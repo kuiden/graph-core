@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>store-saas-marketing-parent</artifactId>
+    <version>0.0.1-RELEASE</version>
+    <packaging>pom</packaging>
+
+    <name>store-saas-marketing-parent</name>
+    <description>store-saas-marketing-parent</description>
+
+    <parent>
+        <groupId>com.tuhu</groupId>
+        <artifactId>tuhu-spring-cloud-parent</artifactId>
+        <version>1.0.13-RELEASE</version>
+    </parent>
+
+    <properties>
+        <parent-project.version>0.0.1-RELEASE</parent-project.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <facade.version>0.0.1-RELEASE</facade.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>nexus_public</id>
+            <url>http://maven.tuhu.work:8081/nexus/content/groups/public/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>nexus_public</id>
+            <url>http://maven.tuhu.work:8081/nexus/content/groups/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>release</id>
+            <name>release???</name>
+            <url>http://maven.tuhu.work:8081/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>snapshots</name>
+            <url>http://maven.tuhu.work:8081/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-marketing-common</artifactId>
+                <version>${parent-project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-marketing-facade</artifactId>
+                <version>${facade.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-marketing-remote</artifactId>
+                <version>${parent-project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-marketing-integration-dal</artifactId>
+                <version>${parent-project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-marketing-domain</artifactId>
+                <version>${parent-project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-marketing-api</artifactId>
+                <version>${parent-project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-marketing-test</artifactId>
+                <version>${parent-project.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <!--prd env-->
+            <id>prd</id>
+            <properties>
+                <profiles.active>prd</profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <!--local env-->
+            <id>local</id>
+            <properties>
+                <profiles.active>local</profiles.active>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <!--test env-->
+            <id>test</id>
+            <properties>
+                <profiles.active>test</profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <!--UT env-->
+            <id>ut</id>
+            <properties>
+                <profiles.active>ut</profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <!-- tuhutest env -->
+            <id>tuhutest</id>
+            <properties>
+                <profiles.active>tuhutest</profiles.active>
+            </properties>
+        </profile>
+    </profiles>
+<modules>  <module>store-saas-marketing-common</module>
+    <module>store-saas-marketing-facade</module>
+    <module>store-saas-marketing-remote</module>
+    <module>store-saas-marketing-integration-dal</module>
+    <module>store-saas-marketing-domain</module>
+    <module>store-saas-marketing-api</module>
+    <module>store-saas-marketing-test</module>
+  </modules>
+</project>
