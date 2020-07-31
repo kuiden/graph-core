@@ -1,15 +1,13 @@
 package com.tuhu;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.hystrix.EnableHystrix;
-import org.springframework.cloud.netflix.hystrix.dashboard.EnableHystrixDashboard;
 import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
@@ -21,12 +19,13 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  * @since 2018-12-12
  */
 @EnableSwagger2
-@EnableFeignClients(basePackages = { "com.tuhu.store.saas.remote" })
+@EnableFeignClients(basePackages = { "com.tuhu.store.saas.marketing.remote" })
 @EnableHystrix
-@ComponentScan
 @SpringBootApplication
-@EnableDiscoveryClient(autoRegister = false)
+@EnableDiscoveryClient
 @EnableScheduling
+@EnableAspectJAutoProxy(exposeProxy=true)
+@Slf4j
 public class StartMain {
 
     public static void main(String[] args) {

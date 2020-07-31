@@ -19,6 +19,12 @@
         <parent-project.version>0.0.1-RELEASE</parent-project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <facade.version>0.0.1-RELEASE</facade.version>
+        <saas-store-order-facade.version>0.0.1-SNAPSHOT</saas-store-order-facade.version>
+        <saas-store-crm-remote-model.version>0.0.1-SNAPSHOT</saas-store-crm-remote-model.version>
+        <mengfancommon.version>1.0.7-SNAPSHOT</mengfancommon.version>
+        <tuhu-spring-cloud-datasource-common.version>1.0.2019091701-Alpha</tuhu-spring-cloud-datasource-common.version>
+        <tuhu-spring-cloud-rw-datasource-frame.version>1.0.2019091701-Alpha</tuhu-spring-cloud-rw-datasource-frame.version>
+
     </properties>
 
     <repositories>
@@ -92,6 +98,45 @@
                 <version>${parent-project.version}</version>
             </dependency>
 
+
+
+<!--            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>tuhu-spring-cloud-rw-datasource-frame</artifactId>
+                <version>${tuhu-spring-cloud-rw-datasource-frame.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>tuhu-spring-cloud-datasource-common</artifactId>
+                <version>${tuhu-spring-cloud-datasource-common.version}</version>
+            </dependency>-->
+
+
+            <dependency>
+                <groupId>com.mengfan</groupId>
+                <artifactId>mengfan-common</artifactId>
+                <version>${mengfancommon.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-order-facade</artifactId>
+                <version>${saas-store-order-facade.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-crm-remote-model</artifactId>
+                <version>${saas-store-crm-remote-model.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xiangyun.versionhelper</groupId>
+                <artifactId>version-helper</artifactId>
+                <version>1.2.4</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -135,6 +180,21 @@
             </properties>
         </profile>
     </profiles>
+
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+    </build>
 <modules>  <module>store-saas-marketing-common</module>
     <module>store-saas-marketing-facade</module>
     <module>store-saas-marketing-remote</module>

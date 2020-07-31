@@ -36,6 +36,20 @@
             <artifactId>store-saas-marketing-facade</artifactId>
         </dependency>
 
+
+
+
+        <dependency>
+            <groupId>com.mengfan</groupId>
+            <artifactId>mengfan-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.xiangyun.versionhelper</groupId>
+            <artifactId>version-helper</artifactId>
+            <version>1.2.4</version>
+        </dependency>
+
     </dependencies>
 
 </project>
