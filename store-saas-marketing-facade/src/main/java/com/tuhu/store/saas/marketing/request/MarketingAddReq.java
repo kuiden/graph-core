@@ -31,7 +31,7 @@ public class MarketingAddReq {
      * 客户ID，多个用逗号分隔
      */
     @ApiModelProperty(value = "客户ID")
-    private List<String> customerIds;
+    private String customerIds;
 
     /**
      * 券Ids

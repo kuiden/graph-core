@@ -3,8 +3,12 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketingExample;
+import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
@@ -71,6 +75,7 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
     public MarketingAddReq addMarketingCustomer(MarketingAddReq addReq) {
         String funName = "定向营销任务新增";
         log.info("{} -> 请求参数: {}", funName, JSONObject.toJSONString(addReq));
+        checkCommonParams(addReq);
         String marketingMethod = addReq.getMarketingMethod().toString();
         if(marketingMethod.equals("0")){
             //营销发优惠卷
@@ -81,7 +86,6 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         }
         return addReq;
     }
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -126,6 +130,34 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         }
         String paramStr = JSONObject.toJSONString(params);
         return paramStr;
+    }
+
+    private void checkCommonParams(MarketingAddReq addReq) {
+        int cNum = 0;
+        if (addReq.getCustomerGroupId()!=null&&!"".equals(addReq.getCustomerGroupId())) {
+            log.info("客群客户数量");
+//            CustomerGroupParam customerGroupParam = new CustomerGroupParam();
+//            customerGroupParam.setId(Long.valueOf(addReq.getCustomerGroupId()));
+//            customerGroupParam.setStoreId(addReq.getStoreId());
+//            customerGroupParam.setTenantId(addReq.getTenantId());
+//            List<Customer> customerList = iMarketingCustomerGroupService.getCustomerByCustomerGroupParam(customerGroupParam);
+//            cNum = customerList.size();
+        }else if(addReq.getCustomerIds()!=null&&!"".equals(addReq.getCustomerIds())){
+            log.info("指定用户数量");
+            String[] strArray = addReq.getCustomerIds().split(",");
+            cNum = strArray.length;
+        }
+        //短信可用数量
+        MessageQuantity req = new MessageQuantity();
+        req.setStoreId(addReq.getStoreId());
+        req.setTenantId(addReq.getTenantId());
+        req.setCreateUser(UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName());
+        MessageQuantity messageQuantity = iMessageQuantityService.selectQuantityByTenantIdAndStoreId(req);
+        int mqNum = Integer.parseInt(messageQuantity.getRemainderQuantity().toString());
+        if(mqNum<cNum){
+            log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,mqNum);
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
+        }
     }
 
 }
