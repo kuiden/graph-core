@@ -38,4 +38,10 @@ public interface ICustomerMarketingService extends Default {
      */
     public void updateMarketingCustomerByTaskType(MarketingUpdateReq addReq);
 
+    /**
+     * 新增定向营销
+     * @param customerMarketing
+     */
+    public void insert(CustomerMarketing customerMarketing);
+
 }

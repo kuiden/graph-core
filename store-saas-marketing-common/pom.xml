@@ -24,6 +24,12 @@
 			<groupId>com.tuhu</groupId>
 			<artifactId>tuhu-boot-starter-logger</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>com.tuhu</groupId>
+			<artifactId>store-saas-crm-remote-model</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
