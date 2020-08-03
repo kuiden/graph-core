@@ -314,7 +314,6 @@ public class CouponServiceImpl implements ICouponService {
         CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
         criteria.andCouponCodeEqualTo(coupon.getCode());
         int sendCount = customerCouponMapper.countByExample(customerCouponExample);
-        //todo 发放数量加入占用数
         resp.setSendNumber(Long.valueOf(sendCount + ""));
         Byte scopeType = coupon.getScopeType();
         if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {
@@ -439,7 +438,7 @@ public class CouponServiceImpl implements ICouponService {
         editCoupon.setUpdateTime(new Date());
         couponMapper.updateByPrimaryKeySelective(editCoupon);
         //更新使用范围
-        editCouponScopeCategory(oldCoupon, editCouponReq);
+        //editCouponScopeCategory(oldCoupon, editCouponReq);
         //券数量如果从不限制改为了限制
         String key = couponSendNumberPrefix.concat(editCoupon.getCode());
         if (oldCoupon.getGrantNumber().compareTo(-1L) == 0 && editCoupon.getGrantNumber().compareTo(0L) > 0) {
@@ -566,8 +565,8 @@ public class CouponServiceImpl implements ICouponService {
      * @return
      */
     private String validateEditCouponReq(CouponResp oldCoupon, EditCouponReq editCouponReq) {
-        //优惠券已发放数量
-        Long sendNumber = oldCoupon.getSendNumber();
+        //优惠券已发放数量 + 占用数量
+        Long number = oldCoupon.getSendNumber() + oldCoupon.getOccupyNum();
         //券数量
         Long grantNumber = editCouponReq.getGrantNumber();
         if (null == grantNumber) {
@@ -577,8 +576,8 @@ public class CouponServiceImpl implements ICouponService {
         if (grantNumber.compareTo(0L) < 0 && !grantNumber.equals(-1L)) {
             return "券数量只能为不限或限制（正整数）";
         }
-        if (grantNumber.compareTo(0L) > 0 && grantNumber.compareTo(sendNumber) < 0) {
-            return "券数量不能小于已发送数量";
+        if (grantNumber.compareTo(0L) > 0 && grantNumber.compareTo(number) < 0) {
+            return "券数量不能小于已发送与已占用数量之和";
         }
         Integer status = editCouponReq.getStatus();
         if (status.intValue() != 0 && status.intValue() != 1) {
@@ -588,7 +587,7 @@ public class CouponServiceImpl implements ICouponService {
         if (allowGet.intValue() != 0 && allowGet.intValue() != 1) {
             return "允许领券格式错误";
         }
-        if (sendNumber.compareTo(0L) > 0) {
+        if (number.compareTo(0L) > 0) {
             //已发放的券只允许编辑券数量，是否允许领券，券状态；
             return null;
         }

@@ -447,62 +447,62 @@ public class CouponExample {
         }
 
         public Criteria andTypeIsNull() {
-            addCriterion("type is null");
+            addCriterion("`type` is null");
             return (Criteria) this;
         }
 
         public Criteria andTypeIsNotNull() {
-            addCriterion("type is not null");
+            addCriterion("`type` is not null");
             return (Criteria) this;
         }
 
         public Criteria andTypeEqualTo(Byte value) {
-            addCriterion("type =", value, "type");
+            addCriterion("`type` =", value, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeNotEqualTo(Byte value) {
-            addCriterion("type <>", value, "type");
+            addCriterion("`type` <>", value, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeGreaterThan(Byte value) {
-            addCriterion("type >", value, "type");
+            addCriterion("`type` >", value, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeGreaterThanOrEqualTo(Byte value) {
-            addCriterion("type >=", value, "type");
+            addCriterion("`type` >=", value, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeLessThan(Byte value) {
-            addCriterion("type <", value, "type");
+            addCriterion("`type` <", value, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeLessThanOrEqualTo(Byte value) {
-            addCriterion("type <=", value, "type");
+            addCriterion("`type` <=", value, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeIn(List<Byte> values) {
-            addCriterion("type in", values, "type");
+            addCriterion("`type` in", values, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeNotIn(List<Byte> values) {
-            addCriterion("type not in", values, "type");
+            addCriterion("`type` not in", values, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeBetween(Byte value1, Byte value2) {
-            addCriterion("type between", value1, value2, "type");
+            addCriterion("`type` between", value1, value2, "type");
             return (Criteria) this;
         }
 
         public Criteria andTypeNotBetween(Byte value1, Byte value2) {
-            addCriterion("type not between", value1, value2, "type");
+            addCriterion("`type` not between", value1, value2, "type");
             return (Criteria) this;
         }
 
@@ -1057,62 +1057,62 @@ public class CouponExample {
         }
 
         public Criteria andStatusIsNull() {
-            addCriterion("status is null");
+            addCriterion("`status` is null");
             return (Criteria) this;
         }
 
         public Criteria andStatusIsNotNull() {
-            addCriterion("status is not null");
+            addCriterion("`status` is not null");
             return (Criteria) this;
         }
 
         public Criteria andStatusEqualTo(Byte value) {
-            addCriterion("status =", value, "status");
+            addCriterion("`status` =", value, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusNotEqualTo(Byte value) {
-            addCriterion("status <>", value, "status");
+            addCriterion("`status` <>", value, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusGreaterThan(Byte value) {
-            addCriterion("status >", value, "status");
+            addCriterion("`status` >", value, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusGreaterThanOrEqualTo(Byte value) {
-            addCriterion("status >=", value, "status");
+            addCriterion("`status` >=", value, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusLessThan(Byte value) {
-            addCriterion("status <", value, "status");
+            addCriterion("`status` <", value, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusLessThanOrEqualTo(Byte value) {
-            addCriterion("status <=", value, "status");
+            addCriterion("`status` <=", value, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusIn(List<Byte> values) {
-            addCriterion("status in", values, "status");
+            addCriterion("`status` in", values, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusNotIn(List<Byte> values) {
-            addCriterion("status not in", values, "status");
+            addCriterion("`status` not in", values, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusBetween(Byte value1, Byte value2) {
-            addCriterion("status between", value1, value2, "status");
+            addCriterion("`status` between", value1, value2, "status");
             return (Criteria) this;
         }
 
         public Criteria andStatusNotBetween(Byte value1, Byte value2) {
-            addCriterion("status not between", value1, value2, "status");
+            addCriterion("`status` not between", value1, value2, "status");
             return (Criteria) this;
         }
 
@@ -1633,6 +1633,66 @@ public class CouponExample {
 
         public Criteria andUpdateTimeNotBetween(Date value1, Date value2) {
             addCriterion("update_time not between", value1, value2, "updateTime");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumIsNull() {
+            addCriterion("occupy_num is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumIsNotNull() {
+            addCriterion("occupy_num is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumEqualTo(Long value) {
+            addCriterion("occupy_num =", value, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumNotEqualTo(Long value) {
+            addCriterion("occupy_num <>", value, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumGreaterThan(Long value) {
+            addCriterion("occupy_num >", value, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumGreaterThanOrEqualTo(Long value) {
+            addCriterion("occupy_num >=", value, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumLessThan(Long value) {
+            addCriterion("occupy_num <", value, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumLessThanOrEqualTo(Long value) {
+            addCriterion("occupy_num <=", value, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumIn(List<Long> values) {
+            addCriterion("occupy_num in", values, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumNotIn(List<Long> values) {
+            addCriterion("occupy_num not in", values, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumBetween(Long value1, Long value2) {
+            addCriterion("occupy_num between", value1, value2, "occupyNum");
+            return (Criteria) this;
+        }
+
+        public Criteria andOccupyNumNotBetween(Long value1, Long value2) {
+            addCriterion("occupy_num not between", value1, value2, "occupyNum");
             return (Criteria) this;
         }
     }

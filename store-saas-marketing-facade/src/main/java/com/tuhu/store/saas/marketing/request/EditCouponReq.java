@@ -128,6 +128,7 @@ public class EditCouponReq implements Serializable {
     /**
      * 券说明
      */
+    @Size(max = 200, message = "券说明只能在200个字符以内")
     private String remark;
 
     /**
