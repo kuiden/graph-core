@@ -71,101 +71,14 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
     public MarketingAddReq addMarketingCustomer(MarketingAddReq addReq) {
         String funName = "定向营销任务新增";
         log.info("{} -> 请求参数: {}", funName, JSONObject.toJSONString(addReq));
-        //判断优惠券或短信数量是否满足发放要求，不满足不能进行任务创建
-//        boolean addFlag = false;
-//        int cNum = 0;
-//        String marketingMethod = addReq.getMarketingMethod().toString();
-//        if (addReq.getCustomerGroupId()!=null&&!"".equals(addReq.getCustomerGroupId())) {
-//            //客群客户数量
-//            CustomerGroupParam customerGroupParam = new CustomerGroupParam();
-//            customerGroupParam.setId(Long.valueOf(addReq.getCustomerGroupId()));
-//            customerGroupParam.setStoreId(addReq.getStoreId());
-//            customerGroupParam.setTenantId(addReq.getTenantId());
-//            List<Customer> customerList = iMarketingCustomerGroupService.getCustomerByCustomerGroupParam(customerGroupParam);
-//            cNum = customerList.size();
-//        }else if(addReq.getCustomerId()!=null&&!"".equals(addReq.getCustomerId())){
-//            //指定用户数量
-//            String[] strArray = addReq.getCustomerId().split(",");
-//            cNum = strArray.length;
-//        }
-//        if(marketingMethod.equals("0")){
-//            addFlag = true;
-//        }else if(marketingMethod.equals("1")){
-//            if(cNum==0){
-//                addFlag = false;
-//            }else{
-//                //短信可用数量
-//                MessageQuantity req = new MessageQuantity();
-//                req.setStoreId(addReq.getStoreId());
-//                req.setTenantId(addReq.getTenantId());
-//                req.setCreateUser(addReq.getCreateUser());
-//                MessageQuantity messageQuantity = iMessageQuantityService.selectQuantityByTenantIdAndStoreId(req);
-//                int mqNum = Integer.parseInt(messageQuantity.getRemainderQuantity().toString());
-//                if(mqNum>=cNum){
-//                    addFlag = true;
-//                }
-//            }
-//        }
-//
-//        if(addFlag){
-//            CustomerMarketing customerMarketing = commonFactory.transToAddCustomerMarketing(addReq);
-//            this.insert(customerMarketing);
-//            //写入定向营销发送记录
-//            //根据任务中记录的发送对象信息查询出客户列表
-//            List<CustomerAndVehicleReq> customeList = new ArrayList();
-//            //客群客户
-//            if (customerMarketing.getCustomerGroupId()!=null&&!"".equals(customerMarketing.getCustomerGroupId())){
-//                //客群接口
-//                CustomerGroupParam customerGroupParam = new CustomerGroupParam();
-//                customerGroupParam.setId(Long.valueOf(customerMarketing.getCustomerGroupId()));
-//                customerGroupParam.setStoreId(addReq.getStoreId());
-//                customerGroupParam.setTenantId(addReq.getTenantId());
-//                List<Customer> customerList = iMarketingCustomerGroupService.getCustomerByCustomerGroupParam(customerGroupParam);
-//                for(Customer customer : customerList){
-//                    CustomerAndVehicleReq cavReq = new CustomerAndVehicleReq();
-//                    //客户详情
-//                    CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customer.getId(),customerMarketing.getTenantId(),customerMarketing.getStoreId());
-//                    cavReq.setCustomerId(customer.getId());
-//                    cavReq.setCustomerName(customer.getName());
-//                    cavReq.setCustomerPhone(customer.getPhoneNumber());
-//                    customeList.add(cavReq);
-//                }
-//            }
-//            //指定客户
-//            if(customerMarketing.getCustomerId()!=null&&!"".equals(customerMarketing.getCustomerId())){
-//                String[] strArray = customerMarketing.getCustomerId().split(",");
-//                for(int i=0;i<=strArray.length-1;i++){
-//                    CustomerAndVehicleReq cavReq = new CustomerAndVehicleReq();
-//                    //客户详情
-//                    String customerId = strArray[i];
-//                    CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId,customerMarketing.getTenantId(),customerMarketing.getStoreId());
-//                    cavReq.setCustomerId(customerDetailResp.getId());
-//                    cavReq.setCustomerName(customerDetailResp.getName());
-//                    cavReq.setCustomerPhone(customerDetailResp.getPhoneNumber());
-//                    customeList.add(cavReq);
-//                }
-//            }
-//            //写入记录表并将状态设为未发送
-//            List<MarketingSendRecord> records = new ArrayList();
-//            for(CustomerAndVehicleReq customerAndVehicleReq : customeList){
-//                MarketingSendRecord marketingSendRecord = new MarketingSendRecord();
-//                marketingSendRecord.setMarketingId(customerMarketing.getId().toString());
-//                marketingSendRecord.setCustomerId(customerAndVehicleReq.getCustomerId());
-//                marketingSendRecord.setCustomerName(customerAndVehicleReq.getCustomerName());
-//                marketingSendRecord.setPhoneNumber(customerAndVehicleReq.getCustomerPhone());
-//                marketingSendRecord.setSendType(Byte.valueOf("0"));
-//                marketingSendRecord.setSendTime(customerMarketing.getSendTime());
-//                marketingSendRecord.setStoreId(customerMarketing.getStoreId());
-//                marketingSendRecord.setTenantId(customerMarketing.getTenantId());
-//                marketingSendRecord.setCreateTime(new Date());
-//                records.add(marketingSendRecord);
-//            }
-//            List<Integer> list = iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
-//
-//            log.info("{} -> 返回响应: {}", funName, JSONObject.toJSONString(addReq));
-//            addReq.setJudgeVersion(true);
-//            return addReq;
-//        }
+        String marketingMethod = addReq.getMarketingMethod().toString();
+        if(marketingMethod.equals("0")){
+            //营销发优惠卷
+            //TODO
+        }else if(marketingMethod.equals("1")){
+            //营销发送活动
+
+        }
         return addReq;
     }
 
