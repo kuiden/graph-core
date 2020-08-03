@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityCustomerMapper">
+  <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="activity_order_code" jdbcType="VARCHAR" property="activityOrderCode" />
+    <result column="activity_code" jdbcType="VARCHAR" property="activityCode" />
+    <result column="customer_id" jdbcType="VARCHAR" property="customerId" />
+    <result column="telephone" jdbcType="VARCHAR" property="telephone" />
+    <result column="store_id" jdbcType="BIGINT" property="storeId" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="use_time" jdbcType="TIMESTAMP" property="useTime" />
+    <result column="use_status" jdbcType="TINYINT" property="useStatus" />
+    <result column="message_status" jdbcType="VARCHAR" property="messageStatus" />
+    <result column="service_order_id" jdbcType="VARCHAR" property="serviceOrderId" />
+    <result column="service_order_time" jdbcType="TIMESTAMP" property="serviceOrderTime" />
+    <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="customer_name" jdbcType="VARCHAR" property="customerName" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, activity_order_code, activity_code, customer_id, telephone, store_id, create_time, 
+    use_time, use_status, message_status, service_order_id, service_order_time, start_time, 
+    end_time, customer_name
+  </sql>
+  <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from activity_customer
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null" >
+      <if test="offset != null" >
+        limit ${offset}, ${limit}
+      </if>
+      <if test="offset == null" >
+        limit ${limit}
+      </if>
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from activity_customer
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from activity_customer
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample">
+    delete from activity_customer
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    insert into activity_customer (id, activity_order_code, activity_code, 
+      customer_id, telephone, store_id, 
+      create_time, use_time, use_status, 
+      message_status, service_order_id, service_order_time, 
+      start_time, end_time, customer_name
+      )
+    values (#{id,jdbcType=BIGINT}, #{activityOrderCode,jdbcType=VARCHAR}, #{activityCode,jdbcType=VARCHAR}, 
+      #{customerId,jdbcType=VARCHAR}, #{telephone,jdbcType=VARCHAR}, #{storeId,jdbcType=BIGINT}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{useTime,jdbcType=TIMESTAMP}, #{useStatus,jdbcType=TINYINT}, 
+      #{messageStatus,jdbcType=VARCHAR}, #{serviceOrderId,jdbcType=VARCHAR}, #{serviceOrderTime,jdbcType=TIMESTAMP}, 
+      #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{customerName,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    insert into activity_customer
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="activityOrderCode != null">
+        activity_order_code,
+      </if>
+      <if test="activityCode != null">
+        activity_code,
+      </if>
+      <if test="customerId != null">
+        customer_id,
+      </if>
+      <if test="telephone != null">
+        telephone,
+      </if>
+      <if test="storeId != null">
+        store_id,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="useTime != null">
+        use_time,
+      </if>
+      <if test="useStatus != null">
+        use_status,
+      </if>
+      <if test="messageStatus != null">
+        message_status,
+      </if>
+      <if test="serviceOrderId != null">
+        service_order_id,
+      </if>
+      <if test="serviceOrderTime != null">
+        service_order_time,
+      </if>
+      <if test="startTime != null">
+        start_time,
+      </if>
+      <if test="endTime != null">
+        end_time,
+      </if>
+      <if test="customerName != null">
+        customer_name,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="activityOrderCode != null">
+        #{activityOrderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="activityCode != null">
+        #{activityCode,jdbcType=VARCHAR},
+      </if>
+      <if test="customerId != null">
+        #{customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null">
+        #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="storeId != null">
+        #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="useTime != null">
+        #{useTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="useStatus != null">
+        #{useStatus,jdbcType=TINYINT},
+      </if>
+      <if test="messageStatus != null">
+        #{messageStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceOrderId != null">
+        #{serviceOrderId,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceOrderTime != null">
+        #{serviceOrderTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="startTime != null">
+        #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null">
+        #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="customerName != null">
+        #{customerName,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultType="java.lang.Integer">
+    select count(*) from activity_customer
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update activity_customer
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=BIGINT},
+      </if>
+      <if test="record.activityOrderCode != null">
+        activity_order_code = #{record.activityOrderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.activityCode != null">
+        activity_code = #{record.activityCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.customerId != null">
+        customer_id = #{record.customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.telephone != null">
+        telephone = #{record.telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.storeId != null">
+        store_id = #{record.storeId,jdbcType=BIGINT},
+      </if>
+      <if test="record.createTime != null">
+        create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.useTime != null">
+        use_time = #{record.useTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.useStatus != null">
+        use_status = #{record.useStatus,jdbcType=TINYINT},
+      </if>
+      <if test="record.messageStatus != null">
+        message_status = #{record.messageStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.serviceOrderId != null">
+        service_order_id = #{record.serviceOrderId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.serviceOrderTime != null">
+        service_order_time = #{record.serviceOrderTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.startTime != null">
+        start_time = #{record.startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.endTime != null">
+        end_time = #{record.endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.customerName != null">
+        customer_name = #{record.customerName,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update activity_customer
+    set id = #{record.id,jdbcType=BIGINT},
+      activity_order_code = #{record.activityOrderCode,jdbcType=VARCHAR},
+      activity_code = #{record.activityCode,jdbcType=VARCHAR},
+      customer_id = #{record.customerId,jdbcType=VARCHAR},
+      telephone = #{record.telephone,jdbcType=VARCHAR},
+      store_id = #{record.storeId,jdbcType=BIGINT},
+      create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      use_time = #{record.useTime,jdbcType=TIMESTAMP},
+      use_status = #{record.useStatus,jdbcType=TINYINT},
+      message_status = #{record.messageStatus,jdbcType=VARCHAR},
+      service_order_id = #{record.serviceOrderId,jdbcType=VARCHAR},
+      service_order_time = #{record.serviceOrderTime,jdbcType=TIMESTAMP},
+      start_time = #{record.startTime,jdbcType=TIMESTAMP},
+      end_time = #{record.endTime,jdbcType=TIMESTAMP},
+      customer_name = #{record.customerName,jdbcType=VARCHAR}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    update activity_customer
+    <set>
+      <if test="activityOrderCode != null">
+        activity_order_code = #{activityOrderCode,jdbcType=VARCHAR},
+      </if>
+      <if test="activityCode != null">
+        activity_code = #{activityCode,jdbcType=VARCHAR},
+      </if>
+      <if test="customerId != null">
+        customer_id = #{customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="telephone != null">
+        telephone = #{telephone,jdbcType=VARCHAR},
+      </if>
+      <if test="storeId != null">
+        store_id = #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="useTime != null">
+        use_time = #{useTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="useStatus != null">
+        use_status = #{useStatus,jdbcType=TINYINT},
+      </if>
+      <if test="messageStatus != null">
+        message_status = #{messageStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceOrderId != null">
+        service_order_id = #{serviceOrderId,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceOrderTime != null">
+        service_order_time = #{serviceOrderTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="startTime != null">
+        start_time = #{startTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null">
+        end_time = #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="customerName != null">
+        customer_name = #{customerName,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    update activity_customer
+    set activity_order_code = #{activityOrderCode,jdbcType=VARCHAR},
+      activity_code = #{activityCode,jdbcType=VARCHAR},
+      customer_id = #{customerId,jdbcType=VARCHAR},
+      telephone = #{telephone,jdbcType=VARCHAR},
+      store_id = #{storeId,jdbcType=BIGINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      use_time = #{useTime,jdbcType=TIMESTAMP},
+      use_status = #{useStatus,jdbcType=TINYINT},
+      message_status = #{messageStatus,jdbcType=VARCHAR},
+      service_order_id = #{serviceOrderId,jdbcType=VARCHAR},
+      service_order_time = #{serviceOrderTime,jdbcType=TIMESTAMP},
+      start_time = #{startTime,jdbcType=TIMESTAMP},
+      end_time = #{endTime,jdbcType=TIMESTAMP},
+      customer_name = #{customerName,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <select id="countByActivityCodeAndUseStatus" resultType="map">
+    SELECT
+    activity_code AS activityCode,
+    COUNT(1) AS number
+    FROM
+      activity_customer
+    <where>
+        <if test="activityCodeList">
+            activity_code IN
+            <foreach collection="activityCodeList" item="activityCode" open="(" close=")" separator=",">
+                #{activityCode,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+        <if test="useStatusList" >
+            AND use_status IN
+            <foreach collection="useStatusList" item="useStatus" open="(" close=")" separator=",">
+                #{useStatus,jdbcType=TINYINT}
+            </foreach>
+        </if>
+    </where>
+    GROUP BY activity_code
+  </select>
+</mapper>
