@@ -1,43 +1,28 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.bo.request.*;
 import com.tuhu.store.saas.crm.bo.response.CustomerDetailResp;
-import com.tuhu.store.saas.crm.bo.response.MessageTemplateLocalResp;
 import com.tuhu.store.saas.crm.dataobject.crm.*;
 import com.tuhu.store.saas.crm.param.CustomerGroupParam;
 import com.tuhu.store.saas.crm.service.*;
-import com.tuhu.store.saas.crm.service.impl.factory.CommonFactory;
-import com.tuhu.store.saas.marketing.dataobject.Customer;
-import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
-import com.tuhu.store.saas.marketing.dataobject.CustomerMarketingExample;
-import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
+import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
-import com.tuhu.store.saas.marketing.request.MarketingDetailsReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
-import com.tuhu.store.saas.marketing.response.CouponStatisticsForCustomerMarketResp;
-import com.tuhu.store.saas.marketing.response.CustomerMarketingDetailsResp;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
-import com.tuhu.store.saas.order.vo.serviceorder.ConsumptionAnalysisRstVO;
-import com.tuhu.store.saas.order.vo.serviceorder.ConsumptionAnalysisVO;
-import com.tuhu.store.saas.remote.ServiceOrderClient;
+import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @Author: ZhangXiao
@@ -53,28 +38,7 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
     private CustomerMarketingMapper customerMarketingMapper;
 
     @Autowired
-    private CommonFactory commonFactory;
-
-    @Autowired
-    private IMessageTemplateLocalService iMessageTemplateLocalService;
-
-    @Autowired
-    private IMarketingSendRecordService iMarketingSendRecordService;
-
-    @Autowired
-    private IMarketingCustomerGroupService iMarketingCustomerGroupService;
-
-    @Autowired
-    private ICustomerService iCustomerService;
-
-    @Autowired
-    private ICouponService iCouponService;
-
-    @Autowired
     private IMessageQuantityService iMessageQuantityService;
-
-    @Autowired
-    private ServiceOrderClient serviceOrderClient;
 
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
@@ -226,127 +190,6 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         }
 
         log.info("更新定向营销任务状态成功");
-    }
-
-
-    @Override
-    public CustomerMarketingDetailsResp customerMarketingDetails(MarketingDetailsReq req) {
-        String funName = "定向营销任务详情及分析显示";
-        log.info("{} -> 请求参数: {}", funName, JSONObject.toJSONString(req));
-        CustomerMarketingDetailsResp customerMarketingDetailsResp = new CustomerMarketingDetailsResp();
-        //根据ID实例化定向营销任务
-        CustomerMarketingExample customerMarketingExample = new CustomerMarketingExample();
-        CustomerMarketingExample.Criteria listCriterion = customerMarketingExample.createCriteria();
-        listCriterion.andIdEqualTo(req.getId());
-        //门店ID过滤
-        listCriterion.andTenantIdEqualTo(req.getTenantId()).andStoreIdEqualTo(req.getStoreId());
-        List<CustomerMarketing> customerMarketingList = customerMarketingMapper.selectByExample(customerMarketingExample);
-        if (!CollectionUtils.isEmpty(customerMarketingList)){
-            CustomerMarketing customerMarketing = customerMarketingList.get(0);
-            customerMarketingDetailsResp.setId(customerMarketing.getId());
-            customerMarketingDetailsResp.setMarketingMethod(customerMarketing.getMarketingMethod());
-            customerMarketingDetailsResp.setTaskType(customerMarketing.getTaskType());
-            customerMarketingDetailsResp.setSendObject(customerMarketing.getSendObject());
-            customerMarketingDetailsResp.setSendTime(customerMarketing.getSendTime());
-            customerMarketingDetailsResp.setCouponId(customerMarketing.getCouponId());
-            customerMarketingDetailsResp.setCouponTitle(customerMarketing.getCouponTitle());
-            customerMarketingDetailsResp.setMessageTemplateId(customerMarketing.getMessageTemplateId());
-            customerMarketingDetailsResp.setCouponCode(customerMarketing.getCouponCode());
-            customerMarketingDetailsResp.setRemark(customerMarketing.getRemark());
-            customerMarketingDetailsResp.setCustomerGroupId(customerMarketing.getCustomerGroupId());
-            if(customerMarketing.getMessageDatas()!=null){
-                List<String> stringList = JSONArray.parseArray(customerMarketing.getMessageDatas(),String.class);
-                StringBuffer buf = new StringBuffer();
-                for (int i = 0; i < stringList.size(); i++) {
-                    buf.append(stringList.get(i)).append(",");
-                }
-                buf.replace(buf.length() - 1, buf.length(), "");
-                customerMarketingDetailsResp.setMessageDatas(buf.toString());
-            }
-            customerMarketingDetailsResp.setCouponMessageFlag(customerMarketing.getCouponMessageFlag());
-            customerMarketingDetailsResp.setMessageTemplate(customerMarketing.getMessageTemplate());
-            //通过模板ID查询模板信息
-            if(customerMarketing.getMessageTemplateId()!=null&&!"".equals(customerMarketing.getMessageTemplateId())){
-                MessageTemplateLocalResp messageTemplateLocalResp = iMessageTemplateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId(),customerMarketing.getTenantId(),customerMarketing.getStoreId());
-                customerMarketingDetailsResp.setMessageTemplateContent(messageTemplateLocalResp.getTemplateContent());
-            }
-            //获取任务发送记录List信息
-            List<MarketingSendRecord> recordList = iMarketingSendRecordService.getMarketingSendRecord(customerMarketing.getId().toString(), null,customerMarketing.getMarketingMethod().toString());
-            customerMarketingDetailsResp.setRecordList(recordList);
-            List<String> customerIds = new ArrayList();
-            //通过客户ID获取消费信息
-            String sendNumber = recordList.size()+"";
-            String consumption = "0";
-            String orderNumber = "0";
-            String orderConsumption = "0";
-            String cardNumber = "0";
-            String cardConsumption = "0";
-            if(recordList.size()>0) {
-                ConsumptionAnalysisVO consumptionAnalysisVO = new ConsumptionAnalysisVO();
-                customerIds = recordList.stream().map(MarketingSendRecord::getCustomerId).collect(Collectors.toList());
-                consumptionAnalysisVO.setCustomerList(customerIds);
-                consumptionAnalysisVO.setStartTime(customerMarketing.getSendTime());
-                consumptionAnalysisVO.setStoreId(customerMarketing.getStoreId());
-                consumptionAnalysisVO.setTenantId(customerMarketing.getTenantId());
-                BizBaseResponse<ConsumptionAnalysisRstVO> consumptionAnalysisRstResult = serviceOrderClient.queryConsumptionAnalysisByCustomerId(consumptionAnalysisVO);
-                ConsumptionAnalysisRstVO consumptionAnalysisRstVO=  consumptionAnalysisRstResult.getData();
-                if (consumptionAnalysisRstVO!=null){
-                    consumption = (consumptionAnalysisRstVO.getGdAmount()+consumptionAnalysisRstVO.getCardAmount())+"";
-                    orderNumber = consumptionAnalysisRstVO.getGdCount().toString();
-                    orderConsumption = consumptionAnalysisRstVO.getGdAmount().toString();
-                    cardNumber = consumptionAnalysisRstVO.getCardCount().toString();
-                    cardConsumption = consumptionAnalysisRstVO.getCardAmount().toString();
-                }
-            }
-            customerMarketingDetailsResp.setConsumption(consumption);
-            customerMarketingDetailsResp.setOrderNumber(orderNumber);
-            customerMarketingDetailsResp.setOrderConsumption(orderConsumption);
-            customerMarketingDetailsResp.setCardNumber(cardNumber);
-            customerMarketingDetailsResp.setCardConsumption(cardConsumption);
-            customerMarketingDetailsResp.setSendNumber(sendNumber);
-
-            //通过客户ID获取优惠券消费信息
-            if(customerMarketing.getMarketingMethod().equals((byte)0)){
-                String sendCouponNumber = "0";
-                String usedCouponNumber = "0";
-                String couponOrderAmount = "0";
-                if(recordList.size()>0){
-                    customerIds = recordList.stream().map(MarketingSendRecord::getCustomerId).collect(Collectors.toList());
-                    String couponCode = customerMarketing.getCouponCode();
-                    CouponStatisticsForCustomerMarketResp couponStatisticsForCustomerMarketResp = iCouponService.getCouponStatisticsForCustomerMarket(couponCode,customerIds);
-                    if(couponStatisticsForCustomerMarketResp!=null){
-                        sendCouponNumber = couponStatisticsForCustomerMarketResp.getSendNumber().toString();
-                        usedCouponNumber = couponStatisticsForCustomerMarketResp.getUsedNumber().toString();
-                    }
-                }
-                customerMarketingDetailsResp.setSendCouponNumber(sendCouponNumber);
-                customerMarketingDetailsResp.setUsedCouponNumber(usedCouponNumber);
-                customerMarketingDetailsResp.setCouponOrderAmount(couponOrderAmount);
-            }
-        }
-
-
-        log.info("{} -> 返回响应: {}", funName, JSONObject.toJSONString(customerMarketingDetailsResp));
-
-        return customerMarketingDetailsResp;
-    }
-
-
-    @Override
-    public void insert(CustomerMarketing customerMarketing) {
-        if (customerMarketing != null) {
-            customerMarketing.setCreateTime(new Date());
-            customerMarketing.setUpdateTime(new Date());
-            String md = customerMarketing.getMessageDatas();
-            if (md!=null&&!"".equals(md)){
-                String[] strArray = md.split(",");
-                List<String> list = Arrays.asList(strArray);
-                customerMarketing.setMessageDatas(this.getJson(list));
-            }
-
-            customerMarketingMapper.insertSelective(customerMarketing);
-        }
-
     }
 
     /**
