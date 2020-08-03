@@ -10,6 +10,7 @@ import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketingExample;
+import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
 import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
@@ -21,6 +22,7 @@ import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
+import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
 import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +49,9 @@ import java.util.List;
 public class CustomerMarketingServiceImpl  implements ICustomerMarketingService {
     @Autowired
     private CustomerMarketingMapper customerMarketingMapper;
+
+    @Autowired
+    private IMarketingSendRecordService iMarketingSendRecordService;
 
     @Autowired
     private ActivityMapper activityMapper;
@@ -165,6 +170,10 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         return paramStr;
     }
 
+    /**
+     * 校验用户数量和短信数量
+     * @param addReq
+     */
     private void checkCommonParams(MarketingAddReq addReq) {
         int cNum = 0;
         if (addReq.getCustomerGroupId()!=null&&!"".equals(addReq.getCustomerGroupId())) {
@@ -218,6 +227,7 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         }
         String currentUser = UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName();
         String sendObject = "";
+        //TODO 查询客户群的名称
         //构造发送任务和发送记录
         CustomerMarketing customerMarketing = new CustomerMarketing();
         BeanUtils.copyProperties(addReq, customerMarketing);
@@ -229,15 +239,36 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         customerMarketing.setCustomerGroupId(addReq.getCustomerGroupId());
         customerMarketing.setCustomerId(addReq.getCustomerIds());
         customerMarketing.setMarketingMethod(addReq.getMarketingMethod());
+        //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo
         customerMarketing.setMessageTemplate("活动营销");
-        customerMarketing.setMessageTemplateId("123test");
+        customerMarketing.setMessageTemplateId("624492");
         customerMarketing.setSendTime(addReq.getSendTime());
         customerMarketing.setRemark(addReq.getRemark());
         customerMarketing.setSendObject(sendObject);//客户群名称
-        customerMarketing.setTaskType((byte)0);
+        customerMarketing.setTaskType(Byte.valueOf("0"));
         insert(customerMarketing);
         //根据任务中记录的发送对象信息查询出客户列表
         List<CustomerAndVehicleReq> customeList = analyseCustomer(addReq);
+        if(customeList==null||customeList.size()<=0){
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"客户群客户不能为空");
+        }
+        //写入记录表并将状态设为未发送
+        List<MarketingSendRecord> records = new ArrayList();
+        for(CustomerAndVehicleReq customerAndVehicleReq : customeList){
+            MarketingSendRecord marketingSendRecord = new MarketingSendRecord();
+            marketingSendRecord.setMarketingId(customerMarketing.getId().toString());
+            marketingSendRecord.setCustomerId(customerAndVehicleReq.getCustomerId());
+            marketingSendRecord.setCustomerName(customerAndVehicleReq.getCustomerName());
+            marketingSendRecord.setPhoneNumber(customerAndVehicleReq.getCustomerPhone());
+            marketingSendRecord.setSendType(Byte.valueOf("0"));
+            marketingSendRecord.setSendTime(customerMarketing.getSendTime());
+            marketingSendRecord.setStoreId(customerMarketing.getStoreId());
+            marketingSendRecord.setTenantId(customerMarketing.getTenantId());
+            marketingSendRecord.setCreateTime(new Date());
+            marketingSendRecord.setCreateUser(currentUser);
+            records.add(marketingSendRecord);
+        }
+        iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
     }
 
     private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq){
@@ -246,6 +277,7 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         //客群客户
         if (StringUtils.isNotBlank(addReq.getCustomerGroupId())){
             //客群接口
+            //TODO 查询客户群的列表
 //            CustomerGroupParam customerGroupParam = new CustomerGroupParam();
 //            customerGroupParam.setId(Long.valueOf(customerMarketing.getCustomerGroupId()));
 //            customerGroupParam.setStoreId(addReq.getStoreId());
