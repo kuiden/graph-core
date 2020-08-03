@@ -178,9 +178,9 @@ public class CouponServiceImpl implements ICouponService {
             conditionLimit = new BigDecimal("-1");
             addCouponReq.setConditionLimit(conditionLimit);
         }
-        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
-            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
-        }
+//        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
+//            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
+//        }
         //优惠金额
         BigDecimal contentValue = addCouponReq.getContentValue();
         //优惠券优惠金额不能为空
@@ -192,11 +192,11 @@ public class CouponServiceImpl implements ICouponService {
         if (CouponTypeEnum.Money.equals(couponTypeEnum)) {
             if (null == contentValue) {
                 return "代金券优惠金额不能为空";
-            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
-                return "代金券优惠金额只能为正整数";
+//            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
+//                return "代金券优惠金额只能为正整数";
             }
             //如果有使用门槛
-            if (conditionLimit.intValue() > 0) {
+            if (conditionLimit.compareTo(BigDecimal.ZERO) > 0) {
                 if (contentValue.compareTo(conditionLimit) > 0) {
                     return "使用门槛不能小于优惠金额";
                 }
@@ -314,6 +314,7 @@ public class CouponServiceImpl implements ICouponService {
         CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
         criteria.andCouponCodeEqualTo(coupon.getCode());
         int sendCount = customerCouponMapper.countByExample(customerCouponExample);
+        //todo 发放数量加入占用数
         resp.setSendNumber(Long.valueOf(sendCount + ""));
         Byte scopeType = coupon.getScopeType();
         if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {
@@ -597,9 +598,9 @@ public class CouponServiceImpl implements ICouponService {
             conditionLimit = new BigDecimal("-1");
             editCouponReq.setConditionLimit(conditionLimit);
         }
-        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
-            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
-        }
+//        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
+//            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
+//        }
         //优惠金额
         BigDecimal contentValue = editCouponReq.getContentValue();
         //优惠券优惠金额不能为空
@@ -611,11 +612,11 @@ public class CouponServiceImpl implements ICouponService {
         if (CouponTypeEnum.Money.equals(couponTypeEnum)) {
             if (null == contentValue) {
                 return "代金券优惠金额不能为空";
-            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
-                return "代金券优惠金额只能为正整数";
+//            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
+//                return "代金券优惠金额只能为正整数";
             }
             //如果有使用门槛
-            if (conditionLimit.intValue() > 0) {
+            if (conditionLimit.compareTo(BigDecimal.ZERO) > 0) {
                 if (contentValue.compareTo(conditionLimit) > 0) {
                     return "使用门槛不能小于优惠金额";
                 }
