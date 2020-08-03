@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityItemMapper" >
+  <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.po.ActivityItem" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="store_id" property="storeId" jdbcType="BIGINT" />
+    <result column="activity_code" property="activityCode" jdbcType="VARCHAR" />
+    <result column="goods_id" property="goodsId" jdbcType="VARCHAR" />
+    <result column="goods_code" property="goodsCode" jdbcType="VARCHAR" />
+    <result column="goods_name" property="goodsName" jdbcType="VARCHAR" />
+    <result column="goods_type" property="goodsType" jdbcType="BIT" />
+    <result column="item_quantity" property="itemQuantity" jdbcType="INTEGER" />
+    <result column="original_price" property="originalPrice" jdbcType="BIGINT" />
+    <result column="actual_price" property="actualPrice" jdbcType="BIGINT" />
+    <result column="update_user" property="updateUser" jdbcType="VARCHAR" />
+    <result column="create_user" property="createUser" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="business_category" property="businessCategory" jdbcType="BIGINT" />
+    <result column="business_category_code" property="businessCategoryCode" jdbcType="VARCHAR" />
+    <result column="business_category_name" property="businessCategoryName" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, store_id, activity_code, goods_id, goods_code, goods_name, goods_type, item_quantity,
+    original_price, actual_price, update_user, create_user, create_time, update_time,
+    business_category, business_category_code, business_category_name
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.po.ActivityItemExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from activity_item
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null" >
+      <if test="offset != null" >
+        limit ${offset}, ${limit}
+      </if>
+      <if test="offset == null" >
+        limit ${limit}
+      </if>
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select
+    <include refid="Base_Column_List" />
+    from activity_item
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from activity_item
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityItemExample" >
+    delete from activity_item
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
+    insert into activity_item (id, store_id, activity_code,
+      goods_id, goods_code, goods_name,
+      goods_type, item_quantity, original_price,
+      actual_price, update_user, create_user,
+      create_time, update_time, business_category,
+      business_category_code, business_category_name
+      )
+    values (#{id,jdbcType=BIGINT}, #{storeId,jdbcType=BIGINT}, #{activityCode,jdbcType=VARCHAR},
+      #{goodsId,jdbcType=VARCHAR}, #{goodsCode,jdbcType=VARCHAR}, #{goodsName,jdbcType=VARCHAR},
+      #{goodsType,jdbcType=BIT}, #{itemQuantity,jdbcType=INTEGER}, #{originalPrice,jdbcType=BIGINT},
+      #{actualPrice,jdbcType=BIGINT}, #{updateUser,jdbcType=VARCHAR}, #{createUser,jdbcType=VARCHAR},
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{businessCategory,jdbcType=BIGINT},
+      #{businessCategoryCode,jdbcType=VARCHAR}, #{businessCategoryName,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
+    insert into activity_item
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="storeId != null" >
+        store_id,
+      </if>
+      <if test="activityCode != null" >
+        activity_code,
+      </if>
+      <if test="goodsId != null" >
+        goods_id,
+      </if>
+      <if test="goodsCode != null" >
+        goods_code,
+      </if>
+      <if test="goodsName != null" >
+        goods_name,
+      </if>
+      <if test="goodsType != null" >
+        goods_type,
+      </if>
+      <if test="itemQuantity != null" >
+        item_quantity,
+      </if>
+      <if test="originalPrice != null" >
+        original_price,
+      </if>
+      <if test="actualPrice != null" >
+        actual_price,
+      </if>
+      <if test="updateUser != null" >
+        update_user,
+      </if>
+      <if test="createUser != null" >
+        create_user,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="businessCategory != null" >
+        business_category,
+      </if>
+      <if test="businessCategoryCode != null" >
+        business_category_code,
+      </if>
+      <if test="businessCategoryName != null" >
+        business_category_name,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="storeId != null" >
+        #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="activityCode != null" >
+        #{activityCode,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsId != null" >
+        #{goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsCode != null" >
+        #{goodsCode,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsName != null" >
+        #{goodsName,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsType != null" >
+        #{goodsType,jdbcType=BIT},
+      </if>
+      <if test="itemQuantity != null" >
+        #{itemQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="originalPrice != null" >
+        #{originalPrice,jdbcType=BIGINT},
+      </if>
+      <if test="actualPrice != null" >
+        #{actualPrice,jdbcType=BIGINT},
+      </if>
+      <if test="updateUser != null" >
+        #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createUser != null" >
+        #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="businessCategory != null" >
+        #{businessCategory,jdbcType=BIGINT},
+      </if>
+      <if test="businessCategoryCode != null" >
+        #{businessCategoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategoryName != null" >
+        #{businessCategoryName,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityItemExample" resultType="java.lang.Integer" >
+    select count(*) from activity_item
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update activity_item
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=BIGINT},
+      </if>
+      <if test="record.storeId != null" >
+        store_id = #{record.storeId,jdbcType=BIGINT},
+      </if>
+      <if test="record.activityCode != null" >
+        activity_code = #{record.activityCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsId != null" >
+        goods_id = #{record.goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsCode != null" >
+        goods_code = #{record.goodsCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsName != null" >
+        goods_name = #{record.goodsName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsType != null" >
+        goods_type = #{record.goodsType,jdbcType=BIT},
+      </if>
+      <if test="record.itemQuantity != null" >
+        item_quantity = #{record.itemQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="record.originalPrice != null" >
+        original_price = #{record.originalPrice,jdbcType=BIGINT},
+      </if>
+      <if test="record.actualPrice != null" >
+        actual_price = #{record.actualPrice,jdbcType=BIGINT},
+      </if>
+      <if test="record.updateUser != null" >
+        update_user = #{record.updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createUser != null" >
+        create_user = #{record.createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateTime != null" >
+        update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.businessCategory != null" >
+        business_category = #{record.businessCategory,jdbcType=BIGINT},
+      </if>
+      <if test="record.businessCategoryCode != null" >
+        business_category_code = #{record.businessCategoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.businessCategoryName != null" >
+        business_category_name = #{record.businessCategoryName,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update activity_item
+    set id = #{record.id,jdbcType=BIGINT},
+    store_id = #{record.storeId,jdbcType=BIGINT},
+    activity_code = #{record.activityCode,jdbcType=VARCHAR},
+    goods_id = #{record.goodsId,jdbcType=VARCHAR},
+    goods_code = #{record.goodsCode,jdbcType=VARCHAR},
+    goods_name = #{record.goodsName,jdbcType=VARCHAR},
+    goods_type = #{record.goodsType,jdbcType=BIT},
+    item_quantity = #{record.itemQuantity,jdbcType=INTEGER},
+    original_price = #{record.originalPrice,jdbcType=BIGINT},
+    actual_price = #{record.actualPrice,jdbcType=BIGINT},
+    update_user = #{record.updateUser,jdbcType=VARCHAR},
+    create_user = #{record.createUser,jdbcType=VARCHAR},
+    create_time = #{record.createTime,jdbcType=TIMESTAMP},
+    update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+    business_category = #{record.businessCategory,jdbcType=BIGINT},
+    business_category_code = #{record.businessCategoryCode,jdbcType=VARCHAR},
+    business_category_name = #{record.businessCategoryName,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
+    update activity_item
+    <set >
+      <if test="storeId != null" >
+        store_id = #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="activityCode != null" >
+        activity_code = #{activityCode,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsId != null" >
+        goods_id = #{goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsCode != null" >
+        goods_code = #{goodsCode,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsName != null" >
+        goods_name = #{goodsName,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsType != null" >
+        goods_type = #{goodsType,jdbcType=BIT},
+      </if>
+      <if test="itemQuantity != null" >
+        item_quantity = #{itemQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="originalPrice != null" >
+        original_price = #{originalPrice,jdbcType=BIGINT},
+      </if>
+      <if test="actualPrice != null" >
+        actual_price = #{actualPrice,jdbcType=BIGINT},
+      </if>
+      <if test="updateUser != null" >
+        update_user = #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createUser != null" >
+        create_user = #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="businessCategory != null" >
+        business_category = #{businessCategory,jdbcType=BIGINT},
+      </if>
+      <if test="businessCategoryCode != null" >
+        business_category_code = #{businessCategoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategoryName != null" >
+        business_category_name = #{businessCategoryName,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
+    update activity_item
+    set store_id = #{storeId,jdbcType=BIGINT},
+      activity_code = #{activityCode,jdbcType=VARCHAR},
+      goods_id = #{goodsId,jdbcType=VARCHAR},
+      goods_code = #{goodsCode,jdbcType=VARCHAR},
+      goods_name = #{goodsName,jdbcType=VARCHAR},
+      goods_type = #{goodsType,jdbcType=BIT},
+      item_quantity = #{itemQuantity,jdbcType=INTEGER},
+      original_price = #{originalPrice,jdbcType=BIGINT},
+      actual_price = #{actualPrice,jdbcType=BIGINT},
+      update_user = #{updateUser,jdbcType=VARCHAR},
+      create_user = #{createUser,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      business_category = #{businessCategory,jdbcType=BIGINT},
+      business_category_code = #{businessCategoryCode,jdbcType=VARCHAR},
+      business_category_name = #{businessCategoryName,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <insert id="insertBatch" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
+    insert into activity_item (store_id, activity_code,
+      goods_id, goods_code, goods_name,
+      goods_type, item_quantity, original_price,
+      actual_price, update_user, create_user,
+      create_time, update_time,business_category,business_category_code,business_category_name)
+    values
+    <foreach collection="list" item="item" index="index" separator=",">
+        (#{item.storeId,jdbcType=BIGINT}, #{item.activityCode,jdbcType=VARCHAR},
+      #{item.goodsId,jdbcType=VARCHAR}, #{item.goodsCode,jdbcType=VARCHAR}, #{item.goodsName,jdbcType=VARCHAR},
+      #{item.goodsType,jdbcType=BIT}, #{item.itemQuantity,jdbcType=INTEGER}, #{item.originalPrice,jdbcType=BIGINT},
+      #{item.actualPrice,jdbcType=BIGINT}, #{item.updateUser,jdbcType=VARCHAR}, #{item.createUser,jdbcType=VARCHAR},
+      #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP},
+      #{item.businessCategory,jdbcType=BIGINT},
+      #{item.businessCategoryCode,jdbcType=VARCHAR},
+      #{item.businessCategoryName,jdbcType=VARCHAR})
+    </foreach>
+  </insert>
+</mapper>
