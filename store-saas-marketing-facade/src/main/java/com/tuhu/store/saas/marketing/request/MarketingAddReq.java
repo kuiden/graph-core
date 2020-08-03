@@ -1,32 +1,17 @@
 package com.tuhu.store.saas.marketing.request;
 
-
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.hibernate.validator.constraints.NotBlank;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Create by ZhangXiao on 2019/5/27
  */
 @Data
 public class MarketingAddReq {
-
-
-    /**
-     * 表主键ID
-     */
-    private Long id;
-
-    /**
-     * 任务状态 0、待发送 1、已发送 2、已取消 3、发送失败
-     */
-    @ApiModelProperty(value = "任务状态")
-    @NotNull(message = "任务状态不能为空")
-    private Byte taskType;
 
     /**
      * 营销方式 0、优惠券关怀 1、短信营销
@@ -37,8 +22,24 @@ public class MarketingAddReq {
 
     /**
      * 客户群组表ID
+     * 和customerId二选一
      */
+    @ApiModelProperty(value = "客户群组id")
     private String customerGroupId;
+
+    /**
+     * 客户ID，多个用逗号分隔
+     */
+    @ApiModelProperty(value = "客户ID")
+    private List<String> customerIds;
+
+    /**
+     * 券Ids
+     * marketingMethod为0为发送优惠券，多个“,”分割
+     * marketingMethod为0为发送活动，只支持单个
+     */
+    @ApiModelProperty(value = "券或者活动Id")
+    private String couponOrActiveIds;
 
     /**
      * 发送时间 精确到年月日时
@@ -48,49 +49,10 @@ public class MarketingAddReq {
     private Date sendTime;
 
     /**
-     * 优惠券标题
+     * 发送短信标记，默认发送
+     * 目前所有的送券都是需要发送短信
      */
-    private String couponTitle;
-
-    /**
-     * 优惠券发送短信标记 0、否 1、是
-     */
-    private Byte couponMessageFlag;
-
-    /**
-     * 短信模板表ID
-     */
-    private String messageTemplateId;
-
-    /**
-     * 短信模板名称
-     */
-    private String messageTemplate;
-
-    /**
-     * 创建人
-     */
-    private String createUser;
-
-    /**
-     * 更新人
-     */
-    private String updateUser;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
-    /**
-     * 是否删除
-     */
-    private Byte isDelete;
+    private boolean messageFlag = true;
 
     /**
      * 门店ID
@@ -103,41 +65,8 @@ public class MarketingAddReq {
     private Long tenantId;
 
     /**
-     * 发送对象（客群名称）
-     */
-    @ApiModelProperty(value = "发送对象")
-    @NotBlank(message = "发送对象不能为空")
-    @Size(max = 60)
-    private String sendObject;
-
-    /**
-     * 券Id
-     */
-    private String couponId;
-
-    /**
-     * 短信模板变量
-     */
-    private String messageDatas;
-
-    /**
-     * 客户ID，多个用逗号分隔
-     */
-    private String customerId;
-
-    /**
-     * 券编码
-     */
-    private String couponCode;
-
-    /**
      * 备注
      */
     private String remark;
-
-    /**
-     * 是否做版本校验
-     */
-    private Boolean judgeVersion = false;
 
 }

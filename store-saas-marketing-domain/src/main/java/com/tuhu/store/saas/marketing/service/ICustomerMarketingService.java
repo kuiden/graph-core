@@ -3,10 +3,8 @@ package com.tuhu.store.saas.marketing.service;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
-import com.tuhu.store.saas.marketing.request.MarketingDetailsReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
-import com.tuhu.store.saas.marketing.response.CustomerMarketingDetailsResp;
 
 import javax.validation.groups.Default;
 
@@ -39,17 +37,5 @@ public interface ICustomerMarketingService extends Default {
      * @param addReq
      */
     public void updateMarketingCustomerByTaskType(MarketingUpdateReq addReq);
-
-    public void insert(CustomerMarketing customerMarketing);
-
-    /**
-     * 定向营销任务详情及分析显示
-     * @param req
-     * @return
-     */
-    public CustomerMarketingDetailsResp customerMarketingDetails(MarketingDetailsReq req);
-
-
-
 
 }
