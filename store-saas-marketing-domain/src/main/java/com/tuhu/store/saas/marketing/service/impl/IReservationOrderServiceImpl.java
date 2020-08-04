@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
+import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.service.IReservationOrderService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -41,5 +42,10 @@ public class IReservationOrderServiceImpl implements IReservationOrderService {
             });
         }
         return set;
+    }
+
+    @Override
+    public void insert(SrvReservationOrder newOrder) {
+        reservationOrderMapper.insert(newOrder);
     }
 }

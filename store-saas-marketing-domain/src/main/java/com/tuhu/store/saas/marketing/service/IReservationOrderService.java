@@ -1,5 +1,7 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
+
 import java.util.Date;
 import java.util.HashSet;
 
@@ -17,4 +19,10 @@ public interface IReservationOrderService {
      * @return
      */
     HashSet getReservedPeriodListForCustomer(Date date, String customerId, Long storeId);
+
+    /**
+     * 新增预约单
+     * @param newOrder
+     */
+    void insert(SrvReservationOrder newOrder);
 }

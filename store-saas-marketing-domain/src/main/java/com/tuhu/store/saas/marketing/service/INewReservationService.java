@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.request.NewReservationReq;
 import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
@@ -16,4 +17,6 @@ public interface INewReservationService {
 //    List<ReservationDateResp> getReserveDateList(Long storeId);
 
     List<ReservationPeriodResp> getReservationPeroidList(ReservePeriodReq req);
+
+    String addReservation(NewReservationReq req);
 }

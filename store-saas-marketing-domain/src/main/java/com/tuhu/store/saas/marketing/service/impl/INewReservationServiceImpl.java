@@ -4,6 +4,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
+import com.tuhu.store.saas.marketing.request.NewReservationReq;
 import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
@@ -81,6 +82,11 @@ public class INewReservationServiceImpl implements INewReservationService {
             });
         }
         return result;
+    }
+
+    @Override
+    public String addReservation(NewReservationReq req) {
+        return null;
     }
 
     /**

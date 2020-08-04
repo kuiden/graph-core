@@ -11,55 +11,9 @@ public class SrvReservationOrder {
     private String id;
 
     /**
-     * 业务分类
-     */
-    private String businessCategoryCode;
-
-    /**
-     * 业务分类名称
-     */
-    private String businessCategoryName;
-
-    /**
      * 预约单号
      */
     private String reservationOrdeNo;
-
-    /**
-     * 工单号
-     */
-    private String serviceOrderNo;
-
-    /**
-     * 车辆ID
-     */
-    private String vehicleId;
-
-    /**
-     * 车型
-     */
-    private String vehicleModel;
-
-    /**
-     * 二级车型
-     */
-
-    private String productId;
-
-    /**
-     * 车牌号
-     */
-    private String licensePlateNo;
-
-    /**
-     * VIN码
-     */
-    private String vin;
-
-    /**
-     * 行驶里程
-     */
-    private Integer drivenDistance;
 
     /**
      * 客户(车主)ID
@@ -77,26 +31,6 @@ public class SrvReservationOrder {
     private String customerPhoneNumber;
 
     /**
-     * 送修人名称
-     */
-    private String delegaterName;
-
-    /**
-     * 送修人手机
-     */
-    private String delegaterPhoneNumber;
-
-    /**
-     * 服务技师ID
-     */
-    private String technicianId;
-
-    /**
-     * 服务技师名称
-     */
-    private String technicianName;
-
-    /**
      * 预计到店时间
      */
     private Date estimatedArriveTime;
@@ -107,34 +41,9 @@ public class SrvReservationOrder {
     private String status;
 
     /**
-     * 合计金额
-     */
-    private Long amount;
-
-    /**
-     * 优惠金额
-     */
-    private Long discountAmount;
-
-    /**
-     * 应收金额
-     */
-    private Long actualAmount;
-
-    /**
-     * 其它费用
-     */
-    private Long extraAmount;
-
-    /**
      * 预约备注
      */
     private String description;
-
-    /**
-     * 预约渠道:ZRJD(门店创建);ZXYY(在线预约);QT(其他)
-     */
-    private String sourceChannel;
 
     /**
      * 门店ID
@@ -173,8 +82,8 @@ public class SrvReservationOrder {
 
 
     /**
-     * 预约创建终端(0:pc 1:b端  2:c端)
+     * 预约创建终端(0:H5 1:b端  2:c端)
      */
-    private Byte teminal;
+    private Integer teminal;
 
 }

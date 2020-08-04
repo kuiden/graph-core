@@ -19,7 +19,6 @@ public class ReservePeriodReq implements Serializable {
      * 门店id
      */
     @ApiModelProperty(value = "门店id")
-    @NotNull(message = "门店id不能为空！")
     private Long storeId;
 
     /**
@@ -27,7 +26,6 @@ public class ReservePeriodReq implements Serializable {
      */
     @ApiModelProperty(value = "日期")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    @NotNull(message = "日期不能为空！")
     private Date date;
 
     /**
