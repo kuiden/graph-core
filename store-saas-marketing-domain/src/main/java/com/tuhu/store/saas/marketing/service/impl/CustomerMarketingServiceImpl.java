@@ -15,10 +15,14 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.ActivityItemResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +71,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Autowired
     private IMessageTemplateLocalService messageTemplateLocalService;
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
 
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
@@ -129,7 +137,6 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             customerMarketing.setRemark(addReq.getRemark());
             customerMarketingMapper.updateByPrimaryKeySelective(customerMarketing);
         }
-
         log.info("更新定向营销任务状态成功");
     }
 
@@ -164,24 +171,35 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             if(messageTemplateLocal==null){
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在活动营销短信模板");
             }
+            //查询门店信息
+            StoreInfoVO storeInfoVO = new StoreInfoVO();
+            storeInfoVO.setStoreId(req.getStoreId());
+            StoreDTO storeDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
             //算出活动价和原价
             BigDecimal activityPrice = activityResp.getActivityPrice();
             BigDecimal srcPrice = new BigDecimal(123);
-//            List<ActivityItemResp> activityItemResps = activityResp.getItems();
-//            for(ActivityItemResp activityItemResp : activityItemResps){
-//
-//            }
+            List<ActivityItemResp> activityItemResps = activityResp.getItems();
+            for(ActivityItemResp activityItemResp : activityItemResps){
+                if(activityItemResp.getGoodsType()){
+                    //服务(价格/100)*(时长/100)
+                    BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
+                    BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity()).divide(BigDecimal.valueOf(100),RoundingMode.HALF_UP);
+                    srcPrice = srcPrice.add(itemSiglePrice.multiply(exeTime));
+
+                }else{
+                    //商品 (价格/100)*个数
+                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
+                    srcPrice = srcPrice.add(itemPrice);
+                }
+            }
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4}
             String template = messageTemplateLocal.getTemplateContent();
-            return MessageFormat.format(template,"","1000抵3600","15623675847","新春美容","http://www.baidu.com");
+            String tempPriceStr = activityPrice.toString()+"抵"+srcPrice.toString();
+            //TODO 替换短链
+            return MessageFormat.format(template,"",tempPriceStr,storeDTO.getMobilePhone(),activityResp.getActivityTitle(),"http://www.baidu.com");
         }
         return null;
-    }
-
-    public static void main(String[] agrs){
-        String s = "【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4}";
-        System.out.println(MessageFormat.format(s,"","123","231","232","233"));
     }
 
     /**
