@@ -5,9 +5,11 @@ import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketingExample;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
+import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocal;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
+import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.GsonTool;
@@ -42,6 +44,9 @@ public class SendMarketingSMSJobTask extends IJobHandler {
     @Autowired
     private IMarketingSendRecordService sendRecordService;
 
+    @Autowired
+    private IMessageTemplateLocalService templateLocalService;
+
     @Override
     public ReturnT<String> execute(String param) throws Exception {
         Date sendTime = DateUtils.getNextMinutes(DateUtils.now(),minutesLater);
@@ -59,10 +64,11 @@ public class SendMarketingSMSJobTask extends IJobHandler {
             for(CustomerMarketing customerMarketing : customerMarketings){
                 if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("0"))){
                     //发送优惠卷
-                    //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
+                    //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态，(减少短信数量这个在入库的时候应该减掉了)
+                    //TODO .如果有重试机制记录message_remind表目前不需要
 
                 }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
-                    //TODO 活动营销，只是根据模板发送短信，更新发送记录和任务状态
+                    //活动营销，只是根据模板发送短信，更新发送记录和任务状态，（减少短信数量这个在入库的时候就减掉了）,如果有重试机制记录message_remind表目前不需要
                     doSendSMS4Activity(customerMarketing);
                 }
             }
@@ -75,6 +81,14 @@ public class SendMarketingSMSJobTask extends IJobHandler {
      * @param customerMarketing
      */
     private void doSendSMS4Activity(CustomerMarketing customerMarketing){
+        MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId());
+        if(messageTemplateLocal==null){
+            //发送失败，模板不存在
+            log.warn("发送失败，短信模板id{}不存在",customerMarketing.getMessageTemplateId());
+            customerMarketing.setTaskType(Byte.valueOf("2"));
+            customerMarketingMapper.updateByPrimaryKey(customerMarketing);
+            return ;
+        }
         customerMarketing.setTaskType(Byte.valueOf("1"));
         String datas = customerMarketing.getMessageDatas();
         List<String> sendDatas = GsonTool.fromJsonList(datas,String.class);
@@ -87,7 +101,7 @@ public class SendMarketingSMSJobTask extends IJobHandler {
             try{
                 SMSParameter sendParam = new SMSParameter();
                 sendParam.setPhone(marketingSendRecord.getPhoneNumber());
-                sendParam.setTemplateId(customerMarketing.getMessageTemplateId());
+                sendParam.setTemplateId(messageTemplateLocal.getTemplateId());
                 sendParam.setDatas(sendDatas);
                 SMSResult smsResult = ismsService.sendCommonSms(sendParam);
                 if(!smsResult.isSendResult()){
@@ -103,6 +117,5 @@ public class SendMarketingSMSJobTask extends IJobHandler {
         //已发送，发送失败更新记录
         customerMarketingMapper.updateByPrimaryKey(customerMarketing);
     }
-
 
 }

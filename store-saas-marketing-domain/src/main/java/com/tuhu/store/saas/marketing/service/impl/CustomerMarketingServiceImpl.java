@@ -8,10 +8,8 @@ import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
-import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
-import com.tuhu.store.saas.marketing.dataobject.CustomerMarketingExample;
-import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
-import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
+import com.tuhu.store.saas.marketing.dataobject.*;
+import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
@@ -24,6 +22,7 @@ import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
 import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
+import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -61,6 +60,12 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
 
     @Autowired
     private CustomerClient customerClient;
+
+    @Autowired
+    private IMessageQuantityService messageQuantityService;
+
+    @Autowired
+    private IMessageTemplateLocalService messageTemplateLocalService;
 
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
@@ -239,9 +244,14 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         customerMarketing.setCustomerGroupId(addReq.getCustomerGroupId());
         customerMarketing.setCustomerId(addReq.getCustomerIds());
         customerMarketing.setMarketingMethod(addReq.getMarketingMethod());
-        //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo
-        customerMarketing.setMessageTemplate("活动营销");
-        customerMarketing.setMessageTemplateId("624492");
+        //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo，存入在message_template_local表
+        MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),addReq.getStoreId());
+        if(messageTemplateLocal==null){
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在活动营销短信模板");
+        }
+        customerMarketing.setMessageTemplate(messageTemplateLocal.getTemplateName());
+        //存的是本地的message模板，发送短信时需要单独查询
+        customerMarketing.setMessageTemplateId(messageTemplateLocal.getId());
         customerMarketing.setSendTime(addReq.getSendTime());
         customerMarketing.setRemark(addReq.getRemark());
         customerMarketing.setSendObject(sendObject);//客户群名称
@@ -269,6 +279,20 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
             records.add(marketingSendRecord);
         }
         iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
+
+        MessageQuantity select = new MessageQuantity();
+        select.setStoreId(customerMarketing.getStoreId());
+        select.setTenantId(customerMarketing.getTenantId());
+        //判断剩余短信数量够不够
+        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
+        if (messageQuantity.getRemainderQuantity() < records.size()) {
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
+        }
+        //更新门店可用短信的数量
+        messageQuantity.setUpdateTime(DateUtils.now());
+        messageQuantity.setUpdateUser(currentUser);
+        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - records.size());
+        messageQuantityService.reduceQuantity(messageQuantity);
     }
 
     private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq){
