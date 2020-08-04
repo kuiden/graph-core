@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CardTemplateMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.CardTemplate">
+        <id column="id" property="id"/>
+        <result column="card_category_code" property="cardCategoryCode"/>
+        <result column="card_name" property="cardName"/>
+        <result column="face_amount" property="faceAmount"/>
+        <result column="actual_amount" property="actualAmount"/>
+        <result column="discount_amount" property="discountAmount"/>
+        <result column="forever" property="forever"/>
+        <result column="expiry_period" property="expiryPeriod"/>
+        <result column="card_type_code" property="cardTypeCode"/>
+        <result column="status" property="status"/>
+        <result column="description" property="description"/>
+        <result column="store_id" property="storeId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_user" property="createUser"/>
+        <result column="update_user" property="updateUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_delete" property="isDelete"/>
+        <result column="type" property="type"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period,
+         card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time,
+          is_delete , type
+    </sql>
+
+    <insert id="insertCardTemplate" parameterType="com.tuhu.store.saas.marketing.dataobject.CardTemplate" keyColumn="id"
+            keyProperty="id"
+            useGeneratedKeys="true">
+    insert into crd_card_template ( card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period
+    , card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time , type)
+    values (#{cardCategoryCode},#{cardName},#{faceAmount},#{actualAmount},#{discountAmount},#{forever},#{expiryPeriod}
+    ,#{cardTypeCode},#{status},#{description},#{storeId},#{tenantId},#{createUser},#{updateUser},#{createTime},#{updateTime},
+    #{type}
+    )
+    </insert>
+
+    <update id="updateCardTemplate" parameterType="com.tuhu.store.saas.marketing.dataobject.CardTemplate">
+      update crd_card_template
+      set
+      card_name = #{cardName},
+      expiry_period = #{expiryPeriod},
+      forever = #{forever},
+      status =#{status} ,
+      type = #{type} ,
+      face_amount =#{faceAmount} ,
+      discount_amount =#{discountAmount} ,
+      actual_amount =#{actualAmount} ,
+      description =#{description},
+      update_user = #{updateUser},
+       update_time = #{updateTime}
+      where id = #{id}  AND tenant_id=#{tenantId} AND store_id=#{storeId}
+   </update>
+
+    <select id="checkCardTemplateName"
+            resultType="java.lang.Integer">
+        select
+          count(*)
+        from
+          crd_card_template
+        where
+         is_delete = 0
+        AND card_name = #{name}
+        AND tenant_id = #{tenantId}
+        AND store_id = #{storeId}
+        AND id != #{id}
+    </select>
+
+    <update id="deleteCardTemplate" parameterType="com.tuhu.store.saas.marketing.dataobject.CardTemplate">
+        update crd_card_template
+        set is_delete = 1,update_time = now()
+        where
+        id = #{id}
+        AND tenant_id = #{tenantId}
+        AND store_id = #{storeId}
+    </update>
+
+    <select id="getCardTemplateById" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        crd_card_template
+        where
+        id = #{id}
+        AND tenant_id = #{tenantId}
+        AND store_id = #{storeId}
+    </select>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        crd_card_template as a
+        where
+        tenant_id = #{tenantId}
+        AND store_id = #{storeId}
+        <if test="status != null and  status != '' ">
+            AND a.status = #{status}
+        </if>
+        <if test="query != null and query != ''">
+            AND a.card_name like  CONCAT('%',#{query}, '%')
+        </if>
+    </select>
+
+</mapper>
