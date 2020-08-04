@@ -8,12 +8,15 @@ import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.dto.product.IssuedDTO;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityCustomerMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityItemMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
 import com.tuhu.store.saas.marketing.po.*;
+import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.crm.bo.response.resp.CommonResp;
@@ -44,6 +47,7 @@ import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
+import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.xiangyun.versionhelper.VersionHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -92,8 +96,8 @@ public class ActivityServiceImpl implements IActivityService {
 //    @Autowired
 //    private IStoreInfoRpcService iStoreInfoRpcService;
 
-//    @Autowired
-//    private IIssuedSpuService iIssuedSpuService;
+    @Autowired
+    private StoreProductClient storeProductClient;
 
     @Autowired
     private ActivityItemMapper activityItemMapper;
@@ -186,26 +190,31 @@ public class ActivityServiceImpl implements IActivityService {
      * @return
      */
     private void issuedGoodOrServiceSpu(ActivityItemReq activityItemReq, Long tenantId, String userId) {
-//        IssuedVO issuedVO = new IssuedVO();
-//        issuedVO.setPid(activityItemReq.getPid());
-//        issuedVO.setStoreId(activityItemReq.getStoreId());
-//        issuedVO.setTenantId(tenantId);
-//        issuedVO.setUserId(userId);
-//        issuedVO.setPrice(activityItemReq.getActualPrice());
-//        issuedVO.setVehicleType(activityItemReq.getVehicleType());
-//        if (null != activityItemReq.getGoodsType() && activityItemReq.getGoodsType()) {
-//            issuedVO.setHour(Long.valueOf(activityItemReq.getItemQuantity()));
-//        }
-//        IssuedDTO issuedDTO = null;
-//        try {
-//            log.info("营销活动下发服务项目或商品入参:{}", JSONObject.toJSONString(issuedVO));
-//            issuedDTO = iIssuedSpuService.issuedGoodOrServiceSpu(issuedVO);
-//            log.info("营销活动下发服务项目或商品出参:{}", JSONObject.toJSONString(issuedDTO));
-//        } catch (Exception e) {
-//            log.error("Product出现异常：{}", e);
-//            throw new CrmException(e.getMessage());
-//        }
-//        activityItemReq.setGoodsId(issuedDTO.getGoodId());
+        IssuedVO issuedVO = new IssuedVO();
+        issuedVO.setPid(activityItemReq.getPid());
+        issuedVO.setStoreId(activityItemReq.getStoreId());
+        issuedVO.setTenantId(tenantId);
+        issuedVO.setUserId(userId);
+        issuedVO.setPrice(activityItemReq.getActualPrice());
+        issuedVO.setVehicleType(activityItemReq.getVehicleType());
+        if (null != activityItemReq.getGoodsType() && activityItemReq.getGoodsType()) {
+            issuedVO.setHour(Long.valueOf(activityItemReq.getItemQuantity()));
+        }
+        IssuedDTO issuedDTO = null;
+        try {
+            log.info("营销活动下发服务项目或商品入参:{}", JSONObject.toJSONString(issuedVO));
+            BizBaseResponse<IssuedDTO> goodsResp = storeProductClient.issuedGoodOrServiceSpu(issuedVO);
+            if (goodsResp.getData() != null) {
+                issuedDTO = goodsResp.getData();
+            }
+            log.info("营销活动下发服务项目或商品出参:{}", JSONObject.toJSONString(issuedDTO));
+        } catch (Exception e) {
+            log.error("Product出现异常：{}", e);
+            throw new MarketingException(e.getMessage());
+        }
+        if (issuedDTO != null) {
+            activityItemReq.setGoodsId(issuedDTO.getGoodId());
+        }
     }
 
     /**
