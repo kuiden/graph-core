@@ -393,6 +393,20 @@ public class DateUtils {
     }
 
     /**
+     * 返回某个日期下几分钟的日期
+     * @param date
+     * @param i
+     * @return
+     */
+    public static Date getNextMinutes(Date date, int i) {
+        Calendar cal = new GregorianCalendar();
+        cal.setTime(date);
+        cal.set(Calendar.MINUTE, cal.get(Calendar.MINUTE) + i);
+        return cal.getTime();
+    }
+
+
+    /**
      * 返回某个日期前几天的日期
      * @param date
      * @param i

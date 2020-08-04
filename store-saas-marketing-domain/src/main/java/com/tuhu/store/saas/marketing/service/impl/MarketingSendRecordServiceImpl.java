@@ -106,6 +106,15 @@ public class MarketingSendRecordServiceImpl implements IMarketingSendRecordServi
         log.info("更新定向营销发送记录状态完成");
     }
 
+    @Override
+    public List<MarketingSendRecord> listMarketingSendRecord(String marketingId, List<Byte> sendTypes) {
+        log.info("根据营销id{}和发送状态{}查询发送记录",marketingId,sendTypes);
+        MarketingSendRecordExample example = new MarketingSendRecordExample();
+        MarketingSendRecordExample.Criteria criteria = example.createCriteria();
+        criteria.andMarketingIdEqualTo(marketingId)
+                .andSendTypeIn(sendTypes);
+        return marketingSendRecordMapper.selectByExample(example);
+    }
 
     /**
      * 根据客户ID和营销任务ID查询对应的发送记录信息

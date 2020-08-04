@@ -25,4 +25,11 @@ public interface IMarketingSendRecordService {
      * @param sendType
      */
     public void updateMarketingSendRecord(String customerId, String marketingId, String sendType);
+
+    /**
+     * 根据营销id和发送状态列表查询营销发送记录
+     * @param marketingId
+     * @return
+     */
+    public List<MarketingSendRecord> listMarketingSendRecord(String marketingId,List<Byte> sendTypes);
 }
