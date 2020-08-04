@@ -18,6 +18,7 @@ import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CouponScopeCategoryResp;
 import com.tuhu.store.saas.marketing.response.dto.*;
 import com.tuhu.store.saas.marketing.service.ICouponService;
+import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.util.GsonTool;
 import com.tuhu.store.saas.marketing.util.Md5Util;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
@@ -81,6 +82,9 @@ public class CouponServiceImpl implements ICouponService {
     @Autowired
     private OrderCouponMapper orderCouponMapper;
 
+    @Autowired
+    private IMCouponService imCouponService;
+
     @Override
     @Transactional
     public AddCouponReq addNewCoupon(AddCouponReq addCouponReq) {
@@ -98,6 +102,15 @@ public class CouponServiceImpl implements ICouponService {
         //生成优惠券编码的密文
         String encryptedCode = Md5Util.md5(code, CodeFactory.codeSalt);
         coupon.setEncryptedCode(encryptedCode);
+        //生成分享二维码
+        QrCodeRequest qrCodeRequest = new QrCodeRequest();
+        qrCodeRequest.setStoreId(addCouponReq.getStoreId());
+        qrCodeRequest.setCouponCode(code);
+        qrCodeRequest.setWidth(250L);
+        qrCodeRequest.setPath("pages/home/home");
+        qrCodeRequest.setScene("encryptedCode="+encryptedCode);
+        String url = imCouponService.getQrCodeForCoupon(qrCodeRequest);
+        coupon.setWeixinQrUrl(url);
         couponMapper.insertSelective(coupon);
         //如果优惠券适用范围做了限定
         CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());

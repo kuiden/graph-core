@@ -21,6 +21,7 @@ import com.tuhu.store.saas.marketing.response.CouponPageResp;
 import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -81,8 +82,8 @@ public class IMCouponServiceImpl implements IMCouponService {
      */
     private static final String personalCouponGetNumberPrefix = "COUPON:PERSONAL:";
 
-    //@Autowired
-    //private MiniAppService miniAppService;
+    @Autowired
+    private MiniAppService miniAppService;
 
     private static  final String BUSSINESS_CATEGORY_DTOS_PREFIX="bussiness_categories_dtos_";
     @Override
@@ -91,23 +92,21 @@ public class IMCouponServiceImpl implements IMCouponService {
         /*
         数据库查询当前抵用券是否已经保存了二维码图片
          */
-        Coupon couponInfo = couponMapper.selectByCouponCode(req.getCouponCode());
-        if (StringUtils.isNotBlank(couponInfo.getWeixinQrUrl())) {
-            return couponInfo.getWeixinQrUrl();
-        }
+//        Coupon couponInfo = couponMapper.selectByCouponCode(req.getCouponCode());
+//        if (StringUtils.isNotBlank(couponInfo.getWeixinQrUrl())) {
+//            return couponInfo.getWeixinQrUrl();
+//        }
         /* 1、调微信api,根据当前storeId生成二维码图片buffer,base64编码
          */
 
          /*
           2、上传图片到图片服务器，
         */
-        //todo
-        //String qrUrl=miniAppService.getQrCodeUrl("end_user_client",req.getScene(),req.getPath(),req.getWidth());
-        String qrUrl="";
+        String qrUrl=miniAppService.getQrCodeUrl(req.getScene(),req.getPath(),req.getWidth());
         /*
           3、保存url到coupon表
         */
-        saveQrUrlToDatabase(couponInfo.getId(), qrUrl);
+        //saveQrUrlToDatabase(couponInfo.getId(), qrUrl);
 
         return qrUrl;
     }
