@@ -1,6 +1,9 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.java.common.utils.DateUtil;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
@@ -9,8 +12,13 @@ import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import com.tuhu.store.saas.marketing.service.IReservationOrderService;
+import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.marketing.util.IdKeyGen;
+import com.tuhu.store.saas.marketing.util.KeyResult;
+import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -26,11 +34,20 @@ import java.util.*;
 @Slf4j
 public class INewReservationServiceImpl implements INewReservationService {
 
+    private static final String orderCodePrefix = "YYD";
+    private static final String orderSeqPrefix = "STORE_SAAS_YYD_SEQ_";
+
     @Autowired
     StoreUserClient storeUserClient;
 
     @Autowired
     IReservationOrderService reservationOrderService;
+
+    @Autowired
+    private IdKeyGen idKeyGen;
+
+    @Autowired
+    private StoreRedisUtils storeRedisUtils;
 
     @Value("${store.open.time.begin}")
     private String openBeginTime = "10:00:00";
@@ -38,33 +55,17 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Value("${store.open.time.end}")
     private String openEndTime = "18:00:00";
 
+    private SimpleDateFormat hmDateFormat = new SimpleDateFormat("HH:mm");
+    SimpleDateFormat hmsDateFormat = new SimpleDateFormat("HH:mm:ss");
+
     @Override
     public List<ReservationPeriodResp> getReservationPeroidList(ReservePeriodReq req) {
         List<ReservationPeriodResp> result = new ArrayList<>();
         //查门店营业时间
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        Date beginTime = new Date();
-        Date endTime = new Date();
-        try {
-            beginTime = sdf.parse(openBeginTime);
-            endTime = sdf.parse(openEndTime);
-            StoreInfoVO vo = new StoreInfoVO();
-            vo.setStoreId(req.getStoreId());
-            BizBaseResponse<StoreInfoDTO> resultObject = storeUserClient.getStoreInfo(vo);
-            StoreInfoDTO storeInfoDTO = resultObject!=null ? (StoreInfoDTO) resultObject.getData() : null;
-            if(storeInfoDTO != null){
-                if(storeInfoDTO.getOpeningEffectiveDate() != null){
-                    beginTime = storeInfoDTO.getOpeningEffectiveDate();
-                }
-                if(storeInfoDTO.getOpeningExpiryDate() != null){
-                    endTime = storeInfoDTO.getOpeningExpiryDate();
-                }
-            }
-        } catch (Exception ex) {
-            log.error("INewReservationServiceImpl.getReservationPeroidList->获取门店信息出错" + ex.getMessage());
-        }
+        Map<String,Date> storeMap = getStoreInfo(req.getStoreId());
+
         //算出时间段
-        List<String> allTimePoints = getTimePoints(beginTime,endTime,30);
+        List<String> allTimePoints = getTimePoints(storeMap.get("startTime"),storeMap.get("endTime"),30);
         for(String s : allTimePoints){
             ReservationPeriodResp resp = new ReservationPeriodResp();
             resp.setPeriodName(getPeriodName(s));
@@ -86,7 +87,70 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public String addReservation(NewReservationReq req) {
-        return null;
+        //校验预约的时间
+        if (req.getEstimatedArriveTime().compareTo(new Date()) < 0) {//预约时间早于当前时间
+            return "预约时间不能小于当前时间";
+        }
+        Map<String,Date> storeMap = getStoreInfo(req.getStoreId());
+        if (DateUtils.getHourOfDay(req.getEstimatedArriveTime()) < DateUtils.getHourOfDay(storeMap.get("startTime"))
+                || DateUtils.getHourOfDay(req.getEstimatedArriveTime()) > DateUtils.getHourOfDay(storeMap.get("endTime"))) {
+            return "当前预约时间段不能预约,门店预约时间范围为：" + hmDateFormat.format(storeMap.get("startTime")) + "-" + hmDateFormat.format(storeMap.get("endTime"));
+        }
+
+        SrvReservationOrder order = new SrvReservationOrder();
+        BeanUtils.copyProperties(req, order);
+        String id = idKeyGen.generateId(req.getTenantId());
+        order.setId(id);
+        order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser().getStoreNo()));
+        order.setStatus("UNCONFIRMED");
+        order.setCreateTime(new Date());
+        order.setUpdateTime(new Date());
+        order.setCreateUser(req.getUserId());
+        order.setUpdateUser(req.getUserId());
+        order.setDelete(false);
+        reservationOrderService.insert(order);
+        return id;
+    }
+
+    //获取门店营业时间
+    private Map<String,Date> getStoreInfo(Long storeId){
+        Map<String,Date> result = new HashMap<>();
+        try {
+            result.put("startTime",hmsDateFormat.parse(openBeginTime));
+            result.put("endTime",hmsDateFormat.parse(openEndTime));
+            StoreInfoVO vo = new StoreInfoVO();
+            vo.setStoreId(storeId);
+            BizBaseResponse<StoreInfoDTO> resultObject = storeUserClient.getStoreInfo(vo);
+            if(resultObject != null && resultObject.getData() != null){
+                if(resultObject.getData().getOpeningEffectiveDate() != null){
+                    result.put("startTime",resultObject.getData().getOpeningEffectiveDate());
+                }
+                if(resultObject.getData().getOpeningExpiryDate() != null){
+                    result.put("endTime",resultObject.getData().getOpeningExpiryDate());
+                }
+            }
+        }catch (Exception ex) {
+            log.error("INewReservationServiceImpl.getStoreInfo->获取门店信息出错" + ex.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * 拼装预约单编号
+     *
+     * @return
+     */
+    private String getOrderCode(Long storeId, String storeNo) {
+        if(StringUtils.isEmpty(storeNo)){
+            storeNo = "";
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
+        String format = sdf.format(new Date());
+        String key = orderSeqPrefix + storeId;
+        KeyResult kr = storeRedisUtils.incrementAndGet(key, DateUtil.getTomorrow());
+        String orderCode = orderCodePrefix + storeNo+ format + kr.getKey(3);
+        log.info("生成的预约单号:{}", orderCode);
+        return orderCode;
     }
 
     /**
@@ -95,13 +159,12 @@ public class INewReservationServiceImpl implements INewReservationService {
      * @return
      */
     private String getPeriodName(String time){
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
         try {
             Calendar cal = Calendar.getInstance();
-            cal.setTime(sdf.parse(time));
+            cal.setTime(hmDateFormat.parse(time));
             cal.add(Calendar.MINUTE, 30);
             Date endTime = cal.getTime();
-            return time + "-" + sdf.format(endTime);
+            return time + "-" + hmDateFormat.format(endTime);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -135,14 +198,12 @@ public class INewReservationServiceImpl implements INewReservationService {
             }
             list.add(hour + ":" + minute + ":00");//拼接为HH:mm格式，添加到集合
         }
-        SimpleDateFormat sdf1 = new SimpleDateFormat("HH:mm:ss");
-        SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm");
         List<String> newList = new ArrayList<>();
         try{
             for(String s : list){
-                long now = sdf1.parse(s).getTime();
+                long now = hmsDateFormat.parse(s).getTime();
                 if(now >= startTime.getTime() && now <= endTime.getTime()){
-                    newList.add(sdf2.format(sdf2.parse(s)));
+                    newList.add(hmDateFormat.format(hmDateFormat.parse(s)));
                 }
             }
         }catch (Exception e){

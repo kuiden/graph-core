@@ -9,8 +9,8 @@ import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,6 +55,18 @@ public class ReservationApi extends BaseApi {
     @ApiOperation(value = "H5新增预约单")
     public BizBaseResponse<String> newForH5(@RequestBody NewReservationReq req){
         BizBaseResponse<String> result = BizBaseResponse.success();
+        String error = validParam(req);
+        if(StringUtils.isNotBlank(error)){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, error);
+        }
+        if(StringUtils.isBlank(req.getCustomerPhoneNumber())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户手机号不能为空");
+        }
+        if(StringUtils.isBlank(req.getVerificationCode())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码不能为空");
+        }
+        req.setTeminal(0);
+        result.setData(iNewReservationService.addReservation(req));
         return result;
     }
 
@@ -62,6 +74,15 @@ public class ReservationApi extends BaseApi {
     @ApiOperation(value = "B端新增预约单")
     public BizBaseResponse<String> newForB(@RequestBody NewReservationReq req){
         BizBaseResponse<String> result = BizBaseResponse.success();
+        String error = validParam(req);
+        if(StringUtils.isNotBlank(error)){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, error);
+        }
+        if(StringUtils.isBlank(req.getCustomerId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
+        }
+        req.setTeminal(1);
+        result.setData(iNewReservationService.addReservation(req));
         return result;
     }
 
@@ -69,6 +90,32 @@ public class ReservationApi extends BaseApi {
     @ApiOperation(value = "C端新增预约单")
     public BizBaseResponse<String> newForC(@RequestBody NewReservationReq req){
         BizBaseResponse<String> result = BizBaseResponse.success();
+        String error = validParam(req);
+        if(StringUtils.isNotBlank(error)){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, error);
+        }
+        if(StringUtils.isBlank(req.getCustomerPhoneNumber())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户手机号不能为空");
+        }
+        if(StringUtils.isBlank(req.getCustomerId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
+        }
+        req.setTeminal(2);
+        result.setData(iNewReservationService.addReservation(req));
+        return result;
+    }
+
+    //新增预约单公共校验
+    private String validParam(NewReservationReq req){
+        req.setTenantId(super.getTenantId());
+        req.setUserId(super.getUserId());
+        String result = "";
+        if(req.getStoreId() == null){
+            result = "门店ID不能为空";
+        }
+        if(req.getEstimatedArriveTime() == null){
+            result = "预计到店时间不能为空";
+        }
         return result;
     }
 }

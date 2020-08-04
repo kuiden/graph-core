@@ -34,4 +34,9 @@ public class CustomUser extends BaseUser {
      */
     private String nickName;
 
+    /***
+     * 门店编号
+     */
+    private String storeNo;
+
 }

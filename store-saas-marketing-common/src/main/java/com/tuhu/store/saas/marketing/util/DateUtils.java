@@ -22,6 +22,12 @@ public class DateUtils {
      */
     private static SimpleDateFormat longSdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    public static int getHourOfDay(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return cal.get(Calendar.HOUR_OF_DAY);
+    }
+
     /**
      * yyyy-MM-dd HH:mm:ss
      * @param dateStr

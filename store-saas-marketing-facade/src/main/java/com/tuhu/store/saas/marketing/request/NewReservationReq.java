@@ -14,6 +14,11 @@ import java.util.Date;
 public class NewReservationReq implements Serializable {
     private static final long serialVersionUID = -6270134858919379753L;
 
+    /**
+     * 创建用户ID
+     */
+    private String userId;
+
     private Long tenantId;
 
     private Long storeId;
@@ -50,9 +55,14 @@ public class NewReservationReq implements Serializable {
     private String verificationCode;
 
     /**
-     * 预约创建终端(0:H5 1:b端  2:c端)
+     * 预约创建终端(0:H5 1:b端 2:c端小程序)
      */
     private Integer teminal;
+
+    /**
+     * 预约渠道:MD(门店创建);ZXYY(小程序在线预约);COUPON(优惠券营销);ACTIVITY(活动营销)
+     */
+    private String sourceChannel;
 
 }
 
