@@ -373,64 +373,62 @@ public class CouponServiceImpl implements ICouponService {
         }
         couponCriteria.andStoreIdEqualTo(couponListReq.getStoreId());
         couponCriteria.andTenantIdEqualTo(couponListReq.getTenantId());
-        couponExample.setOrderByClause("create_time desc");
+        couponExample.setOrderByClause("update_time desc");
         PageHelper.startPage(couponListReq.getPageNum() + 1, couponListReq.getPageSize());
         List<Coupon> couponList = couponMapper.selectByExample(couponExample);
         PageInfo<Coupon> couponPageInfo = new PageInfo<>(couponList);
         BeanUtils.copyProperties(couponPageInfo, couponRespPageInfo);
-        if (CollectionUtils.isEmpty(couponList)) {
-            couponRespPageInfo.setList(new ArrayList<>());
-            return couponRespPageInfo;
-        }
-        //优惠券code集合
-        List<String> couponCodeList = couponList.stream().map(Coupon::getCode).collect(Collectors.toList());
-        //查询优惠券发放情况
-        List<Map<String, Object>> grantNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, null);
-        Map<String, Long> grantNumberMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(grantNumberMapList)) {
-            grantNumberMapList.forEach(grantNumberMapElement -> {
-                Object couponCodeObj = grantNumberMapElement.get("couponCode");
-                if (null != couponCodeObj) {
-                    String couponCode = String.valueOf(couponCodeObj);
-                    Object grantNumberObj = grantNumberMapElement.get("number");
-                    Long grantNumber = 0L;
-                    if (null != grantNumberObj) {
-                        grantNumber = Long.valueOf(String.valueOf(grantNumberObj));
-                    }
-                    grantNumberMap.put(couponCode, grantNumber);
-                }
-            });
-        }
-        //查询优惠券使用情况
-        List<Map<String, Object>> usedNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, Integer.valueOf(1));
-        Map<String, Long> usedNumberMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(usedNumberMapList)) {
-            usedNumberMapList.forEach(usedNumberMapElement -> {
-                Object couponCodeObj = usedNumberMapElement.get("couponCode");
-                if (null != couponCodeObj) {
-                    String couponCode = String.valueOf(couponCodeObj);
-                    Object usedNumberObj = usedNumberMapElement.get("number");
-                    Long usedNumber = 0L;
-                    if (null != usedNumberObj) {
-                        usedNumber = Long.valueOf(String.valueOf(usedNumberObj));
-                    }
-                    usedNumberMap.put(couponCode, usedNumber);
-                }
-            });
-        }
         List<CouponResp> couponRespList = new ArrayList<>(couponList.size());
-        couponList.forEach(coupon -> {
-            CouponResp couponResp = new CouponResp();
-            BeanUtils.copyProperties(coupon, couponResp);
-            couponResp.setType(coupon.getType().intValue());
-            couponResp.setValidityType(coupon.getValidityType().intValue());
-            couponResp.setStatus(coupon.getStatus().intValue());
-            couponResp.setAllowGet(coupon.getAllowGet().intValue());
-            couponResp.setScopeType(coupon.getScopeType().intValue());
-            couponResp.setSendNumber(grantNumberMap.get(couponResp.getCode()));
-            couponResp.setUsedNumber(usedNumberMap.get(couponResp.getCode()));
-            couponRespList.add(couponResp);
-        });
+        if (!CollectionUtils.isEmpty(couponList)) {
+            //优惠券code集合
+            List<String> couponCodeList = couponList.stream().map(Coupon::getCode).collect(Collectors.toList());
+            //查询优惠券发放情况
+            List<Map<String, Object>> grantNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, null);
+            Map<String, Long> grantNumberMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(grantNumberMapList)) {
+                grantNumberMapList.forEach(grantNumberMapElement -> {
+                    Object couponCodeObj = grantNumberMapElement.get("couponCode");
+                    if (null != couponCodeObj) {
+                        String couponCode = String.valueOf(couponCodeObj);
+                        Object grantNumberObj = grantNumberMapElement.get("number");
+                        Long grantNumber = 0L;
+                        if (null != grantNumberObj) {
+                            grantNumber = Long.valueOf(String.valueOf(grantNumberObj));
+                        }
+                        grantNumberMap.put(couponCode, grantNumber);
+                    }
+                });
+            }
+            //查询优惠券使用情况
+            List<Map<String, Object>> usedNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, Integer.valueOf(1));
+            Map<String, Long> usedNumberMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(usedNumberMapList)) {
+                usedNumberMapList.forEach(usedNumberMapElement -> {
+                    Object couponCodeObj = usedNumberMapElement.get("couponCode");
+                    if (null != couponCodeObj) {
+                        String couponCode = String.valueOf(couponCodeObj);
+                        Object usedNumberObj = usedNumberMapElement.get("number");
+                        Long usedNumber = 0L;
+                        if (null != usedNumberObj) {
+                            usedNumber = Long.valueOf(String.valueOf(usedNumberObj));
+                        }
+                        usedNumberMap.put(couponCode, usedNumber);
+                    }
+                });
+            }
+            couponList.forEach(coupon -> {
+                CouponResp couponResp = new CouponResp();
+                BeanUtils.copyProperties(coupon, couponResp);
+                couponResp.setType(coupon.getType().intValue());
+                couponResp.setValidityType(coupon.getValidityType().intValue());
+                couponResp.setStatus(coupon.getStatus().intValue());
+                couponResp.setAllowGet(coupon.getAllowGet().intValue());
+                couponResp.setScopeType(coupon.getScopeType().intValue());
+                couponResp.setSendNumber(grantNumberMap.getOrDefault(couponResp.getCode(),0L));
+                couponResp.setUsedNumber(usedNumberMap.getOrDefault(couponResp.getCode(), 0L));
+                couponRespList.add(couponResp);
+            });
+        }
         couponRespPageInfo.setList(couponRespList);
         return couponRespPageInfo;
     }
