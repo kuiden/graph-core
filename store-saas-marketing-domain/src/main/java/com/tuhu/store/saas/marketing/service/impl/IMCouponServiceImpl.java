@@ -115,10 +115,25 @@ public class IMCouponServiceImpl implements IMCouponService {
     public Map getOveralEffect(CouponRequest req) {
         Map resultMap = Maps.newHashMap();
         Coupon couponInfo = couponMapper.selectByCouponCode(req.getCouponCode());
-        if (couponInfo == null) {
-            return resultMap;
+        if (couponInfo != null) {
+            resultMap.put("couponInfo", couponInfo);
+
+            //整体情况--使用数
+            resultMap.put("useTotalCount", 0);
+            //整体情况--发放数
+            resultMap.put("sendTotalCount", 0);
+
+            //领券效果--领用数
+            resultMap.put("onlineGetCount", 0);
+            //领券效果--使用数
+            resultMap.put("onlineGetUseCount", 0);
+            //领券效果--访问用户数
+            resultMap.put("visitUserCount", 0);
+            //领券效果--新增客户数
+            resultMap.put("newUserCount", 0);
         }
-        resultMap.put("couponInfo", couponInfo);
+
+
 
         //todo
  /*       CustomerCoupon record = new CustomerCoupon(req.getCouponCode());

@@ -142,9 +142,9 @@ public class MiniCouponApi extends BaseApi {
      * @return
      */
     @GetMapping("/getOveralEffect")
-    public ResultObject getCouponOveral(CouponRequest req) {
+    public BizBaseResponse getCouponOveral(CouponRequest req) {
         Map result = imCouponService.getOveralEffect(req);
-        return new ResultObject(result);
+        return new BizBaseResponse(result);
     }
 
     /**
