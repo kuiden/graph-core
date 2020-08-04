@@ -1,5 +1,9 @@
 package com.tuhu.store.saas.marketing.enums;
 
+/**
+ * 短信类型
+ * 对应于表message_template_local template_code字段
+ */
 public enum SMSTypeEnum {
 
     MARKETING_ACTIVITY("MARKETING_ACTIVITY","营销活动模板"),

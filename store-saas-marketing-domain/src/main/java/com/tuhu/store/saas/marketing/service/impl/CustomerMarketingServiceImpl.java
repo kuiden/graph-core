@@ -222,11 +222,15 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
             //活动下架了
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请将活动上架");
         }
-        if(DateUtils.now().after(activity.getEndTime())){
+        if(addReq.getSendTime().after(activity.getEndTime())){
             //活动结束了
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动已结束，不能做营销");
         }
-        if(DateUtils.now().before(activity.getStartTime())){
+        if(addReq.getSendTime().before(DateUtils.now())){
+            //发送时间小于当前时间
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
+        }
+        if(addReq.getSendTime().before(activity.getStartTime())){
             //活动还没有开始
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间不能小于活动开始时间");
         }
@@ -256,6 +260,8 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         customerMarketing.setRemark(addReq.getRemark());
         customerMarketing.setSendObject(sendObject);//客户群名称
         customerMarketing.setTaskType(Byte.valueOf("0"));
+        //messageData
+//        customerMarketing.setMessageDatas();
         insert(customerMarketing);
         //根据任务中记录的发送对象信息查询出客户列表
         List<CustomerAndVehicleReq> customeList = analyseCustomer(addReq);
