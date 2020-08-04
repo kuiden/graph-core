@@ -9,6 +9,10 @@ import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 /**
  * @time 2020-08-04
@@ -25,6 +29,12 @@ public class StoreProductRemoteFactory implements FallbackFactory<StoreProductCl
             @Override
             public BizBaseResponse issuedGoodOrServiceSpu(IssuedVO issuedVO) {
                 log.error("issuedGoodOrServiceSpu error,request={},error={}", issuedVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse queryServiceGoodListBySpuCodes(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId, @RequestParam("tenantId") Long tenantId) {
+                log.error("queryServiceGoodListBySpuCodes error,codeList={}, storeId={},error={}", codeList, storeId, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
         };
