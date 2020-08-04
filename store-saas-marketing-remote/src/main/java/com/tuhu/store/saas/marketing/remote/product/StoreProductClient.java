@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @time 2020-08-04
  * @auther kudeng
  */
-@FeignClient(name = "${feign.application.store.saas.product.name}", fallbackFactory = CustomerRemoteFactory.class)
+@FeignClient(name = "${feign.application.store.saas.product.name:store-saas-product}", fallbackFactory = CustomerRemoteFactory.class)
 public interface StoreProductClient {
 
     @PostMapping("/feign/product/IssuedSpu/issuedGoodOrServiceSpu")
