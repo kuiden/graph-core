@@ -14,7 +14,7 @@ import java.util.List;
 public class MarketingAddReq {
 
     /**
-     * 营销方式 0、优惠券关怀 1、短信营销
+     * 营销方式 0、优惠券营销 1、活动营销
      */
     @ApiModelProperty(value = "营销方式")
     @NotNull(message = "营销方式不能为空")

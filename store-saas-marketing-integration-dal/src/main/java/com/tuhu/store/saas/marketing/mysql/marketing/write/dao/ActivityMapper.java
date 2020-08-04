@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 
+import com.baomidou.mybatisplus.mapper.BaseMapper;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.po.ActivityExample;
 import org.apache.ibatis.annotations.Mapper;
@@ -8,14 +9,14 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
-public interface ActivityMapper {
+public interface ActivityMapper extends BaseMapper<Activity> {
     int countByExample(ActivityExample example);
 
     int deleteByExample(ActivityExample example);
 
     int deleteByPrimaryKey(Long id);
 
-    int insert(Activity record);
+    Integer insert(Activity record);
 
     int insertSelective(Activity record);
 

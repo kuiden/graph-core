@@ -18,9 +18,11 @@
     <properties>
         <parent-project.version>0.0.1-RELEASE</parent-project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <xxl-job-core.version>2.0.1</xxl-job-core.version>
         <facade.version>0.0.1-RELEASE</facade.version>
         <saas-store-order-facade.version>0.0.1-SNAPSHOT</saas-store-order-facade.version>
         <saas-store-crm-remote-model.version>0.0.1-SNAPSHOT</saas-store-crm-remote-model.version>
+        <saas-store-product-facade.version>0.0.1-SNAPSHOT</saas-store-product-facade.version>
         <mengfancommon.version>1.0.7-SNAPSHOT</mengfancommon.version>
         <tuhu-spring-cloud-datasource-common.version>1.0.2019091701-Alpha</tuhu-spring-cloud-datasource-common.version>
         <tuhu-spring-cloud-rw-datasource-frame.version>1.0.2019091701-Alpha</tuhu-spring-cloud-rw-datasource-frame.version>
@@ -66,6 +68,13 @@
                 <groupId>com.tuhu</groupId>
                 <artifactId>store-saas-marketing-facade</artifactId>
                 <version>${facade.version}</version>
+            </dependency>
+
+            <!-- xxl-job-core -->
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job-core.version}</version>
             </dependency>
 
             <dependency>
@@ -129,6 +138,12 @@
                 <groupId>com.tuhu</groupId>
                 <artifactId>store-saas-crm-remote-model</artifactId>
                 <version>${saas-store-crm-remote-model.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tuhu</groupId>
+                <artifactId>store-saas-product-facade</artifactId>
+                <version>${saas-store-product-facade.version}</version>
             </dependency>
 
             <dependency>

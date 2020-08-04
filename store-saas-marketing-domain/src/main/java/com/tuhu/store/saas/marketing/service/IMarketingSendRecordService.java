@@ -6,13 +6,6 @@ import java.util.List;
 
 public interface IMarketingSendRecordService {
     /**
-     * 根据营销ID 获取营销发送记录
-     * @param marketingId
-     * @return
-     */
-    public List<MarketingSendRecord> getMarketingSendRecord(String marketingId, String phone, String marketingMethod);
-
-    /**
      * 批量插入营销发送记录
      * @param records
      * @return
@@ -25,4 +18,11 @@ public interface IMarketingSendRecordService {
      * @param sendType
      */
     public void updateMarketingSendRecord(String customerId, String marketingId, String sendType);
+
+    /**
+     * 根据营销id和发送状态列表查询营销发送记录
+     * @param marketingId
+     * @return
+     */
+    public List<MarketingSendRecord> listMarketingSendRecord(String marketingId,List<Byte> sendTypes);
 }

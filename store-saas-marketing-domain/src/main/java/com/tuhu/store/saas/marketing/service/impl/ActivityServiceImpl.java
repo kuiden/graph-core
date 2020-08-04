@@ -8,12 +8,21 @@ import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.dto.product.IssuedDTO;
+import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityCustomerMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityItemMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityTemplateMapper;
 import com.tuhu.store.saas.marketing.po.*;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
+import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.crm.bo.response.resp.CommonResp;
@@ -44,6 +53,10 @@ import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.dto.StoreInfoDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
+import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.xiangyun.versionhelper.VersionHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -68,8 +81,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ActivityServiceImpl implements IActivityService {
 
-//    @Autowired
-//    private ActivityTemplateMapper activityTemplateMapper;
+    @Autowired
+    private ActivityTemplateMapper activityTemplateMapper;
 
     @Autowired
     private ActivityMapper activityMapper;
@@ -89,11 +102,11 @@ public class ActivityServiceImpl implements IActivityService {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-//    @Autowired
-//    private IStoreInfoRpcService iStoreInfoRpcService;
+    @Autowired
+    private StoreInfoClient storeInfoClient;
 
-//    @Autowired
-//    private IIssuedSpuService iIssuedSpuService;
+    @Autowired
+    private StoreProductClient storeProductClient;
 
     @Autowired
     private ActivityItemMapper activityItemMapper;
@@ -106,8 +119,8 @@ public class ActivityServiceImpl implements IActivityService {
      */
     private static final String personalActivityApplyPrefix = "ACTIVITY:PERSONAL:";
 
-//    @Autowired
-//    private ICustomerService iCustomerService;
+    @Autowired
+    private CustomerClient iCustomerService;
 
 //    @Autowired
 //    private MiniAppService miniAppService;
@@ -153,7 +166,7 @@ public class ActivityServiceImpl implements IActivityService {
         //维护营销活动item明细
         this.addNewActivityItem(addActivityReq, code);
         if (null != activity.getActivityTemplateId()) {
-//            activityTemplateMapper.referById(activity.getActivityTemplateId());
+            activityTemplateMapper.referById(activity.getActivityTemplateId());
         }
         return addActivityReq;
     }
@@ -186,26 +199,31 @@ public class ActivityServiceImpl implements IActivityService {
      * @return
      */
     private void issuedGoodOrServiceSpu(ActivityItemReq activityItemReq, Long tenantId, String userId) {
-//        IssuedVO issuedVO = new IssuedVO();
-//        issuedVO.setPid(activityItemReq.getPid());
-//        issuedVO.setStoreId(activityItemReq.getStoreId());
-//        issuedVO.setTenantId(tenantId);
-//        issuedVO.setUserId(userId);
-//        issuedVO.setPrice(activityItemReq.getActualPrice());
-//        issuedVO.setVehicleType(activityItemReq.getVehicleType());
-//        if (null != activityItemReq.getGoodsType() && activityItemReq.getGoodsType()) {
-//            issuedVO.setHour(Long.valueOf(activityItemReq.getItemQuantity()));
-//        }
-//        IssuedDTO issuedDTO = null;
-//        try {
-//            log.info("营销活动下发服务项目或商品入参:{}", JSONObject.toJSONString(issuedVO));
-//            issuedDTO = iIssuedSpuService.issuedGoodOrServiceSpu(issuedVO);
-//            log.info("营销活动下发服务项目或商品出参:{}", JSONObject.toJSONString(issuedDTO));
-//        } catch (Exception e) {
-//            log.error("Product出现异常：{}", e);
-//            throw new CrmException(e.getMessage());
-//        }
-//        activityItemReq.setGoodsId(issuedDTO.getGoodId());
+        IssuedVO issuedVO = new IssuedVO();
+        issuedVO.setPid(activityItemReq.getPid());
+        issuedVO.setStoreId(activityItemReq.getStoreId());
+        issuedVO.setTenantId(tenantId);
+        issuedVO.setUserId(userId);
+        issuedVO.setPrice(activityItemReq.getActualPrice());
+        issuedVO.setVehicleType(activityItemReq.getVehicleType());
+        if (null != activityItemReq.getGoodsType() && activityItemReq.getGoodsType()) {
+            issuedVO.setHour(Long.valueOf(activityItemReq.getItemQuantity()));
+        }
+        IssuedDTO issuedDTO = null;
+        try {
+            log.info("营销活动下发服务项目或商品入参:{}", JSONObject.toJSONString(issuedVO));
+            BizBaseResponse<IssuedDTO> goodsResp = storeProductClient.issuedGoodOrServiceSpu(issuedVO);
+            if (goodsResp.getData() != null) {
+                issuedDTO = goodsResp.getData();
+            }
+            log.info("营销活动下发服务项目或商品出参:{}", JSONObject.toJSONString(issuedDTO));
+        } catch (Exception e) {
+            log.error("Product出现异常：{}", e);
+            throw new MarketingException(e.getMessage());
+        }
+        if (issuedDTO != null) {
+            activityItemReq.setGoodsId(issuedDTO.getGoodId());
+        }
     }
 
     /**
@@ -324,10 +342,10 @@ public class ActivityServiceImpl implements IActivityService {
         if (null != activityTemplateId && activityTemplateId.compareTo(0L) <= 0) {
             return "营销活动模板ID无效";
         } else if (null != activityTemplateId) {
-//            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
-//            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
-//                return "营销活动模板无效";
-//            }
+            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
+            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
+                return "营销活动模板无效";
+            }
         }
         //校验名称
         List<Activity> activityList = this.getActivityByTitle(addActivityReq.getActivityTitle(), storeId);
@@ -352,18 +370,21 @@ public class ActivityServiceImpl implements IActivityService {
         items = items.stream().filter(activityItemReq -> activityItemReq.getGoodsType() && activityItemReq.getGoodsCode() != null && activityItemReq.getGoodsCode() != "").collect(Collectors.toList());
         List<String> codeList = items.stream().map(ActivityItemReq::getGoodsCode).collect(Collectors.toList());
         //调product rpc接口获取价格,拿取A档
-//        Map<String, ServiceGoodDTO> map = Maps.newHashMap();
-//        if (CollectionUtils.isNotEmpty(codeList)) {
-//            List<ServiceGoodDTO> goodsList = goodsRpcService.queryServiceGoodListBySpuCodes(codeList, storeId, tenantId);
-//            map = goodsList.stream().collect(Collectors.toMap(ServiceGoodDTO::getCode, dto -> dto, (k1, k2) -> k2));
-//        }
-//        Map<String, ServiceGoodDTO> mapTemp = Maps.newHashMap();
-//        mapTemp.putAll(map);
-//        items.forEach(item -> {
-//            if (item.getGoodsType()) {//true:服务项目
-//                item.setGoodsId(mapTemp.get(item.getGoodsCode()) != null ? mapTemp.get(item.getGoodsCode()).getId() : "");
-//            }
-//        });
+        Map<String, ServiceGoodDTO> map = Maps.newHashMap();
+        if (CollectionUtils.isNotEmpty(codeList)) {
+            BizBaseResponse<List<ServiceGoodDTO>> goodsListResp = storeProductClient.queryServiceGoodListBySpuCodes(codeList, storeId, tenantId);
+            if (goodsListResp.getData() != null) {
+                List<ServiceGoodDTO> goodsList = goodsListResp.getData();
+                map = goodsList.stream().collect(Collectors.toMap(ServiceGoodDTO::getCode, dto -> dto, (k1, k2) -> k2));
+            }
+        }
+        Map<String, ServiceGoodDTO> mapTemp = Maps.newHashMap();
+        mapTemp.putAll(map);
+        items.forEach(item -> {
+            if (item.getGoodsType()) {//true:服务项目
+                item.setGoodsId(mapTemp.get(item.getGoodsCode()) != null ? mapTemp.get(item.getGoodsCode()).getId() : "");
+            }
+        });
     }
 
 
@@ -376,22 +397,22 @@ public class ActivityServiceImpl implements IActivityService {
      */
     private boolean checkStoreInfo(Long storeId, Long tanentId, Long companyId) {
         log.info("查询门店信息请求，storeId={},tanentId={},companyId={}", storeId, tanentId, companyId);
-//        StoreInfoVO storeInfoVO = new StoreInfoVO();
-//        storeInfoVO.setStoreId(storeId);
-//        storeInfoVO.setCompanyId(companyId);
-//        storeInfoVO.setTanentId(tanentId);
-//        try {
-//            StoreInfoDTO storeInfoDTO = iStoreInfoRpcService.getStoreInfo(storeInfoVO);
-//            if (null == storeInfoDTO) {
-//                return false;
-//            } else {
-//                if (StringUtils.isBlank(storeInfoDTO.getAddress()) || StringUtils.isBlank(storeInfoDTO.getContactName()) || StringUtils.isBlank(storeInfoDTO.getMobilePhone())) {
-//                    return false;
-//                }
-//            }
-//        } catch (Exception e) {
-//            log.error("查询门店信息RPC接口异常,storeId=" + storeId + ",companyId=" + companyId + ",tanentId=" + tanentId, e);
-//        }
+        StoreInfoVO storeInfoVO = new StoreInfoVO();
+        storeInfoVO.setStoreId(storeId);
+        storeInfoVO.setCompanyId(companyId);
+        storeInfoVO.setTanentId(tanentId);
+        try {
+            StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+            if (null == storeInfoDTO) {
+                return false;
+            } else {
+                if (StringUtils.isBlank(storeInfoDTO.getAddress()) || StringUtils.isBlank(storeInfoDTO.getContactName()) || StringUtils.isBlank(storeInfoDTO.getMobilePhone())) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            log.error("查询门店信息RPC接口异常,storeId=" + storeId + ",companyId=" + companyId + ",tanentId=" + tanentId, e);
+        }
         return true;
     }
 
@@ -411,14 +432,14 @@ public class ActivityServiceImpl implements IActivityService {
         if (StringUtils.isBlank(title) || null == storeId) {
             return null;
         }
-//        ActivityExample activityExample = new ActivityExample();
-//        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
-//        activityExampleCriteria.andActivityTitleEqualTo(title);
-//        activityExampleCriteria.andStoreIdEqualTo(storeId);
-//        List<Activity> activityList = activityMapper.selectByExample(activityExample);
-//        if (CollectionUtils.isNotEmpty(activityList)) {
-//            return activityList;
-//        }
+        ActivityExample activityExample = new ActivityExample();
+        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
+        activityExampleCriteria.andActivityTitleEqualTo(title);
+        activityExampleCriteria.andStoreIdEqualTo(storeId);
+        List<Activity> activityList = activityMapper.selectByExample(activityExample);
+        if (CollectionUtils.isNotEmpty(activityList)) {
+            return activityList;
+        }
         return null;
     }
 
@@ -631,7 +652,7 @@ public class ActivityServiceImpl implements IActivityService {
             redisTemplate.opsForValue().increment(key, 0L);
         }
         if (null != activity.getPicActivityTemplateId() && !activity.getPicActivityTemplateId().equals(oldActivity.getPicActivityTemplateId())) {
-//            activityTemplateMapper.referById(activity.getPicActivityTemplateId());
+            activityTemplateMapper.referById(activity.getPicActivityTemplateId());
         }
         //维护活动项目
         editActivityItems(oldActivity, editActivityReq);
@@ -833,19 +854,19 @@ public class ActivityServiceImpl implements IActivityService {
         if (null != activityTemplateId && activityTemplateId.compareTo(0L) <= 0) {
             return "营销活动模板ID无效";
         } else if (null != activityTemplateId) {
-//            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
-//            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
-//                return "营销活动模板无效";
-//            }
+            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
+            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
+                return "营销活动模板无效";
+            }
         }
         Long picActivityTemplateId = editActivityReq.getPicActivityTemplateId();
         if (null != picActivityTemplateId && picActivityTemplateId.compareTo(0L) <= 0) {
             return "头图营销活动模板ID无效";
         } else if (null != picActivityTemplateId) {
-//            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(picActivityTemplateId);
-//            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
-//                return "头图营销活动模板无效";
-//            }
+            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(picActivityTemplateId);
+            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
+                return "头图营销活动模板无效";
+            }
         }
         //校验名称
         if (!editActivityReq.getActivityTitle().equals(oldActivity.getActivityTitle())) {
@@ -1076,10 +1097,13 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomerResp.setActivity(activityResp);
 //        if (!activityCustomerReq.getIsFromClient()) {
             //3.根据客户id查询客户及车辆详情
-//            Customer customer = iCustomerService.getCustomerById(customerId);
-//            if (null == customer) {
-//                throw new CrmException("客户不存在");
-//            }
+            BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+            baseIdReqVO.setId(customerId);
+            CustomerDTO customer = iCustomerService.getCustomerById(baseIdReqVO).getData();
+            if (null == customer) {
+                throw new MarketingException("客户不存在");
+            }
+            // todo 获取用户车辆详情
 //            CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId, customer.getTenantId(), customer.getStoreId());
 //            activityCustomerResp.setCustomerDetail(customerDetailResp);
 //        }
