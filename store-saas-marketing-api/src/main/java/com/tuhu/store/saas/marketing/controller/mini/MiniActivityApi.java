@@ -10,6 +10,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
+import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -34,7 +35,7 @@ public class MiniActivityApi extends BaseApi {
 
     @PostMapping(value = "/add")
     @ApiOperation(value = "营销活动新增")
-    public BizBaseResponse add(@Validated @RequestBody AddActivityReq addActivityReq) {
+    public BizBaseResponse<AddActivityReq> add(@Validated @RequestBody AddActivityReq addActivityReq) {
         addActivityReq.setCreateUser(super.getUserId());
         addActivityReq.setStoreId(super.getStoreId());
         addActivityReq.setTenantId(super.getTenantId());
@@ -45,14 +46,14 @@ public class MiniActivityApi extends BaseApi {
 
     @PostMapping(value = "/detail")
     @ApiOperation(value = "营销活动详情")
-    public BizBaseResponse detail(@Validated @RequestBody ActivityDetailReq req) {
-        ActivityResp addActivityReq = iActivityService.getActivityDetailById(req.getActivityId(), super.getStoreId());
-        return BizBaseResponse.success(addActivityReq);
+    public BizBaseResponse<ActivityResp> detail(@Validated @RequestBody ActivityDetailReq req) {
+        ActivityResp activityResp = iActivityService.getActivityDetailById(req.getActivityId(), super.getStoreId());
+        return BizBaseResponse.success(activityResp);
     }
 
     @PostMapping(value = "/changeStatus")
     @ApiOperation(value = "营销活动上下架")
-    public BizBaseResponse changeStatus(@Validated @RequestBody ActivityChangeStatusReq activityChangeStatusReq) {
+    public BizBaseResponse<ActivityChangeStatusReq> changeStatus(@Validated @RequestBody ActivityChangeStatusReq activityChangeStatusReq) {
         activityChangeStatusReq.setStoreId(super.getStoreId());
         activityChangeStatusReq.setUserId(super.getUserId());
         activityChangeStatusReq = iActivityService.changeActivityStatus(activityChangeStatusReq);
@@ -62,7 +63,7 @@ public class MiniActivityApi extends BaseApi {
 
     @PostMapping(value = "/list")
     @ApiOperation(value = "营销活动查询")
-    public BizBaseResponse list(@Validated @RequestBody ActivityListReq activityListReq) {
+    public BizBaseResponse<PageInfo<ActivityResp>> list(@Validated @RequestBody ActivityListReq activityListReq) {
         activityListReq.setUserId(this.getUserId());
         activityListReq.setStoreId(this.getStoreId());
         activityListReq.setTenantId(this.getTenantId());
@@ -72,7 +73,7 @@ public class MiniActivityApi extends BaseApi {
 
     @PostMapping(value = "/edit")
     @ApiOperation(value = "营销活动编辑")
-    public BizBaseResponse edit(@Validated @RequestBody EditActivityReq editActivityReq) {
+    public BizBaseResponse<EditActivityReq> edit(@Validated @RequestBody EditActivityReq editActivityReq) {
         editActivityReq.setUpdateUser(super.getUserId());
         editActivityReq.setStoreId(super.getStoreId());
         editActivityReq.setTenantId(super.getTenantId());
@@ -167,9 +168,11 @@ public class MiniActivityApi extends BaseApi {
 
     @GetMapping("/getQrCode")
     @ApiOperation(value = "获取小程序码图片")
-    public BizBaseResponse getActivityQrUrl(@Validated ActivityQrCodeRequest req) {
+    public BizBaseResponse<QrCodeResp> getActivityQrUrl(@Validated ActivityQrCodeRequest req) {
         String url = iActivityService.getQrCodeForActivity(req);
-        return BizBaseResponse.success(url);
+        QrCodeResp resp = new QrCodeResp();
+        resp.setUrl(url);
+        return BizBaseResponse.success(resp);
     }
 
 //    @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})
