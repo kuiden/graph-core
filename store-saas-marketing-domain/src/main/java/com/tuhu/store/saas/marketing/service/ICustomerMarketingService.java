@@ -4,6 +4,7 @@ import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
+import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
 import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
 
 import javax.validation.groups.Default;
@@ -44,4 +45,10 @@ public interface ICustomerMarketingService extends Default {
      */
     public void insert(CustomerMarketing customerMarketing);
 
+    /**
+     * 根据条件获取短信预览
+     * @param req
+     * @return
+     */
+    String getSmsPreview(MarketingSmsReq req);
 }

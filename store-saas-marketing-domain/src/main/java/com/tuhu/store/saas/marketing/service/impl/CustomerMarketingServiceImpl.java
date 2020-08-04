@@ -15,10 +15,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
-import com.tuhu.store.saas.marketing.request.CustomerAndVehicleReq;
-import com.tuhu.store.saas.marketing.request.MarketingAddReq;
-import com.tuhu.store.saas.marketing.request.MarketingReq;
-import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
+import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
 import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
@@ -45,7 +42,7 @@ import java.util.List;
  */
 @Service
 @Slf4j
-public class CustomerMarketingServiceImpl  implements ICustomerMarketingService {
+public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     @Autowired
     private CustomerMarketingMapper customerMarketingMapper;
 
@@ -148,6 +145,11 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
         }
     }
 
+    @Override
+    public String getSmsPreview(MarketingSmsReq req) {
+        return null;
+    }
+
     /**
      * 根据id查询对应的客户实体类
      *
@@ -212,7 +214,7 @@ public class CustomerMarketingServiceImpl  implements ICustomerMarketingService 
      * @param addReq
      */
     private void addMarketing4Activity(MarketingAddReq addReq){
-        Long activityId = Long.valueOf(addReq.getCouponOrActiveIds());
+        Long activityId = Long.valueOf(addReq.getCouponOrActiveId());
         Activity activity = activityMapper.selectByPrimaryKey(activityId);
         if (null == activity || !addReq.getStoreId().equals(activity.getStoreId())) {
             //禁止查询非本门店的营销活动

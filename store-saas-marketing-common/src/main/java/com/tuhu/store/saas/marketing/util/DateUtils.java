@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.util;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -20,6 +21,19 @@ public class DateUtils {
      * 时间格式化参数
      */
     private static SimpleDateFormat longSdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * yyyy-MM-dd HH:mm:ss
+     * @param dateStr
+     * @return
+     */
+    public static Date parseDate(String dateStr){
+        try {
+            return longSdf.parse(dateStr);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
 
     /**
      * 获取当天的开始时间
