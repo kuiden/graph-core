@@ -24,6 +24,9 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 定时扫描营销任务，添加发送短信
+ */
 @Slf4j
 @Component
 @JobHandler("summarySassOrderJobTask")

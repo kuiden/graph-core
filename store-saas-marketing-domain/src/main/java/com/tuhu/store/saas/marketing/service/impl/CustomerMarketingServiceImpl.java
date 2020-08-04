@@ -16,10 +16,8 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketing
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
-import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
-import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
-import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
+import com.tuhu.store.saas.marketing.response.ActivityResp;
+import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -28,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -51,6 +51,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Autowired
     private ActivityMapper activityMapper;
+
+    @Autowired
+    private IActivityService activityService;
 
     @Autowired
     private IMessageQuantityService iMessageQuantityService;
@@ -147,7 +150,38 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Override
     public String getSmsPreview(MarketingSmsReq req) {
+        if(req.getMarketingMethod().equals(Byte.valueOf("0"))){
+            //优惠券营销
+            //TODO
+        }else if(req.getMarketingMethod().equals(Byte.valueOf("1"))){
+            //活动营销
+            ActivityResp activityResp = activityService.getActivityDetailById(Long.valueOf(req.getCouponOrActiveId()),req.getStoreId());
+            if (null == activityResp) {
+                //禁止查询非本门店的营销活动
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动不存");
+            }
+            MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),req.getStoreId());
+            if(messageTemplateLocal==null){
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在活动营销短信模板");
+            }
+            //算出活动价和原价
+            BigDecimal activityPrice = activityResp.getActivityPrice();
+            BigDecimal srcPrice = new BigDecimal(123);
+//            List<ActivityItemResp> activityItemResps = activityResp.getItems();
+//            for(ActivityItemResp activityItemResp : activityItemResps){
+//
+//            }
+            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
+            //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4}
+            String template = messageTemplateLocal.getTemplateContent();
+            return MessageFormat.format(template,"","1000抵3600","15623675847","新春美容","http://www.baidu.com");
+        }
         return null;
+    }
+
+    public static void main(String[] agrs){
+        String s = "【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4}";
+        System.out.println(MessageFormat.format(s,"","123","231","232","233"));
     }
 
     /**
