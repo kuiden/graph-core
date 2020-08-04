@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @time 2020-08-04
  * @auther kudeng
  */
-@FeignClient(name = "${feign.application.crmServer.name}", fallbackFactory = CustomerRemoteFactory.class)
+@FeignClient(name = "${feign.application.crmServer.name}", fallbackFactory = StoreInfoRemoteFactory.class)
 public interface StoreInfoClient {
 
     @PostMapping("/feign/user/storeInfo/getStoreInfo")
