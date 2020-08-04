@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MessageRemindMapper" >
+  <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.MessageRemind" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="customer_id" property="customerId" jdbcType="VARCHAR" />
+    <result column="customer_name" property="customerName" jdbcType="VARCHAR" />
+    <result column="phone_number" property="phoneNumber" jdbcType="VARCHAR" />
+    <result column="message_template_id" property="messageTemplateId" jdbcType="VARCHAR" />
+    <result column="message_template_code" property="messageTemplateCode" jdbcType="VARCHAR" />
+    <result column="try_time" property="tryTime" jdbcType="INTEGER" />
+    <result column="template_id" property="templateId" jdbcType="VARCHAR" />
+    <result column="datas" property="datas" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="store_id" property="storeId" jdbcType="BIGINT" />
+    <result column="tenant_id" property="tenantId" jdbcType="BIGINT" />
+    <result column="create_user" property="createUser" jdbcType="VARCHAR" />
+    <result column="update_user" property="updateUser" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="is_delete" property="isDelete" jdbcType="TINYINT" />
+    <result column="remind" property="remind" jdbcType="TINYINT" />
+    <result column="vehicle_id" property="vehicleId" jdbcType="VARCHAR" />
+    <result column="expiry_date" property="expiryDate" jdbcType="TIMESTAMP" />
+    <result column="source" property="source" jdbcType="VARCHAR" />
+    <result column="source_id" property="sourceId" jdbcType="VARCHAR" />
+    <result column="status_message" property="statusMessage" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.tuhu.store.saas.marketing.dataobject.MessageRemind" extends="BaseResultMap" >
+    <result column="message_content" property="messageContent" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    id, customer_id, customer_name, phone_number, message_template_id, message_template_code,
+    try_time, template_id, datas, status, store_id, tenant_id, create_user, update_user,
+    create_time, update_time, is_delete, remind, vehicle_id, expiry_date, source, source_id,
+    status_message
+  </sql>
+  <sql id="Blob_Column_List" >
+    message_content
+  </sql>
+  <select id="selectByExampleWithBLOBs" resultMap="ResultMapWithBLOBs" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemindExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from message_remind
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemindExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from message_remind
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null" >
+      <if test="offset != null" >
+        limit ${offset}, ${limit}
+      </if>
+      <if test="offset == null" >
+        limit ${limit}
+      </if>
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    select
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from message_remind
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from message_remind
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemindExample" >
+    delete from message_remind
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemind" >
+    insert into message_remind (id, customer_id, customer_name,
+      phone_number, message_template_id, message_template_code,
+      try_time, template_id, datas,
+      status, store_id, tenant_id,
+      create_user, update_user, create_time,
+      update_time, is_delete, remind,
+      vehicle_id, expiry_date, source,
+      source_id, status_message, message_content
+      )
+    values (#{id,jdbcType=VARCHAR}, #{customerId,jdbcType=VARCHAR}, #{customerName,jdbcType=VARCHAR},
+      #{phoneNumber,jdbcType=VARCHAR}, #{messageTemplateId,jdbcType=VARCHAR}, #{messageTemplateCode,jdbcType=VARCHAR},
+      #{tryTime,jdbcType=INTEGER}, #{templateId,jdbcType=VARCHAR}, #{datas,jdbcType=VARCHAR},
+      #{status,jdbcType=VARCHAR}, #{storeId,jdbcType=BIGINT}, #{tenantId,jdbcType=BIGINT},
+      #{createUser,jdbcType=VARCHAR}, #{updateUser,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP},
+      #{updateTime,jdbcType=TIMESTAMP}, #{isDelete,jdbcType=TINYINT}, #{remind,jdbcType=TINYINT},
+      #{vehicleId,jdbcType=VARCHAR}, #{expiryDate,jdbcType=TIMESTAMP}, #{source,jdbcType=VARCHAR},
+      #{sourceId,jdbcType=VARCHAR}, #{statusMessage,jdbcType=VARCHAR}, #{messageContent,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemind" >
+    insert into message_remind
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="customerId != null" >
+        customer_id,
+      </if>
+      <if test="customerName != null" >
+        customer_name,
+      </if>
+      <if test="phoneNumber != null" >
+        phone_number,
+      </if>
+      <if test="messageTemplateId != null" >
+        message_template_id,
+      </if>
+      <if test="messageTemplateCode != null" >
+        message_template_code,
+      </if>
+      <if test="tryTime != null" >
+        try_time,
+      </if>
+      <if test="templateId != null" >
+        template_id,
+      </if>
+      <if test="datas != null" >
+        datas,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="storeId != null" >
+        store_id,
+      </if>
+      <if test="tenantId != null" >
+        tenant_id,
+      </if>
+      <if test="createUser != null" >
+        create_user,
+      </if>
+      <if test="updateUser != null" >
+        update_user,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="isDelete != null" >
+        is_delete,
+      </if>
+      <if test="remind != null" >
+        remind,
+      </if>
+      <if test="vehicleId != null" >
+        vehicle_id,
+      </if>
+      <if test="expiryDate != null" >
+        expiry_date,
+      </if>
+      <if test="source != null" >
+        source,
+      </if>
+      <if test="sourceId != null" >
+        source_id,
+      </if>
+      <if test="statusMessage != null" >
+        status_message,
+      </if>
+      <if test="messageContent != null" >
+        message_content,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="customerId != null" >
+        #{customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="customerName != null" >
+        #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneNumber != null" >
+        #{phoneNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="messageTemplateId != null" >
+        #{messageTemplateId,jdbcType=VARCHAR},
+      </if>
+      <if test="messageTemplateCode != null" >
+        #{messageTemplateCode,jdbcType=VARCHAR},
+      </if>
+      <if test="tryTime != null" >
+        #{tryTime,jdbcType=INTEGER},
+      </if>
+      <if test="templateId != null" >
+        #{templateId,jdbcType=VARCHAR},
+      </if>
+      <if test="datas != null" >
+        #{datas,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="storeId != null" >
+        #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null" >
+        #{tenantId,jdbcType=BIGINT},
+      </if>
+      <if test="createUser != null" >
+        #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateUser != null" >
+        #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="isDelete != null" >
+        #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="remind != null" >
+        #{remind,jdbcType=TINYINT},
+      </if>
+      <if test="vehicleId != null" >
+        #{vehicleId,jdbcType=VARCHAR},
+      </if>
+      <if test="expiryDate != null" >
+        #{expiryDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="source != null" >
+        #{source,jdbcType=VARCHAR},
+      </if>
+      <if test="sourceId != null" >
+        #{sourceId,jdbcType=VARCHAR},
+      </if>
+      <if test="statusMessage != null" >
+        #{statusMessage,jdbcType=VARCHAR},
+      </if>
+      <if test="messageContent != null" >
+        #{messageContent,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemindExample" resultType="java.lang.Integer" >
+    select count(*) from message_remind
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update message_remind
+    <set >
+      <if test="record.id != null" >
+        id = #{record.id,jdbcType=VARCHAR},
+      </if>
+      <if test="record.customerId != null" >
+        customer_id = #{record.customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.customerName != null" >
+        customer_name = #{record.customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.phoneNumber != null" >
+        phone_number = #{record.phoneNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="record.messageTemplateId != null" >
+        message_template_id = #{record.messageTemplateId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.messageTemplateCode != null" >
+        message_template_code = #{record.messageTemplateCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tryTime != null" >
+        try_time = #{record.tryTime,jdbcType=INTEGER},
+      </if>
+      <if test="record.templateId != null" >
+        template_id = #{record.templateId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.datas != null" >
+        datas = #{record.datas,jdbcType=VARCHAR},
+      </if>
+      <if test="record.status != null" >
+        status = #{record.status,jdbcType=VARCHAR},
+      </if>
+      <if test="record.storeId != null" >
+        store_id = #{record.storeId,jdbcType=BIGINT},
+      </if>
+      <if test="record.tenantId != null" >
+        tenant_id = #{record.tenantId,jdbcType=BIGINT},
+      </if>
+      <if test="record.createUser != null" >
+        create_user = #{record.createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateUser != null" >
+        update_user = #{record.updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateTime != null" >
+        update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.isDelete != null" >
+        is_delete = #{record.isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="record.remind != null" >
+        remind = #{record.remind,jdbcType=TINYINT},
+      </if>
+      <if test="record.vehicleId != null" >
+        vehicle_id = #{record.vehicleId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.expiryDate != null" >
+        expiry_date = #{record.expiryDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.source != null" >
+        source = #{record.source,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sourceId != null" >
+        source_id = #{record.sourceId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.statusMessage != null" >
+        status_message = #{record.statusMessage,jdbcType=VARCHAR},
+      </if>
+      <if test="record.messageContent != null" >
+        message_content = #{record.messageContent,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExampleWithBLOBs" parameterType="map" >
+    update message_remind
+    set id = #{record.id,jdbcType=VARCHAR},
+    customer_id = #{record.customerId,jdbcType=VARCHAR},
+    customer_name = #{record.customerName,jdbcType=VARCHAR},
+    phone_number = #{record.phoneNumber,jdbcType=VARCHAR},
+    message_template_id = #{record.messageTemplateId,jdbcType=VARCHAR},
+    message_template_code = #{record.messageTemplateCode,jdbcType=VARCHAR},
+    try_time = #{record.tryTime,jdbcType=INTEGER},
+    template_id = #{record.templateId,jdbcType=VARCHAR},
+    datas = #{record.datas,jdbcType=VARCHAR},
+    status = #{record.status,jdbcType=VARCHAR},
+    store_id = #{record.storeId,jdbcType=BIGINT},
+    tenant_id = #{record.tenantId,jdbcType=BIGINT},
+    create_user = #{record.createUser,jdbcType=VARCHAR},
+    update_user = #{record.updateUser,jdbcType=VARCHAR},
+    create_time = #{record.createTime,jdbcType=TIMESTAMP},
+    update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+    is_delete = #{record.isDelete,jdbcType=TINYINT},
+    remind = #{record.remind,jdbcType=TINYINT},
+    vehicle_id = #{record.vehicleId,jdbcType=VARCHAR},
+    expiry_date = #{record.expiryDate,jdbcType=TIMESTAMP},
+    source = #{record.source,jdbcType=VARCHAR},
+    source_id = #{record.sourceId,jdbcType=VARCHAR},
+    status_message = #{record.statusMessage,jdbcType=VARCHAR},
+    message_content = #{record.messageContent,jdbcType=LONGVARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update message_remind
+    set id = #{record.id,jdbcType=VARCHAR},
+    customer_id = #{record.customerId,jdbcType=VARCHAR},
+    customer_name = #{record.customerName,jdbcType=VARCHAR},
+    phone_number = #{record.phoneNumber,jdbcType=VARCHAR},
+    message_template_id = #{record.messageTemplateId,jdbcType=VARCHAR},
+    message_template_code = #{record.messageTemplateCode,jdbcType=VARCHAR},
+    try_time = #{record.tryTime,jdbcType=INTEGER},
+    template_id = #{record.templateId,jdbcType=VARCHAR},
+    datas = #{record.datas,jdbcType=VARCHAR},
+    status = #{record.status,jdbcType=VARCHAR},
+    store_id = #{record.storeId,jdbcType=BIGINT},
+    tenant_id = #{record.tenantId,jdbcType=BIGINT},
+    create_user = #{record.createUser,jdbcType=VARCHAR},
+    update_user = #{record.updateUser,jdbcType=VARCHAR},
+    create_time = #{record.createTime,jdbcType=TIMESTAMP},
+    update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+    is_delete = #{record.isDelete,jdbcType=TINYINT},
+    remind = #{record.remind,jdbcType=TINYINT},
+    vehicle_id = #{record.vehicleId,jdbcType=VARCHAR},
+    expiry_date = #{record.expiryDate,jdbcType=TIMESTAMP},
+    source = #{record.source,jdbcType=VARCHAR},
+    source_id = #{record.sourceId,jdbcType=VARCHAR},
+    status_message = #{record.statusMessage,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemind" >
+    update message_remind
+    <set >
+      <if test="customerId != null" >
+        customer_id = #{customerId,jdbcType=VARCHAR},
+      </if>
+      <if test="customerName != null" >
+        customer_name = #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneNumber != null" >
+        phone_number = #{phoneNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="messageTemplateId != null" >
+        message_template_id = #{messageTemplateId,jdbcType=VARCHAR},
+      </if>
+      <if test="messageTemplateCode != null" >
+        message_template_code = #{messageTemplateCode,jdbcType=VARCHAR},
+      </if>
+      <if test="tryTime != null" >
+        try_time = #{tryTime,jdbcType=INTEGER},
+      </if>
+      <if test="templateId != null" >
+        template_id = #{templateId,jdbcType=VARCHAR},
+      </if>
+      <if test="datas != null" >
+        datas = #{datas,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="storeId != null" >
+        store_id = #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null" >
+        tenant_id = #{tenantId,jdbcType=BIGINT},
+      </if>
+      <if test="createUser != null" >
+        create_user = #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateUser != null" >
+        update_user = #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="isDelete != null" >
+        is_delete = #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="remind != null" >
+        remind = #{remind,jdbcType=TINYINT},
+      </if>
+      <if test="vehicleId != null" >
+        vehicle_id = #{vehicleId,jdbcType=VARCHAR},
+      </if>
+      <if test="expiryDate != null" >
+        expiry_date = #{expiryDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="source != null" >
+        source = #{source,jdbcType=VARCHAR},
+      </if>
+      <if test="sourceId != null" >
+        source_id = #{sourceId,jdbcType=VARCHAR},
+      </if>
+      <if test="statusMessage != null" >
+        status_message = #{statusMessage,jdbcType=VARCHAR},
+      </if>
+      <if test="messageContent != null" >
+        message_content = #{messageContent,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemind" >
+    update message_remind
+    set customer_id = #{customerId,jdbcType=VARCHAR},
+      customer_name = #{customerName,jdbcType=VARCHAR},
+      phone_number = #{phoneNumber,jdbcType=VARCHAR},
+      message_template_id = #{messageTemplateId,jdbcType=VARCHAR},
+      message_template_code = #{messageTemplateCode,jdbcType=VARCHAR},
+      try_time = #{tryTime,jdbcType=INTEGER},
+      template_id = #{templateId,jdbcType=VARCHAR},
+      datas = #{datas,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      store_id = #{storeId,jdbcType=BIGINT},
+      tenant_id = #{tenantId,jdbcType=BIGINT},
+      create_user = #{createUser,jdbcType=VARCHAR},
+      update_user = #{updateUser,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      is_delete = #{isDelete,jdbcType=TINYINT},
+      remind = #{remind,jdbcType=TINYINT},
+      vehicle_id = #{vehicleId,jdbcType=VARCHAR},
+      expiry_date = #{expiryDate,jdbcType=TIMESTAMP},
+      source = #{source,jdbcType=VARCHAR},
+      source_id = #{sourceId,jdbcType=VARCHAR},
+      status_message = #{statusMessage,jdbcType=VARCHAR},
+      message_content = #{messageContent,jdbcType=LONGVARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemind" >
+    update message_remind
+    set customer_id = #{customerId,jdbcType=VARCHAR},
+      customer_name = #{customerName,jdbcType=VARCHAR},
+      phone_number = #{phoneNumber,jdbcType=VARCHAR},
+      message_template_id = #{messageTemplateId,jdbcType=VARCHAR},
+      message_template_code = #{messageTemplateCode,jdbcType=VARCHAR},
+      try_time = #{tryTime,jdbcType=INTEGER},
+      template_id = #{templateId,jdbcType=VARCHAR},
+      datas = #{datas,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      store_id = #{storeId,jdbcType=BIGINT},
+      tenant_id = #{tenantId,jdbcType=BIGINT},
+      create_user = #{createUser,jdbcType=VARCHAR},
+      update_user = #{updateUser,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      is_delete = #{isDelete,jdbcType=TINYINT},
+      remind = #{remind,jdbcType=TINYINT},
+      vehicle_id = #{vehicleId,jdbcType=VARCHAR},
+      expiry_date = #{expiryDate,jdbcType=TIMESTAMP},
+      source = #{source,jdbcType=VARCHAR},
+      source_id = #{sourceId,jdbcType=VARCHAR},
+      status_message = #{statusMessage,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+
+  <insert id="insertMessageRemindList" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageRemind">
+    insert into message_remind
+    (
+    <include refid="Base_Column_List"/>
+    ,
+    <include refid="Blob_Column_List"/>)
+    values
+    <foreach collection="list" item="item" index="index" separator=",">
+      (
+      #{item.id},
+      #{item.customerId},
+      #{item.customerName},
+      #{item.phoneNumber},
+      #{item.messageTemplateId},
+      #{item.messageTemplateCode},
+      #{item.tryTime},
+      #{item.templateId},
+      #{item.datas},
+      #{item.status},
+      #{item.storeId},
+      #{item.tenantId},
+      #{item.createUser},
+      #{item.updateUser},
+      #{item.createTime},
+      #{item.updateTime},
+      false,
+      #{item.remind},
+      #{item.vehicleId},
+      #{item.expiryDate},
+      #{item.source},
+      #{item.sourceId},
+      #{item.statusMessage},
+      #{item.messageContent}
+      )
+    </foreach>
+  </insert>
+
+  <update id="updateRemindTryTimes">
+    update message_remind
+    set try_time = try_time + 1,
+    update_time = now()
+    where id in
+    <foreach item="item" index="index" collection="list"
+             open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
+  <update id="updateStatusByIdList">
+    update message_remind
+    set status = #{status},
+    update_time = now()
+    where id in
+    <foreach item="item" index="index" collection="list"
+             open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
+
+    <update id="appendSendStatusMessage">
+        update message_remind
+        set status_message =
+        <foreach collection="list" item="item" separator=" " open="case id" close="end">
+            when #{item.id} then concat(ifnull(status_message,''),#{item.statusMessage})
+        </foreach>
+        where id in
+        <foreach collection="list" item="item" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+    </update>
+</mapper>

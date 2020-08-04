@@ -3,9 +3,9 @@ package com.tuhu.store.saas.marketing.request;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import lombok.ToString;
-import org.hibernate.validator.constraints.NotBlank;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -128,6 +128,7 @@ public class EditCouponReq implements Serializable {
     /**
      * 券说明
      */
+    @Size(max = 200, message = "券说明只能在200个字符以内")
     private String remark;
 
     /**

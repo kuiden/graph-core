@@ -147,6 +147,11 @@ public class CouponResp implements Serializable {
     private Long usedNumber;
 
     /**
+     * 占用数量
+     */
+    private Long occupyNum;
+
+    /**
      * 限定的分类
      */
     private List<CouponScopeCategoryResp> categories;
