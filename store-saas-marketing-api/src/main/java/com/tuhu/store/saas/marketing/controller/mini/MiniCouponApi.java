@@ -48,7 +48,7 @@ public class MiniCouponApi extends BaseApi {
     @RequestMapping(value = "/detail", method = {RequestMethod.GET, RequestMethod.POST})
     @ApiOperation(value = "优惠券活动详情")
     public BizBaseResponse detail(Long couponId) {
-        CouponResp couponResp = iCouponService.getCouponDetailById(couponId, this.getStoreId());
+        CouponResp couponResp = iCouponService.getCouponDetailById(couponId);
         return new BizBaseResponse(couponResp);
     }
 
@@ -142,9 +142,9 @@ public class MiniCouponApi extends BaseApi {
      * @return
      */
     @GetMapping("/getOveralEffect")
-    public ResultObject getCouponOveral(CouponRequest req) {
+    public BizBaseResponse getCouponOveral(CouponRequest req) {
         Map result = imCouponService.getOveralEffect(req);
-        return new ResultObject(result);
+        return new BizBaseResponse(result);
     }
 
     /**

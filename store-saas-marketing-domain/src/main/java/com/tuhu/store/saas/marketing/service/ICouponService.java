@@ -35,10 +35,9 @@ public interface ICouponService {
      * 根据优惠券id，获取优惠券活动详情
      *
      * @param couponId
-     * @param storeId
      * @return
      */
-    CouponResp getCouponDetailById(Long couponId, Long storeId);
+    CouponResp getCouponDetailById(Long couponId);
 
     /**
      * 根据优惠券编码，获取优惠券活动详情
