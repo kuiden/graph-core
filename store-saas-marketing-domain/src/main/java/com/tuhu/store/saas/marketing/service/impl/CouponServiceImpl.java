@@ -1,6 +1,5 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
-
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
@@ -102,23 +101,18 @@ public class CouponServiceImpl implements ICouponService {
         //生成优惠券编码的密文
         String encryptedCode = Md5Util.md5(code, CodeFactory.codeSalt);
         coupon.setEncryptedCode(encryptedCode);
-        //生成分享二维码
-        QrCodeRequest qrCodeRequest = new QrCodeRequest();
-        qrCodeRequest.setStoreId(addCouponReq.getStoreId());
-        qrCodeRequest.setCouponCode(code);
-        qrCodeRequest.setWidth(250L);
-        qrCodeRequest.setPath("pages/home/home");
-        qrCodeRequest.setScene("encryptedCode="+encryptedCode);
-        String url = imCouponService.getQrCodeForCoupon(qrCodeRequest);
-        coupon.setWeixinQrUrl(url);
         couponMapper.insertSelective(coupon);
-        //如果优惠券适用范围做了限定
-        CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());
-        if (CouponScopeTypeEnum.Category.equals(scopeTypeEnum)) {
-            List<CouponScopeCategoryReq> categories = addCouponReq.getCategories();
-            List<CouponScopeCategory> scopeCategoryList = convertToCouponScopeCategory(code, categories, addCouponReq);
-            couponScopeCategoryMapper.insertBatch(scopeCategoryList);
-        }
+        threadPoolTaskExecutor.submit(() -> {
+            //生成分享二维码
+            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
+        });
+//        //如果优惠券适用范围做了限定
+//        CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());
+//        if (CouponScopeTypeEnum.Category.equals(scopeTypeEnum)) {
+//            List<CouponScopeCategoryReq> categories = addCouponReq.getCategories();
+//            List<CouponScopeCategory> scopeCategoryList = convertToCouponScopeCategory(code, categories, addCouponReq);
+//            couponScopeCategoryMapper.insertBatch(scopeCategoryList);
+//        }
         //如果不是不限数量，则缓存券发放数量
         if (coupon.getGrantNumber().compareTo(0L) > 0) {
             String key = couponSendNumberPrefix.concat(code);
@@ -126,6 +120,19 @@ public class CouponServiceImpl implements ICouponService {
         }
         return addCouponReq;
     }
+
+    /*
+     * 生成优惠券分享二维码
+     */
+    private String getQrCodeForCoupon(Long couponId, String encryptedCode){
+        QrCodeRequest qrCodeRequest = new QrCodeRequest();
+        qrCodeRequest.setCouponId(couponId);
+        qrCodeRequest.setWidth(250L);
+        qrCodeRequest.setPath("pages/home/home");
+        qrCodeRequest.setScene("encryptedCode="+encryptedCode);
+        return imCouponService.getQrCodeForCoupon(qrCodeRequest);
+    }
+
 
     /**
      * @param couponCode
@@ -305,46 +312,49 @@ public class CouponServiceImpl implements ICouponService {
     }
 
     @Override
-    public CouponResp getCouponDetailById(Long couponId, Long storeId) {
-        log.info("查询优惠券详情请求couponId：{}, storeId: {}", couponId, storeId);
+    public CouponResp getCouponDetailById(Long couponId) {
+        log.info("查询优惠券详情请求couponId：{}", couponId);
         if (null == couponId || couponId <= 0) {
             throw new StoreSaasMarketingException("非法的优惠券ID");
         }
         Coupon coupon = couponMapper.selectByPrimaryKey(couponId);
-        //禁止查询非本门店的优惠券
-        if (null == coupon || !storeId.equals(coupon.getStoreId())) {
-            return null;
-        }
         CouponResp resp = new CouponResp();
-        BeanUtils.copyProperties(coupon, resp);
-        resp.setType(coupon.getType().intValue());
-        resp.setValidityType(coupon.getValidityType().intValue());
-        resp.setStatus(coupon.getStatus().intValue());
-        resp.setAllowGet(coupon.getAllowGet().intValue());
-        resp.setScopeType(coupon.getScopeType().intValue());
-        //统计已发放数量
-        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
-        CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
-        criteria.andCouponCodeEqualTo(coupon.getCode());
-        int sendCount = customerCouponMapper.countByExample(customerCouponExample);
-        resp.setSendNumber(Long.valueOf(sendCount + ""));
-        Byte scopeType = coupon.getScopeType();
-        if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {
-            //查询限定的分类
-            CouponScopeCategoryExample couponScopeCategoryExample = new CouponScopeCategoryExample();
-            CouponScopeCategoryExample.Criteria scopeCategoryCriteria = couponScopeCategoryExample.createCriteria();
-            scopeCategoryCriteria.andCouponCodeEqualTo(coupon.getCode());
-            List<CouponScopeCategory> scopeCategoryList = couponScopeCategoryMapper.selectByExample(couponScopeCategoryExample);
-            if (CollectionUtils.isNotEmpty(scopeCategoryList)) {
-                List<CouponScopeCategoryResp> scopeCategoryRespList = new ArrayList<>();
-                scopeCategoryList.forEach(scopeCategory -> {
-                    CouponScopeCategoryResp scopeCategoryResp = new CouponScopeCategoryResp();
-                    BeanUtils.copyProperties(scopeCategory, scopeCategoryResp);
-                    scopeCategoryRespList.add(scopeCategoryResp);
-                });
-                resp.setCategories(scopeCategoryRespList);
+        if (null != coupon){
+            BeanUtils.copyProperties(coupon, resp);
+            resp.setType(coupon.getType().intValue());
+            resp.setValidityType(coupon.getValidityType().intValue());
+            resp.setStatus(coupon.getStatus().intValue());
+            resp.setAllowGet(coupon.getAllowGet().intValue());
+            resp.setScopeType(coupon.getScopeType().intValue());
+            //统计已发放数量
+            CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+            CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
+            criteria.andCouponCodeEqualTo(coupon.getCode());
+            int sendCount = customerCouponMapper.countByExample(customerCouponExample);
+            resp.setSendNumber(Long.valueOf(sendCount + ""));
+            //未获取到分享二维码，则同步生成
+            if (null == coupon.getWeixinQrUrl()){
+                String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
+                resp.setWeixinQrUrl(url);
             }
         }
+//        Byte scopeType = coupon.getScopeType();
+//        if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {
+//            //查询限定的分类
+//            CouponScopeCategoryExample couponScopeCategoryExample = new CouponScopeCategoryExample();
+//            CouponScopeCategoryExample.Criteria scopeCategoryCriteria = couponScopeCategoryExample.createCriteria();
+//            scopeCategoryCriteria.andCouponCodeEqualTo(coupon.getCode());
+//            List<CouponScopeCategory> scopeCategoryList = couponScopeCategoryMapper.selectByExample(couponScopeCategoryExample);
+//            if (CollectionUtils.isNotEmpty(scopeCategoryList)) {
+//                List<CouponScopeCategoryResp> scopeCategoryRespList = new ArrayList<>();
+//                scopeCategoryList.forEach(scopeCategory -> {
+//                    CouponScopeCategoryResp scopeCategoryResp = new CouponScopeCategoryResp();
+//                    BeanUtils.copyProperties(scopeCategory, scopeCategoryResp);
+//                    scopeCategoryRespList.add(scopeCategoryResp);
+//                });
+//                resp.setCategories(scopeCategoryRespList);
+//            }
+//        }
         log.info("查询优惠券详情响应response：{}", GsonTool.toJSONString(resp));
         return resp;
     }
@@ -435,7 +445,7 @@ public class CouponServiceImpl implements ICouponService {
         if (null == couponId || couponId <= 0) {
             throw new StoreSaasMarketingException("优惠券ID不能为空");
         }
-        CouponResp oldCoupon = getCouponDetailById(couponId, editCouponReq.getStoreId());
+        CouponResp oldCoupon = getCouponDetailById(couponId);
         if (null == oldCoupon) {
             throw new StoreSaasMarketingException("优惠券不存在");
         }

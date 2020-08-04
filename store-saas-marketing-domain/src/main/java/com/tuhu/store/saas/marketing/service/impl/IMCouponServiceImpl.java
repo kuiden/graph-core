@@ -89,13 +89,6 @@ public class IMCouponServiceImpl implements IMCouponService {
     @Override
     public String getQrCodeForCoupon(QrCodeRequest req) {
 
-        /*
-        数据库查询当前抵用券是否已经保存了二维码图片
-         */
-//        Coupon couponInfo = couponMapper.selectByCouponCode(req.getCouponCode());
-//        if (StringUtils.isNotBlank(couponInfo.getWeixinQrUrl())) {
-//            return couponInfo.getWeixinQrUrl();
-//        }
         /* 1、调微信api,根据当前storeId生成二维码图片buffer,base64编码
          */
 
@@ -106,7 +99,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         /*
           3、保存url到coupon表
         */
-        //saveQrUrlToDatabase(couponInfo.getId(), qrUrl);
+        saveQrUrlToDatabase(req.getCouponId(), qrUrl);
 
         return qrUrl;
     }

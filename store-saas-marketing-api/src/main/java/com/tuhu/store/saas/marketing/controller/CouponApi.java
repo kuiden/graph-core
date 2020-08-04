@@ -1,18 +1,17 @@
 package com.tuhu.store.saas.marketing.controller;
 
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.remote.ResultObject;
 
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
+import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerCouponDTO;
 import com.tuhu.store.saas.marketing.response.dto.ServiceOrderCouponDTO;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/coupon")
@@ -53,5 +52,12 @@ public class CouponApi extends BaseApi {
     public ResultObject getCouponDetailByCustomerCouponId(String customerCouponId) {
         CustomerCouponDTO customerCouponDTO = iCouponService.getCouponDetailByCustomerCouponId(customerCouponId, String.valueOf(this.getStoreId()));
         return new ResultObject(customerCouponDTO);
+    }
+
+    @GetMapping(value = "/client/detail")
+    @ApiOperation(value = "c端-优惠券模板详情")
+    public BizBaseResponse getCouponDetail(@RequestParam Long couponId) {
+        CouponResp couponResp = iCouponService.getCouponDetailById(couponId);
+        return new BizBaseResponse(couponResp);
     }
 }
