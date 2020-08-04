@@ -13,8 +13,7 @@ import java.io.Serializable;
  */
 @Data
 public class QrCodeRequest implements Serializable {
-    private Long storeId;
-    private String couponCode;
+    private Long couponId;
     /**
      * 参数"storeId=222"
      */

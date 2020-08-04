@@ -1,6 +1,5 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
-
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
@@ -18,6 +17,7 @@ import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CouponScopeCategoryResp;
 import com.tuhu.store.saas.marketing.response.dto.*;
 import com.tuhu.store.saas.marketing.service.ICouponService;
+import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.util.GsonTool;
 import com.tuhu.store.saas.marketing.util.Md5Util;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
@@ -81,6 +81,9 @@ public class CouponServiceImpl implements ICouponService {
     @Autowired
     private OrderCouponMapper orderCouponMapper;
 
+    @Autowired
+    private IMCouponService imCouponService;
+
     @Override
     @Transactional
     public AddCouponReq addNewCoupon(AddCouponReq addCouponReq) {
@@ -99,13 +102,17 @@ public class CouponServiceImpl implements ICouponService {
         String encryptedCode = Md5Util.md5(code, CodeFactory.codeSalt);
         coupon.setEncryptedCode(encryptedCode);
         couponMapper.insertSelective(coupon);
-        //如果优惠券适用范围做了限定
-        CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());
-        if (CouponScopeTypeEnum.Category.equals(scopeTypeEnum)) {
-            List<CouponScopeCategoryReq> categories = addCouponReq.getCategories();
-            List<CouponScopeCategory> scopeCategoryList = convertToCouponScopeCategory(code, categories, addCouponReq);
-            couponScopeCategoryMapper.insertBatch(scopeCategoryList);
-        }
+        threadPoolTaskExecutor.submit(() -> {
+            //生成分享二维码
+            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
+        });
+//        //如果优惠券适用范围做了限定
+//        CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());
+//        if (CouponScopeTypeEnum.Category.equals(scopeTypeEnum)) {
+//            List<CouponScopeCategoryReq> categories = addCouponReq.getCategories();
+//            List<CouponScopeCategory> scopeCategoryList = convertToCouponScopeCategory(code, categories, addCouponReq);
+//            couponScopeCategoryMapper.insertBatch(scopeCategoryList);
+//        }
         //如果不是不限数量，则缓存券发放数量
         if (coupon.getGrantNumber().compareTo(0L) > 0) {
             String key = couponSendNumberPrefix.concat(code);
@@ -113,6 +120,19 @@ public class CouponServiceImpl implements ICouponService {
         }
         return addCouponReq;
     }
+
+    /*
+     * 生成优惠券分享二维码
+     */
+    private String getQrCodeForCoupon(Long couponId, String encryptedCode){
+        QrCodeRequest qrCodeRequest = new QrCodeRequest();
+        qrCodeRequest.setCouponId(couponId);
+        qrCodeRequest.setWidth(250L);
+        qrCodeRequest.setPath("pages/home/home");
+        qrCodeRequest.setScene("encryptedCode="+encryptedCode);
+        return imCouponService.getQrCodeForCoupon(qrCodeRequest);
+    }
+
 
     /**
      * @param couponCode
@@ -178,9 +198,9 @@ public class CouponServiceImpl implements ICouponService {
             conditionLimit = new BigDecimal("-1");
             addCouponReq.setConditionLimit(conditionLimit);
         }
-        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
-            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
-        }
+//        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
+//            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
+//        }
         //优惠金额
         BigDecimal contentValue = addCouponReq.getContentValue();
         //优惠券优惠金额不能为空
@@ -192,11 +212,11 @@ public class CouponServiceImpl implements ICouponService {
         if (CouponTypeEnum.Money.equals(couponTypeEnum)) {
             if (null == contentValue) {
                 return "代金券优惠金额不能为空";
-            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
-                return "代金券优惠金额只能为正整数";
+//            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
+//                return "代金券优惠金额只能为正整数";
             }
             //如果有使用门槛
-            if (conditionLimit.intValue() > 0) {
+            if (conditionLimit.compareTo(BigDecimal.ZERO) > 0) {
                 if (contentValue.compareTo(conditionLimit) > 0) {
                     return "使用门槛不能小于优惠金额";
                 }
@@ -292,46 +312,49 @@ public class CouponServiceImpl implements ICouponService {
     }
 
     @Override
-    public CouponResp getCouponDetailById(Long couponId, Long storeId) {
-        log.info("查询优惠券详情请求couponId：{}, storeId: {}", couponId, storeId);
+    public CouponResp getCouponDetailById(Long couponId) {
+        log.info("查询优惠券详情请求couponId：{}", couponId);
         if (null == couponId || couponId <= 0) {
             throw new StoreSaasMarketingException("非法的优惠券ID");
         }
         Coupon coupon = couponMapper.selectByPrimaryKey(couponId);
-        //禁止查询非本门店的优惠券
-        if (null == coupon || !storeId.equals(coupon.getStoreId())) {
-            return null;
-        }
         CouponResp resp = new CouponResp();
-        BeanUtils.copyProperties(coupon, resp);
-        resp.setType(coupon.getType().intValue());
-        resp.setValidityType(coupon.getValidityType().intValue());
-        resp.setStatus(coupon.getStatus().intValue());
-        resp.setAllowGet(coupon.getAllowGet().intValue());
-        resp.setScopeType(coupon.getScopeType().intValue());
-        //统计已发放数量
-        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
-        CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
-        criteria.andCouponCodeEqualTo(coupon.getCode());
-        int sendCount = customerCouponMapper.countByExample(customerCouponExample);
-        resp.setSendNumber(Long.valueOf(sendCount + ""));
-        Byte scopeType = coupon.getScopeType();
-        if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {
-            //查询限定的分类
-            CouponScopeCategoryExample couponScopeCategoryExample = new CouponScopeCategoryExample();
-            CouponScopeCategoryExample.Criteria scopeCategoryCriteria = couponScopeCategoryExample.createCriteria();
-            scopeCategoryCriteria.andCouponCodeEqualTo(coupon.getCode());
-            List<CouponScopeCategory> scopeCategoryList = couponScopeCategoryMapper.selectByExample(couponScopeCategoryExample);
-            if (CollectionUtils.isNotEmpty(scopeCategoryList)) {
-                List<CouponScopeCategoryResp> scopeCategoryRespList = new ArrayList<>();
-                scopeCategoryList.forEach(scopeCategory -> {
-                    CouponScopeCategoryResp scopeCategoryResp = new CouponScopeCategoryResp();
-                    BeanUtils.copyProperties(scopeCategory, scopeCategoryResp);
-                    scopeCategoryRespList.add(scopeCategoryResp);
-                });
-                resp.setCategories(scopeCategoryRespList);
+        if (null != coupon){
+            BeanUtils.copyProperties(coupon, resp);
+            resp.setType(coupon.getType().intValue());
+            resp.setValidityType(coupon.getValidityType().intValue());
+            resp.setStatus(coupon.getStatus().intValue());
+            resp.setAllowGet(coupon.getAllowGet().intValue());
+            resp.setScopeType(coupon.getScopeType().intValue());
+            //统计已发放数量
+            CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+            CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
+            criteria.andCouponCodeEqualTo(coupon.getCode());
+            int sendCount = customerCouponMapper.countByExample(customerCouponExample);
+            resp.setSendNumber(Long.valueOf(sendCount + ""));
+            //未获取到分享二维码，则同步生成
+            if (null == coupon.getWeixinQrUrl()){
+                String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
+                resp.setWeixinQrUrl(url);
             }
         }
+//        Byte scopeType = coupon.getScopeType();
+//        if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {
+//            //查询限定的分类
+//            CouponScopeCategoryExample couponScopeCategoryExample = new CouponScopeCategoryExample();
+//            CouponScopeCategoryExample.Criteria scopeCategoryCriteria = couponScopeCategoryExample.createCriteria();
+//            scopeCategoryCriteria.andCouponCodeEqualTo(coupon.getCode());
+//            List<CouponScopeCategory> scopeCategoryList = couponScopeCategoryMapper.selectByExample(couponScopeCategoryExample);
+//            if (CollectionUtils.isNotEmpty(scopeCategoryList)) {
+//                List<CouponScopeCategoryResp> scopeCategoryRespList = new ArrayList<>();
+//                scopeCategoryList.forEach(scopeCategory -> {
+//                    CouponScopeCategoryResp scopeCategoryResp = new CouponScopeCategoryResp();
+//                    BeanUtils.copyProperties(scopeCategory, scopeCategoryResp);
+//                    scopeCategoryRespList.add(scopeCategoryResp);
+//                });
+//                resp.setCategories(scopeCategoryRespList);
+//            }
+//        }
         log.info("查询优惠券详情响应response：{}", GsonTool.toJSONString(resp));
         return resp;
     }
@@ -350,64 +373,62 @@ public class CouponServiceImpl implements ICouponService {
         }
         couponCriteria.andStoreIdEqualTo(couponListReq.getStoreId());
         couponCriteria.andTenantIdEqualTo(couponListReq.getTenantId());
-        couponExample.setOrderByClause("create_time desc");
+        couponExample.setOrderByClause("update_time desc");
         PageHelper.startPage(couponListReq.getPageNum() + 1, couponListReq.getPageSize());
         List<Coupon> couponList = couponMapper.selectByExample(couponExample);
         PageInfo<Coupon> couponPageInfo = new PageInfo<>(couponList);
         BeanUtils.copyProperties(couponPageInfo, couponRespPageInfo);
-        if (CollectionUtils.isEmpty(couponList)) {
-            couponRespPageInfo.setList(new ArrayList<>());
-            return couponRespPageInfo;
-        }
-        //优惠券code集合
-        List<String> couponCodeList = couponList.stream().map(Coupon::getCode).collect(Collectors.toList());
-        //查询优惠券发放情况
-        List<Map<String, Object>> grantNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, null);
-        Map<String, Long> grantNumberMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(grantNumberMapList)) {
-            grantNumberMapList.forEach(grantNumberMapElement -> {
-                Object couponCodeObj = grantNumberMapElement.get("couponCode");
-                if (null != couponCodeObj) {
-                    String couponCode = String.valueOf(couponCodeObj);
-                    Object grantNumberObj = grantNumberMapElement.get("number");
-                    Long grantNumber = 0L;
-                    if (null != grantNumberObj) {
-                        grantNumber = Long.valueOf(String.valueOf(grantNumberObj));
-                    }
-                    grantNumberMap.put(couponCode, grantNumber);
-                }
-            });
-        }
-        //查询优惠券使用情况
-        List<Map<String, Object>> usedNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, Integer.valueOf(1));
-        Map<String, Long> usedNumberMap = new HashMap<>();
-        if (CollectionUtils.isNotEmpty(usedNumberMapList)) {
-            usedNumberMapList.forEach(usedNumberMapElement -> {
-                Object couponCodeObj = usedNumberMapElement.get("couponCode");
-                if (null != couponCodeObj) {
-                    String couponCode = String.valueOf(couponCodeObj);
-                    Object usedNumberObj = usedNumberMapElement.get("number");
-                    Long usedNumber = 0L;
-                    if (null != usedNumberObj) {
-                        usedNumber = Long.valueOf(String.valueOf(usedNumberObj));
-                    }
-                    usedNumberMap.put(couponCode, usedNumber);
-                }
-            });
-        }
         List<CouponResp> couponRespList = new ArrayList<>(couponList.size());
-        couponList.forEach(coupon -> {
-            CouponResp couponResp = new CouponResp();
-            BeanUtils.copyProperties(coupon, couponResp);
-            couponResp.setType(coupon.getType().intValue());
-            couponResp.setValidityType(coupon.getValidityType().intValue());
-            couponResp.setStatus(coupon.getStatus().intValue());
-            couponResp.setAllowGet(coupon.getAllowGet().intValue());
-            couponResp.setScopeType(coupon.getScopeType().intValue());
-            couponResp.setSendNumber(grantNumberMap.get(couponResp.getCode()));
-            couponResp.setUsedNumber(usedNumberMap.get(couponResp.getCode()));
-            couponRespList.add(couponResp);
-        });
+        if (!CollectionUtils.isEmpty(couponList)) {
+            //优惠券code集合
+            List<String> couponCodeList = couponList.stream().map(Coupon::getCode).collect(Collectors.toList());
+            //查询优惠券发放情况
+            List<Map<String, Object>> grantNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, null);
+            Map<String, Long> grantNumberMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(grantNumberMapList)) {
+                grantNumberMapList.forEach(grantNumberMapElement -> {
+                    Object couponCodeObj = grantNumberMapElement.get("couponCode");
+                    if (null != couponCodeObj) {
+                        String couponCode = String.valueOf(couponCodeObj);
+                        Object grantNumberObj = grantNumberMapElement.get("number");
+                        Long grantNumber = 0L;
+                        if (null != grantNumberObj) {
+                            grantNumber = Long.valueOf(String.valueOf(grantNumberObj));
+                        }
+                        grantNumberMap.put(couponCode, grantNumber);
+                    }
+                });
+            }
+            //查询优惠券使用情况
+            List<Map<String, Object>> usedNumberMapList = customerCouponMapper.countGrantNumberByCouponCodeList(couponCodeList, Integer.valueOf(1));
+            Map<String, Long> usedNumberMap = new HashMap<>();
+            if (CollectionUtils.isNotEmpty(usedNumberMapList)) {
+                usedNumberMapList.forEach(usedNumberMapElement -> {
+                    Object couponCodeObj = usedNumberMapElement.get("couponCode");
+                    if (null != couponCodeObj) {
+                        String couponCode = String.valueOf(couponCodeObj);
+                        Object usedNumberObj = usedNumberMapElement.get("number");
+                        Long usedNumber = 0L;
+                        if (null != usedNumberObj) {
+                            usedNumber = Long.valueOf(String.valueOf(usedNumberObj));
+                        }
+                        usedNumberMap.put(couponCode, usedNumber);
+                    }
+                });
+            }
+            couponList.forEach(coupon -> {
+                CouponResp couponResp = new CouponResp();
+                BeanUtils.copyProperties(coupon, couponResp);
+                couponResp.setType(coupon.getType().intValue());
+                couponResp.setValidityType(coupon.getValidityType().intValue());
+                couponResp.setStatus(coupon.getStatus().intValue());
+                couponResp.setAllowGet(coupon.getAllowGet().intValue());
+                couponResp.setScopeType(coupon.getScopeType().intValue());
+                couponResp.setSendNumber(grantNumberMap.getOrDefault(couponResp.getCode(),0L));
+                couponResp.setUsedNumber(usedNumberMap.getOrDefault(couponResp.getCode(), 0L));
+                couponRespList.add(couponResp);
+            });
+        }
         couponRespPageInfo.setList(couponRespList);
         return couponRespPageInfo;
     }
@@ -422,7 +443,7 @@ public class CouponServiceImpl implements ICouponService {
         if (null == couponId || couponId <= 0) {
             throw new StoreSaasMarketingException("优惠券ID不能为空");
         }
-        CouponResp oldCoupon = getCouponDetailById(couponId, editCouponReq.getStoreId());
+        CouponResp oldCoupon = getCouponDetailById(couponId);
         if (null == oldCoupon) {
             throw new StoreSaasMarketingException("优惠券不存在");
         }
@@ -438,7 +459,7 @@ public class CouponServiceImpl implements ICouponService {
         editCoupon.setUpdateTime(new Date());
         couponMapper.updateByPrimaryKeySelective(editCoupon);
         //更新使用范围
-        editCouponScopeCategory(oldCoupon, editCouponReq);
+        //editCouponScopeCategory(oldCoupon, editCouponReq);
         //券数量如果从不限制改为了限制
         String key = couponSendNumberPrefix.concat(editCoupon.getCode());
         if (oldCoupon.getGrantNumber().compareTo(-1L) == 0 && editCoupon.getGrantNumber().compareTo(0L) > 0) {
@@ -565,8 +586,8 @@ public class CouponServiceImpl implements ICouponService {
      * @return
      */
     private String validateEditCouponReq(CouponResp oldCoupon, EditCouponReq editCouponReq) {
-        //优惠券已发放数量
-        Long sendNumber = oldCoupon.getSendNumber();
+        //优惠券已发放数量 + 占用数量
+        Long number = oldCoupon.getSendNumber() + oldCoupon.getOccupyNum();
         //券数量
         Long grantNumber = editCouponReq.getGrantNumber();
         if (null == grantNumber) {
@@ -576,8 +597,8 @@ public class CouponServiceImpl implements ICouponService {
         if (grantNumber.compareTo(0L) < 0 && !grantNumber.equals(-1L)) {
             return "券数量只能为不限或限制（正整数）";
         }
-        if (grantNumber.compareTo(0L) > 0 && grantNumber.compareTo(sendNumber) < 0) {
-            return "券数量不能小于已发送数量";
+        if (grantNumber.compareTo(0L) > 0 && grantNumber.compareTo(number) < 0) {
+            return "券数量不能小于已发送与已占用数量之和";
         }
         Integer status = editCouponReq.getStatus();
         if (status.intValue() != 0 && status.intValue() != 1) {
@@ -587,7 +608,7 @@ public class CouponServiceImpl implements ICouponService {
         if (allowGet.intValue() != 0 && allowGet.intValue() != 1) {
             return "允许领券格式错误";
         }
-        if (sendNumber.compareTo(0L) > 0) {
+        if (number.compareTo(0L) > 0) {
             //已发放的券只允许编辑券数量，是否允许领券，券状态；
             return null;
         }
@@ -597,9 +618,9 @@ public class CouponServiceImpl implements ICouponService {
             conditionLimit = new BigDecimal("-1");
             editCouponReq.setConditionLimit(conditionLimit);
         }
-        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
-            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
-        }
+//        if (!checkPattern("^((-1)|([1-9]\\d*00))$", conditionLimit.toString())) {
+//            return "优惠券使用门槛只能为不限金额或限制金额:正整数";
+//        }
         //优惠金额
         BigDecimal contentValue = editCouponReq.getContentValue();
         //优惠券优惠金额不能为空
@@ -611,11 +632,11 @@ public class CouponServiceImpl implements ICouponService {
         if (CouponTypeEnum.Money.equals(couponTypeEnum)) {
             if (null == contentValue) {
                 return "代金券优惠金额不能为空";
-            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
-                return "代金券优惠金额只能为正整数";
+//            } else if (!checkPattern("^[1-9]\\d*00$", contentValue.toString())) {
+//                return "代金券优惠金额只能为正整数";
             }
             //如果有使用门槛
-            if (conditionLimit.intValue() > 0) {
+            if (conditionLimit.compareTo(BigDecimal.ZERO) > 0) {
                 if (contentValue.compareTo(conditionLimit) > 0) {
                     return "使用门槛不能小于优惠金额";
                 }
