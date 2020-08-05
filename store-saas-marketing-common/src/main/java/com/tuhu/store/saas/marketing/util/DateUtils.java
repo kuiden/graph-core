@@ -328,6 +328,14 @@ public class DateUtils {
      */
     public static int getNowMonth() {
         Date date = new Date();
+        return getDateMonth(date);
+    }
+
+    /**
+     * 获取月份
+     * @return
+     */
+    public static int getDateMonth(Date date) {
         GregorianCalendar gc = (GregorianCalendar) Calendar.getInstance();
         gc.setTime(date);
         return gc.get(2) + 1;

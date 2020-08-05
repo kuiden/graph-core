@@ -4,15 +4,13 @@ import com.google.common.collect.Lists;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
-import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.service.customergroup.AbstractFactorFilter;
+import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.SpringApplicationContextUtil;
-import com.tuhu.store.saas.order.request.serviceorder.ListCustomerInfoReq;
-import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -20,12 +18,17 @@ import java.util.List;
  */
 @Data
 @Slf4j
-public class NoCustomerBehaviorFilter extends AbstractFactorFilter {
+public class CustomerCreateTimeFilter extends AbstractFactorFilter {
 
     /**
-     * 最近几天无消费行为
+     * 少于多少天
      */
-    private Integer recentDay;
+    private Integer lessThanDay;
+
+    /**
+     * 多余多少天
+     */
+    private Integer greaterThanDay;
 
     /**
      * 门店id
@@ -40,23 +43,20 @@ public class NoCustomerBehaviorFilter extends AbstractFactorFilter {
         if(customerDTOS==null||customerDTOS.size()<=0){
             return null;
         }
-        ServiceOrderClient serviceOrderClient = SpringApplicationContextUtil.getBean(ServiceOrderClient.class);
-        ListCustomerInfoReq req = new ListCustomerInfoReq();
-        req.setStoreId(storeId);
-        req.setRecentDays(recentDay);
-        //有消费记录的客户
-        List<ListCustomerInfoResp> customers = serviceOrderClient.listCustomerInfos(req).getData();
-        List<String> hasBehavCus = Lists.newArrayList();
-        if(CollectionUtils.isNotEmpty(customers)){
-            for(ListCustomerInfoResp customerInfoResp : customers){
-                hasBehavCus.add(customerInfoResp.getCostumerId());
-            }
-        }
         List<String> result = Lists.newArrayList();
         for(CustomerDTO customerDTO : customerDTOS){
-            if((hasBehavCus==null|| hasBehavCus!=null&&!hasBehavCus.contains(customerDTO.getId()))
-                    &&!result.contains(customerDTO.getId())){
-                //无消费记录的客户列表
+            Date createTime = customerDTO.getCreateTime();
+            if(createTime==null){
+                continue;
+            }
+            int days = DateUtils.getDiffDays(createTime,DateUtils.now());
+            if(lessThanDay!=null&&days>lessThanDay){
+                continue;
+            }
+            if(greaterThanDay!=null&&days<greaterThanDay){
+                continue;
+            }
+            if(!result.contains(customerDTO.getId())){
                 result.add(customerDTO.getId());
             }
         }
@@ -65,6 +65,6 @@ public class NoCustomerBehaviorFilter extends AbstractFactorFilter {
 
     @Override
     public boolean isOpen() {
-        return recentDay!=null;
+        return !(lessThanDay==null&&greaterThanDay==null);
     }
 }
