@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -42,6 +43,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
     @Autowired
     private StoreProductClient storeProductClient;
     @Override
+    @Transactional
     public void saveCustomerGroup(CustomerGroupReq req){
         CustomerGroupDto customerGroupDto = transferCustomerGroupDto(req);
         if(CollectionUtils.isEmpty(customerGroupDto.getCustomerGroupRuleReqList())){
@@ -54,31 +56,52 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             BeanUtils.copyProperties(customerGroupDto,record);
             int relationId = storeCustomerGroupRelationMapper.insertSelective(record);
             if(relationId>0) {
-                List<CustomerGroupRuleDto> subRuleList = customerGroupDto.getCustomerGroupRuleReqList();
-                List<CustomerGroupRule> customerGroupRuleList = new ArrayList<>();
-                for (CustomerGroupRuleDto customerGroupRuleDto : subRuleList) {
-                    List<CustomerGroupRuleAttributeDto> attributeReqList = customerGroupRuleDto.getAttributeReqList();
-                    for (CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto : attributeReqList) {
-                        CustomerGroupRule customerGroupRule = new CustomerGroupRule();
-                        customerGroupRule.setAttributeName(customerGroupRuleAttributeDto.getAttribute());
-                        customerGroupRule.setAttributeValue(customerGroupRuleAttributeDto.getAttributeValue());
-                        customerGroupRule.setCompareOperator(customerGroupRuleAttributeDto.getCompareOpertor());
-                        customerGroupRule.setStatus("1");
-                        customerGroupRule.setCgRuleFactor(customerGroupRuleDto.getCgRuleFactor());
-                        customerGroupRule.setCgRuleName(customerGroupRuleDto.getCgRuleName());
-                        customerGroupRule.setGroupId(Long.valueOf(relationId));
-                        customerGroupRule.setStoreId(customerGroupDto.getStoreId());
-                        customerGroupRuleList.add(customerGroupRule);
-                    }
-                }
-                customerGroupRuleMapper.insertBatch(customerGroupRuleList);
+                addCustomerGroupRuleList(customerGroupDto, Long.valueOf(relationId));
             }
         }else{//更新
-
+            StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
+            storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
+            storeCustomerGroupRelation.setUpdateTime(new Date());
+            storeCustomerGroupRelation.setId(customerGroupDto.getId());
+            storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);
+            CustomerGroupRule customerGroupRule = new CustomerGroupRule();
+            customerGroupRule.setUpdateTime(new Date());
+            customerGroupRule.setUpdateUser(req.getCreateUser());
+            customerGroupRule.setStatus("0");
+            //失效客群规则
+            CustomerGroupRuleExample example = new CustomerGroupRuleExample();
+            CustomerGroupRuleExample.Criteria criteria = example.createCriteria();
+            criteria.andStatausEqualTo("1");
+            criteria.andStoreIdEqualTo(customerGroupDto.getStoreId());
+            criteria.andGroupIdEqualTo(customerGroupDto.getId());
+            customerGroupRuleMapper.updateByExampleSelective(customerGroupRule,example);
+            //新增客群规则
+            addCustomerGroupRuleList(customerGroupDto, customerGroupDto.getId());
         }
     }
 
+    private void addCustomerGroupRuleList(CustomerGroupDto customerGroupDto, Long relationId) {
+        List<CustomerGroupRuleDto> subRuleList = customerGroupDto.getCustomerGroupRuleReqList();
+        List<CustomerGroupRule> customerGroupRuleList = new ArrayList<>();
+        for (CustomerGroupRuleDto customerGroupRuleDto : subRuleList) {
+            List<CustomerGroupRuleAttributeDto> attributeReqList = customerGroupRuleDto.getAttributeReqList();
+            for (CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto : attributeReqList) {
+                CustomerGroupRule customerGroupRule = new CustomerGroupRule();
+                customerGroupRule.setAttributeName(customerGroupRuleAttributeDto.getAttribute());
+                customerGroupRule.setAttributeValue(customerGroupRuleAttributeDto.getAttributeValue());
+                customerGroupRule.setCompareOperator(customerGroupRuleAttributeDto.getCompareOpertor());
+                customerGroupRule.setStatus("1");
+                customerGroupRule.setCgRuleFactor(customerGroupRuleDto.getCgRuleFactor());
+                customerGroupRule.setCgRuleName(customerGroupRuleDto.getCgRuleName());
+                customerGroupRule.setGroupId(Long.valueOf(relationId));
+                customerGroupRule.setStoreId(customerGroupDto.getStoreId());
+                customerGroupRuleList.add(customerGroupRule);
+            }
+        }
+        customerGroupRuleMapper.insertBatch(customerGroupRuleList);
+    }
 
+    @Override
     public CustomerGroupResp getCustomerGroupDetail(CustomerGroupReq req) throws ParseException {
         CustomerGroupResp customerGroupResp = null;
         StoreCustomerGroupRelationExample storeCustomerGroupRelationExample = new StoreCustomerGroupRelationExample();
@@ -116,13 +139,9 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             if(!amap.isEmpty() ){
                 convertCustomerGroupResp(customerGroupResp, amap);
-
-
             }
 
         }
-
-
         return customerGroupResp;
     }
 
