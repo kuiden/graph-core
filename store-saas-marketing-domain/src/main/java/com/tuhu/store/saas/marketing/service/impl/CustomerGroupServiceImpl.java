@@ -57,9 +57,9 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             customerGroupDto.setCreateTime(new Date());
             StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
             BeanUtils.copyProperties(customerGroupDto,record);
-            int relationId = storeCustomerGroupRelationMapper.insertSelective(record);
-            if(relationId>0) {
-                addCustomerGroupRuleList(customerGroupDto, Long.valueOf(relationId));
+            storeCustomerGroupRelationMapper.insertSelective(record);
+            if(record.getId()>0) {
+                addCustomerGroupRuleList(customerGroupDto, Long.valueOf(record.getId()));
             }
 
         }else{//更新
@@ -99,6 +99,8 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 customerGroupRule.setCgRuleName(customerGroupRuleDto.getCgRuleName());
                 customerGroupRule.setGroupId(Long.valueOf(relationId));
                 customerGroupRule.setStoreId(customerGroupDto.getStoreId());
+                customerGroupRule.setCreateUser(customerGroupDto.getCreateUser());
+                customerGroupRule.setCreateTime(new Date());
                 customerGroupRuleList.add(customerGroupRule);
             }
         }
@@ -155,6 +157,9 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         StoreCustomerGroupRelationExample example = new StoreCustomerGroupRelationExample();
         StoreCustomerGroupRelationExample.Criteria criteria = example.createCriteria();
         criteria.andStoreIdEqualTo(req.getStoreId());
+        if(StringUtils.isNotBlank(req.getQuery())){
+            criteria.andGroupNameLike("%".concat(req.getQuery()).concat("%"));
+        }
         List<StoreCustomerGroupRelation> storeCustomerGroupRelations = storeCustomerGroupRelationMapper.selectByExample(example);
         result.setList(storeCustomerGroupRelations);
         return result;
