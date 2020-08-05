@@ -98,7 +98,7 @@ public class CustomerGroupFilterFactory {
         }
         AbstractFactorFilter filter = cugFilters.get(0);
         for(int i=1;i<cugFilters.size();i++){
-            filter.setFilter(cugFilters.get(i));
+            cugFilters.get(i-1).setFilter(cugFilters.get(i));
         }
         return filter;
     }
