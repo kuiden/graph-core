@@ -340,19 +340,19 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
         iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
 
-        MessageQuantity select = new MessageQuantity();
-        select.setStoreId(customerMarketing.getStoreId());
-        select.setTenantId(customerMarketing.getTenantId());
-        //判断剩余短信数量够不够
-        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
-        if (messageQuantity.getRemainderQuantity() < records.size()) {
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
-        }
-        //更新门店可用短信的数量
-        messageQuantity.setUpdateTime(DateUtils.now());
-        messageQuantity.setUpdateUser(currentUser);
-        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - records.size());
-        messageQuantityService.reduceQuantity(messageQuantity);
+//        MessageQuantity select = new MessageQuantity();
+//        select.setStoreId(customerMarketing.getStoreId());
+//        select.setTenantId(customerMarketing.getTenantId());
+//        //判断剩余短信数量够不够
+//        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
+//        if (messageQuantity.getRemainderQuantity() < records.size()) {
+//            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
+//        }
+//        //更新门店可用短信的数量
+//        messageQuantity.setUpdateTime(DateUtils.now());
+//        messageQuantity.setUpdateUser(currentUser);
+//        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - records.size());
+//        messageQuantityService.reduceQuantity(messageQuantity);
     }
 
     private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq){
