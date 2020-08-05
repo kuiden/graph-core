@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.controller;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
 import com.tuhu.store.saas.marketing.response.CustomerGroupResp;
 import com.tuhu.store.saas.marketing.response.GoodsResp;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +30,7 @@ import java.util.List;
 @Slf4j
 public class CustomerGroupApi extends BaseApi{
     @Autowired
-    private ICustomerGroupService iCardOrderService;
+    private ICustomerGroupService iCustomerGroupService;
 
     @RequestMapping(value = "/saveCustomerGroup", method = RequestMethod.POST)
     public BizBaseResponse saveCustomerGroup(@RequestBody CustomerGroupReq req) {
@@ -39,7 +42,7 @@ public class CustomerGroupApi extends BaseApi{
         }
         req.setStoreId(super.getStoreId());
         req.setCreateUser(this.getUserId());
-        iCardOrderService.saveCustomerGroup(req);
+        iCustomerGroupService.saveCustomerGroup(req);
         return new BizBaseResponse(1);
     }
 
@@ -53,14 +56,13 @@ public class CustomerGroupApi extends BaseApi{
         }
         req.setStoreId(super.getStoreId());
         req.setCreateUser(this.getUserId());
-        CustomerGroupResp customerGroupResp = new CustomerGroupResp();
-        List<GoodsResp> alist = new ArrayList<>();
-        GoodsResp goodsResp = new GoodsResp();
-        goodsResp.setId("1");
-        goodsResp.setName("测试");
-        goodsResp.setChecked(true);
-        alist.add(goodsResp);
-        customerGroupResp.setServerList(alist);
+        CustomerGroupResp customerGroupResp = null;
+        try {
+            customerGroupResp = iCustomerGroupService.getCustomerGroupDetail(req);
+        } catch (ParseException e) {
+           log.error("查询客群详情出错",e);
+           throw new StoreSaasMarketingException("查询客群详情出错");
+        }
         return new BizBaseResponse(customerGroupResp);
     }
 

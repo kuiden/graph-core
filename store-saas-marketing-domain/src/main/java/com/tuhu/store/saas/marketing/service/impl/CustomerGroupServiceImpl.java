@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerGroupRuleExample;
 import com.tuhu.store.saas.marketing.dataobject.StoreCustomerGroupRelation;
 import com.tuhu.store.saas.marketing.dataobject.StoreCustomerGroupRelationExample;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerGroupRuleMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
@@ -47,7 +48,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
     public void saveCustomerGroup(CustomerGroupReq req){
         CustomerGroupDto customerGroupDto = transferCustomerGroupDto(req);
         if(CollectionUtils.isEmpty(customerGroupDto.getCustomerGroupRuleReqList())){
-            throw new MarketingException("请填写特征信息");
+            throw new StoreSaasMarketingException("请填写特征信息");
         }
         if(customerGroupDto.getId()==null){//新增
             customerGroupDto.setCreateUser(req.getCreateUser());
