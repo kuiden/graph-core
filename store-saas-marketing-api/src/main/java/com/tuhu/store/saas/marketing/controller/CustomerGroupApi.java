@@ -142,6 +142,7 @@ public class CustomerGroupApi extends BaseApi{
         customerGroupDto.setStoreId(this.getStoreId());
 
         List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
+        return new BizBaseResponse(null);
     }
 
 
