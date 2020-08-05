@@ -1,11 +1,15 @@
 package com.tuhu.store.saas.marketing.controller;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
+import com.tuhu.store.saas.marketing.dataobject.StoreCustomerGroupRelation;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.request.CustomerGroupListReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.response.CustomerGroupResp;
 import com.tuhu.store.saas.marketing.response.GoodsResp;
 import com.tuhu.store.saas.marketing.service.ICustomerGroupService;
@@ -66,6 +70,12 @@ public class CustomerGroupApi extends BaseApi{
         return new BizBaseResponse(customerGroupResp);
     }
 
+    @RequestMapping(value = "/getCustomerGroupList", method = RequestMethod.POST)
+    public BizBaseResponse<PageInfo<StoreCustomerGroupRelation>> getCustomerGroupList(@RequestBody CustomerGroupListReq req) {
+        req.setStoreId(this.getStoreId());
+        req.setTenantId(this.getTenantId());
+        return new BizBaseResponse(iCustomerGroupService.getCustomerGroupList(req));
+    }
 
 
 }

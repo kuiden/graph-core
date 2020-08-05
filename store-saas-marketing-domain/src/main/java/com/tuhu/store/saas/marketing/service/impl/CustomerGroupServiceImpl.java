@@ -1,18 +1,20 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.dto.product.GoodsData;
 import com.tuhu.store.saas.marketing.constant.CustomerGroupConstant;
-import com.tuhu.store.saas.marketing.dataobject.CustomerGroupRule;
-import com.tuhu.store.saas.marketing.dataobject.CustomerGroupRuleExample;
-import com.tuhu.store.saas.marketing.dataobject.StoreCustomerGroupRelation;
-import com.tuhu.store.saas.marketing.dataobject.StoreCustomerGroupRelationExample;
+import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerGroupRuleMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
+import com.tuhu.store.saas.marketing.request.CustomerGroupListReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
 import com.tuhu.store.saas.marketing.response.CustomerGroupResp;
 import com.tuhu.store.saas.marketing.response.GoodsResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
@@ -145,6 +147,17 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
 
         }
         return customerGroupResp;
+    }
+    @Override
+    public PageInfo<StoreCustomerGroupRelation> getCustomerGroupList(CustomerGroupListReq req) {
+        PageInfo<StoreCustomerGroupRelation> result = new PageInfo<>();
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+        StoreCustomerGroupRelationExample example = new StoreCustomerGroupRelationExample();
+        StoreCustomerGroupRelationExample.Criteria criteria = example.createCriteria();
+        criteria.andStoreIdEqualTo(req.getStoreId());
+        List<StoreCustomerGroupRelation> storeCustomerGroupRelations = storeCustomerGroupRelationMapper.selectByExample(example);
+        result.setList(storeCustomerGroupRelations);
+        return result;
     }
 
     private void convertCustomerGroupResp(CustomerGroupResp customerGroupResp, Map<String, Map<String, String>> amap) throws ParseException {
