@@ -58,6 +58,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             if(relationId>0) {
                 addCustomerGroupRuleList(customerGroupDto, Long.valueOf(relationId));
             }
+
         }else{//更新
             StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
