@@ -1,5 +1,7 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
+import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.dto.product.GoodsData;
 import com.tuhu.store.saas.marketing.constant.CustomerGroupConstant;
 import com.tuhu.store.saas.marketing.dataobject.CustomerGroupRule;
 import com.tuhu.store.saas.marketing.dataobject.CustomerGroupRuleExample;
@@ -8,12 +10,14 @@ import com.tuhu.store.saas.marketing.dataobject.StoreCustomerGroupRelationExampl
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerGroupRuleMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
+import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
 import com.tuhu.store.saas.marketing.response.CustomerGroupResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleAttributeDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleDto;
 import com.tuhu.store.saas.marketing.service.ICustomerGroupService;
+import com.tuhu.store.saas.vo.product.GoodsListVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +38,8 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
     @Autowired
     private CustomerGroupRuleMapper customerGroupRuleMapper;
 
+    @Autowired
+    private StoreProductClient storeProductClient;
     @Override
     public void saveCustomerGroup(CustomerGroupReq req){
         CustomerGroupDto customerGroupDto = transferCustomerGroupDto(req);
@@ -85,6 +91,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             customerGroupResp.setConsumerGroupName(storeCustomerGroupRelation.getGroupName());
             customerGroupResp.setId(storeCustomerGroupRelation.getId());
             customerGroupResp.setStoreId(storeCustomerGroupRelation.getStoreId());
+            customerGroupResp.setTenantId(req.getTenantId());
         }
         if(customerGroupResp!=null && customerGroupResp.getId()!=null){
             CustomerGroupRuleExample customerGroupRuleExample = new CustomerGroupRuleExample();
@@ -107,84 +114,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 }
             }
             if(!amap.isEmpty() ){
-                if(amap.get(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR)!=null){
-                     if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))){
-                        customerGroupResp.setNoConsumerDay(Long.valueOf(amap.get(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
-                    }
-                }
-                if(amap.get(CustomerGroupConstant.HAS_CONSUMER_FACTOR)!=null){
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.HAS_CONSUMER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
-                        customerGroupResp.setHasConsumerDay(Long.valueOf(amap.get(CustomerGroupConstant.HAS_CONSUMER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
-                    }
-                }
-                if(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR)!=null){
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
-                        customerGroupResp.setConsumerTimeDay(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
-                    }
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.LEAST_TIME))) {
-                        customerGroupResp.setConsumerLeastTime(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.LEAST_TIME)));
-                    }
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.MAX_TIME))) {
-                        customerGroupResp.setConsumerMaxTime(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.MAX_TIME)));
-                    }
-                }
-
-                if(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR)!=null){
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
-                        customerGroupResp.setConsumerAmountDay(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
-                    }
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.LEAST_AMOUNT))) {
-                        customerGroupResp.setConsumerLeastAmount(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.LEAST_AMOUNT)));
-                    }
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.MAX_AMOUNT))) {
-                        customerGroupResp.setConsumerMaxAmount(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.MAX_AMOUNT)));
-                    }
-                }
-                if(amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR)!=null){
-                    if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
-                        customerGroupResp.setConsumerServeDay(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
-                    }
-                    String serverArrayStr = amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.SPECIFIED_SERVER);
-                    if(StringUtils.isNotBlank(serverArrayStr)){
-                        List<String> serverIdList =  Arrays.asList(serverArrayStr.split(","));
-                        customerGroupResp.setConsumerServeList(serverIdList);
-                    }
-                }
-                if(amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR)!=null){
-                    SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String createdTimeStartStr = amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR).get(CustomerGroupConstant.CREATED_TIME_LEAST_DAY);
-                    String createdTimeEndStr = amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR).get(CustomerGroupConstant.CREATED_TIME_MAX_DAY);
-                    if(StringUtils.isNotBlank(createdTimeStartStr)) {
-                        customerGroupResp.setCreateDateStart(sf.parse(createdTimeStartStr));
-                    }
-                    if(StringUtils.isNotBlank(createdTimeEndStr)) {
-                        customerGroupResp.setCreateDateEnd(sf.parse(createdTimeEndStr));
-                    }
-                }
-                if(amap.get(CustomerGroupConstant.BRITHDAY_FACTOR)!=null){
-                    SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String brithdayStartStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_LEAST_DAY);
-                    String brithdayEndStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_MAX_DAY);
-                    if(StringUtils.isNotBlank(brithdayStartStr)){
-                        customerGroupResp.setBrithdayStart(sf.parse(brithdayStartStr));
-                    }
-                    if(StringUtils.isNotBlank(brithdayEndStr)){
-                        customerGroupResp.setBrithdayEnd(sf.parse(brithdayEndStr));
-                    }
-
-                }
-                if(amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR)!=null){
-                    SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String maintenanceStartStr = amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR).get(CustomerGroupConstant.MAINTENANCE_LEAST_DAY);
-                    String maintenanceEndStr = amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR).get(CustomerGroupConstant.MAINTENANCE_MAX_DAY);
-                    if(StringUtils.isNotBlank(maintenanceStartStr)){
-                        customerGroupResp.setMaintenanceDateStart(sf.parse(maintenanceStartStr));
-                    }
-                    if(StringUtils.isNotBlank(maintenanceEndStr)){
-                        customerGroupResp.setMaintenanceDateEnd(sf.parse(maintenanceEndStr));
-                    }
-                }
-
+                convertCustomerGroupResp(customerGroupResp, amap);
 
 
             }
@@ -193,6 +123,97 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
 
 
         return customerGroupResp;
+    }
+
+    private void convertCustomerGroupResp(CustomerGroupResp customerGroupResp, Map<String, Map<String, String>> amap) throws ParseException {
+        if(amap.get(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR)!=null){
+             if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))){
+                customerGroupResp.setNoConsumerDay(Long.valueOf(amap.get(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
+            }
+        }
+        if(amap.get(CustomerGroupConstant.HAS_CONSUMER_FACTOR)!=null){
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.HAS_CONSUMER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
+                customerGroupResp.setHasConsumerDay(Long.valueOf(amap.get(CustomerGroupConstant.HAS_CONSUMER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
+            }
+        }
+        if(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR)!=null){
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
+                customerGroupResp.setConsumerTimeDay(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
+            }
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.LEAST_TIME))) {
+                customerGroupResp.setConsumerLeastTime(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.LEAST_TIME)));
+            }
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.MAX_TIME))) {
+                customerGroupResp.setConsumerMaxTime(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_TIME_FACTOR).get(CustomerGroupConstant.MAX_TIME)));
+            }
+        }
+
+        if(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR)!=null){
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
+                customerGroupResp.setConsumerAmountDay(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
+            }
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.LEAST_AMOUNT))) {
+                customerGroupResp.setConsumerLeastAmount(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.LEAST_AMOUNT)));
+            }
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.MAX_AMOUNT))) {
+                customerGroupResp.setConsumerMaxAmount(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.MAX_AMOUNT)));
+            }
+        }
+        if(amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR)!=null){
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS))) {
+                customerGroupResp.setConsumerServeDay(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
+            }
+            String serverArrayStr = amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.SPECIFIED_SERVER);
+            if(StringUtils.isNotBlank(serverArrayStr)){
+                List<String> serverIdList =  Arrays.asList(serverArrayStr.split(","));
+                //查询服务
+                GoodsListVO goodsVO = new GoodsListVO();
+                goodsVO.setStoreId(customerGroupResp.getStoreId());
+                goodsVO.setTenantId(customerGroupResp.getTenantId());
+                goodsVO.setGoodsIdSet( new HashSet<String>(serverIdList));
+                BizBaseResponse<List<GoodsData>> goodsByIDListResponse = storeProductClient.getGoodsByIDList(goodsVO);
+                if(goodsByIDListResponse!=null) {
+                    List<GoodsData> goodsDataList = goodsByIDListResponse.getData();
+                    if(CollectionUtils.isNotEmpty(goodsDataList)) {
+                        customerGroupResp.setConsumerServeList(serverIdList);
+                    }
+                }
+            }
+        }
+        if(amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR)!=null){
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String createdTimeStartStr = amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR).get(CustomerGroupConstant.CREATED_TIME_LEAST_DAY);
+            String createdTimeEndStr = amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR).get(CustomerGroupConstant.CREATED_TIME_MAX_DAY);
+            if(StringUtils.isNotBlank(createdTimeStartStr)) {
+                customerGroupResp.setCreateDateStart(sf.parse(createdTimeStartStr));
+            }
+            if(StringUtils.isNotBlank(createdTimeEndStr)) {
+                customerGroupResp.setCreateDateEnd(sf.parse(createdTimeEndStr));
+            }
+        }
+        if(amap.get(CustomerGroupConstant.BRITHDAY_FACTOR)!=null){
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String brithdayStartStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_LEAST_DAY);
+            String brithdayEndStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_MAX_DAY);
+            if(StringUtils.isNotBlank(brithdayStartStr)){
+                customerGroupResp.setBrithdayStart(sf.parse(brithdayStartStr));
+            }
+            if(StringUtils.isNotBlank(brithdayEndStr)){
+                customerGroupResp.setBrithdayEnd(sf.parse(brithdayEndStr));
+            }
+
+        }
+        if(amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR)!=null){
+            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String maintenanceStartStr = amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR).get(CustomerGroupConstant.MAINTENANCE_LEAST_DAY);
+            String maintenanceEndStr = amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR).get(CustomerGroupConstant.MAINTENANCE_MAX_DAY);
+            if(StringUtils.isNotBlank(maintenanceStartStr)){
+                customerGroupResp.setMaintenanceDateStart(sf.parse(maintenanceStartStr));
+            }
+            if(StringUtils.isNotBlank(maintenanceEndStr)){
+                customerGroupResp.setMaintenanceDateEnd(sf.parse(maintenanceEndStr));
+            }
+        }
     }
 
 

@@ -3,7 +3,9 @@ package com.tuhu.store.saas.marketing.remote.product;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.dto.product.GoodsData;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.vo.product.GoodsListVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,12 @@ public class StoreProductRemoteFactory implements FallbackFactory<StoreProductCl
             @Override
             public BizBaseResponse queryServiceGoodListBySpuCodes(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId, @RequestParam("tenantId") Long tenantId) {
                 log.error("queryServiceGoodListBySpuCodes error,codeList={}, storeId={},error={}", codeList, storeId, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<List<GoodsData>> getGoodsByIDList(GoodsListVO goodsVO) {
+                log.error("getGoodsByIDList error,request={},error={}", goodsVO, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
         };
