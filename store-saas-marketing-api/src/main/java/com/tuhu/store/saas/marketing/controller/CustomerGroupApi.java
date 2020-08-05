@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
 import com.tuhu.store.saas.marketing.dataobject.StoreCustomerGroupRelation;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.request.CalculateCustomerCountReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupListReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
@@ -83,66 +84,11 @@ public class CustomerGroupApi extends BaseApi{
     }
 
 
-    @RequestMapping(value = "/computerData", method = RequestMethod.POST)
-    public  BizBaseResponse computerData(@RequestBody CustomerGroupReq req) {
+    @RequestMapping(value = "/calculateCustomerCount", method = RequestMethod.POST)
+    public  BizBaseResponse calculateCustomerCount(@RequestBody CalculateCustomerCountReq req) {
         req.setStoreId(this.getStoreId());
         req.setTenantId(this.getTenantId());
-
-        CustomerGroupDto customerGroupDto = new CustomerGroupDto();
-        customerGroupDto.setStoreId(this.getStoreId());
-
-        List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
-
-
-       /* CustomerGroupRuleDto customerGroupRuleDto = new CustomerGroupRuleDto();
-        List<CustomerGroupRuleAttributeDto> attributeReqList = new ArrayList<>();
-        CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto = new CustomerGroupRuleAttributeDto();
-        customerGroupRuleAttributeDto.setAttribute(CustomerGroupConstant.RECENT_DAYS);
-        customerGroupRuleAttributeDto.setAttributeValue("7");
-        attributeReqList.add(customerGroupRuleAttributeDto);
-        customerGroupRuleDto.setCgRuleFactor(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR);
-        customerGroupRuleDto.setAttributeReqList(attributeReqList);
-*/
-
-        CustomerGroupRuleDto customerGroupRuleDto1 = new CustomerGroupRuleDto();
-        List<CustomerGroupRuleAttributeDto> attributeReqList1 = new ArrayList<>();
-        CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto1 = new CustomerGroupRuleAttributeDto();
-        customerGroupRuleAttributeDto1.setAttribute(CustomerGroupConstant.RECENT_DAYS);
-        customerGroupRuleAttributeDto1.setAttributeValue("100");
-        attributeReqList1.add(customerGroupRuleAttributeDto1);
-        customerGroupRuleDto1.setCgRuleFactor(CustomerGroupConstant.HAS_CONSUMER_FACTOR);
-        customerGroupRuleDto1.setAttributeReqList(attributeReqList1);
-
-        CustomerGroupRuleDto customerGroupRuleDto2 = new CustomerGroupRuleDto();
-        List<CustomerGroupRuleAttributeDto> attributeReqList2 = new ArrayList<>();
-        CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto2 = new CustomerGroupRuleAttributeDto();
-        customerGroupRuleAttributeDto2.setAttribute(CustomerGroupConstant.RECENT_DAYS);
-        customerGroupRuleAttributeDto2.setAttributeValue("100");
-
-        CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto3 = new CustomerGroupRuleAttributeDto();
-        customerGroupRuleAttributeDto3.setAttribute(CustomerGroupConstant.LEAST_TIME);
-        customerGroupRuleAttributeDto3.setAttributeValue("5");
-
-        attributeReqList2.add(customerGroupRuleAttributeDto2);
-        attributeReqList2.add(customerGroupRuleAttributeDto3);
-        customerGroupRuleDto2.setCgRuleFactor(CustomerGroupConstant.CONSUMER_TIME_FACTOR);
-        customerGroupRuleDto2.setAttributeReqList(attributeReqList2);
-
-        //customerGroupRuleReqList.add(customerGroupRuleDto);
-        customerGroupRuleReqList.add(customerGroupRuleDto1);
-        customerGroupRuleReqList.add(customerGroupRuleDto2);
-        customerGroupDto.setCustomerGroupRuleReqList(customerGroupRuleReqList);
-        List<String> strings = CustomerGroupFilterFactory.createFilter(customerGroupDto).filterProcess();
-        return new BizBaseResponse(strings);
-    }
-
-    @RequestMapping(value = "/calculateCustomerCount", method = RequestMethod.POST)
-    public  BizBaseResponse calculateCustomerCount(@RequestBody CustomerGroupReq req) {
-        CustomerGroupDto customerGroupDto = new CustomerGroupDto();
-        customerGroupDto.setStoreId(this.getStoreId());
-
-        List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
-        return new BizBaseResponse(null);
+        return new BizBaseResponse(iCustomerGroupService.calculateCustomerCount(req));
     }
 
 

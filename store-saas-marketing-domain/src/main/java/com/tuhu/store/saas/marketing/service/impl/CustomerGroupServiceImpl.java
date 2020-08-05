@@ -11,6 +11,7 @@ import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerGroupRuleMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
+import com.tuhu.store.saas.marketing.request.CalculateCustomerCountReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupListReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
@@ -21,6 +22,7 @@ import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleAttributeDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleDto;
 import com.tuhu.store.saas.marketing.service.ICustomerGroupService;
+import com.tuhu.store.saas.marketing.service.customergroup.CustomerGroupFilterFactory;
 import com.tuhu.store.saas.vo.product.GoodsListVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -29,10 +31,13 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 
 @Service
@@ -424,5 +429,96 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
     }
 
+    /**
+     * 获取封装customerGroupDto  无groupName
+     * @param calculateCustomerCountReq
+     * @return
+     */
+    @Override
+    public List<CustomerGroupDto>  getCustomerGroupDto(CalculateCustomerCountReq calculateCustomerCountReq){
+        List<CustomerGroupDto> result = new ArrayList<>();
+        if(calculateCustomerCountReq.getStoreId()==null){
+            throw new StoreSaasMarketingException("获取门店ID为空");
+        }
+        CustomerGroupRuleExample example = new CustomerGroupRuleExample();
+        CustomerGroupRuleExample.Criteria criteria = example.createCriteria();
+        criteria.andStoreIdEqualTo(calculateCustomerCountReq.getStoreId());
+        criteria.andStatausEqualTo("1");
+        if(CollectionUtils.isNotEmpty(calculateCustomerCountReq.getGroupList())){
+            criteria.andGroupIdIn(calculateCustomerCountReq.getGroupList());
+        }
+        List<CustomerGroupRule> customerGroupRuleList = customerGroupRuleMapper.selectByExample(example);
+        if(CollectionUtils.isNotEmpty(customerGroupRuleList)){
+            Map<Long,CustomerGroupDto> customerGroupDtoMap = new HashMap<>();
+            for(CustomerGroupRule customerGroupRule : customerGroupRuleList){
+                CustomerGroupDto customerGroupDto = null;
+                if(customerGroupDtoMap.get(customerGroupRule.getGroupId())==null){
+                    customerGroupDto = new CustomerGroupDto();
+                    customerGroupDto.setId(customerGroupRule.getGroupId());
+                    customerGroupDto.setStoreId(customerGroupRule.getStoreId());
+                    result.add(customerGroupDto);
+                }else{
+                    customerGroupDto = customerGroupDtoMap.get(customerGroupRule.getGroupId());
+                }
+                List<CustomerGroupRuleDto> customerGroupRuleReqList = null;
+                if(CollectionUtils.isEmpty(customerGroupDto.getCustomerGroupRuleReqList())){
+                    customerGroupRuleReqList = new ArrayList<>();
+                    customerGroupRuleReqList.add(getCustomerGroupRuleDto(customerGroupRule, customerGroupDto));
+                    customerGroupDto.setCustomerGroupRuleReqList(customerGroupRuleReqList);
+                }else{
+                    customerGroupRuleReqList = customerGroupDto.getCustomerGroupRuleReqList();
+                    boolean inExistRule = false;
+                    for(CustomerGroupRuleDto customerGroupRuleDto : customerGroupRuleReqList){
+                        if(customerGroupRuleDto.getCgRuleFactor().equalsIgnoreCase(customerGroupRule.getCgRuleFactor())){
+                            inExistRule = true;
+                            customerGroupRuleDto.getAttributeReqList().add(getCustomerGroupRuleAttribute(customerGroupRule));
+                        }
+                    }
+                    if(!inExistRule){
+                        customerGroupRuleReqList.add(getCustomerGroupRuleDto(customerGroupRule, customerGroupDto));
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private CustomerGroupRuleDto getCustomerGroupRuleDto(CustomerGroupRule customerGroupRule, CustomerGroupDto customerGroupDto) {
+        CustomerGroupRuleDto customerGroupRuleDto = new  CustomerGroupRuleDto();
+        customerGroupRuleDto.setCgRuleFactor(customerGroupRule.getCgRuleFactor());
+        customerGroupRuleDto.setGroupId(customerGroupDto.getId());
+        customerGroupRuleDto.setStoreId(customerGroupDto.getStoreId());
+        List<CustomerGroupRuleAttributeDto> attributeReqList = new ArrayList<>();
+        attributeReqList.add(getCustomerGroupRuleAttribute(customerGroupRule));
+        customerGroupRuleDto.setAttributeReqList(attributeReqList);
+        return customerGroupRuleDto;
+    }
+
+    private CustomerGroupRuleAttributeDto getCustomerGroupRuleAttribute(CustomerGroupRule customerGroupRule) {
+        CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto = new CustomerGroupRuleAttributeDto();
+        customerGroupRuleAttributeDto.setAttribute(customerGroupRule.getAttributeName());
+        customerGroupRuleAttributeDto.setAttributeValue(customerGroupRule.getAttributeValue());
+        customerGroupRuleAttributeDto.setCompareOpertor(customerGroupRule.getCgRuleFactor());
+        return customerGroupRuleAttributeDto;
+    }
+
+    @Override
+    public List<String> calculateCustomerCount(CalculateCustomerCountReq req){
+        List<String> customerIdList = new ArrayList<>();
+        List<CustomerGroupDto> customerGroupDtoList = getCustomerGroupDto(req);
+        if(CollectionUtils.isNotEmpty(customerGroupDtoList)){
+            for(CustomerGroupDto customerGroupDto : customerGroupDtoList){
+                List<String> singleCustomerIdList = CustomerGroupFilterFactory.createFilter(customerGroupDto).filterProcess();
+                if(CollectionUtils.isEmpty(customerIdList)){
+                    customerIdList.addAll(singleCustomerIdList);
+                }else{
+                    customerIdList.addAll(singleCustomerIdList.stream().filter(item -> !customerIdList.contains(item)).collect(toList()));
+                }
+            }
+        }
+        return customerIdList;
+
+    }
 
 }
