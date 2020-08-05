@@ -12,6 +12,9 @@ import com.tuhu.store.saas.marketing.service.customergroup.filter.NoCustomerBeha
 
 import java.util.List;
 
+/**
+ * 根据过滤条件生成过滤器
+ */
 public class CustomerGroupFilterFactory {
 
     /**
@@ -20,8 +23,7 @@ public class CustomerGroupFilterFactory {
      * @param customerGroupDto
      * @return
      */
-    public static CustomerGroupFactorFilter createFilter(CustomerGroupDto customerGroupDto)
-            throws IllegalAccessException, InstantiationException {
+    public static CustomerGroupFactorFilter createFilter(CustomerGroupDto customerGroupDto){
         if(customerGroupDto==null||customerGroupDto.getStoreId()==null||customerGroupDto.getCustomerGroupRuleReqList()==null||customerGroupDto.getCustomerGroupRuleReqList().size()<=0){
             return null;
         }
