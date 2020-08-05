@@ -2,8 +2,11 @@ package com.tuhu.store.saas.marketing.remote.storeuser;
 
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.remote.reponse.CustomerDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.UserDTO;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.marketing.remote.request.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,5 +46,10 @@ public interface StoreUserClient {
     @PostMapping("/feign/user/storeInfo/getStoreInfo")
     BizBaseResponse<StoreInfoDTO> getStoreInfo(@RequestBody StoreInfoVO storeInfoVO);
 
+    @PostMapping(value = "/feign/crm/Customer/addCustomerForReservation")
+    BizBaseResponse<AddVehicleReq> addCustomerForReservation(@RequestBody AddVehicleReq addVehicleReq);
+
+    @PostMapping(value = "/feign/crm/Customer/getCustomerById")
+    BizBaseResponse<CustomerDTO> getCustomerById(@RequestBody BaseIdReqVO baseIdReqVO);
 
 }

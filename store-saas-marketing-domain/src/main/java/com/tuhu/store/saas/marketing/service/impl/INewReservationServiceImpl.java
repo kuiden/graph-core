@@ -1,11 +1,18 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.java.common.utils.DateUtil;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.SrvReservationStatusEnum;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
+import com.tuhu.store.saas.marketing.remote.reponse.CustomerDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.marketing.remote.request.BaseIdReqVO;
+import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.NewReservationReq;
@@ -18,6 +25,7 @@ import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.marketing.util.KeyResult;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +66,8 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     private SimpleDateFormat hmDateFormat = new SimpleDateFormat("HH:mm");
     SimpleDateFormat hmsDateFormat = new SimpleDateFormat("HH:mm:ss");
+    SimpleDateFormat ymdDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    SimpleDateFormat ymdhmDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     @Override
     public List<ReservationPeriodResp> getReservationPeroidList(ReservePeriodReq req) {
@@ -67,13 +77,21 @@ public class INewReservationServiceImpl implements INewReservationService {
 
         //算出时间段
         List<String> allTimePoints = getTimePoints(storeMap.get("startTime"),storeMap.get("endTime"),30);
-        for(String s : allTimePoints){
-            ReservationPeriodResp resp = new ReservationPeriodResp();
-            resp.setPeriodName(getPeriodName(s));
-            resp.setReserveStartTimeString(s);
+        try{
+            String ymd = ymdDateFormat.format(req.getDate());
+            for(String s : allTimePoints){
+                ReservationPeriodResp resp = new ReservationPeriodResp();
+                resp.setReserveStartTimeString(s);
+                resp.setPeriodName(s + "-" + getAfterTime(s));
+                resp.setReserveStartTime(ymdhmDateFormat.parse(ymd+" "+s).getTime());
+                resp.setReserveEndTime(ymdhmDateFormat.parse(ymd+" "+getAfterTime(s)).getTime());
 
-            result.add(resp);
+                result.add(resp);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
+
         //过滤出客户已预约过的
         if(StringUtils.isNotBlank(req.getCustomerId())){
             HashSet set = reservationOrderService.getReservedPeriodListForCustomer(req.getDate(), req.getCustomerId(), req.getStoreId());
@@ -89,15 +107,52 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
         //校验预约的时间
-        if (req.getEstimatedArriveTime().compareTo(new Date()) < 0) {//预约时间早于当前时间
-            return "预约时间不能小于当前时间";
+        if (req.getEstimatedArriveTime().compareTo(new Date()) < 0) {
+            throw new StoreSaasMarketingException("到店时间需大于当前时间");
         }
         Map<String,Date> storeMap = getStoreInfo(req.getStoreId());
         if (DateUtils.getHourOfDay(req.getEstimatedArriveTime()) < DateUtils.getHourOfDay(storeMap.get("startTime"))
                 || DateUtils.getHourOfDay(req.getEstimatedArriveTime()) > DateUtils.getHourOfDay(storeMap.get("endTime"))) {
-            return "当前预约时间段不能预约,门店预约时间范围为：" + hmDateFormat.format(storeMap.get("startTime")) + "-" + hmDateFormat.format(storeMap.get("endTime"));
+            throw new StoreSaasMarketingException("当前预约时间段不能预约,门店预约时间范围为：" + hmDateFormat.format(storeMap.get("startTime")) + "-" + hmDateFormat.format(storeMap.get("endTime")));
+        }
+        //如果手机号不在门店客户中，添加客户(只有小程序和H5会出现这种情况)
+        if(type != 0){
+            AddVehicleReq addVehicleReq = new AddVehicleReq();
+            addVehicleReq.setStoreId(req.getStoreId());
+            addVehicleReq.setTenantId(req.getTenantId());
+            CustomerReq customerReq = new CustomerReq();
+            customerReq.setPhoneNumber(req.getCustomerPhoneNumber());
+            customerReq.setGender("1");
+            customerReq.setCustomerType(CustomTypeEnumVo.PERSON.getCode());
+            customerReq.setCustomerSource("ZRJD");
+            customerReq.setIsVip(false);
+            addVehicleReq.setCustomerReq(customerReq);
+            BizBaseResponse<AddVehicleReq> addObject = storeUserClient.addCustomerForReservation(addVehicleReq);
+            if(addObject != null && addObject.getCode() != 10000){
+                throw new StoreSaasMarketingException("新建客户出错："+addObject.getMessage());
+            }
+            if(addObject != null && addObject.getData() != null && addObject.getData().getCustomerReq() != null){
+                req.setCustomerId(addObject.getData().getCustomerReq().getId());
+            }
+        }else {//门店的手机号会脱敏处理，所以这里根据客户id查
+            BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+            baseIdReqVO.setId(req.getCustomerId());
+            baseIdReqVO.setTenantId(req.getTenantId());
+            baseIdReqVO.setStoreId(req.getStoreId());
+            log.info("查询客户信息请求参数为:{}", JSONObject.toJSONString(baseIdReqVO));
+            BizBaseResponse<CustomerDTO> response = storeUserClient.getCustomerById(baseIdReqVO);
+            log.info("查询客户信息返回参数为:{}", JSONObject.toJSONString(response));
+            if (response != null && response.isSuccess() && response.getData() != null) {
+                req.setCustomerPhoneNumber(response.getData().getPhoneNumber());
+            }
+        }
+        //校验客户是否已预约过当前时间段
+        HashSet set = reservationOrderService.getReservedPeriodListForCustomer(req.getEstimatedArriveTime(), req.getCustomerId(), req.getStoreId());
+        if(CollectionUtils.isNotEmpty(set) && set.contains(hmDateFormat.format(req.getEstimatedArriveTime()))){
+            throw new StoreSaasMarketingException("您已预约该时段，请勿重复预约");
         }
 
+        //写表
         SrvReservationOrder order = new SrvReservationOrder();
         BeanUtils.copyProperties(req, order);
         String id = idKeyGen.generateId(req.getTenantId());
@@ -155,17 +210,17 @@ public class INewReservationServiceImpl implements INewReservationService {
     }
 
     /**
-     * 获取当前时间往后推半个小时的时间段
+     * 获取当前时间往后推半个小时的时间
      * @param time
      * @return
      */
-    private String getPeriodName(String time){
+    private String getAfterTime(String time){
         try {
             Calendar cal = Calendar.getInstance();
             cal.setTime(hmDateFormat.parse(time));
             cal.add(Calendar.MINUTE, 30);
             Date endTime = cal.getTime();
-            return time + "-" + hmDateFormat.format(endTime);
+            return hmDateFormat.format(endTime);
         }catch (Exception e){
             e.printStackTrace();
         }

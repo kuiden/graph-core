@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ClientEventRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.ClientEventRecordDAO">
+        <result column="id" property="id" />
+        <result column="event_type" property="eventType" />
+        <result column="content_type" property="contentType" />
+        <result column="content_value" property="contentValue" />
+        <result column="open_id" property="openId" />
+        <result column="customer_id" property="customerId" />
+        <result column="store_id" property="storeId" />
+        <result column="create_time" property="createTime" />
+        <result column="event_count" property="eventCount" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <select id="getClientEventRecordStatisticsByEvent" parameterType="map" resultType="map">
+        select COUNT(1) AS userCount, SUM(event_count) AS eventCount, event_type AS eventType
+        from client_event_record
+        <where>
+            <if test="eventTypes">
+                event_type IN
+                <foreach collection="eventTypes" item="eventType" open="(" close=")" separator=",">
+                    #{eventType,jdbcType=VARCHAR}
+                </foreach>
+            </if>
+            <if test="contentType">
+                and content_type = #{contentType,jdbcType=VARCHAR}
+            </if>
+            <if test="contentValue">
+                and content_value = #{contentValue,jdbcType=VARCHAR}
+            </if>
+            <if test="storeId">
+                and store_id = #{storeId,jdbcType=VARCHAR}
+            </if>
+        </where>
+        group by event_type
+    </select>
+
+</mapper>

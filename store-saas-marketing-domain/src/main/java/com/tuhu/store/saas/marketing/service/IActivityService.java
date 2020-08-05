@@ -165,7 +165,7 @@ public interface IActivityService {
      * @param storeId
      * @return
      */
-//    Map<String, Object> getActivityStatistics(Long activityId, Long storeId);
+    Map<String, Object> getActivityStatistics(Long activityId, Long storeId);
 
     /**
      * 营销活动报名回写工单id并修改使用状态

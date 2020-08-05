@@ -3,28 +3,12 @@
 <mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper" >
     <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.po.SrvReservationOrder" >
         <id column="id" property="id" jdbcType="VARCHAR" />
-        <result column="business_category_code" property="businessCategoryCode" jdbcType="VARCHAR" />
-        <result column="business_category_name" property="businessCategoryName" jdbcType="VARCHAR" />
         <result column="reservation_orde_no" property="reservationOrdeNo" jdbcType="VARCHAR" />
-        <result column="service_order_no" property="serviceOrderNo" jdbcType="VARCHAR" />
-        <result column="vehicle_id" property="vehicleId" jdbcType="VARCHAR" />
-        <result column="vehicle_model" property="vehicleModel" jdbcType="VARCHAR" />
-        <result column="license_plate_no" property="licensePlateNo" jdbcType="VARCHAR" />
-        <result column="VIN" property="vin" jdbcType="VARCHAR" />
-        <result column="driven_distance" property="drivenDistance" jdbcType="INTEGER" />
         <result column="customer_id" property="customerId" jdbcType="VARCHAR" />
         <result column="customer_name" property="customerName" jdbcType="VARCHAR" />
         <result column="customer_phone_number" property="customerPhoneNumber" jdbcType="VARCHAR" />
-        <result column="delegater_name" property="delegaterName" jdbcType="VARCHAR" />
-        <result column="delegater_phone_number" property="delegaterPhoneNumber" jdbcType="VARCHAR" />
-        <result column="technician_id" property="technicianId" jdbcType="VARCHAR" />
-        <result column="technician_name" property="technicianName" jdbcType="VARCHAR" />
         <result column="estimated_arrive_time" property="estimatedArriveTime" jdbcType="TIMESTAMP" />
         <result column="status" property="status" jdbcType="CHAR" />
-        <result column="amount" property="amount" jdbcType="BIGINT" />
-        <result column="discount_amount" property="discountAmount" jdbcType="BIGINT" />
-        <result column="actual_amount" property="actualAmount" jdbcType="BIGINT" />
-        <result column="extra_amount" property="extraAmount" jdbcType="BIGINT" />
         <result column="description" property="description" jdbcType="VARCHAR" />
         <result column="source_channel" property="sourceChannel" jdbcType="VARCHAR" />
         <result column="store_id" property="storeId" jdbcType="BIGINT" />
@@ -33,8 +17,7 @@
         <result column="update_user" property="updateUser" jdbcType="VARCHAR" />
         <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
         <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
-        <result column="is_delete" property="isDelete" jdbcType="BIT" />
-        <result column="product_id" property="productId" jdbcType="VARCHAR" />
+        <result column="is_delete" property="delete" jdbcType="BIT" />
         <result column="teminal" property="teminal" jdbcType="TINYINT" />
     </resultMap>
 
@@ -43,7 +26,8 @@
     from srv_reservation_order
     where date_format(estimated_arrive_time, '%Y-%m-%d') = #{dateString}
           and store_id=#{storeId}
-          and status!='CANCEL' and customer_id=#{customerId}
+          and status in('CONFIRMED','UNCONFIRMED')
+          and customer_id=#{customerId}
   </select>
 
 </mapper>
