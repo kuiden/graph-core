@@ -21,6 +21,11 @@
 			<artifactId>store-saas-marketing-common</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.tuhu</groupId>
+			<artifactId>store-saas-product-facade</artifactId>
+		</dependency>
+
 	</dependencies>
 
 </project>

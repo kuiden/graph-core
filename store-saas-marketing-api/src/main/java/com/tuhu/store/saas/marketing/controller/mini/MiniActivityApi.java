@@ -10,7 +10,9 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
+import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +27,15 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/mini/activity")
+@Api(tags = "B端营销活动服务")
 public class MiniActivityApi extends BaseApi {
 
     @Autowired
     private IActivityService iActivityService;
 
-    @RequestMapping(value = "/add", method = RequestMethod.POST)
+    @PostMapping(value = "/add")
     @ApiOperation(value = "营销活动新增")
-    public BizBaseResponse add(@Validated @RequestBody AddActivityReq addActivityReq) {
+    public BizBaseResponse<AddActivityReq> add(@Validated @RequestBody AddActivityReq addActivityReq) {
         addActivityReq.setCreateUser(super.getUserId());
         addActivityReq.setStoreId(super.getStoreId());
         addActivityReq.setTenantId(super.getTenantId());
@@ -41,16 +44,16 @@ public class MiniActivityApi extends BaseApi {
         return BizBaseResponse.success(addActivityReq);
     }
 
-    @RequestMapping(value = "/detail", method = {RequestMethod.GET, RequestMethod.POST})
+    @PostMapping(value = "/detail")
     @ApiOperation(value = "营销活动详情")
-    public BizBaseResponse detail(Long activityId) {
-        ActivityResp addActivityReq = iActivityService.getActivityDetailById(activityId, super.getStoreId());
-        return BizBaseResponse.success(addActivityReq);
+    public BizBaseResponse<ActivityResp> detail(@Validated @RequestBody ActivityDetailReq req) {
+        ActivityResp activityResp = iActivityService.getActivityDetailById(req.getActivityId(), super.getStoreId());
+        return BizBaseResponse.success(activityResp);
     }
 
-    @RequestMapping(value = "/changeStatus", method = {RequestMethod.GET, RequestMethod.POST})
+    @PostMapping(value = "/changeStatus")
     @ApiOperation(value = "营销活动上下架")
-    public BizBaseResponse<Object> changeStatus(@Validated @RequestBody ActivityChangeStatusReq activityChangeStatusReq) {
+    public BizBaseResponse<ActivityChangeStatusReq> changeStatus(@Validated @RequestBody ActivityChangeStatusReq activityChangeStatusReq) {
         activityChangeStatusReq.setStoreId(super.getStoreId());
         activityChangeStatusReq.setUserId(super.getUserId());
         activityChangeStatusReq = iActivityService.changeActivityStatus(activityChangeStatusReq);
@@ -58,9 +61,9 @@ public class MiniActivityApi extends BaseApi {
     }
 
 
-    @RequestMapping(value = "/list", method = {RequestMethod.GET, RequestMethod.POST})
+    @PostMapping(value = "/list")
     @ApiOperation(value = "营销活动查询")
-    public BizBaseResponse list(@Validated @RequestBody ActivityListReq activityListReq) {
+    public BizBaseResponse<PageInfo<ActivityResp>> list(@Validated @RequestBody ActivityListReq activityListReq) {
         activityListReq.setUserId(this.getUserId());
         activityListReq.setStoreId(this.getStoreId());
         activityListReq.setTenantId(this.getTenantId());
@@ -68,9 +71,9 @@ public class MiniActivityApi extends BaseApi {
         return BizBaseResponse.success(activityRespPageInfo);
     }
 
-    @RequestMapping(value = "/edit", method = RequestMethod.POST)
+    @PostMapping(value = "/edit")
     @ApiOperation(value = "营销活动编辑")
-    public BizBaseResponse edit(@Validated @RequestBody EditActivityReq editActivityReq) {
+    public BizBaseResponse<EditActivityReq> edit(@Validated @RequestBody EditActivityReq editActivityReq) {
         editActivityReq.setUpdateUser(super.getUserId());
         editActivityReq.setStoreId(super.getStoreId());
         editActivityReq.setTenantId(super.getTenantId());
@@ -165,9 +168,11 @@ public class MiniActivityApi extends BaseApi {
 
     @GetMapping("/getQrCode")
     @ApiOperation(value = "获取小程序码图片")
-    public BizBaseResponse getActivityQrUrl(@Validated ActivityQrCodeRequest req) {
+    public BizBaseResponse<QrCodeResp> getActivityQrUrl(@Validated ActivityQrCodeRequest req) {
         String url = iActivityService.getQrCodeForActivity(req);
-        return BizBaseResponse.success(url);
+        QrCodeResp resp = new QrCodeResp();
+        resp.setUrl(url);
+        return BizBaseResponse.success(resp);
     }
 
 //    @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})

@@ -2,7 +2,9 @@ package com.tuhu.store.saas.marketing.remote.storeuser;
 
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.UserDTO;
+import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +39,9 @@ public interface StoreUserClient {
      */
     @PostMapping("/feign/user/storeInfo/getUserInfoMapByIdList")
     BizBaseResponse<Map<String, UserDTO>> getUserInfoMapByIdList(@RequestBody List<String> list);
+
+    @PostMapping("/feign/user/storeInfo/getStoreInfo")
+    BizBaseResponse<StoreInfoDTO> getStoreInfo(@RequestBody StoreInfoVO storeInfoVO);
 
 
 }
