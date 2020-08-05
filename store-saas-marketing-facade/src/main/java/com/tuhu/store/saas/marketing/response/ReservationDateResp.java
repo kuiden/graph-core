@@ -20,24 +20,12 @@ public class ReservationDateResp implements Serializable {
      日期
      */
     @ApiModelProperty(value = "日期")
-    private Date reserveDate;
+    private Long reservationDate;
 
     /**
-     日期
+     * 当天预约数
      */
-    @ApiModelProperty(value = "日期String")
-    private String reserveDateString;
-
-    /**
-     * 星期数
-     */
-    @ApiModelProperty(value = "星期数")
-    private int dayOfWeek;
-
-    /**
-     * 星期几
-     */
-    @ApiModelProperty(value = "星期几")
-    private String dayOfWeekName;
+    @ApiModelProperty(value = "当天预约数")
+    private Integer count;
 
 }
