@@ -72,6 +72,7 @@ public class UserInterceptor implements HandlerInterceptor {
         user.setId(0L);
         user.setCompanyId(227L);
         user.setTenantId(179L);
+        user.setStoreId(227L);
         user.setStoreNo("MDBU824");
         UserContextHolder.setUser(user);
         return true;
