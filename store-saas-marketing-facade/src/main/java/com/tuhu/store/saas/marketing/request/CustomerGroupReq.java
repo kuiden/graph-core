@@ -43,10 +43,10 @@ public class CustomerGroupReq implements Serializable {
     private Date createDateStart;
     @ApiModelProperty("最大开始创建时间")
     private Date createDateEnd;
-    @ApiModelProperty("生日开始时间")
-    private Date brithdayStart;
-    @ApiModelProperty("生日结束时间")
-    private Date brithdayEnd;
+    @ApiModelProperty("生日开始月份")
+    private Long brithdayStart;
+    @ApiModelProperty("生日结束月份")
+    private Long brithdayEnd;
     @ApiModelProperty("保养开始时间")
     private Date maintenanceDateStart;
     @ApiModelProperty("保养结束时间")

@@ -202,14 +202,14 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
         }
         if(amap.get(CustomerGroupConstant.BRITHDAY_FACTOR)!=null){
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String brithdayStartStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_LEAST_DAY);
-            String brithdayEndStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_MAX_DAY);
+          //  SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String brithdayStartStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_LEAST_MONTH);
+            String brithdayEndStr = amap.get(CustomerGroupConstant.BRITHDAY_FACTOR).get(CustomerGroupConstant.BRITHDAY_MAX_MONTH);
             if(StringUtils.isNotBlank(brithdayStartStr)){
-                customerGroupResp.setBrithdayStart(sf.parse(brithdayStartStr));
+                customerGroupResp.setBrithdayStart(Long.valueOf(brithdayStartStr));
             }
             if(StringUtils.isNotBlank(brithdayEndStr)){
-                customerGroupResp.setBrithdayEnd(sf.parse(brithdayEndStr));
+                customerGroupResp.setBrithdayEnd(Long.valueOf(brithdayEndStr));
             }
 
         }
@@ -254,34 +254,61 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         customerGroupDto.setGroupName(req.getConsumerGroupName());
         customerGroupDto.setStoreId(req.getStoreId());
         customerGroupDto.setId(req.getId());
+        StringBuffer sb = new StringBuffer();
         List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
         if(req.getNoConsumerDay()!=null && req.getNoConsumerDay()>0){
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.NO_CONSUMER_BEHAVIOR_FACTOR,String.valueOf(req.getNoConsumerDay()),CustomerGroupConstant.RECENT_DAYS,"=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
+            sb.append(req.getNoConsumerDay()+"天内无消费").append(";");
         }
         if(req.getHasConsumerDay()!=null && req.getHasConsumerDay()>0){
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.HAS_CONSUMER_FACTOR,String.valueOf(req.getHasConsumerDay()),CustomerGroupConstant.RECENT_DAYS,"=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
+            sb.append(req.getHasConsumerDay()+"天内消费过").append(";");
         }
         if(req.getConsumerTimeDay()!=null && req.getConsumerTimeDay()>0 && ((req.getConsumerLeastTime()!=null && req.getConsumerLeastTime()>=0)|| (req.getConsumerMaxTime()!=null && req.getConsumerMaxTime()>0))){
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CONSUMER_TIME_FACTOR,String.valueOf(req.getConsumerTimeDay()),CustomerGroupConstant.RECENT_DAYS,"=");
+            sb.append(req.getConsumerTimeDay()+"天内消费次数");
+            boolean hasLeast =false;
+            boolean hasMax =false;
             if(req.getConsumerLeastTime()!=null && req.getConsumerLeastTime()>0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerLeastTime()),CustomerGroupConstant.LEAST_TIME,">=");
+                hasLeast = true;
             }
             if(req.getConsumerMaxTime()!=null && req.getConsumerMaxTime()>0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerMaxTime()),CustomerGroupConstant.MAX_TIME,"<=");
+                hasMax = true;
             }
             customerGroupRuleReqList.add(customerGroupRuleDto);
+            if(hasLeast && hasMax){
+              sb.append(req.getConsumerLeastTime()).append("-").append(req.getConsumerMaxTime()).append("次;");
+            }else if(hasLeast){
+                sb.append(req.getConsumerLeastTime()).append("次以上;");
+            }else{
+                sb.append(req.getConsumerMaxTime()).append("次以下;");
+            }
         }
         if(req.getConsumerAmountDay()!=null && req.getConsumerAmountDay()>0 && ((req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount()>=0)|| (req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount()>0))){
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR,String.valueOf(req.getConsumerAmountDay()),CustomerGroupConstant.RECENT_DAYS,"=");
+            sb.append(req.getConsumerAmountDay()+"天内消费金额");
+            boolean hasLeast =false;
+            boolean hasMax =false;
             if(req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount()>0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerLeastAmount()),CustomerGroupConstant.LEAST_AMOUNT,">=");
+                hasLeast = true;
             }
             if(req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount()>0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerMaxAmount()),CustomerGroupConstant.MAX_AMOUNT,"<=");
+                hasMax = true;
             }
             customerGroupRuleReqList.add(customerGroupRuleDto);
+            if(hasLeast && hasMax){
+                sb.append(req.getConsumerLeastAmount()).append("-").append(req.getConsumerMaxAmount()).append("元;");
+            }else if (hasLeast){
+                sb.append(req.getConsumerLeastAmount()).append("元以上;");
+            }else{
+                sb.append(req.getConsumerMaxAmount()).append("元以下;");
+            }
         }
         if (req.getConsumerServeDay() != null && req.getConsumerServeDay() > 0 && CollectionUtils.isNotEmpty(req.getConsumerServeList())) {
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CONSUMER_SERVER_FACTOR,String.valueOf(req.getConsumerServeDay()),CustomerGroupConstant.RECENT_DAYS,"=");
@@ -296,9 +323,9 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
 
         if(req.getBrithdayStart()!=null && req.getBrithdayEnd()!=null){
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.BRITHDAY_FACTOR,sf.format(req.getBrithdayStart()),CustomerGroupConstant.BRITHDAY_LEAST_DAY,">=");
-            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, sf.format(req.getBrithdayEnd()),CustomerGroupConstant.BRITHDAY_MAX_DAY,"<=");
+            //SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.BRITHDAY_FACTOR,String.valueOf(req.getBrithdayStart()),CustomerGroupConstant.BRITHDAY_LEAST_MONTH,">=");
+            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getBrithdayEnd()),CustomerGroupConstant.BRITHDAY_MAX_MONTH,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
         }
         if(req.getMaintenanceDateStart()!=null && req.getMaintenanceDateEnd()!=null){

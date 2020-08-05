@@ -41,9 +41,9 @@ public class CustomerGroupResp implements Serializable {
     //创建时间结束值
     private Date createDateEnd;
     //生日开始时间
-    private Date brithdayStart;
+    private Long brithdayStart;
     //生日结束时间
-    private Date brithdayEnd;
+    private Long brithdayEnd;
     //保养开始时间
     private Date maintenanceDateStart;
     //保养结束时间
