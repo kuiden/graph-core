@@ -11,6 +11,7 @@ import com.tuhu.store.saas.order.request.serviceorder.ListCustomerInfoReq;
 import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.List;
 
@@ -46,14 +47,19 @@ public class NoCustomerBehaviorFilter extends AbstractFactorFilter {
         //有消费记录的客户
         List<ListCustomerInfoResp> customers = serviceOrderClient.listCustomerInfos(req).getData();
         List<String> hasBehavCus = Lists.newArrayList();
-        if(customers!=null){
+        if(CollectionUtils.isNotEmpty(customers)){
             for(ListCustomerInfoResp customerInfoResp : customers){
                 hasBehavCus.add(customerInfoResp.getCostumerId());
             }
         }
         List<String> result = Lists.newArrayList();
+
+        if(CollectionUtils.isNotEmpty(hasBehavCus)){
+
+        }
         for(CustomerDTO customerDTO : customerDTOS){
-            if(hasBehavCus!=null&&!hasBehavCus.contains(customerDTO.getId())&&!result.contains(customerDTO.getId())){
+            if((hasBehavCus==null|| hasBehavCus!=null&&!hasBehavCus.contains(customerDTO.getId()))
+                    &&!result.contains(customerDTO.getId())){
                 //无消费记录的客户列表
                 result.add(customerDTO.getId());
             }

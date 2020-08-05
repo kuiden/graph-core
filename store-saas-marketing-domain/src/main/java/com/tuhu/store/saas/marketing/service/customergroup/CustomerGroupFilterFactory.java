@@ -82,7 +82,6 @@ public class CustomerGroupFilterFactory {
                 }
                 cugFilters.add(customerBehaviorFilter);
             }
-            //TODO
         }
         return getFinalGroupFilter(cugFilters);
     }
