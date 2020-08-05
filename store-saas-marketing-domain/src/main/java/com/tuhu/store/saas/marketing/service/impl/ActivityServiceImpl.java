@@ -51,12 +51,16 @@ import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.user.rpc.vo.EventTypeEnum;
 //import com.tuhu.saas.user.rpc.vo.StoreInfoVO;
 import com.tuhu.store.saas.marketing.service.IActivityService;
+import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
+import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.dto.StoreInfoDTO;
+import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
+import com.tuhu.store.saas.user.vo.EventTypeEnum;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.xiangyun.versionhelper.VersionHelper;
@@ -126,6 +130,9 @@ public class ActivityServiceImpl implements IActivityService {
 
     @Autowired
     private MiniAppService miniAppService;
+
+    @Autowired
+    private IClientEventRecordService iClientEventRecordService;
 
 //    @Autowired
 //    private IRemindService iRemindService;
@@ -1619,101 +1626,101 @@ public class ActivityServiceImpl implements IActivityService {
         return map;
     }
 
-//    @Override
-//    public Map<String, Object> getActivityStatistics(Long activityId, Long storeId) {
-//        log.info("查询营销活动数据请求activityId：{}, storeId: {}", activityId, storeId);
-//        if (null == activityId || activityId.compareTo(0L) <= 0) {
-//            throw new MarketingException("入参无效");
-//        }
-//        ActivityResp activityResp = this.getActivityDetailById(activityId, storeId);
-//        if (null == activityResp) {
-//            //禁止查询非本门店的营销活动
-//            throw new MarketingException("活动不存在");
-//        }
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("activityCode", activityResp.getActivityCode());
-//        result.put("applyCount", activityResp.getApplyCount());//报名数
-//
-//        //统计已核销的人数
-//        int writeOffCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 1);
-//        int orderCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 3);
-//        writeOffCount += orderCount;
-//        result.put("writeOffCount", Integer.valueOf(writeOffCount));//核销数
-//        result.put("orderCount", Integer.valueOf(orderCount));//开单数
-//        //计算活动金额
-//        List<ActivityItemResp> itemRespList = activityResp.getItems();
-//        BigDecimal singleActivityAmount = BigDecimal.ZERO;
-//        if (null == itemRespList || CollectionUtils.isEmpty(itemRespList)){
-//            if (null != activityResp.getActivityPrice()){
-//                singleActivityAmount = activityResp.getActivityPrice();
-//            }
-//        }else {
-//            for (ActivityItemResp activityItemResp : itemRespList) {
-//                singleActivityAmount = singleActivityAmount.add(new BigDecimal(activityItemResp.getActualPrice()).multiply(new BigDecimal(activityItemResp.getItemQuantity())));
-//            }
-//        }
-//        //收入合计
-//        result.put("totalAmount", singleActivityAmount.multiply(new BigDecimal(writeOffCount)));
-//        //开单金额
-//        result.put("orderAmount", singleActivityAmount.multiply(new BigDecimal(orderCount)));
-//        //查询访问数据
-//        ClientEventRecordVO clientEventRecordVO = new ClientEventRecordVO();
-//        clientEventRecordVO.setStoreId(String.valueOf(storeId));
-//        clientEventRecordVO.setContentType("activity");
-//        clientEventRecordVO.setContentValue(activityResp.getEncryptedCode());
-//        List<String> eventTypes = Arrays.stream(EventTypeEnum.values()).map(EventTypeEnum::getCode).collect(Collectors.toList());
-//        clientEventRecordVO.setEventTypes(eventTypes);
-//        try {
-//            Map<String, ClientEventRecordDTO> clientEventRecordDTOMap = iStoreInfoRpcService.getClientEventRecordStatisticsByEvent(clientEventRecordVO);
-//            if (MapUtils.isNotEmpty(clientEventRecordDTOMap)) {
-//                ClientEventRecordDTO visitRecord = clientEventRecordDTOMap.get(EventTypeEnum.VISIT.getCode());
-//                if (null != visitRecord) {
-//                    result.put("visitUserCount", visitRecord.getUserCount());//访问用户数
-//                    result.put("visitCount", visitRecord.getEventCount());//活动访问数
-//                } else {
-//                    result.put("visitUserCount", Long.valueOf(0));//访问用户数
-//                    result.put("visitCount", Long.valueOf(0));//活动访问数
-//                }
-//                ClientEventRecordDTO forwardRecord = clientEventRecordDTOMap.get(EventTypeEnum.WECHATFORWARD.getCode());
-//                if (null != forwardRecord) {
-//                    result.put("wechatForwardCount", forwardRecord.getEventCount());//活动转发数
-//                } else {
-//                    result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
-//                }
-//                //通过登录新增的客户数
-//                ClientEventRecordDTO loginRecord = clientEventRecordDTOMap.get(EventTypeEnum.LOGIN.getCode());
-//                Long loginUserCount = null;
-//                if (null != loginRecord) {
-//                    loginUserCount = loginRecord.getUserCount();
-//                }
-//                if (null == loginUserCount) {
-//                    loginUserCount = 0L;
-//                }
-//                //通过注册新增的客户数
-//                Long registeredUserCount = null;
-//                ClientEventRecordDTO registeredRecord = clientEventRecordDTOMap.get(EventTypeEnum.REGISTERED.getCode());
-//                if (null != registeredRecord) {
-//                    registeredUserCount = registeredRecord.getUserCount();
-//                }
-//                if (null == registeredUserCount) {
-//                    registeredUserCount = 0L;
-//                }
-//                result.put("newUserCount", loginUserCount + registeredUserCount);//新增客户数
-//            } else {
-//                result.put("visitUserCount", Long.valueOf(0));//访问用户数
-//                result.put("visitCount", Long.valueOf(0));//活动访问数
-//                result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
-//                result.put("newUserCount", Long.valueOf(0));//新增客户数
-//            }
-//        } catch (Exception e) {
-//            log.error("查询营销活动数据远程接口异常", e);
-//            result.put("visitUserCount", Long.valueOf(0));//访问用户数
-//            result.put("visitCount", Long.valueOf(0));//活动访问数
-//            result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
-//            result.put("newUserCount", Long.valueOf(0));//新增客户数
-//        }
-//        return result;
-//    }
+    @Override
+    public Map<String, Object> getActivityStatistics(Long activityId, Long storeId) {
+        log.info("查询营销活动数据请求activityId：{}, storeId: {}", activityId, storeId);
+        if (null == activityId || activityId.compareTo(0L) <= 0) {
+            throw new MarketingException("入参无效");
+        }
+        ActivityResp activityResp = this.getActivityDetailById(activityId, storeId);
+        if (null == activityResp) {
+            //禁止查询非本门店的营销活动
+            throw new MarketingException("活动不存在");
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("activityCode", activityResp.getActivityCode());
+        result.put("applyCount", activityResp.getApplyCount());//报名数
+
+        //统计已核销的人数
+        int writeOffCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 1);
+        int orderCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 3);
+        writeOffCount += orderCount;
+        result.put("writeOffCount", Integer.valueOf(writeOffCount));//核销数
+        result.put("orderCount", Integer.valueOf(orderCount));//开单数
+        //计算活动金额
+        List<ActivityItemResp> itemRespList = activityResp.getItems();
+        BigDecimal singleActivityAmount = BigDecimal.ZERO;
+        if (null == itemRespList || CollectionUtils.isEmpty(itemRespList)){
+            if (null != activityResp.getActivityPrice()){
+                singleActivityAmount = activityResp.getActivityPrice();
+            }
+        }else {
+            for (ActivityItemResp activityItemResp : itemRespList) {
+                singleActivityAmount = singleActivityAmount.add(new BigDecimal(activityItemResp.getActualPrice()).multiply(new BigDecimal(activityItemResp.getItemQuantity())));
+            }
+        }
+        //收入合计
+        result.put("totalAmount", singleActivityAmount.multiply(new BigDecimal(writeOffCount)));
+        //开单金额
+        result.put("orderAmount", singleActivityAmount.multiply(new BigDecimal(orderCount)));
+        //查询访问数据
+        ClientEventRecordVO clientEventRecordVO = new ClientEventRecordVO();
+        clientEventRecordVO.setStoreId(String.valueOf(storeId));
+        clientEventRecordVO.setContentType("activity");
+        clientEventRecordVO.setContentValue(activityResp.getEncryptedCode());
+        List<String> eventTypes = Arrays.stream(EventTypeEnum.values()).map(EventTypeEnum::getCode).collect(Collectors.toList());
+        clientEventRecordVO.setEventTypes(eventTypes);
+        try {
+            Map<String, ClientEventRecordDTO> clientEventRecordDTOMap = iClientEventRecordService.getClientEventRecordStatisticsByEvent(clientEventRecordVO);
+            if (MapUtils.isNotEmpty(clientEventRecordDTOMap)) {
+                ClientEventRecordDTO visitRecord = clientEventRecordDTOMap.get(EventTypeEnum.VISIT.getCode());
+                if (null != visitRecord) {
+                    result.put("visitUserCount", visitRecord.getUserCount());//访问用户数
+                    result.put("visitCount", visitRecord.getEventCount());//活动访问数
+                } else {
+                    result.put("visitUserCount", Long.valueOf(0));//访问用户数
+                    result.put("visitCount", Long.valueOf(0));//活动访问数
+                }
+                ClientEventRecordDTO forwardRecord = clientEventRecordDTOMap.get(EventTypeEnum.WECHATFORWARD.getCode());
+                if (null != forwardRecord) {
+                    result.put("wechatForwardCount", forwardRecord.getEventCount());//活动转发数
+                } else {
+                    result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
+                }
+                //通过登录新增的客户数
+                ClientEventRecordDTO loginRecord = clientEventRecordDTOMap.get(EventTypeEnum.LOGIN.getCode());
+                Long loginUserCount = null;
+                if (null != loginRecord) {
+                    loginUserCount = loginRecord.getUserCount();
+                }
+                if (null == loginUserCount) {
+                    loginUserCount = 0L;
+                }
+                //通过注册新增的客户数
+                Long registeredUserCount = null;
+                ClientEventRecordDTO registeredRecord = clientEventRecordDTOMap.get(EventTypeEnum.REGISTERED.getCode());
+                if (null != registeredRecord) {
+                    registeredUserCount = registeredRecord.getUserCount();
+                }
+                if (null == registeredUserCount) {
+                    registeredUserCount = 0L;
+                }
+                result.put("newUserCount", loginUserCount + registeredUserCount);//新增客户数
+            } else {
+                result.put("visitUserCount", Long.valueOf(0));//访问用户数
+                result.put("visitCount", Long.valueOf(0));//活动访问数
+                result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
+                result.put("newUserCount", Long.valueOf(0));//新增客户数
+            }
+        } catch (Exception e) {
+            log.error("查询营销活动数据远程接口异常", e);
+            result.put("visitUserCount", Long.valueOf(0));//访问用户数
+            result.put("visitCount", Long.valueOf(0));//活动访问数
+            result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
+            result.put("newUserCount", Long.valueOf(0));//新增客户数
+        }
+        return result;
+    }
 
 //    @Override
 //    public int updateActivityCustomerForOrder(ActivityCustomerRpcVO activityCustomerRpcVO) {

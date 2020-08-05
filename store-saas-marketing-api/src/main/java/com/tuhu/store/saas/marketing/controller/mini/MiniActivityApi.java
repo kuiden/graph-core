@@ -8,12 +8,14 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 //import com.tuhu.saas.crm.rpc.dto.ActivityCustomerDTO;
 //import com.tuhu.saas.crm.rpc.vo.ServiceOrderActivityUseVO;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/mini/activity")
 @Api(tags = "B端营销活动服务")
+@Slf4j
 public class MiniActivityApi extends BaseApi {
 
     @Autowired
@@ -175,12 +178,12 @@ public class MiniActivityApi extends BaseApi {
         return BizBaseResponse.success(resp);
     }
 
-//    @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "获取活动数据")
-//    public ResultObject getActivityStatistics(Long activityId) {
-//        Map<String, Object> activityStatistics = iActivityService.getActivityStatistics(activityId, super.getStoreId());
-//        return new ResultObject(activityStatistics);
-//    }
+    @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})
+    @ApiOperation(value = "获取活动数据")
+    public BizBaseResponse getActivityStatistics(Long activityId) {
+        Map<String, Object> activityStatistics = iActivityService.getActivityStatistics(activityId, super.getStoreId());
+        return new BizBaseResponse(activityStatistics);
+    }
 //
 //    @RequestMapping(value = "/useOrCancelActivityCustomer", method = {RequestMethod.GET, RequestMethod.POST})
 //    @ApiOperation(value = "活动开单与取消开单")
