@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 //import com.codingapi.tx.annotation.TxTransaction;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -50,6 +51,7 @@ import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.user.rpc.vo.EventTypeEnum;
 //import com.tuhu.saas.user.rpc.vo.StoreInfoVO;
 import com.tuhu.store.saas.marketing.service.IActivityService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
@@ -122,8 +124,8 @@ public class ActivityServiceImpl implements IActivityService {
     @Autowired
     private CustomerClient iCustomerService;
 
-//    @Autowired
-//    private MiniAppService miniAppService;
+    @Autowired
+    private MiniAppService miniAppService;
 
 //    @Autowired
 //    private IRemindService iRemindService;
@@ -1541,15 +1543,14 @@ public class ActivityServiceImpl implements IActivityService {
             return activity.getWeixinQrUrl();
         }
 
-//        String qrUrl = miniAppService.getQrCodeUrl("end_user_client", request.getScene(), request.getPath(), request.getWidth());
+        String qrUrl = miniAppService.getQrCodeUrl(request.getScene(), request.getPath(), request.getWidth());
 
         /*
           保存url到activity表
         */
-//        saveQrUrlToDatabase(request.getActivityId(), qrUrl);
-//
-//        return qrUrl;
-        return "";
+        saveQrUrlToDatabase(request.getActivityId(), qrUrl);
+
+        return qrUrl;
     }
 
     /**
