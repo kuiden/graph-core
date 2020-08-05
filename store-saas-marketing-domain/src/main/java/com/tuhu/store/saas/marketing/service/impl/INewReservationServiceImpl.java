@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.java.common.utils.DateUtil;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.enums.SrvReservationStatusEnum;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
@@ -86,7 +87,7 @@ public class INewReservationServiceImpl implements INewReservationService {
     }
 
     @Override
-    public String addReservation(NewReservationReq req) {
+    public String addReservation(NewReservationReq req, Integer type) {
         //校验预约的时间
         if (req.getEstimatedArriveTime().compareTo(new Date()) < 0) {//预约时间早于当前时间
             return "预约时间不能小于当前时间";
@@ -102,7 +103,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         String id = idKeyGen.generateId(req.getTenantId());
         order.setId(id);
         order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser().getStoreNo()));
-        order.setStatus("UNCONFIRMED");
+        order.setStatus(type == 0 ? SrvReservationStatusEnum.CONFIRMED.getEnumCode() : SrvReservationStatusEnum.UNCONFIRMED.getEnumCode());
         order.setCreateTime(new Date());
         order.setUpdateTime(new Date());
         order.setCreateUser(req.getUserId());

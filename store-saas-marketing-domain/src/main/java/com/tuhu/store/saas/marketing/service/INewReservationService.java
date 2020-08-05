@@ -18,5 +18,11 @@ public interface INewReservationService {
 
     List<ReservationPeriodResp> getReservationPeroidList(ReservePeriodReq req);
 
-    String addReservation(NewReservationReq req);
+    /**
+     * 创建预约单
+     * @param req
+     * @param type 门店：0，小程序和H5:1
+     * @return
+     */
+    String addReservation(NewReservationReq req, Integer type);
 }

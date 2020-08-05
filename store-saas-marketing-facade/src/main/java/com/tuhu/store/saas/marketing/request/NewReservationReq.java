@@ -15,6 +15,11 @@ public class NewReservationReq implements Serializable {
     private static final long serialVersionUID = -6270134858919379753L;
 
     /**
+     * 预约单id,修改时使用
+     */
+    private String id;
+
+    /**
      * 创建用户ID
      */
     private String userId;
