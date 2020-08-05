@@ -187,18 +187,22 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             String serverArrayStr = amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.SPECIFIED_SERVER);
             if(StringUtils.isNotBlank(serverArrayStr)){
                 List<String> serverIdList =  Arrays.asList(serverArrayStr.split(","));
-                queryServerList(customerGroupResp, serverIdList);
+                List<GoodsResp> goodsResps = queryServerList(customerGroupResp.getStoreId(), customerGroupResp.getTenantId(), serverIdList);
+                if(CollectionUtils.isNotEmpty(goodsResps)){
+                    customerGroupResp.setConsumerServeList(goodsResps);
+                }
+
             }
         }
         if(amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR)!=null){
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            //SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String createdTimeStartStr = amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR).get(CustomerGroupConstant.CREATED_TIME_LEAST_DAY);
             String createdTimeEndStr = amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR).get(CustomerGroupConstant.CREATED_TIME_MAX_DAY);
             if(StringUtils.isNotBlank(createdTimeStartStr)) {
-                customerGroupResp.setCreateDateStart(sf.parse(createdTimeStartStr));
+                customerGroupResp.setCreateDateStart(Long.valueOf(createdTimeStartStr));
             }
             if(StringUtils.isNotBlank(createdTimeEndStr)) {
-                customerGroupResp.setCreateDateEnd(sf.parse(createdTimeEndStr));
+                customerGroupResp.setCreateDateEnd(Long.valueOf(createdTimeEndStr));
             }
         }
         if(amap.get(CustomerGroupConstant.BRITHDAY_FACTOR)!=null){
@@ -226,25 +230,27 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
     }
 
-    private void queryServerList(CustomerGroupResp customerGroupResp, List<String> serverIdList) {
+    private List<GoodsResp> queryServerList(Long storeId,Long tenantId ,List<String> serverIdList) {
         //查询服务
+        List<GoodsResp> goodsResps = null;
         GoodsListVO goodsVO = new GoodsListVO();
-        goodsVO.setStoreId(customerGroupResp.getStoreId());
-        goodsVO.setTenantId(customerGroupResp.getTenantId());
+        goodsVO.setStoreId(storeId);
+        goodsVO.setTenantId(tenantId);
         goodsVO.setGoodsIdSet( new HashSet<String>(serverIdList));
         BizBaseResponse<List<GoodsData>> goodsByIDListResponse = storeProductClient.getGoodsByIDList(goodsVO);
         if(goodsByIDListResponse!=null) {
             List<GoodsData> goodsDataList = goodsByIDListResponse.getData();
             if(CollectionUtils.isNotEmpty(goodsDataList)) {
-                List<GoodsResp> goodsResps = new ArrayList<>();
+                goodsResps = new ArrayList<>();
                 for(GoodsData goodsData : goodsDataList){
                     GoodsResp goodsResp = new GoodsResp();
                     BeanUtils.copyProperties(goodsData,goodsResp);
                     goodsResps.add(goodsResp);
                 }
-                customerGroupResp.setConsumerServeList(goodsResps);
+              //  customerGroupResp.setConsumerServeList(goodsResps);
             }
         }
+        return goodsResps;
     }
 
 
@@ -314,19 +320,50 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CONSUMER_SERVER_FACTOR,String.valueOf(req.getConsumerServeDay()),CustomerGroupConstant.RECENT_DAYS,"=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, StringUtils.join(req.getConsumerServeList().toArray(),","),CustomerGroupConstant.SPECIFIED_SERVER,"in");
             customerGroupRuleReqList.add(customerGroupRuleDto);
+            // 查询服务
+            List<GoodsResp> goodsResps = queryServerList(req.getStoreId(), req.getTenantId(), req.getConsumerServeList());
+            if(CollectionUtils.isNotEmpty(goodsResps)) {
+                sb.append(req.getConsumerServeDay() + "天内消费过");
+                for(int i=0;i<goodsResps.size();i++){
+                    sb.append(goodsResps.get(i).getName());
+                    if(i<goodsResps.size()-1){
+                        sb.append(",");
+                    }
+                }
+                sb.append("服务;");
+            }
         }
-        if(req.getCreateDateStart()!=null && req.getCreateDateEnd()!=null){
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CREATED_TIME_FACTOR,sf.format(req.getCreateDateStart()),CustomerGroupConstant.CREATED_TIME_LEAST_DAY,">=");
-            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, sf.format(req.getCreateDateEnd()),CustomerGroupConstant.CREATED_TIME_MAX_DAY,"<=");
-            customerGroupRuleReqList.add(customerGroupRuleDto);
+        if(req.getCreateDateStart()!=null || req.getCreateDateEnd()!=null){
+            boolean hasLeast =false;
+            boolean hasMax =false;
+            if(req.getCreateDateStart()!=null) {
+                hasLeast = true;
+                CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CREATED_TIME_FACTOR, String.valueOf(req.getCreateDateStart()), CustomerGroupConstant.CREATED_TIME_LEAST_DAY, ">=");
+                if(req.getCreateDateEnd()!=null){
+                    hasMax = true;
+                    customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getCreateDateEnd()),CustomerGroupConstant.CREATED_TIME_MAX_DAY,"<=");
+                }
+                customerGroupRuleReqList.add(customerGroupRuleDto);
+            }else{
+                hasMax =true;
+                CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CREATED_TIME_FACTOR, String.valueOf(req.getCreateDateEnd()), CustomerGroupConstant.CREATED_TIME_MAX_DAY, "<=");
+                customerGroupRuleReqList.add(customerGroupRuleDto);
+            }
+            sb.append("创建时间");
+            if(hasLeast && hasMax){
+                sb.append(req.getCreateDateStart()).append("-").append(req.getCreateDateEnd()).append("天;");
+            }else if(hasLeast){
+                sb.append("大于").append(req.getCreateDateStart()).append("天;");
+            }else{
+                sb.append("小于").append(req.getCreateDateEnd()).append("天;");
+            }
         }
 
         if(req.getBrithdayStart()!=null && req.getBrithdayEnd()!=null){
-            //SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.BRITHDAY_FACTOR,String.valueOf(req.getBrithdayStart()),CustomerGroupConstant.BRITHDAY_LEAST_MONTH,">=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getBrithdayEnd()),CustomerGroupConstant.BRITHDAY_MAX_MONTH,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
+            sb.append("生日在").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("客户;");
         }
         if(req.getMaintenanceDateStart()!=null && req.getMaintenanceDateEnd()!=null){
             SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -335,6 +372,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             customerGroupRuleReqList.add(customerGroupRuleDto);
         }
         customerGroupDto.setCustomerGroupRuleReqList(customerGroupRuleReqList);
+        customerGroupDto.setGroupDesc(sb.toString());
         return customerGroupDto;
     }
 
