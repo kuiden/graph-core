@@ -5,10 +5,7 @@ import com.tuhu.store.saas.marketing.constant.CustomerGroupConstant;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleAttributeDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleDto;
-import com.tuhu.store.saas.marketing.service.customergroup.filter.HasCustomerBehaviorFilter;
-import com.tuhu.store.saas.marketing.service.customergroup.filter.HasCustomerBehaviorMoneyFilter;
-import com.tuhu.store.saas.marketing.service.customergroup.filter.HasCustomerBehaviorTimesFilter;
-import com.tuhu.store.saas.marketing.service.customergroup.filter.NoCustomerBehaviorFilter;
+import com.tuhu.store.saas.marketing.service.customergroup.filter.*;
 
 import java.util.List;
 
@@ -81,6 +78,36 @@ public class CustomerGroupFilterFactory {
                     }
                 }
                 cugFilters.add(customerBehaviorFilter);
+            }else if(CustomerGroupConstant.CREATED_TIME_FACTOR.equalsIgnoreCase(cgrule)){
+                //创建时间过滤
+                CustomerCreateTimeFilter customerCreateTimeFilter = new CustomerCreateTimeFilter();
+                customerCreateTimeFilter.setStoreId(storeId);
+                for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
+                    if(CustomerGroupConstant.CREATED_TIME_LEAST_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
+                        customerCreateTimeFilter.setGreaterThanDay(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }else if(CustomerGroupConstant.CREATED_TIME_MAX_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
+                        customerCreateTimeFilter.setLessThanDay(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }
+                }
+                cugFilters.add(customerCreateTimeFilter);
+            }else if(CustomerGroupConstant.BRITHDAY_FACTOR.equalsIgnoreCase(cgrule)){
+                //生日过滤
+                CustomerBirthdayFilter birthdayFilter = new CustomerBirthdayFilter();
+                birthdayFilter.setStoreId(storeId);
+                for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
+                    if(CustomerGroupConstant.BRITHDAY_LEAST_MONTH.equalsIgnoreCase(attributeDto.getAttribute())){
+                        birthdayFilter.setLeastMonth(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }else if(CustomerGroupConstant.BRITHDAY_MAX_MONTH.equalsIgnoreCase(attributeDto.getAttribute())){
+                        birthdayFilter.setMaxMonth(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }
+                }
+                cugFilters.add(birthdayFilter);
+            }else if(CustomerGroupConstant.MAINTENANCE_FACTOR.equalsIgnoreCase(cgrule)){
+                //保养过滤
+                //TODO
+            }else if(CustomerGroupConstant.CONSUMER_SERVER_FACTOR.equalsIgnoreCase(cgrule)){
+                //指定服务过滤
+                //TODO
             }
         }
         return getFinalGroupFilter(cugFilters);
