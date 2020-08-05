@@ -13,6 +13,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGrou
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
 import com.tuhu.store.saas.marketing.response.CustomerGroupResp;
+import com.tuhu.store.saas.marketing.response.GoodsResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleAttributeDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleDto;
@@ -166,18 +167,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             String serverArrayStr = amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.SPECIFIED_SERVER);
             if(StringUtils.isNotBlank(serverArrayStr)){
                 List<String> serverIdList =  Arrays.asList(serverArrayStr.split(","));
-                //查询服务
-                GoodsListVO goodsVO = new GoodsListVO();
-                goodsVO.setStoreId(customerGroupResp.getStoreId());
-                goodsVO.setTenantId(customerGroupResp.getTenantId());
-                goodsVO.setGoodsIdSet( new HashSet<String>(serverIdList));
-                BizBaseResponse<List<GoodsData>> goodsByIDListResponse = storeProductClient.getGoodsByIDList(goodsVO);
-                if(goodsByIDListResponse!=null) {
-                    List<GoodsData> goodsDataList = goodsByIDListResponse.getData();
-                    if(CollectionUtils.isNotEmpty(goodsDataList)) {
-                        customerGroupResp.setConsumerServeList(serverIdList);
-                    }
-                }
+                queryServerList(customerGroupResp, serverIdList);
             }
         }
         if(amap.get(CustomerGroupConstant.CREATED_TIME_FACTOR)!=null){
@@ -212,6 +202,27 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             if(StringUtils.isNotBlank(maintenanceEndStr)){
                 customerGroupResp.setMaintenanceDateEnd(sf.parse(maintenanceEndStr));
+            }
+        }
+    }
+
+    private void queryServerList(CustomerGroupResp customerGroupResp, List<String> serverIdList) {
+        //查询服务
+        GoodsListVO goodsVO = new GoodsListVO();
+        goodsVO.setStoreId(customerGroupResp.getStoreId());
+        goodsVO.setTenantId(customerGroupResp.getTenantId());
+        goodsVO.setGoodsIdSet( new HashSet<String>(serverIdList));
+        BizBaseResponse<List<GoodsData>> goodsByIDListResponse = storeProductClient.getGoodsByIDList(goodsVO);
+        if(goodsByIDListResponse!=null) {
+            List<GoodsData> goodsDataList = goodsByIDListResponse.getData();
+            if(CollectionUtils.isNotEmpty(goodsDataList)) {
+                List<GoodsResp> goodsResps = new ArrayList<>();
+                for(GoodsData goodsData : goodsDataList){
+                    GoodsResp goodsResp = new GoodsResp();
+                    BeanUtils.copyProperties(goodsData,goodsResp);
+                    goodsResps.add(goodsResp);
+                }
+                customerGroupResp.setConsumerServeList(goodsResps);
             }
         }
     }

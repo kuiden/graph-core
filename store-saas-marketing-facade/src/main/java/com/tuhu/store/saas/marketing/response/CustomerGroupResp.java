@@ -35,7 +35,7 @@ public class CustomerGroupResp implements Serializable {
     //近几天消费服务
     private Long consumerServeDay;
     //近几天消费服务列表
-    private List<String> consumerServeList;
+    private List<GoodsResp> consumerServeList;
     //开始创建时间
     private Date createDateStart;
     //创建时间结束值
@@ -52,7 +52,7 @@ public class CustomerGroupResp implements Serializable {
     private String createUser;
     private String updateUser;
     //服务列表
-    private List<GoodsResp> serverList;
+   // private List<GoodsResp> serverList;
 
     private Long tenantId;
 
