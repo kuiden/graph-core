@@ -54,4 +54,6 @@ public class CustomerGroupResp implements Serializable {
     //服务列表
     private List<GoodsResp> serverList;
 
+    private Long tenantId;
+
 }
