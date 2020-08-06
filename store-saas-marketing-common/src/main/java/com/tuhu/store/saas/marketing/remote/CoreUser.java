@@ -3,7 +3,7 @@ package com.tuhu.store.saas.marketing.remote;
 import lombok.Data;
 
 @Data
-public class CustomUser extends BaseUser {
+public class CoreUser extends BaseUser {
 
     private Integer systemCode;
 

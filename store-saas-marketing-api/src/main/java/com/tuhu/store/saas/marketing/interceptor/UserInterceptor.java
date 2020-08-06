@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
-import com.tuhu.store.saas.marketing.remote.CustomUser;
+import com.tuhu.store.saas.marketing.remote.CoreUser;
 import com.tuhu.store.saas.marketing.remote.admin.StoreAdminClient;
 import com.tuhu.store.saas.marketing.remote.reponse.UserDTO;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
@@ -40,25 +40,25 @@ public class UserInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        CustomUser customUser = null;
+        CoreUser coreUser = null;
         if (StringUtils.isBlank(authorization)) {
             BizBaseResponse bizBaseResponse = new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递Authorization信息");
             this.writeResponse(response, bizBaseResponse);
             return false;
         } else {
             try {
-                BizBaseResponse<CustomUser> customUserResult = storeAdminClient.getUserByToken();
+                BizBaseResponse<CoreUser> customUserResult = storeAdminClient.getUserByToken();
                 log.info("==storeAdminClient.getUserByToken=={}", JSONObject.toJSONString(customUserResult));
                 if (null != customUserResult && customUserResult.isSuccess() && null != customUserResult.getData()) {
-                    customUser = customUserResult.getData();
-                    makeUpStoreUserInfo(customUser);
+                    coreUser = customUserResult.getData();
+                    makeUpStoreUserInfo(coreUser);
                 }
             } catch (Exception e) {
                 log.error("获取登录用户信息异常", e);
             }
         }
-        if (null != customUser) {
-            UserContextHolder.setUser(customUser);
+        if (null != coreUser) {
+            UserContextHolder.setUser(coreUser);
             return true;
         }
         BizBaseResponse bizBaseResponse = new BizBaseResponse(BizErrorCodeEnum.INVALID_ACCESS_TOKEN, "您的身份已过期，请重新登录");
@@ -78,24 +78,24 @@ public class UserInterceptor implements HandlerInterceptor {
     /**
      * 补充门店用户信息
      *
-     * @param customUser
+     * @param coreUser
      */
-    private void makeUpStoreUserInfo(CustomUser customUser) {
-        if (null == customUser || null == customUser.getAccountId()) {
+    private void makeUpStoreUserInfo(CoreUser coreUser) {
+        if (null == coreUser || null == coreUser.getAccountId()) {
             return;
         }
         try {
-            BizBaseResponse<UserDTO> userDTOResponse = storeUserClient.getStoreUserInfoBySysUserId(customUser.getAccountId());
+            BizBaseResponse<UserDTO> userDTOResponse = storeUserClient.getStoreUserInfoBySysUserId(coreUser.getAccountId());
             log.info("==makeUpStoreUserInfo=userDTOResponse:{}", JSONObject.toJSONString(userDTOResponse));
             if (null != userDTOResponse && userDTOResponse.isSuccess() && null != userDTOResponse.getData()) {
-                BeanUtils.copyProperties(userDTOResponse.getData(),customUser);
-                customUser.setStoreUserId(userDTOResponse.getData().getId());
+                BeanUtils.copyProperties(userDTOResponse.getData(), coreUser);
+                coreUser.setStoreUserId(userDTOResponse.getData().getId());
             }
         } catch (Exception e) {
             log.error("根据组织机构用户ID获取门店用户信息异常", e);
         }
-        if (StringUtils.isBlank(customUser.getStoreUserId())) {
-            customUser.setStoreUserId(String.valueOf(customUser.getId()));
+        if (StringUtils.isBlank(coreUser.getStoreUserId())) {
+            coreUser.setStoreUserId(String.valueOf(coreUser.getId()));
         }
     }
 
