@@ -1,14 +1,14 @@
 package com.tuhu.store.saas.marketing.controller;
 
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
-import com.tuhu.store.saas.marketing.remote.CustomUser;
+import com.tuhu.store.saas.marketing.remote.CoreUser;
 
 /**
  * @author jiangyuhang
  * @date 2018/10/2418:20
  */
 public class BaseApi {
-    public CustomUser getUserCore() {
+    public CoreUser getUserCore() {
         return UserContextHolder.getUser();
     }
 
@@ -53,7 +53,7 @@ public class BaseApi {
     }
 
     public String getPhone() {
-        CustomUser user = this.getUserCore();
+        CoreUser user = this.getUserCore();
         if (null != user) {
             return user.getAccount();
         }

@@ -2,7 +2,7 @@ package com.tuhu.store.saas.marketing.remote.admin;
 
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.marketing.remote.CustomUser;
+import com.tuhu.store.saas.marketing.remote.CoreUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.PostMapping;
 public interface StoreAdminClient {
 
     @PostMapping("/login/getUserByToken")
-    BizBaseResponse<CustomUser> getUserByToken();
+    BizBaseResponse<CoreUser> getUserByToken();
 }
