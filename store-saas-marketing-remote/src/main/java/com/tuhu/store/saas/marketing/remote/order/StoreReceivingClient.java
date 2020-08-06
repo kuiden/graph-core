@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-@FeignClient(name = "${feign.application.jvstore.order.name}",fallbackFactory = StoreReceivingRemoteFactory.class)
+@FeignClient(name = "${feign.application.orderServer.name}",fallbackFactory = StoreReceivingRemoteFactory.class)
 public interface StoreReceivingClient {
 
     /**
