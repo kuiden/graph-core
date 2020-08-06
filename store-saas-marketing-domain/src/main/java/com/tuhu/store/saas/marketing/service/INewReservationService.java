@@ -25,4 +25,6 @@ public interface INewReservationService {
      * @return
      */
     String addReservation(NewReservationReq req, Integer type);
+
+    Boolean updateReservation(NewReservationReq req);
 }

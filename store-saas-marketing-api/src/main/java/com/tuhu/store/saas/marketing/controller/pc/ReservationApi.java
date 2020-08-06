@@ -2,28 +2,29 @@ package com.tuhu.store.saas.marketing.controller.pc;
 
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
+import com.tuhu.store.saas.marketing.service.ISMSService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * @Author: yanglanqing
@@ -36,6 +37,9 @@ public class ReservationApi extends BaseApi {
 
     @Autowired
     INewReservationService iNewReservationService;
+
+    @Autowired
+    ISMSService ismsService;
 
     @PostMapping(value = "/periodList")
     @ApiOperation(value = "预约时间段list")
@@ -60,10 +64,16 @@ public class ReservationApi extends BaseApi {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "请输入您的手机号码");
         }
         if(StringUtils.isBlank(req.getVerificationCode())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码不能为空");
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "请输入验证码");
         }
         if(StringUtils.isBlank(req.getSourceChannel())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约渠道不能为空");
+        }
+        if(StringUtils.isBlank(req.getCouponId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动id不能为空");
+        }
+        if(StringUtils.isBlank(req.getCouponName())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动名称不能为空");
         }
         req.setTeminal(0);
         result.setData(iNewReservationService.addReservation(req,2));
@@ -108,17 +118,17 @@ public class ReservationApi extends BaseApi {
     public BizBaseResponse<Boolean> updateForC(@RequestBody NewReservationReq req){
         BizBaseResponse<Boolean> result = BizBaseResponse.success();
         validParam(req);
+        if(StringUtils.isBlank(req.getId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约单id不能为空");
+        }
         if(StringUtils.isBlank(req.getCustomerPhoneNumber())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户手机号不能为空");
         }
         if(StringUtils.isBlank(req.getCustomerId())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
         }
-        if(StringUtils.isBlank(req.getSourceChannel())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约渠道不能为空");
-        }
         req.setTeminal(2);
-        result.setData(true);
+        result.setData(iNewReservationService.updateReservation(req));
         return result;
     }
 
@@ -191,6 +201,41 @@ public class ReservationApi extends BaseApi {
     public BizBaseResponse cancelReservation(@RequestBody CancelReservationReq req){
         BizBaseResponse rs = new BizBaseResponse("取消成功");
         return rs;
+    }
+
+    @GetMapping(value = "/sendVerificationCode")
+    @ApiOperation(value = "发送验证码")
+    public BizBaseResponse sendVerificationCode(String phoneNumber){
+        if(StringUtils.isBlank(phoneNumber)){
+            throw new StoreSaasMarketingException("请输入手机号");
+        }
+        //生成随机验证码
+        int  maxNum = 10;
+        int i;
+        int count = 0;
+        char[] str = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+        StringBuffer pwd = new StringBuffer("");
+        Random r = new Random();
+        while(count < 6){
+            i = Math.abs(r.nextInt(maxNum));
+            if (i >= 0 && i < str.length) {
+                pwd.append(str[i]);
+                count ++;
+            }
+        }
+        //发送短信
+        SMSParameter smsParameter = new SMSParameter();
+        smsParameter.setPhone(phoneNumber);
+        smsParameter.setTemplateId("415424");
+        List<String> list = new ArrayList<>();
+        list.add(pwd.toString());
+        smsParameter.setDatas(list);
+        SMSResult result = ismsService.sendCommonSms(smsParameter);
+        if(result != null && result.isSendResult()){
+            //todo
+            //将验证码写入redis，并设置过期时间
+        }
+        return new BizBaseResponse("发送成功");
     }
 
 

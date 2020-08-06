@@ -69,5 +69,15 @@ public class NewReservationReq implements Serializable {
      */
     private String sourceChannel;
 
+    /**
+     * 优惠券或活动id
+     */
+    private String couponId;
+
+    /**
+     * 优惠券或活动名称
+     */
+    private String couponName;
+
 }
 

@@ -7,6 +7,7 @@ import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.SrvReservationStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.remote.reponse.CustomerDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
@@ -58,6 +59,9 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Autowired
     private StoreRedisUtils storeRedisUtils;
 
+    @Autowired
+    SrvReservationOrderMapper reservationOrderMapper;
+
     @Value("${store.open.time.begin}")
     private String openBeginTime = "10:00:00";
 
@@ -74,7 +78,6 @@ public class INewReservationServiceImpl implements INewReservationService {
         List<ReservationPeriodResp> result = new ArrayList<>();
         //查门店营业时间
         Map<String,Date> storeMap = getStoreInfo(req.getStoreId());
-
         //算出时间段
         List<String> allTimePoints = getTimePoints(storeMap.get("startTime"),storeMap.get("endTime"),30);
         try{
@@ -91,7 +94,6 @@ public class INewReservationServiceImpl implements INewReservationService {
         }catch (Exception e){
             e.printStackTrace();
         }
-
         //过滤出客户已预约过的
         if(StringUtils.isNotBlank(req.getCustomerId())){
             HashSet set = reservationOrderService.getReservedPeriodListForCustomer(req.getDate(), req.getCustomerId(), req.getStoreId());
@@ -106,6 +108,44 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
+        //校验
+        validReservationParam(req,type);
+        //写表
+        SrvReservationOrder order = new SrvReservationOrder();
+        BeanUtils.copyProperties(req, order);
+        String id = idKeyGen.generateId(req.getTenantId());
+        order.setId(id);
+        order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser().getStoreNo()));
+        order.setStatus(type == 0 ? SrvReservationStatusEnum.CONFIRMED.getEnumCode() : SrvReservationStatusEnum.UNCONFIRMED.getEnumCode());
+        order.setCreateTime(new Date());
+        order.setUpdateTime(new Date());
+        order.setCreateUser(req.getUserId());
+        order.setUpdateUser(req.getUserId());
+        order.setDelete(false);
+        reservationOrderService.insert(order);
+        return id;
+    }
+
+    @Override
+    public Boolean updateReservation(NewReservationReq req) {
+        //校验
+        validReservationParam(req,1);
+        //查原有预约单是否存在
+        SrvReservationOrder oldOrder = reservationOrderMapper.selectById(req.getId());
+        if(oldOrder == null){
+            throw new StoreSaasMarketingException("预约单id:"+req.getId()+"无效");
+        }
+        SrvReservationOrder newOrder = new SrvReservationOrder();
+        BeanUtils.copyProperties(req,newOrder);
+        return reservationOrderService.update(newOrder) > 0;
+    }
+
+    /**
+     * 新增和修改预约单共同的校验
+     * @param req
+     * @param type 门店：0,小程序：1,H5:2
+     */
+    private void validReservationParam(NewReservationReq req, Integer type){
         //校验预约的时间
         if (req.getEstimatedArriveTime().compareTo(new Date()) < 0) {
             throw new StoreSaasMarketingException("到店时间需大于当前时间");
@@ -120,9 +160,11 @@ public class INewReservationServiceImpl implements INewReservationService {
             AddVehicleReq addVehicleReq = new AddVehicleReq();
             addVehicleReq.setStoreId(req.getStoreId());
             addVehicleReq.setTenantId(req.getTenantId());
+            //H5短链进来拿不到操作人id,故H5创建的用户操作人为空，小程序的操作人也只拿得到客户id
+            addVehicleReq.setUserId(req.getCustomerId());
             CustomerReq customerReq = new CustomerReq();
             customerReq.setPhoneNumber(req.getCustomerPhoneNumber());
-            customerReq.setGender("1");
+            customerReq.setGender("3");
             customerReq.setCustomerType(CustomTypeEnumVo.PERSON.getCode());
             customerReq.setCustomerSource("ZRJD");
             customerReq.setIsVip(false);
@@ -151,21 +193,6 @@ public class INewReservationServiceImpl implements INewReservationService {
         if(CollectionUtils.isNotEmpty(set) && set.contains(hmDateFormat.format(req.getEstimatedArriveTime()))){
             throw new StoreSaasMarketingException("您已预约该时段，请勿重复预约");
         }
-
-        //写表
-        SrvReservationOrder order = new SrvReservationOrder();
-        BeanUtils.copyProperties(req, order);
-        String id = idKeyGen.generateId(req.getTenantId());
-        order.setId(id);
-        order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser().getStoreNo()));
-        order.setStatus(type == 0 ? SrvReservationStatusEnum.CONFIRMED.getEnumCode() : SrvReservationStatusEnum.UNCONFIRMED.getEnumCode());
-        order.setCreateTime(new Date());
-        order.setUpdateTime(new Date());
-        order.setCreateUser(req.getUserId());
-        order.setUpdateUser(req.getUserId());
-        order.setDelete(false);
-        reservationOrderService.insert(order);
-        return id;
     }
 
     //获取门店营业时间

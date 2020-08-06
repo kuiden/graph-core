@@ -12,4 +12,6 @@ import java.util.Map;
 public interface SrvReservationOrderMapper extends BaseMapper<SrvReservationOrder> {
 
     List<Map> getReservedPeriodListForCustomer(HashMap params);
+
+    int updateReservation(SrvReservationOrder order);
 }
