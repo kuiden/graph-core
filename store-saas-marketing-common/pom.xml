@@ -35,6 +35,10 @@
 			<artifactId>store-saas-order-facade</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.cloopen</groupId>
+			<artifactId>java-sms-sdk</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
