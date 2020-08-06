@@ -41,45 +41,6 @@ public class ReservationApi extends BaseApi {
     @Autowired
     ISMSService ismsService;
 
-    @PostMapping(value = "/periodList")
-    @ApiOperation(value = "预约时间段list")
-    public BizBaseResponse getReservePeriodList(@RequestBody ReservePeriodReq req) {
-        BizBaseResponse<List<ReservationPeriodResp>> result = BizBaseResponse.success();
-        if(req.getStoreId() == null){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "门店ID不能为空");
-        }
-        if(req.getDate() == null){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "日期不能为空");
-        }
-        result.setData(iNewReservationService.getReservationPeroidList(req));
-        return result;
-    }
-
-    @PostMapping(value = "/newForH5")
-    @ApiOperation(value = "H5新增预约单")
-    public BizBaseResponse<String> newForH5(@RequestBody NewReservationReq req){
-        BizBaseResponse<String> result = BizBaseResponse.success();
-        validParam(req);
-        if(StringUtils.isBlank(req.getCustomerPhoneNumber())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "请输入您的手机号码");
-        }
-        if(StringUtils.isBlank(req.getVerificationCode())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "请输入验证码");
-        }
-        if(StringUtils.isBlank(req.getSourceChannel())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约渠道不能为空");
-        }
-        if(StringUtils.isBlank(req.getCouponId())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动id不能为空");
-        }
-        if(StringUtils.isBlank(req.getCouponName())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动名称不能为空");
-        }
-        req.setTeminal(0);
-        result.setData(iNewReservationService.addReservation(req,2));
-        return result;
-    }
-
     @PostMapping(value = "/newForB")
     @ApiOperation(value = "B端新增预约单")
     public BizBaseResponse<String> newForB(@RequestBody NewReservationReq req){
@@ -201,41 +162,6 @@ public class ReservationApi extends BaseApi {
     public BizBaseResponse cancelReservation(@RequestBody CancelReservationReq req){
         BizBaseResponse rs = new BizBaseResponse("取消成功");
         return rs;
-    }
-
-    @GetMapping(value = "/sendVerificationCode")
-    @ApiOperation(value = "发送验证码")
-    public BizBaseResponse sendVerificationCode(String phoneNumber){
-        if(StringUtils.isBlank(phoneNumber)){
-            throw new StoreSaasMarketingException("请输入手机号");
-        }
-        //生成随机验证码
-        int  maxNum = 10;
-        int i;
-        int count = 0;
-        char[] str = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-        StringBuffer pwd = new StringBuffer("");
-        Random r = new Random();
-        while(count < 6){
-            i = Math.abs(r.nextInt(maxNum));
-            if (i >= 0 && i < str.length) {
-                pwd.append(str[i]);
-                count ++;
-            }
-        }
-        //发送短信
-        SMSParameter smsParameter = new SMSParameter();
-        smsParameter.setPhone(phoneNumber);
-        smsParameter.setTemplateId("415424");
-        List<String> list = new ArrayList<>();
-        list.add(pwd.toString());
-        smsParameter.setDatas(list);
-        SMSResult result = ismsService.sendCommonSms(smsParameter);
-        if(result != null && result.isSendResult()){
-            //todo
-            //将验证码写入redis，并设置过期时间
-        }
-        return new BizBaseResponse("发送成功");
     }
 
 
