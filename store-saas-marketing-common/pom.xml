@@ -20,10 +20,6 @@
 			<groupId>com.tuhu</groupId>
 			<artifactId>tuhu-spring-cloud-api-common</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.tuhu</groupId>
-			<artifactId>tuhu-boot-starter-logger</artifactId>
-		</dependency>
 
 		<dependency>
 			<groupId>com.tuhu</groupId>
