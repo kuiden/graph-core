@@ -119,4 +119,13 @@ public class EditActivityReq implements Serializable {
     @Valid
     @NotNull(message = "活动项目不能为空")
     private List<ActivityItemReq> items;
+
+    @ApiModelProperty("有效期：0-有效天数，1-截止日期")
+    private Integer activeType;
+
+    @ApiModelProperty("报名活动后有效天数")
+    private Integer activeDays;
+
+    @ApiModelProperty("活动截止日期")
+    private Date activeDate;
 }

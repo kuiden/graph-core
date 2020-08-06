@@ -6,7 +6,9 @@ import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleAttributeDto;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupRuleDto;
 import com.tuhu.store.saas.marketing.service.customergroup.filter.*;
+import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -107,7 +109,22 @@ public class CustomerGroupFilterFactory {
                 //TODO
             }else if(CustomerGroupConstant.CONSUMER_SERVER_FACTOR.equalsIgnoreCase(cgrule)){
                 //指定服务过滤
-                //TODO
+                ConsumerServerListFilter consumerServerListFilter = new ConsumerServerListFilter();
+                consumerServerListFilter.setStoreId(storeId);
+                for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
+                    if(CustomerGroupConstant.RECENT_DAYS.equalsIgnoreCase(attributeDto.getAttribute())){
+                        consumerServerListFilter.setRecentDay(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }
+                    if(CustomerGroupConstant.SPECIFIED_SERVER.equalsIgnoreCase(attributeDto.getAttribute())){
+                        String serverIds = attributeDto.getAttributeValue();
+                        if(StringUtils.isNotBlank(serverIds)){
+                            String[] serverIdArray = serverIds.split(",");
+                            List<String> serverIdList = Arrays.asList(serverIdArray);
+                            consumerServerListFilter.setServerIdList(serverIdList);
+                        }
+                    }
+                }
+                cugFilters.add(consumerServerListFilter);
             }
         }
         return getFinalGroupFilter(cugFilters);

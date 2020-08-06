@@ -21,13 +21,34 @@
         <result column="teminal" property="teminal" jdbcType="TINYINT" />
     </resultMap>
 
-  <select id="getReservedPeriodListForCustomer" parameterType="Map" resultType="java.util.HashMap">
-    select date_format(estimated_arrive_time, '%H:%i') as dayString
-    from srv_reservation_order
-    where date_format(estimated_arrive_time, '%Y-%m-%d') = #{dateString}
-          and store_id=#{storeId}
-          and status in('CONFIRMED','UNCONFIRMED')
-          and customer_id=#{customerId}
-  </select>
+    <select id="getReservedPeriodListForCustomer" parameterType="Map" resultType="java.util.HashMap">
+        select date_format(estimated_arrive_time, '%H:%i') as dayString
+        from srv_reservation_order
+        where date_format(estimated_arrive_time, '%Y-%m-%d') = #{dateString}
+              and store_id=#{storeId}
+              and status in('CONFIRMED','UNCONFIRMED')
+              and customer_id=#{customerId}
+    </select>
+
+    <update id="updateReservation" parameterType="com.tuhu.store.saas.marketing.po.SrvReservationOrder">
+        update srv_reservation_order
+        set estimated_arrive_time = #{estimatedArriveTime},customer_phone_number = #{customerPhoneNumber},customer_id = #{customerId},
+        description = #{description},status='UNCONFIRMED',update_time = now()
+        where id = #{id}
+    </update>
+
+    <select id="getCReservationList" resultMap="BaseResultMap">
+        select * from srv_reservation_order
+        where store_id = #{storeId}
+        and customer_id = #{customerId}
+        ORDER BY estimated_arrive_time DESC
+        limit ${(pageIndex-1)*pageSize},${pageSize}
+    </select>
+
+    <select id="getCReservationCount" resultType="java.lang.Long">
+        select count(1) from srv_reservation_order
+        where store_id = #{storeId}
+        and customer_id = #{customerId}
+    </select>
 
 </mapper>

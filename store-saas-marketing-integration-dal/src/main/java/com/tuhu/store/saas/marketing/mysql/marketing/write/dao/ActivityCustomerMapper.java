@@ -17,7 +17,7 @@ public interface ActivityCustomerMapper extends BaseMapper<ActivityCustomer> {
 
     int deleteByPrimaryKey(Long id);
 
-    Integer insert(ActivityCustomer record);
+    Integer insertEntity(ActivityCustomer record);
 
     int insertSelective(ActivityCustomer record);
 
