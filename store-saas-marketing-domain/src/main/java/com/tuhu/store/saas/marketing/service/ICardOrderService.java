@@ -1,6 +1,9 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
+import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
+import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 
 /**
  * @author wangyuqing
@@ -10,5 +13,7 @@ public interface ICardOrderService {
     /*
      * 开卡
      */
-    Long addCardOrder(AddCardOrderReq req);
+    String addCardOrder(AddCardOrderReq req);
+
+    PageInfo<CardOrderResp> getCardOrderList(ListCardOrderReq req);
 }

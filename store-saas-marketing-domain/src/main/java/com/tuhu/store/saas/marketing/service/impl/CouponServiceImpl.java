@@ -102,10 +102,10 @@ public class CouponServiceImpl implements ICouponService {
         String encryptedCode = Md5Util.md5(code, CodeFactory.codeSalt);
         coupon.setEncryptedCode(encryptedCode);
         couponMapper.insertSelective(coupon);
-        threadPoolTaskExecutor.submit(() -> {
-            //生成分享二维码
-            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
-        });
+//        threadPoolTaskExecutor.submit(() -> {
+//            //生成分享二维码
+//            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
+//        });
 //        //如果优惠券适用范围做了限定
 //        CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());
 //        if (CouponScopeTypeEnum.Category.equals(scopeTypeEnum)) {
@@ -332,11 +332,11 @@ public class CouponServiceImpl implements ICouponService {
             criteria.andCouponCodeEqualTo(coupon.getCode());
             int sendCount = customerCouponMapper.countByExample(customerCouponExample);
             resp.setSendNumber(Long.valueOf(sendCount + ""));
-            //未获取到分享二维码，则同步生成
-            if (null == coupon.getWeixinQrUrl()){
-                String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
-                resp.setWeixinQrUrl(url);
-            }
+//            //未获取到分享二维码，则同步生成
+//            if (null == coupon.getWeixinQrUrl()){
+//                String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
+//                resp.setWeixinQrUrl(url);
+//            }
         }
 //        Byte scopeType = coupon.getScopeType();
 //        if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {

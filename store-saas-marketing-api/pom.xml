@@ -21,6 +21,11 @@
 			<artifactId>store-saas-marketing-domain</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.ctrip.framework.apollo</groupId>
+			<artifactId>apollo-client</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<profiles>
