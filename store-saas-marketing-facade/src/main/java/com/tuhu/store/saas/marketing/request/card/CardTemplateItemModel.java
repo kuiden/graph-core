@@ -65,7 +65,7 @@ public class CardTemplateItemModel {
     @ApiModelProperty(value = "优惠金额", dataType = "String", required = false, example = "12")
     private BigDecimal discountAmount;
 
-    @Min(value = 1,message = "项目实额必须大于0元")
+   // @Min(value = 1,message = "项目实额必须大于0元")
     @ApiModelProperty(value = "卡实额", dataType = "String", required = false, example = "12")
     private BigDecimal actualAmount;
 

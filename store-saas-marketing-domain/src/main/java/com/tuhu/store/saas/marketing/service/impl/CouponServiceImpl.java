@@ -3,6 +3,9 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
+import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CouponScopeTypeEnum;
 import com.tuhu.store.saas.marketing.enums.CouponTypeEnum;
@@ -13,6 +16,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponScopeCategoryMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CouponScopeCategoryResp;
 import com.tuhu.store.saas.marketing.response.dto.*;
@@ -104,7 +108,7 @@ public class CouponServiceImpl implements ICouponService {
         couponMapper.insertSelective(coupon);
         threadPoolTaskExecutor.submit(() -> {
             //生成分享二维码
-            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
+            this.getQrCodeForCoupon(coupon.getId(), encryptedCode);
         });
 //        //如果优惠券适用范围做了限定
 //        CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());
@@ -124,12 +128,12 @@ public class CouponServiceImpl implements ICouponService {
     /*
      * 生成优惠券分享二维码
      */
-    private String getQrCodeForCoupon(Long couponId, String encryptedCode){
+    private String getQrCodeForCoupon(Long couponId, String encryptedCode) {
         QrCodeRequest qrCodeRequest = new QrCodeRequest();
         qrCodeRequest.setCouponId(couponId);
         qrCodeRequest.setWidth(250L);
         qrCodeRequest.setPath("pages/home/home");
-        qrCodeRequest.setScene("encryptedCode="+encryptedCode);
+        qrCodeRequest.setScene("encryptedCode=" + encryptedCode);
         return imCouponService.getQrCodeForCoupon(qrCodeRequest);
     }
 
@@ -319,7 +323,7 @@ public class CouponServiceImpl implements ICouponService {
         }
         Coupon coupon = couponMapper.selectByPrimaryKey(couponId);
         CouponResp resp = new CouponResp();
-        if (null != coupon){
+        if (null != coupon) {
             BeanUtils.copyProperties(coupon, resp);
             resp.setType(coupon.getType().intValue());
             resp.setValidityType(coupon.getValidityType().intValue());
@@ -333,7 +337,7 @@ public class CouponServiceImpl implements ICouponService {
             int sendCount = customerCouponMapper.countByExample(customerCouponExample);
             resp.setSendNumber(Long.valueOf(sendCount + ""));
             //未获取到分享二维码，则同步生成
-            if (null == coupon.getWeixinQrUrl()){
+            if (null == coupon.getWeixinQrUrl()) {
                 String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
                 resp.setWeixinQrUrl(url);
             }
@@ -424,7 +428,7 @@ public class CouponServiceImpl implements ICouponService {
                 couponResp.setStatus(coupon.getStatus().intValue());
                 couponResp.setAllowGet(coupon.getAllowGet().intValue());
                 couponResp.setScopeType(coupon.getScopeType().intValue());
-                couponResp.setSendNumber(grantNumberMap.getOrDefault(couponResp.getCode(),0L));
+                couponResp.setSendNumber(grantNumberMap.getOrDefault(couponResp.getCode(), 0L));
                 couponResp.setUsedNumber(usedNumberMap.getOrDefault(couponResp.getCode(), 0L));
                 couponRespList.add(couponResp);
             });
@@ -707,27 +711,34 @@ public class CouponServiceImpl implements ICouponService {
         return null;
     }
 
+    @Autowired
+    private CustomerClient customerClient;
+
     @Override
     @Transactional
     public List<CommonResp<CustomerCoupon>> sendCoupon(SendCouponReq sendCouponReq) {
+        log.info("sendCoupon-> 绑定优惠券逻辑开始->{}", sendCouponReq);
         List<String> codes = sendCouponReq.getCodes();
         if (CollectionUtils.isEmpty(codes)) {
             throw new StoreSaasMarketingException("发券优惠券编码列表为空");
+        }
+        if (codes.stream().filter(x -> StringUtils.isBlank(x)).count() > 0) {
+            throw new StoreSaasMarketingException("优惠券券码为空");
         }
         List<String> customerIds = sendCouponReq.getCustomerIds();
         if (CollectionUtils.isEmpty(customerIds)) {
             throw new StoreSaasMarketingException("要发券的客户为空");
         }
-        //查询客户列表TODO
-/*        CustomerExample customerExample = new CustomerExample();
-        CustomerExample.Criteria customerCriteria = customerExample.createCriteria();
-        customerCriteria.andIdIn(customerIds);
-        List<Customer> customerList = customerMapper.selectByExample(customerExample);*/
-        List<Customer> customerList = Lists.newArrayList();
-
-        if (CollectionUtils.isEmpty(customerList)) {
+        BaseIdsReqVO baseIdsReqVO = new BaseIdsReqVO();
+        baseIdsReqVO.setId(customerIds);
+        baseIdsReqVO.setStoreId(sendCouponReq.getStoreId());
+        baseIdsReqVO.setTenantId(sendCouponReq.getTenantId());
+        BizBaseResponse<List<CustomerDTO>> crmResult = customerClient.getCustomerByIds(baseIdsReqVO);
+        if (crmResult.getData() == null || CollectionUtils.isEmpty(crmResult.getData())) {
             throw new StoreSaasMarketingException("要发券的客户不存在");
         }
+        //查询需要发券的客户
+        List<CustomerDTO> customerList = crmResult.getData();
         if (customerList.size() > customerIds.size()) {
             throw new StoreSaasMarketingException("要发券的部分客户不存在");
         }
@@ -744,7 +755,7 @@ public class CouponServiceImpl implements ICouponService {
         }
         List<Future<CommonResp<CustomerCoupon>>> customerCouponFutureList = new ArrayList<>();
         for (Coupon coupon : couponList) {
-            for (Customer customer : customerList) {
+            for (CustomerDTO customer : customerList) {
                 try {
                     Future<CommonResp<CustomerCoupon>> customerCouponFuture = threadPoolTaskExecutor.submit(new Callable<CommonResp<CustomerCoupon>>() {
                         @Override
@@ -790,19 +801,25 @@ public class CouponServiceImpl implements ICouponService {
         return customerCouponList;
     }
 
+    @Override
+    public CommonResp<CustomerCoupon> generateCustomerCoupon(Coupon coupon, Customer customer, SendCouponReq sendCouponReq) {
+        CustomerDTO customerDTO = new CustomerDTO();
+        BeanUtils.copyProperties(customer, customerDTO);
+        return this.generateCustomerCoupon(coupon, customerDTO, sendCouponReq);
+    }
+
     /**
      * 生成客户优惠券
      *
      * @return
      */
-    public CommonResp<CustomerCoupon> generateCustomerCoupon(Coupon coupon, Customer customer, SendCouponReq sendCouponReq) {
+    public CommonResp<CustomerCoupon> generateCustomerCoupon(Coupon coupon, CustomerDTO customer, SendCouponReq sendCouponReq) {
         CommonResp<CustomerCoupon> result = new CommonResp();
         result.setCode(4000);
         result.setSuccess(false);
         String code = coupon.getCode();
         //判断优惠券状态
         Byte status = coupon.getStatus();
-        Integer receiveType = sendCouponReq.getReceiveType();
         //禁用状态的券，不允许领取和发放
         if (status.equals((byte) 0)) {
             result.setMessage(String.format("\"%s\"已被禁用", coupon.getTitle()));
@@ -828,6 +845,7 @@ public class CouponServiceImpl implements ICouponService {
                 result.setCode(4001);
                 return result;
             }
+
         }
         Long grantNumber = coupon.getGrantNumber();
         //如果不是不限数量
