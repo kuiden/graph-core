@@ -91,5 +91,13 @@ public class CustomerGroupApi extends BaseApi{
         return new BizBaseResponse(iCustomerGroupService.calculateCustomerCount(req));
     }
 
+    @RequestMapping(value = "/calculateCustomerCountNum", method = RequestMethod.POST)
+    public  BizBaseResponse calculateCustomerCountNum(@RequestBody CalculateCustomerCountReq req) {
+        req.setStoreId(this.getStoreId());
+        req.setTenantId(this.getTenantId());
+        List<String> customerIdList = iCustomerGroupService.calculateCustomerCount(req);
+        return new BizBaseResponse(customerIdList.size());
+    }
+
 
 }
