@@ -25,7 +25,7 @@ public class MarketingAddReq {
      * 和customerId二选一
      */
     @ApiModelProperty(value = "客户群组id")
-    private String customerGroupId;
+    private String customerGroupIds;
 
     /**
      * 客户ID，多个用逗号分隔
@@ -35,11 +35,11 @@ public class MarketingAddReq {
 
     /**
      * 券Ids
-     * marketingMethod为0为发送优惠券，多个“,”分割
-     * marketingMethod为0为发送活动，只支持单个
+     * marketingMethod为0为发送优惠券
+     * marketingMethod为0为发送活动
      */
     @ApiModelProperty(value = "券或者活动Id")
-    private String couponOrActiveIds;
+    private String couponOrActiveId;
 
     /**
      * 发送时间 精确到年月日时

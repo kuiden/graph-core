@@ -1,28 +1,24 @@
 package com.tuhu.store.saas.marketing.controller;
 
 import com.github.pagehelper.PageInfo;
-import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
-import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
+import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
-import com.tuhu.store.saas.marketing.request.MarketingDetailsReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
-import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
+import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
+import com.tuhu.store.saas.marketing.service.IUtilityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * @Author: ZhangXiao
@@ -38,90 +34,52 @@ import java.util.List;
 public class MarketingApi extends BaseApi {
 
     @Autowired
+    private IUtilityService iUtilityService;
+
+    @Autowired
     private IMarketingSendRecordService marketingSendRecordService;
     @Autowired
     private ICustomerMarketingService  iCustomerMarketingService;
 
-    @RequestMapping(value = "/getMarketingSendRecord", method = RequestMethod.POST)
-    @ApiOperation(value = "根据营销ID 获取营销发送记录")
-    public BizBaseResponse getMarketingSendRecord(@Validated @RequestBody MarketingSendRecord req) {
-        if (req == null || (StringUtils.isEmpty(req.getMarketingId()) && StringUtils.isEmpty(req.getPhoneNumber()))) {
-            return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "参数验证失败");
-        }
-        List<MarketingSendRecord> result = marketingSendRecordService.getMarketingSendRecord(req.getMarketingId(), req.getPhoneNumber(), null);
-        return new BizBaseResponse(result);
-    }
-
-    /**
-     * @param marketingReq
-     * @return
-     * @author ZhangXiao
-     */
-    @ApiOperation(value = "定向营销任务列表")
-    @RequestMapping(value = "/list", method = RequestMethod.POST)
-    public BizBaseResponse marketingList(@Validated @RequestBody MarketingReq marketingReq) {
-        marketingReq.setTenantId(super.getTenantId());
-        marketingReq.setStoreId(super.getStoreId());
-        PageInfo<CustomerMarketing> marketingList = iCustomerMarketingService.customerMarketingList(marketingReq);
-        BizBaseResponse resultObject = new BizBaseResponse(marketingList);
-        return resultObject;
-    }
-
-    /**
-     * @param addReq
-     * @return
-     * @author ZhangXiao
-     */
-    @RequestMapping(value = "/add", method = RequestMethod.POST)
-    @ApiOperation(value = "定向营销任务新增")
-    public BizBaseResponse add(@Validated @RequestBody MarketingAddReq addReq) {
-        addReq.setTenantId(super.getTenantId());
-        addReq.setStoreId(super.getStoreId());
-        MarketingAddReq marketingAddReq = iCustomerMarketingService.addMarketingCustomer(addReq);
-        BizBaseResponse resultObject = new BizBaseResponse(marketingAddReq);
-        return resultObject;
-    }
-
-    /**
-     * @param addReq
-     * @return
-     * @author ZhangXiao
-     */
-    @RequestMapping(value = "/updateTaskType", method = RequestMethod.POST)
-    @ApiOperation(value = "更新定向营销任务状态")
-    public BizBaseResponse updateTaskType(@Validated @RequestBody MarketingUpdateReq addReq) {
-        addReq.setUpdateUser(this.getUserId());
-        addReq.setTenantId(super.getTenantId());
-        addReq.setStoreId(super.getStoreId());
-        iCustomerMarketingService.updateMarketingCustomerByTaskType(addReq);
-        return new BizBaseResponse();
+    @RequestMapping(value = "/getSmsPreview", method = RequestMethod.POST)
+    @ApiOperation(value = "根据营销方式和资源id获取短信预览")
+    public BizBaseResponse getSmsPreview(@Validated @RequestBody MarketingSmsReq req) {
+        req.setStoreId(getStoreId());
+        String templateContent = iCustomerMarketingService.getSmsPreview(req);
+        return new BizBaseResponse(templateContent);
     }
 
 
-    /**
-     * @param req
-     * @return
-     * @author ZhangXiao
-     */
-    @RequestMapping(value = "/details", method = RequestMethod.POST)
-    @ApiOperation(value = "定向营销任务详情及营销效果显示")
-    public BizBaseResponse add(@Validated @RequestBody MarketingDetailsReq req) {
-        req.setTenantId(super.getTenantId());
-        req.setStoreId(super.getStoreId());
-//        CustomerMarketingDetailsResp customerMarketingDetailsResp = iCustomerMarketingService.customerMarketingDetails(req);
-//        return new BizBaseResponse(customerMarketingDetailsResp);
-        return null;
+    @RequestMapping(value = "/customerMarketingList", method = RequestMethod.POST)
+    @ApiOperation(value = "分页查询定向营销列表")
+    public BizBaseResponse customerMarketingList(@Validated @RequestBody MarketingReq req) {
+        req.setStoreId(getStoreId());
+        PageInfo<CustomerMarketing> pageList = iCustomerMarketingService.customerMarketingList(req);
+        return new BizBaseResponse(pageList);
     }
 
-/*    @Autowired
-    private ICustomerMarketingRpcService iCustomerMarketingRpcService;
+    @RequestMapping(value = "/addMarketingCustomer", method = RequestMethod.POST)
+    @ApiOperation(value = "创建定向营销")
+    public BizBaseResponse addMarketingCustomer(@Validated @RequestBody MarketingAddReq addReq) {
+        addReq.setStoreId(getStoreId());
+        boolean success = iCustomerMarketingService.addMarketingCustomer(addReq);
+        return new BizBaseResponse(success);
+    }
 
-    @GetMapping(value = "marketingRpc")
-    @ApiOperation(value = "定向营销任务详情及营销效果显示")
-    public BizBaseResponse marketingRpc() {
-        iCustomerMarketingRpcService.sendMarketingCouponAndMessage();
-        return new BizBaseResponse();
-    }*/
+    @RequestMapping(value = "/getLastMessageCount", method = RequestMethod.GET)
+    @ApiOperation(value = "获取门店剩余的短信数量额度")
+    public BizBaseResponse getLastMessageCount() {
+        MessageQuantity messageQuantity = iCustomerMarketingService.getStoreMessageQuantity(getTenantId(), getStoreId());
+        return new BizBaseResponse(messageQuantity.getRemainderQuantity());
+    }
+
+
+    @RequestMapping(value = "/test", method = RequestMethod.GET)
+    @ApiOperation(value = "test")
+    public BizBaseResponse test(String longUrl) {
+        return new BizBaseResponse(iUtilityService.getShortUrl(longUrl));
+    }
+
 
 
 }

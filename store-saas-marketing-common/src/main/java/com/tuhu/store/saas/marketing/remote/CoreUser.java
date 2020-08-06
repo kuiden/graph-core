@@ -3,7 +3,7 @@ package com.tuhu.store.saas.marketing.remote;
 import lombok.Data;
 
 @Data
-public class CustomUser extends BaseUser {
+public class CoreUser extends BaseUser {
 
     private Integer systemCode;
 
@@ -33,5 +33,10 @@ public class CustomUser extends BaseUser {
      * 门店对应的用户名称
      */
     private String nickName;
+
+    /***
+     * 门店编号
+     */
+    private String storeNo;
 
 }

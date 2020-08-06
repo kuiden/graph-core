@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 //import com.codingapi.tx.annotation.TxTransaction;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -9,13 +10,19 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.dto.product.IssuedDTO;
+import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityCustomerMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityItemMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityTemplateMapper;
 import com.tuhu.store.saas.marketing.po.*;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.*;
@@ -44,9 +51,17 @@ import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.user.rpc.vo.EventTypeEnum;
 //import com.tuhu.saas.user.rpc.vo.StoreInfoVO;
 import com.tuhu.store.saas.marketing.service.IActivityService;
+import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
+import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.dto.StoreInfoDTO;
+import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
+import com.tuhu.store.saas.user.vo.EventTypeEnum;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.xiangyun.versionhelper.VersionHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -72,8 +87,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ActivityServiceImpl implements IActivityService {
 
-//    @Autowired
-//    private ActivityTemplateMapper activityTemplateMapper;
+    @Autowired
+    private ActivityTemplateMapper activityTemplateMapper;
 
     @Autowired
     private ActivityMapper activityMapper;
@@ -93,8 +108,8 @@ public class ActivityServiceImpl implements IActivityService {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-//    @Autowired
-//    private IStoreInfoRpcService iStoreInfoRpcService;
+    @Autowired
+    private StoreInfoClient storeInfoClient;
 
     @Autowired
     private StoreProductClient storeProductClient;
@@ -110,11 +125,14 @@ public class ActivityServiceImpl implements IActivityService {
      */
     private static final String personalActivityApplyPrefix = "ACTIVITY:PERSONAL:";
 
-//    @Autowired
-//    private ICustomerService iCustomerService;
+    @Autowired
+    private CustomerClient iCustomerService;
 
-//    @Autowired
-//    private MiniAppService miniAppService;
+    @Autowired
+    private MiniAppService miniAppService;
+
+    @Autowired
+    private IClientEventRecordService iClientEventRecordService;
 
 //    @Autowired
 //    private IRemindService iRemindService;
@@ -157,7 +175,7 @@ public class ActivityServiceImpl implements IActivityService {
         //维护营销活动item明细
         this.addNewActivityItem(addActivityReq, code);
         if (null != activity.getActivityTemplateId()) {
-//            activityTemplateMapper.referById(activity.getActivityTemplateId());
+            activityTemplateMapper.referById(activity.getActivityTemplateId());
         }
         return addActivityReq;
     }
@@ -171,9 +189,9 @@ public class ActivityServiceImpl implements IActivityService {
         }
         List<ActivityItem> activityItemList = new ArrayList<>();
         for (ActivityItemReq activityItemReq : items) {
-            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud()) {
-                issuedGoodOrServiceSpu(activityItemReq, addActivityReq.getTenantId(), addActivityReq.getCreateUser());
-            }
+//            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud()) {
+//                issuedGoodOrServiceSpu(activityItemReq, addActivityReq.getTenantId(), addActivityReq.getCreateUser());
+//            }
             ActivityItem activityItem = new ActivityItem();
             BeanUtils.copyProperties(activityItemReq, activityItem);
             activityItem.setActivityCode(code);
@@ -333,10 +351,10 @@ public class ActivityServiceImpl implements IActivityService {
         if (null != activityTemplateId && activityTemplateId.compareTo(0L) <= 0) {
             return "营销活动模板ID无效";
         } else if (null != activityTemplateId) {
-//            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
-//            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
-//                return "营销活动模板无效";
-//            }
+            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
+            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
+                return "营销活动模板无效";
+            }
         }
         //校验名称
         List<Activity> activityList = this.getActivityByTitle(addActivityReq.getActivityTitle(), storeId);
@@ -361,18 +379,21 @@ public class ActivityServiceImpl implements IActivityService {
         items = items.stream().filter(activityItemReq -> activityItemReq.getGoodsType() && activityItemReq.getGoodsCode() != null && activityItemReq.getGoodsCode() != "").collect(Collectors.toList());
         List<String> codeList = items.stream().map(ActivityItemReq::getGoodsCode).collect(Collectors.toList());
         //调product rpc接口获取价格,拿取A档
-//        Map<String, ServiceGoodDTO> map = Maps.newHashMap();
-//        if (CollectionUtils.isNotEmpty(codeList)) {
-//            List<ServiceGoodDTO> goodsList = goodsRpcService.queryServiceGoodListBySpuCodes(codeList, storeId, tenantId);
-//            map = goodsList.stream().collect(Collectors.toMap(ServiceGoodDTO::getCode, dto -> dto, (k1, k2) -> k2));
-//        }
-//        Map<String, ServiceGoodDTO> mapTemp = Maps.newHashMap();
-//        mapTemp.putAll(map);
-//        items.forEach(item -> {
-//            if (item.getGoodsType()) {//true:服务项目
-//                item.setGoodsId(mapTemp.get(item.getGoodsCode()) != null ? mapTemp.get(item.getGoodsCode()).getId() : "");
-//            }
-//        });
+        Map<String, ServiceGoodDTO> map = Maps.newHashMap();
+        if (CollectionUtils.isNotEmpty(codeList)) {
+            BizBaseResponse<List<ServiceGoodDTO>> goodsListResp = storeProductClient.queryServiceGoodListBySpuCodes(codeList, storeId, tenantId);
+            if (goodsListResp.getData() != null) {
+                List<ServiceGoodDTO> goodsList = goodsListResp.getData();
+                map = goodsList.stream().collect(Collectors.toMap(ServiceGoodDTO::getCode, dto -> dto, (k1, k2) -> k2));
+            }
+        }
+        Map<String, ServiceGoodDTO> mapTemp = Maps.newHashMap();
+        mapTemp.putAll(map);
+        items.forEach(item -> {
+            if (item.getGoodsType()) {//true:服务项目
+                item.setGoodsId(mapTemp.get(item.getGoodsCode()) != null ? mapTemp.get(item.getGoodsCode()).getId() : "");
+            }
+        });
     }
 
 
@@ -385,22 +406,22 @@ public class ActivityServiceImpl implements IActivityService {
      */
     private boolean checkStoreInfo(Long storeId, Long tanentId, Long companyId) {
         log.info("查询门店信息请求，storeId={},tanentId={},companyId={}", storeId, tanentId, companyId);
-//        StoreInfoVO storeInfoVO = new StoreInfoVO();
-//        storeInfoVO.setStoreId(storeId);
-//        storeInfoVO.setCompanyId(companyId);
-//        storeInfoVO.setTanentId(tanentId);
-//        try {
-//            StoreInfoDTO storeInfoDTO = iStoreInfoRpcService.getStoreInfo(storeInfoVO);
-//            if (null == storeInfoDTO) {
-//                return false;
-//            } else {
-//                if (StringUtils.isBlank(storeInfoDTO.getAddress()) || StringUtils.isBlank(storeInfoDTO.getContactName()) || StringUtils.isBlank(storeInfoDTO.getMobilePhone())) {
-//                    return false;
-//                }
-//            }
-//        } catch (Exception e) {
-//            log.error("查询门店信息RPC接口异常,storeId=" + storeId + ",companyId=" + companyId + ",tanentId=" + tanentId, e);
-//        }
+        StoreInfoVO storeInfoVO = new StoreInfoVO();
+        storeInfoVO.setStoreId(storeId);
+        storeInfoVO.setCompanyId(companyId);
+        storeInfoVO.setTanentId(tanentId);
+        try {
+            StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+            if (null == storeInfoDTO) {
+                return false;
+            } else {
+                if (StringUtils.isBlank(storeInfoDTO.getAddress()) || StringUtils.isBlank(storeInfoDTO.getContactName()) || StringUtils.isBlank(storeInfoDTO.getMobilePhone())) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            log.error("查询门店信息RPC接口异常,storeId=" + storeId + ",companyId=" + companyId + ",tanentId=" + tanentId, e);
+        }
         return true;
     }
 
@@ -420,14 +441,14 @@ public class ActivityServiceImpl implements IActivityService {
         if (StringUtils.isBlank(title) || null == storeId) {
             return null;
         }
-//        ActivityExample activityExample = new ActivityExample();
-//        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
-//        activityExampleCriteria.andActivityTitleEqualTo(title);
-//        activityExampleCriteria.andStoreIdEqualTo(storeId);
-//        List<Activity> activityList = activityMapper.selectByExample(activityExample);
-//        if (CollectionUtils.isNotEmpty(activityList)) {
-//            return activityList;
-//        }
+        ActivityExample activityExample = new ActivityExample();
+        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
+        activityExampleCriteria.andActivityTitleEqualTo(title);
+        activityExampleCriteria.andStoreIdEqualTo(storeId);
+        List<Activity> activityList = activityMapper.selectByExample(activityExample);
+        if (CollectionUtils.isNotEmpty(activityList)) {
+            return activityList;
+        }
         return null;
     }
 
@@ -640,7 +661,7 @@ public class ActivityServiceImpl implements IActivityService {
             redisTemplate.opsForValue().increment(key, 0L);
         }
         if (null != activity.getPicActivityTemplateId() && !activity.getPicActivityTemplateId().equals(oldActivity.getPicActivityTemplateId())) {
-//            activityTemplateMapper.referById(activity.getPicActivityTemplateId());
+            activityTemplateMapper.referById(activity.getPicActivityTemplateId());
         }
         //维护活动项目
         editActivityItems(oldActivity, editActivityReq);
@@ -843,19 +864,19 @@ public class ActivityServiceImpl implements IActivityService {
         if (null != activityTemplateId && activityTemplateId.compareTo(0L) <= 0) {
             return "营销活动模板ID无效";
         } else if (null != activityTemplateId) {
-//            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
-//            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
-//                return "营销活动模板无效";
-//            }
+            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(activityTemplateId);
+            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
+                return "营销活动模板无效";
+            }
         }
         Long picActivityTemplateId = editActivityReq.getPicActivityTemplateId();
         if (null != picActivityTemplateId && picActivityTemplateId.compareTo(0L) <= 0) {
             return "头图营销活动模板ID无效";
         } else if (null != picActivityTemplateId) {
-//            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(picActivityTemplateId);
-//            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
-//                return "头图营销活动模板无效";
-//            }
+            ActivityTemplate activityTemplate = activityTemplateMapper.selectByPrimaryKey(picActivityTemplateId);
+            if (null == activityTemplate || Boolean.FALSE.equals(activityTemplate.getStatus())) {
+                return "头图营销活动模板无效";
+            }
         }
         //校验名称
         if (!editActivityReq.getActivityTitle().equals(oldActivity.getActivityTitle())) {
@@ -1098,10 +1119,13 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomerResp.setActivity(activityResp);
 //        if (!activityCustomerReq.getIsFromClient()) {
             //3.根据客户id查询客户及车辆详情
-//            Customer customer = iCustomerService.getCustomerById(customerId);
-//            if (null == customer) {
-//                throw new CrmException("客户不存在");
-//            }
+            BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+            baseIdReqVO.setId(customerId);
+            CustomerDTO customer = iCustomerService.getCustomerById(baseIdReqVO).getData();
+            if (null == customer) {
+                throw new MarketingException("客户不存在");
+            }
+            // todo 获取用户车辆详情
 //            CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId, customer.getTenantId(), customer.getStoreId());
 //            activityCustomerResp.setCustomerDetail(customerDetailResp);
 //        }
@@ -1539,15 +1563,14 @@ public class ActivityServiceImpl implements IActivityService {
             return activity.getWeixinQrUrl();
         }
 
-//        String qrUrl = miniAppService.getQrCodeUrl("end_user_client", request.getScene(), request.getPath(), request.getWidth());
+        String qrUrl = miniAppService.getQrCodeUrl(request.getScene(), request.getPath(), request.getWidth());
 
         /*
           保存url到activity表
         */
-//        saveQrUrlToDatabase(request.getActivityId(), qrUrl);
-//
-//        return qrUrl;
-        return "";
+        saveQrUrlToDatabase(request.getActivityId(), qrUrl);
+
+        return qrUrl;
     }
 
     /**
@@ -1616,101 +1639,101 @@ public class ActivityServiceImpl implements IActivityService {
         return map;
     }
 
-//    @Override
-//    public Map<String, Object> getActivityStatistics(Long activityId, Long storeId) {
-//        log.info("查询营销活动数据请求activityId：{}, storeId: {}", activityId, storeId);
-//        if (null == activityId || activityId.compareTo(0L) <= 0) {
-//            throw new MarketingException("入参无效");
-//        }
-//        ActivityResp activityResp = this.getActivityDetailById(activityId, storeId);
-//        if (null == activityResp) {
-//            //禁止查询非本门店的营销活动
-//            throw new MarketingException("活动不存在");
-//        }
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("activityCode", activityResp.getActivityCode());
-//        result.put("applyCount", activityResp.getApplyCount());//报名数
-//
-//        //统计已核销的人数
-//        int writeOffCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 1);
-//        int orderCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 3);
-//        writeOffCount += orderCount;
-//        result.put("writeOffCount", Integer.valueOf(writeOffCount));//核销数
-//        result.put("orderCount", Integer.valueOf(orderCount));//开单数
-//        //计算活动金额
-//        List<ActivityItemResp> itemRespList = activityResp.getItems();
-//        BigDecimal singleActivityAmount = BigDecimal.ZERO;
-//        if (null == itemRespList || CollectionUtils.isEmpty(itemRespList)){
-//            if (null != activityResp.getActivityPrice()){
-//                singleActivityAmount = activityResp.getActivityPrice();
-//            }
-//        }else {
-//            for (ActivityItemResp activityItemResp : itemRespList) {
-//                singleActivityAmount = singleActivityAmount.add(new BigDecimal(activityItemResp.getActualPrice()).multiply(new BigDecimal(activityItemResp.getItemQuantity())));
-//            }
-//        }
-//        //收入合计
-//        result.put("totalAmount", singleActivityAmount.multiply(new BigDecimal(writeOffCount)));
-//        //开单金额
-//        result.put("orderAmount", singleActivityAmount.multiply(new BigDecimal(orderCount)));
-//        //查询访问数据
-//        ClientEventRecordVO clientEventRecordVO = new ClientEventRecordVO();
-//        clientEventRecordVO.setStoreId(String.valueOf(storeId));
-//        clientEventRecordVO.setContentType("activity");
-//        clientEventRecordVO.setContentValue(activityResp.getEncryptedCode());
-//        List<String> eventTypes = Arrays.stream(EventTypeEnum.values()).map(EventTypeEnum::getCode).collect(Collectors.toList());
-//        clientEventRecordVO.setEventTypes(eventTypes);
-//        try {
-//            Map<String, ClientEventRecordDTO> clientEventRecordDTOMap = iStoreInfoRpcService.getClientEventRecordStatisticsByEvent(clientEventRecordVO);
-//            if (MapUtils.isNotEmpty(clientEventRecordDTOMap)) {
-//                ClientEventRecordDTO visitRecord = clientEventRecordDTOMap.get(EventTypeEnum.VISIT.getCode());
-//                if (null != visitRecord) {
-//                    result.put("visitUserCount", visitRecord.getUserCount());//访问用户数
-//                    result.put("visitCount", visitRecord.getEventCount());//活动访问数
-//                } else {
-//                    result.put("visitUserCount", Long.valueOf(0));//访问用户数
-//                    result.put("visitCount", Long.valueOf(0));//活动访问数
-//                }
-//                ClientEventRecordDTO forwardRecord = clientEventRecordDTOMap.get(EventTypeEnum.WECHATFORWARD.getCode());
-//                if (null != forwardRecord) {
-//                    result.put("wechatForwardCount", forwardRecord.getEventCount());//活动转发数
-//                } else {
-//                    result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
-//                }
-//                //通过登录新增的客户数
-//                ClientEventRecordDTO loginRecord = clientEventRecordDTOMap.get(EventTypeEnum.LOGIN.getCode());
-//                Long loginUserCount = null;
-//                if (null != loginRecord) {
-//                    loginUserCount = loginRecord.getUserCount();
-//                }
-//                if (null == loginUserCount) {
-//                    loginUserCount = 0L;
-//                }
-//                //通过注册新增的客户数
-//                Long registeredUserCount = null;
-//                ClientEventRecordDTO registeredRecord = clientEventRecordDTOMap.get(EventTypeEnum.REGISTERED.getCode());
-//                if (null != registeredRecord) {
-//                    registeredUserCount = registeredRecord.getUserCount();
-//                }
-//                if (null == registeredUserCount) {
-//                    registeredUserCount = 0L;
-//                }
-//                result.put("newUserCount", loginUserCount + registeredUserCount);//新增客户数
-//            } else {
-//                result.put("visitUserCount", Long.valueOf(0));//访问用户数
-//                result.put("visitCount", Long.valueOf(0));//活动访问数
-//                result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
-//                result.put("newUserCount", Long.valueOf(0));//新增客户数
-//            }
-//        } catch (Exception e) {
-//            log.error("查询营销活动数据远程接口异常", e);
-//            result.put("visitUserCount", Long.valueOf(0));//访问用户数
-//            result.put("visitCount", Long.valueOf(0));//活动访问数
-//            result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
-//            result.put("newUserCount", Long.valueOf(0));//新增客户数
-//        }
-//        return result;
-//    }
+    @Override
+    public Map<String, Object> getActivityStatistics(Long activityId, Long storeId) {
+        log.info("查询营销活动数据请求activityId：{}, storeId: {}", activityId, storeId);
+        if (null == activityId || activityId.compareTo(0L) <= 0) {
+            throw new MarketingException("入参无效");
+        }
+        ActivityResp activityResp = this.getActivityDetailById(activityId, storeId);
+        if (null == activityResp) {
+            //禁止查询非本门店的营销活动
+            throw new MarketingException("活动不存在");
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("activityCode", activityResp.getActivityCode());
+        result.put("applyCount", activityResp.getApplyCount());//报名数
+
+        //统计已核销的人数
+        int writeOffCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 1);
+        int orderCount = getCountOfActivityItemByCodeAndUseStatus(activityResp.getActivityCode(), (byte) 3);
+        writeOffCount += orderCount;
+        result.put("writeOffCount", Integer.valueOf(writeOffCount));//核销数
+        result.put("orderCount", Integer.valueOf(orderCount));//开单数
+        //计算活动金额
+        List<ActivityItemResp> itemRespList = activityResp.getItems();
+        BigDecimal singleActivityAmount = BigDecimal.ZERO;
+        if (null == itemRespList || CollectionUtils.isEmpty(itemRespList)){
+            if (null != activityResp.getActivityPrice()){
+                singleActivityAmount = activityResp.getActivityPrice();
+            }
+        }else {
+            for (ActivityItemResp activityItemResp : itemRespList) {
+                singleActivityAmount = singleActivityAmount.add(new BigDecimal(activityItemResp.getActualPrice()).multiply(new BigDecimal(activityItemResp.getItemQuantity())));
+            }
+        }
+        //收入合计
+        result.put("totalAmount", singleActivityAmount.multiply(new BigDecimal(writeOffCount)));
+        //开单金额
+        result.put("orderAmount", singleActivityAmount.multiply(new BigDecimal(orderCount)));
+        //查询访问数据
+        ClientEventRecordVO clientEventRecordVO = new ClientEventRecordVO();
+        clientEventRecordVO.setStoreId(String.valueOf(storeId));
+        clientEventRecordVO.setContentType("activity");
+        clientEventRecordVO.setContentValue(activityResp.getEncryptedCode());
+        List<String> eventTypes = Arrays.stream(EventTypeEnum.values()).map(EventTypeEnum::getCode).collect(Collectors.toList());
+        clientEventRecordVO.setEventTypes(eventTypes);
+        try {
+            Map<String, ClientEventRecordDTO> clientEventRecordDTOMap = iClientEventRecordService.getClientEventRecordStatisticsByEvent(clientEventRecordVO);
+            if (MapUtils.isNotEmpty(clientEventRecordDTOMap)) {
+                ClientEventRecordDTO visitRecord = clientEventRecordDTOMap.get(EventTypeEnum.VISIT.getCode());
+                if (null != visitRecord) {
+                    result.put("visitUserCount", visitRecord.getUserCount());//访问用户数
+                    result.put("visitCount", visitRecord.getEventCount());//活动访问数
+                } else {
+                    result.put("visitUserCount", Long.valueOf(0));//访问用户数
+                    result.put("visitCount", Long.valueOf(0));//活动访问数
+                }
+                ClientEventRecordDTO forwardRecord = clientEventRecordDTOMap.get(EventTypeEnum.WECHATFORWARD.getCode());
+                if (null != forwardRecord) {
+                    result.put("wechatForwardCount", forwardRecord.getEventCount());//活动转发数
+                } else {
+                    result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
+                }
+                //通过登录新增的客户数
+                ClientEventRecordDTO loginRecord = clientEventRecordDTOMap.get(EventTypeEnum.LOGIN.getCode());
+                Long loginUserCount = null;
+                if (null != loginRecord) {
+                    loginUserCount = loginRecord.getUserCount();
+                }
+                if (null == loginUserCount) {
+                    loginUserCount = 0L;
+                }
+                //通过注册新增的客户数
+                Long registeredUserCount = null;
+                ClientEventRecordDTO registeredRecord = clientEventRecordDTOMap.get(EventTypeEnum.REGISTERED.getCode());
+                if (null != registeredRecord) {
+                    registeredUserCount = registeredRecord.getUserCount();
+                }
+                if (null == registeredUserCount) {
+                    registeredUserCount = 0L;
+                }
+                result.put("newUserCount", loginUserCount + registeredUserCount);//新增客户数
+            } else {
+                result.put("visitUserCount", Long.valueOf(0));//访问用户数
+                result.put("visitCount", Long.valueOf(0));//活动访问数
+                result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
+                result.put("newUserCount", Long.valueOf(0));//新增客户数
+            }
+        } catch (Exception e) {
+            log.error("查询营销活动数据远程接口异常", e);
+            result.put("visitUserCount", Long.valueOf(0));//访问用户数
+            result.put("visitCount", Long.valueOf(0));//活动访问数
+            result.put("wechatForwardCount", Long.valueOf(0));//活动转发数
+            result.put("newUserCount", Long.valueOf(0));//新增客户数
+        }
+        return result;
+    }
 
 //    @Override
 //    public int updateActivityCustomerForOrder(ActivityCustomerRpcVO activityCustomerRpcVO) {

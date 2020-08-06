@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.util;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -20,6 +21,49 @@ public class DateUtils {
      * 时间格式化参数
      */
     private static SimpleDateFormat longSdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public static int getHourOfDay(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return cal.get(Calendar.HOUR_OF_DAY);
+    }
+
+    /**
+     * 日期加一
+     */
+    public static Date addDate(Date date, int add) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.DAY_OF_MONTH, add);
+        return cal.getTime();
+    }
+
+    /**
+     * 取指定日期起始点
+     *
+     * @return
+     */
+    public static Date getDateStartTime(Date date) {
+        Calendar calendar = new Calendar.Builder().setInstant(date).build();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    /**
+     * yyyy-MM-dd HH:mm:ss
+     * @param dateStr
+     * @return
+     */
+    public static Date parseDate(String dateStr){
+        try {
+            return longSdf.parse(dateStr);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
 
     /**
      * 获取当天的开始时间
@@ -308,6 +352,14 @@ public class DateUtils {
      */
     public static int getNowMonth() {
         Date date = new Date();
+        return getDateMonth(date);
+    }
+
+    /**
+     * 获取月份
+     * @return
+     */
+    public static int getDateMonth(Date date) {
         GregorianCalendar gc = (GregorianCalendar) Calendar.getInstance();
         gc.setTime(date);
         return gc.get(2) + 1;
@@ -391,6 +443,20 @@ public class DateUtils {
         cal.set(Calendar.DATE, cal.get(Calendar.DATE) + i);
         return cal.getTime();
     }
+
+    /**
+     * 返回某个日期下几分钟的日期
+     * @param date
+     * @param i
+     * @return
+     */
+    public static Date getNextMinutes(Date date, int i) {
+        Calendar cal = new GregorianCalendar();
+        cal.setTime(date);
+        cal.set(Calendar.MINUTE, cal.get(Calendar.MINUTE) + i);
+        return cal.getTime();
+    }
+
 
     /**
      * 返回某个日期前几天的日期

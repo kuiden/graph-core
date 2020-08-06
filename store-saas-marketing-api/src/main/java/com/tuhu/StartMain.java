@@ -29,7 +29,11 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class StartMain {
 
     public static void main(String[] args) {
+        long start = System.currentTimeMillis();
         SpringApplication.run(StartMain.class, args);
+        log.info("^_^ ######################################################## ^_^");
+        log.info("^_^ ###: STORE-SAAS-MARKETING Application was started,{} seconds.", (System.currentTimeMillis() - start) / 1000L);
+        log.info("^_^ ######################################################## ^_^");
     }
 
 }

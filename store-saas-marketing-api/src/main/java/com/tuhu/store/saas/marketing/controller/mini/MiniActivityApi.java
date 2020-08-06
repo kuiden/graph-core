@@ -8,17 +8,17 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 //import com.tuhu.saas.crm.rpc.dto.ActivityCustomerDTO;
 //import com.tuhu.saas.crm.rpc.vo.ServiceOrderActivityUseVO;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +31,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/mini/activity")
 @Api(tags = "B端营销活动服务")
+@Slf4j
 public class MiniActivityApi extends BaseApi {
 
     @Autowired
@@ -43,7 +44,14 @@ public class MiniActivityApi extends BaseApi {
         addActivityReq.setStoreId(super.getStoreId());
         addActivityReq.setTenantId(super.getTenantId());
         addActivityReq.setCompanyId(super.getCompanyId());
-        addActivityReq = iActivityService.addNewActivity(addActivityReq);
+        try {
+            addActivityReq = iActivityService.addNewActivity(addActivityReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("营销活动新增服务异常，入参：{}", addActivityReq);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(addActivityReq);
     }
 
@@ -59,7 +67,14 @@ public class MiniActivityApi extends BaseApi {
     public BizBaseResponse<ActivityChangeStatusReq> changeStatus(@Validated @RequestBody ActivityChangeStatusReq activityChangeStatusReq) {
         activityChangeStatusReq.setStoreId(super.getStoreId());
         activityChangeStatusReq.setUserId(super.getUserId());
-        activityChangeStatusReq = iActivityService.changeActivityStatus(activityChangeStatusReq);
+        try {
+            activityChangeStatusReq = iActivityService.changeActivityStatus(activityChangeStatusReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("营销活动上下架服务异常，入参：{}", activityChangeStatusReq);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(activityChangeStatusReq);
     }
 
@@ -194,20 +209,18 @@ public class MiniActivityApi extends BaseApi {
         return BizBaseResponse.success(resp);
     }
 
-//    @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "获取活动数据")
-//    public ResultObject getActivityStatistics(Long activityId) {
-//        Map<String, Object> activityStatistics = iActivityService.getActivityStatistics(activityId, super.getStoreId());
-//        return new ResultObject(activityStatistics);
-//    }
-//
-//    @RequestMapping(value = "/useOrCancelActivityCustomer", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "活动开单与取消开单")
-//    public ResultObject useOrCancelActivityCustomer(@RequestBody ServiceOrderActivityUseVO serviceOrderActivityUseVO) {
-//        serviceOrderActivityUseVO.setStoreId(String.valueOf(super.getStoreId()));
-//        serviceOrderActivityUseVO.setCompanyId(super.getCompanyId());
-//        serviceOrderActivityUseVO.setTenantId(String.valueOf(super.getTenantId()));
-//        ActivityCustomerDTO activityCustomerDTO = iActivityService.useOrCancelActivityCustomerForOrder(serviceOrderActivityUseVO);
-//        return new ResultObject(activityCustomerDTO);
-//    }
+    @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})
+    @ApiOperation(value = "获取活动数据")
+    public BizBaseResponse getActivityStatistics(Long activityId) {
+        Map<String, Object> activityStatistics = null;
+        try {
+            activityStatistics = iActivityService.getActivityStatistics(activityId, super.getStoreId());
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("获取活动数据服务异常，入参：{}", activityId);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
+        return new BizBaseResponse(activityStatistics);
+    }
 }
