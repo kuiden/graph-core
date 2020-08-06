@@ -19,11 +19,11 @@ public class BaseEndUserApi {
         return EndUserContextHolder.getUserId();
     }
 
-    public String getStoreId() {
+    public Long getStoreId() {
         return EndUserContextHolder.getStoreId();
     }
 
-    public String getTenantId() {
+    public Long getTenantId() {
         return EndUserContextHolder.getTenantId();
     }
 

@@ -38,10 +38,10 @@ public class EndUserContextHolder {
      *
      * @return
      */
-    public static String getTenantId() {
+    public static Long getTenantId() {
         EndUser EndUser = EndUserContextHolder.getUser();
         if (null != EndUser) {
-            return EndUser.getTenantId();
+            return Long.valueOf(EndUser.getTenantId());
         }
         return null;
     }
@@ -52,10 +52,10 @@ public class EndUserContextHolder {
      *
      * @return
      */
-    public static String getStoreId() {
+    public static Long getStoreId() {
         EndUser EndUser = EndUserContextHolder.getUser();
         if (null != EndUser) {
-            return EndUser.getStoreId();
+            return Long.valueOf(EndUser.getStoreId());
         }
         return null;
     }
