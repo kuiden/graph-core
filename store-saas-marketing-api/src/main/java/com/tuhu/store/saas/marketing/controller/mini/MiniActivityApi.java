@@ -8,6 +8,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 //import com.tuhu.saas.crm.rpc.dto.ActivityCustomerDTO;
 //import com.tuhu.saas.crm.rpc.vo.ServiceOrderActivityUseVO;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
@@ -43,7 +44,14 @@ public class MiniActivityApi extends BaseApi {
         addActivityReq.setStoreId(super.getStoreId());
         addActivityReq.setTenantId(super.getTenantId());
         addActivityReq.setCompanyId(super.getCompanyId());
-        addActivityReq = iActivityService.addNewActivity(addActivityReq);
+        try {
+            addActivityReq = iActivityService.addNewActivity(addActivityReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("营销活动新增服务异常，入参：{}", addActivityReq);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(addActivityReq);
     }
 
@@ -59,7 +67,14 @@ public class MiniActivityApi extends BaseApi {
     public BizBaseResponse<ActivityChangeStatusReq> changeStatus(@Validated @RequestBody ActivityChangeStatusReq activityChangeStatusReq) {
         activityChangeStatusReq.setStoreId(super.getStoreId());
         activityChangeStatusReq.setUserId(super.getUserId());
-        activityChangeStatusReq = iActivityService.changeActivityStatus(activityChangeStatusReq);
+        try {
+            activityChangeStatusReq = iActivityService.changeActivityStatus(activityChangeStatusReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("营销活动上下架服务异常，入参：{}", activityChangeStatusReq);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(activityChangeStatusReq);
     }
 
@@ -81,7 +96,14 @@ public class MiniActivityApi extends BaseApi {
         editActivityReq.setStoreId(super.getStoreId());
         editActivityReq.setTenantId(super.getTenantId());
         editActivityReq.setCompanyId(super.getCompanyId());
-        editActivityReq = iActivityService.editActivity(editActivityReq);
+        try {
+            editActivityReq = iActivityService.editActivity(editActivityReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("营销活动编辑服务异常，入参：{}", editActivityReq);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(editActivityReq);
     }
 
@@ -181,7 +203,15 @@ public class MiniActivityApi extends BaseApi {
     @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})
     @ApiOperation(value = "获取活动数据")
     public BizBaseResponse getActivityStatistics(Long activityId) {
-        Map<String, Object> activityStatistics = iActivityService.getActivityStatistics(activityId, super.getStoreId());
+        Map<String, Object> activityStatistics = null;
+        try {
+            activityStatistics = iActivityService.getActivityStatistics(activityId, super.getStoreId());
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("获取活动数据服务异常，入参：{}", activityId);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return new BizBaseResponse(activityStatistics);
     }
 //

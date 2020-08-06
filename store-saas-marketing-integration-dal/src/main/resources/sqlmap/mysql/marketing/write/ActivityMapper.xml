@@ -132,7 +132,7 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.po.Activity">
+  <insert id="insertEntity" parameterType="com.tuhu.store.saas.marketing.po.Activity">
     insert into activity (id, activity_code, encrypted_code, 
       store_id, `type`, pic_url, 
       activity_title, activity_introduce, apply_number, 
