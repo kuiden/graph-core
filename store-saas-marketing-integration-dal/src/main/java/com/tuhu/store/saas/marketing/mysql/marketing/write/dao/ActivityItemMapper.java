@@ -14,7 +14,7 @@ public interface ActivityItemMapper extends BaseMapper<ActivityItem> {
 
     int deleteByPrimaryKey(Long id);
 
-    Integer insert(ActivityItem record);
+    Integer insertEntity(ActivityItem record);
 
     int insertSelective(ActivityItem record);
 

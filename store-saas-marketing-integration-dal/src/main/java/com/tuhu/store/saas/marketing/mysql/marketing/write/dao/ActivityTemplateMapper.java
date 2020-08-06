@@ -16,7 +16,7 @@ public interface ActivityTemplateMapper extends BaseMapper<ActivityTemplate> {
 
     int deleteByPrimaryKey(Long id);
 
-    Integer insert(ActivityTemplate record);
+    Integer insertEntity(ActivityTemplate record);
 
     int insertSelective(ActivityTemplate record);
 
