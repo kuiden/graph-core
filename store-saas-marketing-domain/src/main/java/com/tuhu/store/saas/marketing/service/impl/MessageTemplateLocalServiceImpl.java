@@ -54,4 +54,13 @@ public class MessageTemplateLocalServiceImpl implements IMessageTemplateLocalSer
         return list.get(0);
     }
 
+    @Override
+    public String getSMSTemplateIdByCodeAndStoreId(String templateCode, Long storeId) {
+        MessageTemplateLocal messageTemplateLocal = getTemplateLocalById(templateCode,storeId);
+        if(messageTemplateLocal!=null){
+            return messageTemplateLocal.getTemplateId();
+        }
+        return null;
+    }
+
 }
