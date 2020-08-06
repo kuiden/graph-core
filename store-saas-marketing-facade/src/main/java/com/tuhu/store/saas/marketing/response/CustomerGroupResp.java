@@ -36,14 +36,14 @@ public class CustomerGroupResp implements Serializable {
     private Long consumerServeDay;
     //近几天消费服务列表
     private List<GoodsResp> consumerServeList;
-    //开始创建时间
-    private Date createDateStart;
-    //创建时间结束值
-    private Date createDateEnd;
+    //创建时间大于天数
+    private Long createDateStart;
+    //创建时间小于天数
+    private Long createDateEnd;
     //生日开始时间
-    private Date brithdayStart;
+    private Long brithdayStart;
     //生日结束时间
-    private Date brithdayEnd;
+    private Long brithdayEnd;
     //保养开始时间
     private Date maintenanceDateStart;
     //保养结束时间

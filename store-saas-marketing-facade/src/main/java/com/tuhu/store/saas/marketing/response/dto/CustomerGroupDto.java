@@ -14,6 +14,8 @@ public class CustomerGroupDto implements Serializable {
     private Long id;
     private String groupName;
 
+    private String groupDesc;
+
     private Long storeId;
 
     private List<CustomerGroupRuleDto> customerGroupRuleReqList;

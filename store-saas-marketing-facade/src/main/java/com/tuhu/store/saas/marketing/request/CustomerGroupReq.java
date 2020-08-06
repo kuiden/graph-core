@@ -38,15 +38,15 @@ public class CustomerGroupReq implements Serializable {
     @ApiModelProperty("消费服务近几天")
     private Long consumerServeDay;
     @ApiModelProperty("近几天消费服务列表")
-    private List<Long> consumerServeList;
-    @ApiModelProperty("最小开始创建时间")
-    private Date createDateStart;
-    @ApiModelProperty("最大开始创建时间")
-    private Date createDateEnd;
-    @ApiModelProperty("生日开始时间")
-    private Date brithdayStart;
-    @ApiModelProperty("生日结束时间")
-    private Date brithdayEnd;
+    private List<String> consumerServeList;
+    @ApiModelProperty("创建时间大于天数")
+    private Long createDateStart;
+    @ApiModelProperty("创建时间小于天数")
+    private Long createDateEnd;
+    @ApiModelProperty("生日开始月份")
+    private Long brithdayStart;
+    @ApiModelProperty("生日结束月份")
+    private Long brithdayEnd;
     @ApiModelProperty("保养开始时间")
     private Date maintenanceDateStart;
     @ApiModelProperty("保养结束时间")

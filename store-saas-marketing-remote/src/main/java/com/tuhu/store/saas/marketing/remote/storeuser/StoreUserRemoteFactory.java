@@ -4,8 +4,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.remote.reponse.CustomerDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.UserDTO;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.marketing.remote.request.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +46,18 @@ public class StoreUserRemoteFactory implements FallbackFactory<StoreUserClient> 
             @Override
             public BizBaseResponse<StoreInfoDTO> getStoreInfo(StoreInfoVO storeInfoVO) {
                 log.error("getStoreInfo error,request={},error={}", JSONObject.toJSONString(storeInfoVO), ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<AddVehicleReq> addCustomerForReservation(AddVehicleReq addVehicleReq) {
+                log.error("addCustomerForReservation error,request={},error={}", JSONObject.toJSONString(addVehicleReq), ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<CustomerDTO> getCustomerById(BaseIdReqVO baseIdReqVO) {
+                log.error("getCustomerById error,request={},error={}", JSONObject.toJSONString(baseIdReqVO), ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 

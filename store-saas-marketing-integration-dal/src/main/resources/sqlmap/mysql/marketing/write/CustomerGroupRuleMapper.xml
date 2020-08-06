@@ -301,16 +301,15 @@
 
   <insert id="insertBatch" parameterType="java.util.List" >
     insert into customer_group_rule ( cg_rule_factor, cg_rule_name,
-    attribute_name, attribute_value, compare_operator,status,group_id,store_id
-    create_user, update_user, create_time,update_time)
+    attribute_name, attribute_value, compare_operator,status,group_id,store_id,
+    create_user, create_time)
     values
     <foreach collection="list" item="item" index="index" separator=",">
       (#{item.cgRuleFactor,jdbcType=VARCHAR}, #{item.cgRuleName,jdbcType=VARCHAR},
       #{item.attributeName,jdbcType=VARCHAR}, #{item.attributeValue,jdbcType=VARCHAR},
       #{item.compareOperator,jdbcType=VARCHAR}, #{item.status,jdbcType=VARCHAR},
       #{item.groupId,jdbcType=BIGINT}, #{item.storeId,jdbcType=BIGINT},
-      #{createUser,jdbcType=VARCHAR},#{updateUser,jdbcType=VARCHAR},
-      #{createTime,jdbcType=TIMESTAMP},#{updateTime,jdbcType=TIMESTAMP}
+      #{item.createUser,jdbcType=VARCHAR},#{item.createTime,jdbcType=TIMESTAMP}
      )
     </foreach>
   </insert>

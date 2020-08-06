@@ -32,8 +32,8 @@ public class CustomerGroupConstant {
     public  static  final String SPECIFIED_SERVER="SPECIFIED_SERVER";
     public  static  final String CREATED_TIME_LEAST_DAY="CREATED_TIME_LEAST_DAY";
     public  static  final String CREATED_TIME_MAX_DAY="CREATED_TIME_MAX_DAY";
-    public  static  final String BRITHDAY_LEAST_DAY="BRITHDAY_LEAST_DAY";
-    public  static  final String BRITHDAY_MAX_DAY="BRITHDAY_MAX_DAY";
+    public  static  final String BRITHDAY_LEAST_MONTH="BRITHDAY_LEAST_MONTH";
+    public  static  final String BRITHDAY_MAX_MONTH="BRITHDAY_MAX_MONTH";
     public  static  final String MAINTENANCE_LEAST_DAY="MAINTENANCE_LEAST_DAY";
     public  static  final String MAINTENANCE_MAX_DAY="MAINTENANCE_MAX_DAY";
 

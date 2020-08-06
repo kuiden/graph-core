@@ -16,28 +16,28 @@ import java.util.Date;
 public class ReservationPeriodResp implements Serializable {
     private static final long serialVersionUID = 2105446757437476772L;
 
-//    /**
-//     预约到店开始时间
-//     */
-//    @ApiModelProperty(value = "Description:")
-//    private Date reserveStartTime;
+    /**
+     预约到店开始时间
+     */
+    @ApiModelProperty(value = "预约到店开始时间")
+    private Long reserveStartTime;
 
     /**
      预约到店时间
      */
-    @ApiModelProperty(value = "Description:")
+    @ApiModelProperty(value = "预约到店时间")
     private String reserveStartTimeString;
 
     /**
-//     预约到店结束时间
-//     */
-//    @ApiModelProperty(value = "Description:")
-//    private Date reserveEndTime;
+     预约到店结束时间
+     */
+    @ApiModelProperty(value = "预约到店结束时间")
+    private Long reserveEndTime;
 
     /**
      * 时间段名称： 开始时间-结束时间
      */
-    @ApiModelProperty(value = "时间段名称： 开始时间-结束时间")
+    @ApiModelProperty(value = "时间段名称：开始时间-结束时间")
     private String periodName;
 
     /**

@@ -1,6 +1,11 @@
 package com.tuhu.store.saas.marketing.controller;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
+import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
+import com.tuhu.store.saas.marketing.request.MarketingAddReq;
+import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
@@ -39,6 +44,31 @@ public class MarketingApi extends BaseApi {
         String templateContent = iCustomerMarketingService.getSmsPreview(req);
         return new BizBaseResponse(templateContent);
     }
+
+
+    @RequestMapping(value = "/customerMarketingList", method = RequestMethod.POST)
+    @ApiOperation(value = "分页查询定向营销列表")
+    public BizBaseResponse customerMarketingList(@Validated @RequestBody MarketingReq req) {
+        req.setStoreId(getStoreId());
+        PageInfo<CustomerMarketing> pageList = iCustomerMarketingService.customerMarketingList(req);
+        return new BizBaseResponse(pageList);
+    }
+
+    @RequestMapping(value = "/addMarketingCustomer", method = RequestMethod.POST)
+    @ApiOperation(value = "创建定向营销")
+    public BizBaseResponse addMarketingCustomer(@Validated @RequestBody MarketingAddReq addReq) {
+        addReq.setStoreId(getStoreId());
+        boolean success = iCustomerMarketingService.addMarketingCustomer(addReq);
+        return new BizBaseResponse(success);
+    }
+
+    @RequestMapping(value = "/getLastMessageCount", method = RequestMethod.GET)
+    @ApiOperation(value = "获取门店剩余的短信数量额度")
+    public BizBaseResponse getLastMessageCount() {
+        MessageQuantity messageQuantity = iCustomerMarketingService.getStoreMessageQuantity(getTenantId(), getStoreId());
+        return new BizBaseResponse(messageQuantity.getRemainderQuantity());
+    }
+
 
 
 

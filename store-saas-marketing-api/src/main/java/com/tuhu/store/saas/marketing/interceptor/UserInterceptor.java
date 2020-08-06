@@ -39,43 +39,31 @@ public class UserInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-//        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-//        CustomUser customUser = null;
-//        if (StringUtils.isBlank(authorization)) {
-//            BizBaseResponse bizBaseResponse = new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递Authorization信息");
-//            this.writeResponse(response, bizBaseResponse);
-//            return false;
-//        } else {
-//            try {
-//                BizBaseResponse<CustomUser> customUserResult = storeAdminClient.getUserByToken();
-//                log.info("==storeAdminClient.getUserByToken=={}", JSONObject.toJSONString(customUserResult));
-//                if (null != customUserResult && customUserResult.isSuccess() && null != customUserResult.getData()) {
-//                    customUser = customUserResult.getData();
-//                    makeUpStoreUserInfo(customUser);
-//                }
-//            } catch (Exception e) {
-//                log.error("获取登录用户信息异常", e);
-//            }
-//        }
-//        if (null != customUser) {
-//            UserContextHolder.setUser(customUser);
-//            return true;
-//        }
-//        BizBaseResponse bizBaseResponse = new BizBaseResponse(BizErrorCodeEnum.INVALID_ACCESS_TOKEN, "您的身份已过期，请重新登录");
-//        this.writeResponse(response, bizBaseResponse);
-//        return false;
-
-        CustomUser user ;
-        user =new CustomUser();
-        user.setStoreUserId("1550558043568000179307752");
-        user.setUsername("system");
-        user.setId(0L);
-        user.setCompanyId(227L);
-        user.setTenantId(179L);
-        user.setStoreId(227L);
-        user.setStoreNo("MDBU824");
-        UserContextHolder.setUser(user);
-        return true;
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        CustomUser customUser = null;
+        if (StringUtils.isBlank(authorization)) {
+            BizBaseResponse bizBaseResponse = new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递Authorization信息");
+            this.writeResponse(response, bizBaseResponse);
+            return false;
+        } else {
+            try {
+                BizBaseResponse<CustomUser> customUserResult = storeAdminClient.getUserByToken();
+                log.info("==storeAdminClient.getUserByToken=={}", JSONObject.toJSONString(customUserResult));
+                if (null != customUserResult && customUserResult.isSuccess() && null != customUserResult.getData()) {
+                    customUser = customUserResult.getData();
+                    makeUpStoreUserInfo(customUser);
+                }
+            } catch (Exception e) {
+                log.error("获取登录用户信息异常", e);
+            }
+        }
+        if (null != customUser) {
+            UserContextHolder.setUser(customUser);
+            return true;
+        }
+        BizBaseResponse bizBaseResponse = new BizBaseResponse(BizErrorCodeEnum.INVALID_ACCESS_TOKEN, "您的身份已过期，请重新登录");
+        this.writeResponse(response, bizBaseResponse);
+        return false;
     }
 
     private void writeResponse(HttpServletResponse response, BizBaseResponse bizBaseResponse) {

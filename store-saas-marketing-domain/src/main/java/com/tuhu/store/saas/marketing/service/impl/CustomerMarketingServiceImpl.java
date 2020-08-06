@@ -11,19 +11,20 @@ import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
-import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityItemResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
+import com.tuhu.store.saas.marketing.response.ActivityResponse;
+import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Author: ZhangXiao
@@ -55,10 +57,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     private IMarketingSendRecordService iMarketingSendRecordService;
 
     @Autowired
-    private ActivityMapper activityMapper;
+    private IActivityService activityService;
 
     @Autowired
-    private IActivityService activityService;
+    private ICouponService couponService;
 
     @Autowired
     private IMessageQuantityService iMessageQuantityService;
@@ -67,13 +69,13 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     private CustomerClient customerClient;
 
     @Autowired
-    private IMessageQuantityService messageQuantityService;
-
-    @Autowired
     private IMessageTemplateLocalService messageTemplateLocalService;
 
     @Autowired
     private StoreInfoClient storeInfoClient;
+
+    @Autowired
+    private ICustomerGroupService customerGroupService;
 
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
@@ -108,19 +110,12 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public MarketingAddReq addMarketingCustomer(MarketingAddReq addReq) {
+    public Boolean addMarketingCustomer(MarketingAddReq addReq) {
         String funName = "定向营销任务新增";
         log.info("{} -> 请求参数: {}", funName, JSONObject.toJSONString(addReq));
         checkCommonParams(addReq);
-        String marketingMethod = addReq.getMarketingMethod().toString();
-        if(marketingMethod.equals("0")){
-            //营销发优惠卷
-            //TODO
-        }else if(marketingMethod.equals("1")){
-            //营销发送活动
-            addMarketing4Activity(addReq);
-        }
-        return addReq;
+        addMarketing(addReq);
+        return true;
     }
 
     @Override
@@ -235,25 +230,24 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      */
     private void checkCommonParams(MarketingAddReq addReq) {
         int cNum = 0;
-        if (addReq.getCustomerGroupId()!=null&&!"".equals(addReq.getCustomerGroupId())) {
+        if (StringUtils.isNotEmpty(addReq.getCustomerGroupIds())) {
             log.info("客群客户数量");
-//            CustomerGroupParam customerGroupParam = new CustomerGroupParam();
-//            customerGroupParam.setId(Long.valueOf(addReq.getCustomerGroupId()));
-//            customerGroupParam.setStoreId(addReq.getStoreId());
-//            customerGroupParam.setTenantId(addReq.getTenantId());
-//            List<Customer> customerList = iMarketingCustomerGroupService.getCustomerByCustomerGroupParam(customerGroupParam);
-//            cNum = customerList.size();
-        }else if(addReq.getCustomerIds()!=null&&!"".equals(addReq.getCustomerIds())){
+            String[] groupIds = addReq.getCustomerGroupIds().split(",");
+            List<Long> groupList = new ArrayList<>();
+            for(int i=0; i<groupIds.length ;i++){
+                groupList.add(Long.valueOf(groupIds[i]));
+            }
+            CalculateCustomerCountReq req = new CalculateCustomerCountReq();
+            req.setGroupList(groupList);
+            List<String> customerIds = customerGroupService.calculateCustomerCount(req);
+            cNum = customerIds.size();
+        }else if(StringUtils.isNotEmpty(addReq.getCustomerIds())){
             log.info("指定用户数量");
             String[] strArray = addReq.getCustomerIds().split(",");
             cNum = strArray.length;
         }
         //短信可用数量
-        MessageQuantity req = new MessageQuantity();
-        req.setStoreId(addReq.getStoreId());
-        req.setTenantId(addReq.getTenantId());
-        req.setCreateUser(UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName());
-        MessageQuantity messageQuantity = iMessageQuantityService.selectQuantityByTenantIdAndStoreId(req);
+        MessageQuantity messageQuantity = this.getStoreMessageQuantity(addReq.getTenantId(), addReq.getStoreId());
         int mqNum = Integer.parseInt(messageQuantity.getRemainderQuantity().toString());
         if(mqNum<cNum){
             log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,mqNum);
@@ -265,29 +259,60 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * 添加活动定向营销
      * @param addReq
      */
-    private void addMarketing4Activity(MarketingAddReq addReq){
-        Long activityId = Long.valueOf(addReq.getCouponOrActiveId());
-        Activity activity = activityMapper.selectByPrimaryKey(activityId);
-        if (null == activity || !addReq.getStoreId().equals(activity.getStoreId())) {
-            //禁止查询非本门店的营销活动
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动不存在或者不属于本店");
+    private void addMarketing(MarketingAddReq addReq){
+
+        CouponResp coupon = null;
+        ActivityResponse activity = null;
+        if(addReq.getMarketingMethod().equals(0)){
+            Long couponId = Long.valueOf(addReq.getCouponOrActiveId());
+            coupon = couponService.getCouponDetailById(couponId);
+//            if (null == coupon || !addReq.getStoreId().equals(coupon.getStoreId())) {
+//                //禁止查询非本门店的优惠券
+//                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券不存在或者不属于本店");
+//            }
+//            if(coupon.getStatus().equals(0)){
+//                //优惠券失效
+//                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请将优惠券启用");
+//            }
+//            if(addReq.getSendTime().after(coupon.getUseEndTime())){
+//                //优惠券结束
+//                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券已过期，不能做营销");
+//            }
+            if(addReq.getSendTime().before(DateUtils.now())){
+                //发送时间小于当前时间
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
+            }
+        }else {
+            Long activityId = Long.valueOf(addReq.getCouponOrActiveId());
+            activity = activityService.getActivityById(activityId, Long.valueOf(addReq.getStoreId()));
+            if (null == activity || !addReq.getStoreId().equals(activity.getStoreId())) {
+                //禁止查询非本门店的营销活动
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动不存在或者不属于本店");
+            }
+            if(!activity.getStatus()){
+                //活动下架了
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请将活动上架");
+            }
+            if(addReq.getSendTime().after(activity.getEndTime())){
+                //活动结束了
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动已结束，不能做营销");
+            }
+            if(addReq.getSendTime().before(DateUtils.now())){
+                //发送时间小于当前时间
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
+            }
+            if(addReq.getSendTime().before(activity.getStartTime())){
+                //活动还没有开始
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间不能小于活动开始时间");
+            }
         }
-        if(!activity.getStatus()){
-            //活动下架了
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请将活动上架");
+
+        //根据任务中记录的发送对象信息查询出客户列表
+        List<CustomerAndVehicleReq> customeList = analyseCustomer(addReq);
+        if(CollectionUtils.isEmpty(customeList)){
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"客户群客户不能为空");
         }
-        if(addReq.getSendTime().after(activity.getEndTime())){
-            //活动结束了
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动已结束，不能做营销");
-        }
-        if(addReq.getSendTime().before(DateUtils.now())){
-            //发送时间小于当前时间
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
-        }
-        if(addReq.getSendTime().before(activity.getStartTime())){
-            //活动还没有开始
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间不能小于活动开始时间");
-        }
+
         String currentUser = UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName();
         String sendObject = "";
         //TODO 查询客户群的名称
@@ -299,7 +324,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         customerMarketing.setCreateUser(currentUser);
         customerMarketing.setUpdateTime(DateUtils.now());
         customerMarketing.setUpdateUser(currentUser);
-        customerMarketing.setCustomerGroupId(addReq.getCustomerGroupId());
+        customerMarketing.setCustomerGroupId(addReq.getCustomerGroupIds());
         customerMarketing.setCustomerId(addReq.getCustomerIds());
         customerMarketing.setMarketingMethod(addReq.getMarketingMethod());
         //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo，存入在message_template_local表
@@ -314,14 +339,22 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         customerMarketing.setRemark(addReq.getRemark());
         customerMarketing.setSendObject(sendObject);//客户群名称
         customerMarketing.setTaskType(Byte.valueOf("0"));
+
+        //原有字段共用，存放活动相关信息
+        if(coupon != null && activity == null) {
+            customerMarketing.setCouponId(coupon.getId().toString());
+            customerMarketing.setCouponCode(coupon.getCode());
+            customerMarketing.setCouponTitle(coupon.getTitle());
+        }else if(coupon == null && activity != null){
+            customerMarketing.setCouponId(activity.getId().toString());
+            customerMarketing.setCouponCode(activity.getActivityCode());
+            customerMarketing.setCouponTitle(activity.getActivityTitle());
+        }
+
         //messageData
 //        customerMarketing.setMessageDatas();
         insert(customerMarketing);
-        //根据任务中记录的发送对象信息查询出客户列表
-        List<CustomerAndVehicleReq> customeList = analyseCustomer(addReq);
-        if(customeList==null||customeList.size()<=0){
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"客户群客户不能为空");
-        }
+
         //写入记录表并将状态设为未发送
         List<MarketingSendRecord> records = new ArrayList();
         for(CustomerAndVehicleReq customerAndVehicleReq : customeList){
@@ -340,65 +373,75 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
         iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
 
-        MessageQuantity select = new MessageQuantity();
-        select.setStoreId(customerMarketing.getStoreId());
-        select.setTenantId(customerMarketing.getTenantId());
-        //判断剩余短信数量够不够
-        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
-        if (messageQuantity.getRemainderQuantity() < records.size()) {
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
-        }
-        //更新门店可用短信的数量
-        messageQuantity.setUpdateTime(DateUtils.now());
-        messageQuantity.setUpdateUser(currentUser);
-        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - records.size());
-        messageQuantityService.reduceQuantity(messageQuantity);
+//        MessageQuantity select = new MessageQuantity();
+//        select.setStoreId(customerMarketing.getStoreId());
+//        select.setTenantId(customerMarketing.getTenantId());
+//        //判断剩余短信数量够不够
+//        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
+//        if (messageQuantity.getRemainderQuantity() < records.size()) {
+//            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
+//        }
+//        //更新门店可用短信的数量
+//        messageQuantity.setUpdateTime(DateUtils.now());
+//        messageQuantity.setUpdateUser(currentUser);
+//        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - records.size());
+//        messageQuantityService.reduceQuantity(messageQuantity);
     }
 
+    /**
+     * 获取发送对象中的真实用户信息
+     * @param addReq
+     * @return
+     */
     private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq){
         //根据任务中记录的发送对象信息查询出客户列表
         List<CustomerAndVehicleReq> customeList = new ArrayList();
+
+        List<String> customerIds = new ArrayList<>();
         //客群客户
-        if (StringUtils.isNotBlank(addReq.getCustomerGroupId())){
-            //客群接口
-            //TODO 查询客户群的列表
-//            CustomerGroupParam customerGroupParam = new CustomerGroupParam();
-//            customerGroupParam.setId(Long.valueOf(customerMarketing.getCustomerGroupId()));
-//            customerGroupParam.setStoreId(addReq.getStoreId());
-//            customerGroupParam.setTenantId(addReq.getTenantId());
-//            List<Customer> customerList = iMarketingCustomerGroupService.getCustomerByCustomerGroupParam(customerGroupParam);
-//            for(Customer customer : customerList){
-//                CustomerAndVehicleReq cavReq = new CustomerAndVehicleReq();
-//                //客户详情
-//                CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customer.getId(),customerMarketing.getTenantId(),customerMarketing.getStoreId());
-//                cavReq.setCustomerId(customer.getId());
-//                cavReq.setCustomerName(customer.getName());
-//                cavReq.setCustomerPhone(customer.getPhoneNumber());
-//                customeList.add(cavReq);
-//            }
+        if (StringUtils.isNotBlank(addReq.getCustomerGroupIds())){
+            String[] groupIds = addReq.getCustomerGroupIds().split(",");
+            List<Long> groupList = new ArrayList<>();
+            for(int i=0; i<groupIds.length ;i++){
+                groupList.add(Long.valueOf(groupIds[i]));
+            }
+            CalculateCustomerCountReq req = new CalculateCustomerCountReq();
+            req.setGroupList(groupList);
+            customerIds = customerGroupService.calculateCustomerCount(req);
+            if(CollectionUtils.isEmpty(customerIds)) {
+                return customeList;
+            }
+
         }else if(StringUtils.isNotBlank(addReq.getCustomerIds())){
             //指定客户
             String[] strArray = addReq.getCustomerIds().split(",");
-            List<String> cusIds = Lists.newArrayList();
             for(int i=0;i<=strArray.length-1;i++){
-                cusIds.add(strArray[i]);
+                customerIds.add(strArray[i]);
             }
-            BaseIdsReqVO baseIdsReqVO = new BaseIdsReqVO();
-            baseIdsReqVO.setId(cusIds);
-            baseIdsReqVO.setStoreId(addReq.getStoreId());
-            List<CustomerDTO> customerDTOS = customerClient.getCustomerByIds(baseIdsReqVO).getData();
-            for(CustomerDTO customerDTO : customerDTOS){
-                CustomerAndVehicleReq cavReq = new CustomerAndVehicleReq();
-                //客户详情
-                cavReq.setCustomerId(customerDTO.getId());
-                cavReq.setCustomerName(customerDTO.getName());
-                cavReq.setCustomerPhone(customerDTO.getPhoneNumber());
-                customeList.add(cavReq);
-            }
+        }
+
+        BaseIdsReqVO baseIdsReqVO = new BaseIdsReqVO();
+        baseIdsReqVO.setId(customerIds);
+        baseIdsReqVO.setStoreId(addReq.getStoreId());
+        List<CustomerDTO> customerDTOS = customerClient.getCustomerByIds(baseIdsReqVO).getData();
+        for(CustomerDTO customerDTO : customerDTOS){
+            CustomerAndVehicleReq cavReq = new CustomerAndVehicleReq();
+            //客户详情
+            cavReq.setCustomerId(customerDTO.getId());
+            cavReq.setCustomerName(customerDTO.getName());
+            cavReq.setCustomerPhone(customerDTO.getPhoneNumber());
+            customeList.add(cavReq);
         }
         return customeList;
     }
 
-
-
+    @Override
+    public MessageQuantity getStoreMessageQuantity(Long tenantId, Long storeId){
+        MessageQuantity req = new MessageQuantity();
+        req.setStoreId(storeId);
+        req.setTenantId(tenantId);
+        req.setCreateUser(UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName());
+        MessageQuantity messageQuantity = iMessageQuantityService.selectQuantityByTenantIdAndStoreId(req);
+        return messageQuantity;
+    }
 }
