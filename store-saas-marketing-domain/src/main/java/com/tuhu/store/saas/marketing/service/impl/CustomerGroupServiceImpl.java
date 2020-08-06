@@ -457,6 +457,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                     customerGroupDto.setId(customerGroupRule.getGroupId());
                     customerGroupDto.setStoreId(customerGroupRule.getStoreId());
                     result.add(customerGroupDto);
+                    customerGroupDtoMap.put(customerGroupRule.getGroupId(),customerGroupDto);
                 }else{
                     customerGroupDto = customerGroupDtoMap.get(customerGroupRule.getGroupId());
                 }

@@ -1,23 +1,23 @@
 package com.tuhu.store.saas.marketing.controller;
 
 import com.github.pagehelper.PageInfo;
-import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
-import com.tuhu.store.saas.marketing.parameter.SMSParameter;
+import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
+import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
-import com.tuhu.store.saas.marketing.service.ISMSService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @Author: ZhangXiao
@@ -31,9 +31,6 @@ import java.util.List;
 @Api(value = "定向营销相关api")
 @Slf4j
 public class MarketingApi extends BaseApi {
-
-    @Autowired
-    private ISMSService ismsService;
 
     @Autowired
     private IMarketingSendRecordService marketingSendRecordService;
@@ -57,21 +54,23 @@ public class MarketingApi extends BaseApi {
         return new BizBaseResponse(pageList);
     }
 
-    @GetMapping(value = "/test")
-    @ApiOperation(value = "测试")
-    public BizBaseResponse test() {
-        SMSParameter parameter = new SMSParameter();
-        List<String> datas = Lists.newArrayList();
-        datas.add("1");
-        datas.add("12");
-        datas.add("123");
-        datas.add("1234");
-        parameter.setPhone("15623695619");
-        parameter.setDatas(datas);
-        parameter.setTemplateId("624492");
-        ismsService.sendCommonSms(parameter);
-        return new BizBaseResponse("");
+    @RequestMapping(value = "/addMarketingCustomer", method = RequestMethod.POST)
+    @ApiOperation(value = "创建定向营销")
+    public BizBaseResponse addMarketingCustomer(@Validated @RequestBody MarketingAddReq addReq) {
+        addReq.setStoreId(getStoreId());
+        boolean success = iCustomerMarketingService.addMarketingCustomer(addReq);
+        return new BizBaseResponse(success);
     }
+
+    @RequestMapping(value = "/getLastMessageCount", method = RequestMethod.GET)
+    @ApiOperation(value = "获取门店剩余的短信数量额度")
+    public BizBaseResponse getLastMessageCount() {
+        MessageQuantity messageQuantity = iCustomerMarketingService.getStoreMessageQuantity(getTenantId(), getStoreId());
+        return new BizBaseResponse(messageQuantity.getRemainderQuantity());
+    }
+
+
+
 
 
 

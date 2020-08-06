@@ -24,9 +24,9 @@ public interface IMessageQuantityService {
 
     /**
      * 通过租户id和门店id减用户可用次数
-     * @param reduceMessage
+     * @param usedNum
      */
-    void reduceQuantity(MessageQuantity reduceMessage);
+    void reduceQuantity(String id, Integer usedNum, String updateUser);
 }
 
 
