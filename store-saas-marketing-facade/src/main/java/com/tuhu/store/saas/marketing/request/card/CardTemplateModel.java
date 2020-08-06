@@ -84,6 +84,9 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "卡类型 1次卡", dataType = "Date", required = false, example = "1")
     private Byte type ;
 
+
+    @ApiModelProperty(value = "过期时间  日期格式 开卡的时候用", dataType = "Date", required = false, example = "2020-08-06")
+    private  Date expiryDate;
     @Valid
     List<CardTemplateItemModel> cardTemplateItemModelList;
 }

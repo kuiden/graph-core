@@ -12,6 +12,7 @@ public class BaseApi {
         return UserContextHolder.getUser();
     }
 
+
     public Long getTenantId() {
         return UserContextHolder.getTenantId();
     }

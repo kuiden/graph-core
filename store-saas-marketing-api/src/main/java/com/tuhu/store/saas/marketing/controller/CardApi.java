@@ -43,8 +43,9 @@ public class CardApi extends BaseApi {
     }
 
 
+
     @PostMapping(value = "/getCardTemplateList")
-    @ApiOperation(value = "卡模板详情")
+    @ApiOperation(value = "卡模板列表")
     public BizBaseResponse<PageInfo<CardTemplateModel>> getCardTemplateList(@RequestBody CardTemplateReq req) {
         req.setTenantId(super.getTenantId());
         req.setStoreId(super.getStoreId());
