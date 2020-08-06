@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 最近多少天无消费行为的客户id过滤
+ * 客户创建时间的客户id过滤
  */
 @Data
 @Slf4j

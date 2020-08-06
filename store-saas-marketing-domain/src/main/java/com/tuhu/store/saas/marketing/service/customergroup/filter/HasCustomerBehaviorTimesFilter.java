@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
- * 最近多少天有消费行为次数的客户id过滤
+ * 最近多少天有消费次数的客户id过滤
  */
 @Data
 @Slf4j
