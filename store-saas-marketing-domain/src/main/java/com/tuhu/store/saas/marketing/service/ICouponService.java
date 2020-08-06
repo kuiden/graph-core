@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.marketing.dataobject.Coupon;
 import com.tuhu.store.saas.marketing.dataobject.CouponScopeCategory;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
@@ -81,6 +82,9 @@ public interface ICouponService {
      * @return
      */
     CommonResp<CustomerCoupon> generateCustomerCoupon(Coupon coupon, Customer customer, SendCouponReq sendCouponReq);
+
+    CommonResp<CustomerCoupon> generateCustomerCoupon(Coupon coupon, CustomerDTO customer, SendCouponReq sendCouponReq);
+
 
     /**
      * 查询指定用户所有未使用的优惠券信息

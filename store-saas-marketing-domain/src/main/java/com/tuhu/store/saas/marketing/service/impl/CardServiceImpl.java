@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
@@ -36,7 +37,7 @@ public class CardServiceImpl implements ICardService {
     @Override
     public Long saveCardTemplate(CardTemplateModel req, String userId) {
         log.info("CardServiceImpl-> addCardTemplate req={}", req);
-        if (cardTemplateMapper.checkCardTemplateName(req.getCardName(), req.getId() == null ? 0 : req.getId(), req.getTenantId(), req.getStoreId()) > 0)
+        if (cardTemplateMapper.checkCardTemplateName(req.getCardName().trim(), req.getId() == null ? 0 : req.getId(), req.getTenantId(), req.getStoreId()) > 0)
             throw new StoreSaasMarketingException("卡名称不能重复");
         boolean isUpdate = req.getId() != null && req.getId() > 0 ? true : false;
         CardTemplate cardTemplate = this.convertorToCardTemplate(req);
@@ -65,7 +66,15 @@ public class CardServiceImpl implements ICardService {
         if (cardTemplateEntity != null) {
             BeanUtils.copyProperties(cardTemplateEntity, result);
             result.setCardTemplateItemModelList(itemService.getCardTemplateItemListByCardTemplateId(id));
+            if (!cardTemplateEntity.getForever()) {
+                //计算卡的优先期 时
+                Date now = new Date(System.currentTimeMillis());
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.MONTH, result.getExpiryPeriod());
+                result.setExpiryDate(cal.getTime());
+            }
         }
+
         return result;
     }
 
@@ -109,9 +118,9 @@ public class CardServiceImpl implements ICardService {
                 //计算单次项目 总单价
                 cardTemplateItem.setActualAmount(cardTemplateItem.getFaceAmount().multiply(quantity));
                 //计算总项实额
-                cardTemplate.setFaceAmount(cardTemplate.getFaceAmount().add(cardTemplateItem.getActualAmount()));
+                cardTemplate.setActualAmount(cardTemplate.getActualAmount().add(cardTemplateItem.getActualAmount()));
                 //计算总项面值
-                cardTemplate.setActualAmount(cardTemplate.getActualAmount().add(cardTemplateItem.getPrice().multiply(quantity)));
+                cardTemplate.setFaceAmount(cardTemplate.getFaceAmount().add(cardTemplateItem.getPrice().multiply(quantity)));
                 //计算总优惠额度
                 cardTemplate.setDiscountAmount(cardTemplate.getDiscountAmount().add(cardTemplateItem.getDiscountAmount()));
                 cardTemplateList.add(cardTemplateItem);
