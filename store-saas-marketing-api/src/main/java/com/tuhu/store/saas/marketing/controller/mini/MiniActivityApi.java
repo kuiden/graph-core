@@ -9,13 +9,16 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 //import com.tuhu.saas.crm.rpc.vo.ServiceOrderActivityUseVO;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,6 +83,22 @@ public class MiniActivityApi extends BaseApi {
         editActivityReq.setCompanyId(super.getCompanyId());
         editActivityReq = iActivityService.editActivity(editActivityReq);
         return BizBaseResponse.success(editActivityReq);
+    }
+
+
+    @PostMapping(value = "/scanForWriteOff")
+    @ApiModelProperty(value = "客户核销信息查询")
+    public BizBaseResponse<ActivityCustomerResp> scanForWriteOff(@Validated @RequestBody ActivityCustomerReq req){
+        ActivityCustomerResp resp = iActivityService.getActivityCustomerDetail(req);
+        return BizBaseResponse.success(resp);
+    }
+
+
+    @PostMapping(value = "/writeOffOrCancel")
+    @ApiModelProperty(value = "活动核销或取消")
+    public BizBaseResponse<String> writeOffOrCacel(@Validated @RequestBody ActivityWriteOffOrCancelReq req){
+
+        return BizBaseResponse.success();
     }
 
 //    @RequestMapping(value = "/client/apply", method = RequestMethod.POST)

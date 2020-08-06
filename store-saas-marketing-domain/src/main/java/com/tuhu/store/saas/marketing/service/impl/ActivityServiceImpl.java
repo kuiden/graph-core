@@ -654,6 +654,7 @@ public class ActivityServiceImpl implements IActivityService {
      * @param editActivityReq
      */
     @Transactional
+    @Override
     public void editActivityItems(ActivityResp oldActivity, EditActivityReq editActivityReq) {
         Date date = new Date();
         Map<Long, ActivityItemResp> oldActivityItemMap = oldActivity.getItems().stream().collect(Collectors.toMap(ActivityItemResp::getId, activityItemResp -> activityItemResp));
@@ -1045,10 +1046,11 @@ public class ActivityServiceImpl implements IActivityService {
         if (null == activityCustomerReq) {
             throw new MarketingException(CrmReturnCodeEnum.REQUEST_ARG_IS_EMPTY.getDesc());
         }
-        /*String customerId = activityCustomerReq.getCustomerId();
+        String customerId = activityCustomerReq.getCustomerId();
         if (StringUtils.isBlank(customerId)) {
-            throw new CrmException("客户ID不能为空");
-        }*/
+            //用户Id不能为空
+            throw new MarketingException(CrmReturnCodeEnum.CUSTOMER_ID_MISSING.getDesc());
+        }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if (StringUtils.isBlank(activityOrderCode)) {
             throw new MarketingException("活动报名订单号不能为空");
@@ -1057,31 +1059,42 @@ public class ActivityServiceImpl implements IActivityService {
         if (null == storeId) {
             throw new MarketingException("门店ID不能为空");
         }
+        //高级SQL操作开始
         //1.根据活动报名订单号查询活动报名信息
         ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
         ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
+        //没猜错的话 where条件开始
+        //没猜错的话 field+EqualTo就是 and field={}的意思
         activityCustomerExampleCriteria.andActivityOrderCodeEqualTo(activityOrderCode);
-//        activityCustomerExampleCriteria.andCustomerIdEqualTo(customerId);
+        activityCustomerExampleCriteria.andCustomerIdEqualTo(customerId);
+        activityCustomerExampleCriteria.andStoreIdEqualTo(storeId);
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
+        //高级SQL操作结束
+
+
+        //可能返回"对不起,你没有权限" 更好
         if (CollectionUtils.isEmpty(activityCustomerList)) {
             throw new MarketingException("客户报名信息不存在");
         }
+        //QUEST 门店+用户+活动code难道还有多条记录？
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
         //门店不一致的活动不允许查看
         if (!activityCustomer.getStoreId().equals(storeId)) {
             throw new MarketingException("客户报名信息不存在");
         }
-        String customerId = activityCustomer.getCustomerId();
+//        用户不一致就给看?
+//        String customerId = activityCustomer.getCustomerId();
+
         String activityCode = activityCustomer.getActivityCode();
         //2.根据活动编码查询活动详情
         ActivityResp activityResp = this.getActivityByActivityCode(activityCode);
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
-        if (activityCustomerResp.getUseStatus()!=null
-                && activityCustomerResp.getUseStatus()==0
-                && (new Date()).after(activityCustomerResp.getEndTime())){
-            activityCustomerResp.setUseStatus(Byte.valueOf("-1"));//已过期
-        }
+//        if (activityCustomerResp.getUseStatus()!=null   只是查询
+//                && activityCustomerResp.getUseStatus()==0
+//                && (new Date()).after(activityCustomerResp.getEndTime())){
+//            activityCustomerResp.setUseStatus(Byte.valueOf("-1"));//已过期
+//        }
         activityCustomerResp.setActivity(activityResp);
 //        if (!activityCustomerReq.getIsFromClient()) {
             //3.根据客户id查询客户及车辆详情
