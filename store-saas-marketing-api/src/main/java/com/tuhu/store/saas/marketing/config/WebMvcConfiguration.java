@@ -1,6 +1,5 @@
 package com.tuhu.store.saas.marketing.config;
 
-import com.tuhu.store.saas.marketing.interceptor.CustomerInterceptor;
 import com.tuhu.store.saas.marketing.interceptor.UserInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;

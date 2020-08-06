@@ -13,6 +13,10 @@ public class StoreCustomerGroupRelation {
 
     private Long storeId;
 
+    private Long customerCount;
+
+    private String groupDesc;
+
     /**
      * 创建人
      */

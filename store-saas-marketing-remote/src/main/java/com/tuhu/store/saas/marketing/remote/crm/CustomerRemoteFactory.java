@@ -39,6 +39,12 @@ public class CustomerRemoteFactory implements FallbackFactory<CustomerClient> {
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 
+            @Override
+            public BizBaseResponse<List<CustomerDTO>> listCustomer(CustomerVO customerVO) {
+                log.error("listCustomer error,request={},error={}", customerVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
         };
     }
 }

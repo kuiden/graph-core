@@ -12,6 +12,13 @@ public class CustomerGroupRuleDto implements Serializable {
 
     private String cgRuleName;
 
+    private Long groupId;
+
+    private Long storeId;
+
+    private Long tenantId;
+
+
     private List<CustomerGroupRuleAttributeDto> attributeReqList;
 
 }

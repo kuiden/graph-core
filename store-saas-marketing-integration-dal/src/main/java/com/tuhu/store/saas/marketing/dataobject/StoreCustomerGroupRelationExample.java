@@ -132,10 +132,14 @@ public class StoreCustomerGroupRelationExample {
         }
 
         public StoreCustomerGroupRelationExample.Criteria andGroupIdEqualTo(Long value) {
-            addCriterion("group_id =", value, "groupId");
+            addCriterion("id =", value, "id");
             return (StoreCustomerGroupRelationExample.Criteria) this;
         }
 
+        public StoreCustomerGroupRelationExample.Criteria andGroupNameLike(String value) {
+            addCriterion("group_name like", value, "groupName");
+            return (StoreCustomerGroupRelationExample.Criteria) this;
+        }
 
 
     }

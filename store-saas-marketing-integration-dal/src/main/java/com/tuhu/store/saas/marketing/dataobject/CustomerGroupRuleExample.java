@@ -139,6 +139,10 @@ public class CustomerGroupRuleExample {
             return (CustomerGroupRuleExample.Criteria) this;
         }
 
+        public CustomerGroupRuleExample.Criteria andGroupIdIn(List<Long> values) {
+            addCriterion("group_id in", values, "groupId");
+            return (CustomerGroupRuleExample.Criteria) this;
+        }
 
     }
 

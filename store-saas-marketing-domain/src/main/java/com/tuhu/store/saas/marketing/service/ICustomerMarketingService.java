@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
+import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
@@ -31,7 +32,7 @@ public interface ICustomerMarketingService extends Default {
      * @param addReq
      * @return
      */
-    public MarketingAddReq addMarketingCustomer(MarketingAddReq addReq);
+    public Boolean addMarketingCustomer(MarketingAddReq addReq);
 
     /**
      * 更新定向营销任务状态
@@ -51,4 +52,12 @@ public interface ICustomerMarketingService extends Default {
      * @return
      */
     String getSmsPreview(MarketingSmsReq req);
+
+    /**
+     * 获取门店的短信数量信息
+     * @param tenantId
+     * @param storeId
+     * @return
+     */
+    MessageQuantity getStoreMessageQuantity(Long tenantId, Long storeId);
 }

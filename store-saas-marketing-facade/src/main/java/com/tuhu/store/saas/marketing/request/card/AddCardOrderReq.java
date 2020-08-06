@@ -7,6 +7,7 @@
  */
 package com.tuhu.store.saas.marketing.request.card;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,12 +45,9 @@ public class AddCardOrderReq {
     @ApiModelProperty(value = "销售人员姓名", dataType = "Long", required = false, example = "销售人员姓名")
     private String salesmanName;
 
-    @ApiModelProperty(value = "卡模板ID", dataType = "Long", required = false, example = "154347623596900001911552")
+    @ApiModelProperty(value = "卡模板ID", dataType = "Long", required = false, example = "1")
     @NotNull(message = "卡模板ID不能为空")
-    private String cardTemplateId;
-
-    @ApiModelProperty(value = "卡号", dataType = "Long", required = false, example = "154347623596900001911552")
-    private String cardNo;
+    private Long cardTemplateId;
 
     @ApiModelProperty(value = "有效日期", dataType = "Long", required = false, example = "234543")
     private Date expiryDate;
@@ -58,9 +56,11 @@ public class AddCardOrderReq {
     @NotNull(message = "是否永久有效不能为空")
     private Boolean forever;
 
-
     @ApiModelProperty(value = "门店ID", dataType = "Long", required = false, example = "17")
     private Long storeId;
+
+    @ApiModelProperty(value = "门店编码")
+    private String storeNo;
 
     @ApiModelProperty(value = "租户ID", dataType = "Long", required = false, example = "19")
     private Long tenantId;
@@ -70,6 +70,7 @@ public class AddCardOrderReq {
 
     @ApiModelProperty(value = "创建时间", dataType = "Long", required = false, example = "2018-11-22T12:36:54.025Z")
     private Date createTime;
+
     @ApiModelProperty(value = "更新时间", dataType = "Long", required = false, example = "2018-11-22T12:36:54.025Z")
     private Date updateTime;
 

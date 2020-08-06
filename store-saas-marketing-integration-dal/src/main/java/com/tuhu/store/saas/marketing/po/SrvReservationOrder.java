@@ -86,6 +86,19 @@ public class SrvReservationOrder {
      */
     private Integer teminal;
 
+    /**
+     * 预约渠道:MD(门店创建);ZXYY(小程序在线预约);COUPON(优惠券营销);ACTIVITY(活动营销)
+     */
+    private String sourceChannel;
+
+    public String getSourceChannel() {
+        return sourceChannel;
+    }
+
+    public void setSourceChannel(String sourceChannel) {
+        this.sourceChannel = sourceChannel;
+    }
+
     public String getId() {
         return id;
     }

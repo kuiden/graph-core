@@ -25,7 +25,7 @@ public class MarketingAddReq {
      * 和customerId二选一
      */
     @ApiModelProperty(value = "客户群组id")
-    private String customerGroupId;
+    private String customerGroupIds;
 
     /**
      * 客户ID，多个用逗号分隔

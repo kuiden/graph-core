@@ -49,6 +49,10 @@ public class BaseApi {
         return UserContextHolder.getStoreId();
     }
 
+    public  String getStoreNo(){
+        return UserContextHolder.getUser().getStoreNo();
+    }
+
     public String getPhone() {
         CustomUser user = this.getUserCore();
         if (null != user) {
