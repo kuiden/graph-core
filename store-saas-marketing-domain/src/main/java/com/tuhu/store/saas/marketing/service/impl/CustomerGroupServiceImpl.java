@@ -57,6 +57,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         if(CollectionUtils.isEmpty(customerGroupDto.getCustomerGroupRuleReqList())){
             throw new StoreSaasMarketingException("请填写特征信息");
         }
+        Long id = null;
         if(customerGroupDto.getId()==null){//新增
             customerGroupDto.setCreateUser(req.getCreateUser());
             customerGroupDto.setCreateTime(new Date());
@@ -66,7 +67,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             if(record.getId()>0) {
                 addCustomerGroupRuleList(customerGroupDto, Long.valueOf(record.getId()));
             }
-
+            id = record.getId();
         }else{//更新
             StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
@@ -86,7 +87,24 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             customerGroupRuleMapper.updateByExampleSelective(customerGroupRule,example);
             //新增客群规则
             addCustomerGroupRuleList(customerGroupDto, customerGroupDto.getId());
+            id = customerGroupDto.getId();
         }
+        //计算客群数量
+        updateCustomerCountInfo(req.getStoreId(), id);
+
+    }
+
+    private void updateCustomerCountInfo(Long storeId, Long id) {
+        CalculateCustomerCountReq calculateCustomerCountReq = new CalculateCustomerCountReq();
+        calculateCustomerCountReq.setStoreId(storeId);
+        List<Long> groupList = new ArrayList<>();
+        groupList.add(id);
+        calculateCustomerCountReq.setGroupList(groupList);
+        List<String> customerIdList = this.calculateCustomerCount(calculateCustomerCountReq);
+        StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
+        record.setId(id);
+        record.setCustomerCount(Long.valueOf(customerIdList.size()));
+        storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
     }
 
     private void addCustomerGroupRuleList(CustomerGroupDto customerGroupDto, Long relationId) {
@@ -500,7 +518,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         CustomerGroupRuleAttributeDto customerGroupRuleAttributeDto = new CustomerGroupRuleAttributeDto();
         customerGroupRuleAttributeDto.setAttribute(customerGroupRule.getAttributeName());
         customerGroupRuleAttributeDto.setAttributeValue(customerGroupRule.getAttributeValue());
-        customerGroupRuleAttributeDto.setCompareOpertor(customerGroupRule.getCgRuleFactor());
+        customerGroupRuleAttributeDto.setCompareOpertor(customerGroupRule.getCompareOperator());
         return customerGroupRuleAttributeDto;
     }
 
@@ -511,6 +529,10 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         if(CollectionUtils.isNotEmpty(customerGroupDtoList)){
             for(CustomerGroupDto customerGroupDto : customerGroupDtoList){
                 List<String> singleCustomerIdList = CustomerGroupFilterFactory.createFilter(customerGroupDto).filterProcess();
+                StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
+                record.setId(customerGroupDto.getId());
+                record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
                 if(CollectionUtils.isEmpty(customerIdList)){
                     customerIdList.addAll(singleCustomerIdList);
                 }else{
