@@ -97,12 +97,7 @@ public class ReservationApi extends BaseApi {
     @ApiOperation(value = "获取门店预约日期")
     public BizBaseResponse<List<ReservationDateResp>> getReserveDateList(){
         BizBaseResponse<List<ReservationDateResp>> result = BizBaseResponse.success();
-        List<ReservationDateResp> list = new ArrayList<>();
-        ReservationDateResp resp = new ReservationDateResp();
-        resp.setCount(2);
-        resp.setReservationDate(new Date().getTime());
-        list.add(resp);
-        result.setData(list);
+        result.setData(iNewReservationService.getReserveDateList(super.getStoreId()));
         return result;
     }
 

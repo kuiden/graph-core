@@ -51,4 +51,14 @@
         and customer_id = #{customerId}
     </select>
 
+    <select id="getReserveDateList" resultType="com.tuhu.store.saas.marketing.po.ReservationDateDTO">
+        select count(1) as count,date_format(estimated_arrive_time, '%Y-%m-%d') as reservationDate
+        from srv_reservation_order
+        where estimated_arrive_time <![CDATA[>=]]> date_format(curdate(), '%Y-%m-%d')
+        and estimated_arrive_time <![CDATA[<=]]> date_sub(curdate(), interval -7 day)
+        and store_id = #{storeId}
+        GROUP BY date_format(estimated_arrive_time, '%Y-%m-%d')
+        ORDER BY date_format(estimated_arrive_time, '%Y-%m-%d')
+    </select>
+
 </mapper>
