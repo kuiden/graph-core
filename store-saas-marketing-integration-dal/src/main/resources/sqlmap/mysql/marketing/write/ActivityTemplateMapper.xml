@@ -118,7 +118,7 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.po.ActivityTemplate">
+  <insert id="insertEntity" parameterType="com.tuhu.store.saas.marketing.po.ActivityTemplate">
     insert into activity_template (id, code, `type`, 
       pic_url, activity_title, activity_introduce, 
       apply_number, `status`, refence_number, 

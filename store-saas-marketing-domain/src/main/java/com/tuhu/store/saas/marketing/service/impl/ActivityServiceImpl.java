@@ -189,9 +189,9 @@ public class ActivityServiceImpl implements IActivityService {
         }
         List<ActivityItem> activityItemList = new ArrayList<>();
         for (ActivityItemReq activityItemReq : items) {
-            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud()) {
-                issuedGoodOrServiceSpu(activityItemReq, addActivityReq.getTenantId(), addActivityReq.getCreateUser());
-            }
+//            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud()) {
+//                issuedGoodOrServiceSpu(activityItemReq, addActivityReq.getTenantId(), addActivityReq.getCreateUser());
+//            }
             ActivityItem activityItem = new ActivityItem();
             BeanUtils.copyProperties(activityItemReq, activityItem);
             activityItem.setActivityCode(code);
