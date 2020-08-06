@@ -76,4 +76,13 @@ public class AddActivityReq implements Serializable {
 
     @ApiModelProperty("活动模板ID")
     private Long activityTemplateId;
+
+    @ApiModelProperty("有效期：0-有效天数，1-截止日期")
+    private Integer activeType;
+
+    @ApiModelProperty("报名活动后有效天数")
+    private Integer activeDays;
+
+    @ApiModelProperty("活动截止日期")
+    private Date activeDate;
 }

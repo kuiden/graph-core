@@ -22,6 +22,7 @@ import com.tuhu.store.saas.marketing.response.ClientEventRecordResp;
 import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
 import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
 import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
+import com.tuhu.store.saas.user.vo.EventTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,10 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * C端用户事件记录服务实现类
@@ -102,32 +100,32 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         if (StringUtils.isEmpty(contentValue)) {
             contentValue = clientEventRecordRequest.getContentValue();
         }
-//        ClientEventRecordEntity oldClientEventRecordEntity = clientEventRecordEntityDao.findByEventAndOpenId(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId);
-//        //如果没有记录
-//        if (null == oldClientEventRecordEntity || StringUtils.isEmpty(oldClientEventRecordEntity.getId())) {
-//            ClientEventRecordEntity clientEventRecordEntity = new ClientEventRecordEntity();
-//            clientEventRecordEntity.setId(UUID.randomUUID().toString());
-//            clientEventRecordEntity.setEventType(clientEventRecordRequest.getEventType());
-//            clientEventRecordEntity.setContentType(clientEventRecordRequest.getContentType());
-//            clientEventRecordEntity.setContentValue(contentValue);
-//            clientEventRecordEntity.setOpenId(openId);
-//            clientEventRecordEntity.setStoreId(clientEventRecordRequest.getStoreId());
-//            Date date = new Date();
-//            clientEventRecordEntity.setCreateTime(date);
-//            clientEventRecordEntity.setUpdateTime(date);
-//            clientEventRecordEntity.setEventCount(1);
-//            try {
-//                this.addNewClientEventRecord(clientEventRecordEntity);
-//            } catch (Exception e) {
-//                log.error("C端客户行为新增记录失败,ClientEventRecordEntity={},error={}", JSONObject.toJSONString(clientEventRecordEntity), ExceptionUtils.getStackTrace(e));
-//                //再次查询
-//                oldClientEventRecordEntity = clientEventRecordEntityDao.findByEventAndOpenId(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId);
-//                this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId(), new Date());
-//            }
-//        } else {
-//            this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId(), new Date());
-//        }
-//        //如果是访问门店或优惠券
+        ClientEventRecordDAO oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId);
+        //如果没有记录
+        if (null == oldClientEventRecordEntity || StringUtils.isEmpty(oldClientEventRecordEntity.getId())) {
+            ClientEventRecordDAO clientEventRecordEntity = new ClientEventRecordDAO();
+            clientEventRecordEntity.setId(UUID.randomUUID().toString());
+            clientEventRecordEntity.setEventType(clientEventRecordRequest.getEventType());
+            clientEventRecordEntity.setContentType(clientEventRecordRequest.getContentType());
+            clientEventRecordEntity.setContentValue(contentValue);
+            clientEventRecordEntity.setOpenId(openId);
+            clientEventRecordEntity.setStoreId(clientEventRecordRequest.getStoreId());
+            Date date = new Date();
+            clientEventRecordEntity.setCreateTime(date);
+            clientEventRecordEntity.setUpdateTime(date);
+            clientEventRecordEntity.setEventCount(1);
+            try {
+                this.addNewClientEventRecord(clientEventRecordEntity);
+            } catch (Exception e) {
+                log.error("C端客户行为新增记录失败,ClientEventRecordEntity={},error={}", JSONObject.toJSONString(clientEventRecordEntity), ExceptionUtils.getStackTrace(e));
+                //再次查询
+                oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId);
+                this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId());
+            }
+        } else {
+            this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId());
+        }
+        //如果是访问门店或优惠券
 //        if (EventTypeEnum.VISIT.getCode().equals(clientEventRecordRequest.getEventType())) {
 //            if (EventContentTypeEnum.STORE.getCode().equals(clientEventRecordRequest.getContentType())) {
 //                EndUserVisitedStoreEntity endUserVisitedStoreEntity = new EndUserVisitedStoreEntity();
