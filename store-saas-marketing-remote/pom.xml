@@ -26,6 +26,11 @@
 			<artifactId>store-saas-product-facade</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.tuhu</groupId>
+			<artifactId>store-saas-order-facade</artifactId>
+		</dependency>
+
 	</dependencies>
 
 </project>
