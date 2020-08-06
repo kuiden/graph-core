@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 
 import com.baomidou.mybatisplus.mapper.BaseMapper;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -14,4 +15,9 @@ public interface SrvReservationOrderMapper extends BaseMapper<SrvReservationOrde
     List<Map> getReservedPeriodListForCustomer(HashMap params);
 
     int updateReservation(SrvReservationOrder order);
+
+    List<SrvReservationOrder> getCReservationList(@Param("storeId") Long storeId, @Param("customerId") String customerId,
+                                             @Param("pageIndex") Integer pageIndex, @Param("pageSize") Integer pageSize);
+
+    Long getCReservationCount(@Param("storeId") Long storeId, @Param("customerId") String customerId);
 }

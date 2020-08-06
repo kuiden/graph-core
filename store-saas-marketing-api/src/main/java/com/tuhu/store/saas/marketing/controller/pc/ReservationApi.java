@@ -134,6 +134,10 @@ public class ReservationApi extends BaseApi {
     @ApiOperation(value = "获取车主小程序预约列表")
     public BizBaseResponse getCReservationList(@RequestBody CReservationListReq req){
         BizBaseResponse<PageInfo<ReservationDTO>> result = BizBaseResponse.success();
+        if(req.getStoreId() == null){
+            throw new StoreSaasMarketingException("门店ID不能为空");
+        }
+        result.setData(iNewReservationService.getCReservationList(req));
         return result;
     }
 

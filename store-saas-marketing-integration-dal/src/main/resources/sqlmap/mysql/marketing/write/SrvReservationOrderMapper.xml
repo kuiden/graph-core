@@ -37,4 +37,18 @@
         where id = #{id}
     </update>
 
+    <select id="getCReservationList" resultMap="BaseResultMap">
+        select * from srv_reservation_order
+        where store_id = #{storeId}
+        and customer_id = #{customerId}
+        ORDER BY estimated_arrive_time DESC
+        limit ${(pageIndex-1)*pageSize},${pageSize}
+    </select>
+
+    <select id="getCReservationCount" resultType="java.lang.Long">
+        select count(1) from srv_reservation_order
+        where store_id = #{storeId}
+        and customer_id = #{customerId}
+    </select>
+
 </mapper>
