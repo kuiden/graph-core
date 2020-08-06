@@ -29,6 +29,30 @@ public class DateUtils {
     }
 
     /**
+     * 日期加一
+     */
+    public static Date addDate(Date date, int add) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.DAY_OF_MONTH, add);
+        return cal.getTime();
+    }
+
+    /**
+     * 取指定日期起始点
+     *
+     * @return
+     */
+    public static Date getDateStartTime(Date date) {
+        Calendar calendar = new Calendar.Builder().setInstant(date).build();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    /**
      * yyyy-MM-dd HH:mm:ss
      * @param dateStr
      * @return

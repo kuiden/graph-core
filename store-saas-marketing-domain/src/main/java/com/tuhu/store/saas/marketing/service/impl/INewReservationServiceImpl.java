@@ -9,6 +9,7 @@ import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.SrvReservationStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
+import com.tuhu.store.saas.marketing.po.ReservationDateDTO;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.remote.reponse.CustomerDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
@@ -20,10 +21,12 @@ import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.CReservationListReq;
 import com.tuhu.store.saas.marketing.request.NewReservationReq;
 import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
+import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import com.tuhu.store.saas.marketing.service.IReservationOrderService;
+import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.marketing.util.KeyResult;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
@@ -157,6 +160,28 @@ public class INewReservationServiceImpl implements INewReservationService {
         }
         result.setList(list);
         result.setTotal(reservationOrderMapper.getCReservationCount(req.getStoreId(),req.getCustomerId()));
+        return result;
+    }
+
+    @Override
+    public List<ReservationDateResp> getReserveDateList(Long storeId) {
+        List<ReservationDateResp> result = new ArrayList<>();
+        Date today = DateUtils.getDateStartTime(new Date());
+        for(int i = 0 ; i < 7 ; i++){
+            ReservationDateResp resp = new ReservationDateResp();
+            resp.setReservationDate(DateUtils.addDate(today, i).getTime());
+            result.add(resp);
+        }
+        List<ReservationDateDTO> daoList = reservationOrderMapper.getReserveDateList(storeId);
+        if(CollectionUtils.isNotEmpty(daoList)){
+            for(ReservationDateDTO dao : daoList){
+                for(ReservationDateResp resp : result){
+                    if(dao.getReservationDate().getTime() == resp.getReservationDate()){
+                        resp.setCount(dao.getCount());
+                    }
+                }
+            }
+        }
         return result;
     }
 
