@@ -14,6 +14,7 @@ import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -56,7 +57,12 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
     }
 
     @Override
-    public void reduceQuantity(MessageQuantity reduceMessage) {
-        quantityMapper.updateByPrimaryKey(reduceMessage);
+    @Transactional
+    public void reduceQuantity(String id, Integer usedNum, String updateUser) {
+        MessageQuantity messageQuantity = quantityMapper.selectByPrimaryKey(id);
+        messageQuantity.setUpdateTime(new Date());
+        messageQuantity.setUpdateUser(updateUser);
+        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - usedNum);
+        quantityMapper.updateByPrimaryKey(messageQuantity);
     }
 }

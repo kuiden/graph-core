@@ -75,14 +75,10 @@ public class RemindServiceImpl implements IRemindService {
         if (messageQuantity.getRemainderQuantity() < messageTimes) {
             throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
         }
-        Date now = new Date();
         //保存提醒记录
         this.saveMessageRemind(sendRemindReq);
         //更新租户提醒次数
-        messageQuantity.setUpdateTime(now);
-        messageQuantity.setUpdateUser(sendRemindReq.getUserId());
-        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - messageTimes);
-        messageQuantityService.reduceQuantity(messageQuantity);
+        messageQuantityService.reduceQuantity(messageQuantity.getId(), messageTimes, sendRemindReq.getUserId());
         return true;
     }
 
@@ -99,14 +95,10 @@ public class RemindServiceImpl implements IRemindService {
         if (messageQuantity.getRemainderQuantity() < 1) {
             throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
         }
-        Date now = new Date();
         //保存提醒记录
         this.saveMessageRemindWithPhone(sendRemindReq, phone);
         //更新租户提醒次数
-        messageQuantity.setUpdateTime(now);
-        messageQuantity.setUpdateUser(sendRemindReq.getUserId());
-        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - 1);
-        messageQuantityService.reduceQuantity(messageQuantity);
+        messageQuantityService.reduceQuantity(messageQuantity.getId(), 1, sendRemindReq.getUserId());
         return true;
     }
 
