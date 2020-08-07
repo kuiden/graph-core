@@ -7,8 +7,10 @@
  */
 package com.tuhu.store.saas.marketing.service.impl;
 
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocal;
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocalExample;
+import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MessageTemplateLocalMapper;
 import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
@@ -50,7 +52,12 @@ public class MessageTemplateLocalServiceImpl implements IMessageTemplateLocalSer
             list.addAll(templateLocalMapper.selectByExample(publicExample));
         }
         if(list==null||list.size()<=0){
-            throw new StoreSaasMarketingException("不存在短信模板:"+templateCode);
+            SMSTypeEnum smsTypeEnum = SMSTypeEnum.getByCode(templateCode);
+            if(smsTypeEnum==null){
+                throw new StoreSaasMarketingException("不存在短信模板:"+templateCode);
+            }else{
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "不存在"+smsTypeEnum.desc()+"短信模板");
+            }
         }
         return list.get(0);
     }
