@@ -84,7 +84,9 @@ public class H5ReservationApi extends BaseApi {
         if(SrvReservationChannelEnum.COUPON.getEnumCode().equals(req.getSourceChannel())){
             CouponResp couponResp = iCouponService.getCouponDetailById(Long.parseLong(req.getCouponId()));
             log.info("根据优惠券id查详情返回", JSONObject.toJSONString(couponResp));
-            if(couponResp != null && couponResp.getStoreId() != null && couponResp.getTenantId() != null){
+            if(couponResp == null){
+                return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券不存在");
+            }else if(couponResp.getStoreId() != null && couponResp.getTenantId() != null){
                 req.setStoreId(couponResp.getStoreId());
                 req.setTenantId(couponResp.getTenantId());
             }

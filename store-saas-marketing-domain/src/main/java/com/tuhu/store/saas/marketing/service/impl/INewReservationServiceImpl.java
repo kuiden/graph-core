@@ -42,6 +42,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Author: yanglanqing
@@ -192,6 +193,7 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Override
     public List<BReservationListResp> getBReservationList(BReservationListReq req) {
         List<BReservationListResp> result = new ArrayList<>();
+        List<BReservationListResp> allTimeResult = new ArrayList<>();
         //查出规定日期内所有预约单
         List<SrvReservationOrder> daoList = reservationOrderMapper.getBReservationList(req.getStoreId(),ymdDateFormat.format(new Date(req.getReservationDate())));
         if(CollectionUtils.isNotEmpty(daoList)){
@@ -204,7 +206,7 @@ public class INewReservationServiceImpl implements INewReservationService {
                     BReservationListResp resp = new BReservationListResp();
                     List<ReservationDTO> reservationDTOs = new ArrayList<>();
                     for(SrvReservationOrder order : daoList){
-                        if(s.equals(hmsDateFormat.format(order.getEstimatedArriveTime()))){
+                        if(s.equals(hmDateFormat.format(order.getEstimatedArriveTime()))){
                             ReservationDTO dto = new ReservationDTO();
                             BeanUtils.copyProperties(order,dto);
                             reservationDTOs.add(dto);
@@ -214,8 +216,10 @@ public class INewReservationServiceImpl implements INewReservationService {
                     resp.setReservationEndTime(ymdhmDateFormat.parse(ymd+" "+getAfterTime(s)).getTime());
                     resp.setPeriodName(s + "-" + getAfterTime(s));
                     resp.setReservationDTOs(reservationDTOs);
-                    result.add(resp);
+                    allTimeResult.add(resp);
                 }
+                //将没有数据的时间段剔除
+                result = allTimeResult.stream().filter(x->CollectionUtils.isNotEmpty(x.getReservationDTOs())).collect(Collectors.toList());
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -399,7 +403,7 @@ public class INewReservationServiceImpl implements INewReservationService {
             if (minute.length() < 2) {
                 minute = "0" + minute;
             }
-            list.add(hour + ":" + minute + ":00");//拼接为HH:mm格式，添加到集合
+            list.add(hour + ":" + minute);//拼接为HH:mm格式，添加到集合
         }
         if(startTime == null && endTime == null){
             return list;
@@ -407,7 +411,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         List<String> newList = new ArrayList<>();
         try{
             for(String s : list){
-                long now = hmsDateFormat.parse(s).getTime();
+                long now = hmDateFormat.parse(s).getTime();
                 if(now >= startTime.getTime() && now <= endTime.getTime()){
                     newList.add(hmDateFormat.format(hmDateFormat.parse(s)));
                 }
