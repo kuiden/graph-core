@@ -65,11 +65,13 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             id = record.getId();
         }else{//更新
-           /* StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
+
+            StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
             storeCustomerGroupRelation.setUpdateTime(new Date());
+            storeCustomerGroupRelation.setGroupName(customerGroupDto.getGroupName());
             storeCustomerGroupRelation.setId(customerGroupDto.getId());
-            storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);*/
+            storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);
             CustomerGroupRule customerGroupRule = new CustomerGroupRule();
             customerGroupRule.setUpdateTime(new Date());
             customerGroupRule.setUpdateUser(req.getCreateUser());
