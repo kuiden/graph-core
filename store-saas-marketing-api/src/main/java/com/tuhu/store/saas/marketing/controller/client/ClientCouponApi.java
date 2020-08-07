@@ -1,19 +1,16 @@
-package com.tuhu.store.saas.marketing.controller.mini.c;
+package com.tuhu.store.saas.marketing.controller.client;
 
 
-import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.marketing.context.CustomerContextHolder;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
-import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
-import com.tuhu.store.saas.marketing.remote.CustomerAuthDto;
+import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.remote.ResultObject;
-import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
-import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
-import com.tuhu.store.saas.marketing.response.*;
-import com.tuhu.store.saas.marketing.response.dto.CustomerCouponDTO;
-import com.tuhu.store.saas.marketing.response.dto.ServiceOrderCouponDTO;
+import com.tuhu.store.saas.marketing.request.CouponReceiveRecordRequest;
+import com.tuhu.store.saas.marketing.request.CouponRequest;
+import com.tuhu.store.saas.marketing.request.CouponSearchRequest;
+import com.tuhu.store.saas.marketing.response.CouponPageResp;
+import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import io.swagger.annotations.ApiOperation;
@@ -21,8 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,7 +25,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/mini/c/coupon")
-public class MiniCCouponApi extends BaseApi {
+public class ClientCouponApi extends BaseApi {
 
     @Autowired
     private ICouponService iCouponService;
@@ -40,9 +35,9 @@ public class MiniCCouponApi extends BaseApi {
     @RequestMapping(value = "/getCoupon", method = RequestMethod.POST)
     @ApiOperation(value = "领券")
     public BizBaseResponse getCoupon(@Validated @RequestBody CouponRequest req) {
-      //  CustomerAuthDto dto = CustomerContextHolder.getUser();
-      //  Map map = imCouponService.getCoupon(req, dto.getUserId());
-        Map map = imCouponService.getCoupon(req, "159006368380700017990" );
+        EndUser dto =  EndUserContextHolder.getUser();
+         Map map = imCouponService.getCoupon(req, dto.getUserId());
+      //  Map map = imCouponService.getCoupon(req, "159006368380700017990" );
         return new BizBaseResponse(map);
     }
 
@@ -53,9 +48,9 @@ public class MiniCCouponApi extends BaseApi {
      */
     @GetMapping("/client/getCouponList")
     public BizBaseResponse getCouponList(CouponSearchRequest req) {
-      //  CustomerAuthDto dto = CustomerContextHolder.getUser();
-        //  CouponPageResp result = imCouponService.getCouponList(req, dto.getUserId());
-        CouponPageResp result = imCouponService.getCouponList(req, "159006368380700017990");
+        EndUser dto =  EndUserContextHolder.getUser();
+          CouponPageResp result = imCouponService.getCouponList(req, dto.getUserId());
+      //  CouponPageResp result = imCouponService.getCouponList(req, "159006368380700017990");
         return new BizBaseResponse(result);
     }
 
@@ -76,8 +71,8 @@ public class MiniCCouponApi extends BaseApi {
 
     @GetMapping("/client/couponDetail")
     public ResultObject getCouponDetailForClient(CouponRequest req) {
-        //  CustomerAuthDto dto = CustomerContextHolder.getUser();
-        //    Map result = imCouponService.getCouponDetailForClient(req, customerId);
+        EndUser dto =  EndUserContextHolder.getUser();
+         //   Map result = imCouponService.getCouponDetailForClient(req, customerId);
         String customerId = "159006368380700017990";
         Map result = imCouponService.getCouponDetailForClient(req, customerId);
         return new ResultObject(result);
