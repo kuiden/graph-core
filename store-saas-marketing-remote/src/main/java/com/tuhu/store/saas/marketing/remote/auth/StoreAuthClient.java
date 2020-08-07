@@ -6,7 +6,7 @@ import com.tuhu.store.saas.marketing.remote.EndUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
-@FeignClient(name = "${feign.application.store.saas.auth.name}")
+@FeignClient(name = "${feign.application.store.saas.auth.name}",fallbackFactory = StoreAuthRemoteFactory.class)
 public interface StoreAuthClient {
 
     @PostMapping("/feign/auth/login/getUserByToken")

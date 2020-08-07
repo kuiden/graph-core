@@ -11,12 +11,10 @@ import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +49,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("营销活动新增服务异常，入参：{}", addActivityReq);
+            log.info("营销活动新增服务异常，入参：{}", addActivityReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return BizBaseResponse.success(addActivityReq);
@@ -98,10 +96,16 @@ public class MiniActivityApi extends BaseApi {
         editActivityReq.setStoreId(super.getStoreId());
         editActivityReq.setTenantId(super.getTenantId());
         editActivityReq.setCompanyId(super.getCompanyId());
-        editActivityReq = iActivityService.editActivity(editActivityReq);
+        try {
+            editActivityReq = iActivityService.editActivity(editActivityReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("营销活动编辑服务异常，入参：{}", editActivityReq, e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(editActivityReq);
     }
-
 
     @GetMapping("/getQrCode")
     @ApiOperation(value = "获取小程序码图片")
@@ -121,7 +125,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("获取活动数据服务异常，入参：{}", activityId);
+            log.info("获取活动数据服务异常，入参：{}", activityId, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return new BizBaseResponse(activityStatistics);
