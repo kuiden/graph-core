@@ -26,10 +26,10 @@ public interface INewReservationService {
     /**
      * 创建预约单
      * @param req
-     * @param type 门店：0,小程序：1,H5:2
+     * @param teminalType 门店：0,小程序：1,H5:2
      * @return
      */
-    String addReservation(NewReservationReq req, Integer type);
+    String addReservation(NewReservationReq req, Integer teminalType);
 
     Boolean updateReservation(NewReservationReq req);
 

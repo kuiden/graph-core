@@ -86,6 +86,7 @@ public class ReservationApi extends BaseApi {
     //新增预约单公共校验
     private void validParam(NewReservationReq req){
         req.setTenantId(super.getTenantId());
+        req.setStoreId(super.getStoreId());
         req.setUserId(super.getUserId());
         if(req.getEstimatedArriveTime() == null){
             throw new StoreSaasMarketingException("请选择到店时间");
