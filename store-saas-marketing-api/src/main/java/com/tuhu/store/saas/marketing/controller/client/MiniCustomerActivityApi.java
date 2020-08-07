@@ -123,9 +123,15 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
 
     @PostMapping(value = "/myActivityList")
     @ApiOperation(value = "我的营销活动列表")
-    public BizBaseResponse myActivityList(ActivityCustomerListRequest activityCustomerListRequest) {
+    public BizBaseResponse myActivityList(@RequestBody ActivityCustomerListRequest activityCustomerListRequest) {
         activityCustomerListRequest.setCustomerId(this.getCustomerId());
-        ActivityCustomerPageResp resp = iActivityService.getMyActivityList(activityCustomerListRequest);
+        ActivityCustomerPageResp resp = null;
+        try {
+            resp = iActivityService.getMyActivityList(activityCustomerListRequest);
+        } catch (Exception e) {
+            log.info("我的营销活动列表服务异常：入参：{}", activityCustomerListRequest, e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(resp);
     }
 //
