@@ -122,7 +122,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         BeanUtils.copyProperties(req, order);
         String id = idKeyGen.generateId(req.getTenantId());
         order.setId(id);
-        order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser().getStoreNo()));
+        order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser()==null?null:UserContextHolder.getUser().getStoreNo()));
         order.setStatus(type == 0 ? SrvReservationStatusEnum.CONFIRMED.getEnumCode() : SrvReservationStatusEnum.UNCONFIRMED.getEnumCode());
         order.setCreateTime(new Date());
         order.setUpdateTime(new Date());
@@ -155,6 +155,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         if(CollectionUtils.isNotEmpty(daoList)){
             for(SrvReservationOrder dao : daoList){
                 ReservationDTO dto = new ReservationDTO();
+                dto.setId(dao.getId());
                 dto.setReservationTime(dao.getEstimatedArriveTime().getTime());
                 dto.setStatus(transCStatus(dao));
                 list.add(dto);
