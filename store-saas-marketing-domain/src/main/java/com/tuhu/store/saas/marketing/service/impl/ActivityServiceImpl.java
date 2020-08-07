@@ -256,6 +256,9 @@ public class ActivityServiceImpl implements IActivityService {
         activity.setUpdateUser(addActivityReq.getCreateUser());
         activity.setStartTime(DataTimeUtil.getDateStartTime(activity.getStartTime()));
         activity.setEndTime(DataTimeUtil.getDateZeroTime(activity.getEndTime()));
+        if (CollectionUtils.isNotEmpty(addActivityReq.getItems())) {
+            activity.setActivityPrice(BigDecimal.valueOf(addActivityReq.getItems().stream().mapToLong(ActivityItemReq::getActualPrice).sum()));
+        }
         return activity;
     }
 
@@ -647,6 +650,9 @@ public class ActivityServiceImpl implements IActivityService {
         Date date = new Date();
         if (oldActivity.getStartTime().compareTo(date) <= 0) {
             throw new MarketingException("活动过开始时间，不允许编辑");
+        }
+        if (CollectionUtils.isNotEmpty(editActivityReq.getItems())) {
+            editActivityReq.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(ActivityItemReq::getActualPrice).sum()));
         }
         //校验输入
         String validateResult = this.validateEditActivityReq(oldActivity, editActivityReq);
