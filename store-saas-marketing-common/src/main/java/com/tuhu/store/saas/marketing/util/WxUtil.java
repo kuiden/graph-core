@@ -51,7 +51,8 @@ public class WxUtil {
         try {
             Map map = new HashMap();
             map.put("scene", scene);
-            map.put("page", path);
+            //todo 小程序正式发版后添加此页面
+//            map.put("page", path);
             map.put("width", width);
             String data = JSONObject.toJSONString(map);// 转化成json
             String url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + token;
