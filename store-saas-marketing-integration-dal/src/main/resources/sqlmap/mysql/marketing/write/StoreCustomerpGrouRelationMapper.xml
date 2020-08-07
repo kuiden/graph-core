@@ -5,6 +5,7 @@
     <id column="id" property="id" jdbcType="BIGINT" />
     <result column="group_name" property="groupName" jdbcType="VARCHAR" />
     <result column="store_id" property="storeId" jdbcType="BIGINT" />
+    <result column="tenant_id" property="tenantId" jdbcType="BIGINT" />
     <result column="customer_count" property="customerCount" jdbcType="TINYINT" />
     <result column="group_desc" property="groupDesc" jdbcType="VARCHAR" />
     <result column="create_user" jdbcType="VARCHAR" property="createUser" />
@@ -73,7 +74,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, group_name, store_id, group_desc,customer_count, create_user,update_user, create_time, update_time
+    id, group_name, store_id,tenant_id, group_desc,customer_count, create_user,update_user, create_time, update_time
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerGroupRuleExample" >
     select
@@ -125,6 +126,9 @@
       <if test="storeId != null" >
         store_id,
       </if>
+      <if test="tenantId != null" >
+        tenant_id,
+      </if>
       <if test="groupDesc != null" >
         group_desc,
       </if>
@@ -153,6 +157,9 @@
       </if>
       <if test="storeId != null" >
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null" >
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="groupDesc != null" >
         #{groupDesc,jdbcType=BIGINT},
@@ -191,6 +198,9 @@
       <if test="record.storeId != null" >
         store_id = #{record.storeId,jdbcType=BIGINT},
       </if>
+      <if test="record.tenantId != null" >
+        tenant_id = #{record.tenantId,jdbcType=BIGINT},
+      </if>
       <if test="record.groupDesc != null" >
         group_desc = #{record.groupDesc,jdbcType=BIGINT},
       </if>
@@ -223,6 +233,9 @@
       </if>
       <if test="storeId != null" >
         store_id = #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null" >
+        tenant_id = #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="groupDesc != null" >
         group_desc = #{groupDesc,jdbcType=BIGINT},

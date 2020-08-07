@@ -65,11 +65,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             id = record.getId();
         }else{//更新
-            StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
+           /* StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
             storeCustomerGroupRelation.setUpdateTime(new Date());
             storeCustomerGroupRelation.setId(customerGroupDto.getId());
-            storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);
+            storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);*/
             CustomerGroupRule customerGroupRule = new CustomerGroupRule();
             customerGroupRule.setUpdateTime(new Date());
             customerGroupRule.setUpdateUser(req.getCreateUser());
@@ -118,6 +118,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 customerGroupRule.setCgRuleName(customerGroupRuleDto.getCgRuleName());
                 customerGroupRule.setGroupId(Long.valueOf(relationId));
                 customerGroupRule.setStoreId(customerGroupDto.getStoreId());
+                customerGroupRule.setTenantId(customerGroupDto.getTenantId());
                 customerGroupRule.setCreateUser(customerGroupDto.getCreateUser());
                 customerGroupRule.setCreateTime(new Date());
                 customerGroupRuleList.add(customerGroupRule);
@@ -298,6 +299,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         CustomerGroupDto customerGroupDto = new CustomerGroupDto();
         customerGroupDto.setGroupName(req.getConsumerGroupName());
         customerGroupDto.setStoreId(req.getStoreId());
+        customerGroupDto.setTenantId(req.getTenantId());
         customerGroupDto.setId(req.getId());
         StringBuffer sb = new StringBuffer();
         List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
@@ -471,6 +473,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                     customerGroupDto = new CustomerGroupDto();
                     customerGroupDto.setId(customerGroupRule.getGroupId());
                     customerGroupDto.setStoreId(customerGroupRule.getStoreId());
+                    customerGroupDto.setTenantId(customerGroupRule.getTenantId());
                     result.add(customerGroupDto);
                     customerGroupDtoMap.put(customerGroupRule.getGroupId(),customerGroupDto);
                 }else{

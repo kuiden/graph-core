@@ -23,11 +23,12 @@ public class CustomerGroupFilterFactory {
      * @return
      */
     public static CustomerGroupFactorFilter createFilter(CustomerGroupDto customerGroupDto){
-        if(customerGroupDto==null||customerGroupDto.getStoreId()==null||customerGroupDto.getCustomerGroupRuleReqList()==null||customerGroupDto.getCustomerGroupRuleReqList().size()<=0){
+        if(customerGroupDto==null||customerGroupDto.getStoreId()==null ||customerGroupDto.getTenantId()==null ||customerGroupDto.getCustomerGroupRuleReqList()==null||customerGroupDto.getCustomerGroupRuleReqList().size()<=0){
             return null;
         }
         List<AbstractFactorFilter> cugFilters = Lists.newArrayList();
         Long storeId = customerGroupDto.getStoreId();
+        Long tenantId = customerGroupDto.getTenantId();
         List<CustomerGroupRuleDto> customerGroupRuleDtos = customerGroupDto.getCustomerGroupRuleReqList();
         for(CustomerGroupRuleDto customerGroupRuleDto : customerGroupRuleDtos){
             String cgrule = customerGroupRuleDto.getCgRuleFactor();
@@ -108,6 +109,7 @@ public class CustomerGroupFilterFactory {
 
                 MaintenanceDayFilter maintenanceDayFilter = new MaintenanceDayFilter();
                 maintenanceDayFilter.setStoreId(storeId);
+                maintenanceDayFilter.setTenantId(tenantId);
                 for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
                     if(CustomerGroupConstant.MAINTENANCE_LEAST_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
                         maintenanceDayFilter.setDayStart(Integer.valueOf(attributeDto.getAttributeValue()));

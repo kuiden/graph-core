@@ -7,6 +7,7 @@ import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
+import com.tuhu.store.saas.crm.vo.VehicleMaintenanceVo;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -48,6 +49,12 @@ public class CustomerRemoteFactory implements FallbackFactory<CustomerClient> {
             @Override
             public BizBaseResponse<List<CustomerDTO>> getCustomerByQuery(CustomerVO customerVO) {
                 log.error("getCustomerByQuery error,request={},error={}", customerVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<List<CustomerDTO>> getCustomerByVehicleMaintenance(VehicleMaintenanceVo vehicleMaintenanceVo) {
+                log.error("getCustomerByVehicleMaintenance error,request={},error={}", vehicleMaintenanceVo, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 
