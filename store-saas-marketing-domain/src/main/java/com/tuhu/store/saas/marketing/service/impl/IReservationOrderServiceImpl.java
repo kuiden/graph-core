@@ -48,4 +48,9 @@ public class IReservationOrderServiceImpl implements IReservationOrderService {
     public void insert(SrvReservationOrder newOrder) {
         reservationOrderMapper.insert(newOrder);
     }
+
+    @Override
+    public int update(SrvReservationOrder newOrder) {
+        return reservationOrderMapper.updateReservation(newOrder);
+    }
 }

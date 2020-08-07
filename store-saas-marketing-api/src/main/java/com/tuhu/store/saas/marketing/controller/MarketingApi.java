@@ -9,6 +9,7 @@ import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
+import com.tuhu.store.saas.marketing.service.IUtilityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Api(value = "定向营销相关api")
 @Slf4j
 public class MarketingApi extends BaseApi {
+
+    @Autowired
+    private IUtilityService iUtilityService;
 
     @Autowired
     private IMarketingSendRecordService marketingSendRecordService;
@@ -70,7 +74,11 @@ public class MarketingApi extends BaseApi {
     }
 
 
-
+    @RequestMapping(value = "/test", method = RequestMethod.GET)
+    @ApiOperation(value = "test")
+    public BizBaseResponse test(String longUrl) {
+        return new BizBaseResponse(iUtilityService.getShortUrl(longUrl));
+    }
 
 
 

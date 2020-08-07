@@ -1,7 +1,6 @@
 package com.tuhu.store.saas.marketing.context;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
-import com.tuhu.store.saas.marketing.remote.CustomUser;
 import com.tuhu.store.saas.marketing.remote.CustomerAuthDto;
 
 /**

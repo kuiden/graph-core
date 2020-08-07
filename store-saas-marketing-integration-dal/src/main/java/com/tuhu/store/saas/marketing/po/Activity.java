@@ -132,5 +132,20 @@ public class Activity implements Serializable {
      */
     private BigDecimal activityPrice;
 
+    /**
+     * 有效期：0-有效天数，1-截止日期
+     */
+    private Integer activeType;
+
+    /**
+     * 报名活动后有效天数
+     */
+    private Integer activeDays;
+
+    /**
+     * 活动截止日期
+     */
+    private Date activeDate;
+
     private static final long serialVersionUID = 1L;
 }

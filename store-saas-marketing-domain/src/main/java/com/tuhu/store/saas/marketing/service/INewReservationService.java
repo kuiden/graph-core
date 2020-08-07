@@ -1,9 +1,14 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.marketing.request.BReservationListReq;
+import com.tuhu.store.saas.marketing.request.CReservationListReq;
 import com.tuhu.store.saas.marketing.request.NewReservationReq;
 import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
+import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
+import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
 
 import java.util.List;
 
@@ -25,4 +30,12 @@ public interface INewReservationService {
      * @return
      */
     String addReservation(NewReservationReq req, Integer type);
+
+    Boolean updateReservation(NewReservationReq req);
+
+    PageInfo<ReservationDTO> getCReservationList(CReservationListReq req);
+
+    List<ReservationDateResp> getReserveDateList(Long storeId);
+
+    List<BReservationListResp> getBReservationList(BReservationListReq req);
 }

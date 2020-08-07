@@ -25,4 +25,7 @@ public interface IReservationOrderService {
      * @param newOrder
      */
     void insert(SrvReservationOrder newOrder);
+
+    //车主小程序更新预约单
+    int update(SrvReservationOrder newOrder);
 }

@@ -19,6 +19,7 @@ import com.tuhu.store.saas.marketing.response.ActivityItemResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.ActivityResponse;
 import com.tuhu.store.saas.marketing.response.CouponResp;
+import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.user.dto.StoreDTO;
@@ -31,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.print.DocFlavor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
@@ -152,27 +154,80 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Override
     public String getSmsPreview(MarketingSmsReq req) {
+
+        String template = "";
         if(req.getMarketingMethod().equals(Byte.valueOf("0"))){
-            //优惠券营销
-            //TODO
-        }else if(req.getMarketingMethod().equals(Byte.valueOf("1"))){
-            //活动营销
-            ActivityResp activityResp = activityService.getActivityDetailById(Long.valueOf(req.getCouponOrActiveId()),req.getStoreId());
-            if (null == activityResp) {
-                //禁止查询非本门店的营销活动
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动不存");
+
+            MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_COUPON.templateCode(),req.getStoreId());
+            if(messageTemplateLocal==null){
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在优惠券营销短信模板");
             }
+            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
+            //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
+            template = messageTemplateLocal.getTemplateContent();
+
+        }else if(req.getMarketingMethod().equals(Byte.valueOf("1"))){
+
             MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),req.getStoreId());
             if(messageTemplateLocal==null){
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在活动营销短信模板");
             }
-            //查询门店信息
-            StoreInfoVO storeInfoVO = new StoreInfoVO();
-            storeInfoVO.setStoreId(req.getStoreId());
-            StoreDTO storeDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+
+            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
+            //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
+            template = messageTemplateLocal.getTemplateContent();
+        }
+
+        String paramStr = getMessageData(req.getStoreId(), req.getMarketingMethod(), req.getCouponOrActiveId());
+
+        if(StringUtils.isEmpty(paramStr)) {
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信参数生成失败");
+        }
+        String[] params = StringUtils.split(","+paramStr,",");
+
+        return MessageFormat.format(template,params);
+    }
+
+    /**
+     * 获取短信参数信息
+     * @param storeId
+     * @param marketingMethod
+     * @param couponOrActiveId
+     * @return
+     */
+    private String getMessageData(Long storeId, Byte marketingMethod, String couponOrActiveId) {
+        List<String> params = new ArrayList<>();
+        //查询门店信息
+        StoreInfoVO storeInfoVO = new StoreInfoVO();
+        storeInfoVO.setStoreId(storeId);
+        StoreDTO storeDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+
+        if(marketingMethod.equals(Byte.valueOf("0"))){
+            //优惠券营销
+            CouponResp coupon = couponService.getCouponDetailById(Long.valueOf(couponOrActiveId));
+            if (null == coupon) {
+                //禁止查询非本门店的优惠券
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券不存在");
+            }
+
+            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
+            //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
+            params.add("价值" + coupon.getContentValue().intValue()+ "元" +coupon.getTitle());
+            params.add(storeDTO.getMobilePhone());
+            //TODO 替换短链
+            params.add("http://www.baidu.com");
+
+        }else if(marketingMethod.equals(Byte.valueOf("1"))){
+            //活动营销
+            ActivityResp activityResp = activityService.getActivityDetailById(Long.valueOf(couponOrActiveId),storeId);
+            if (null == activityResp) {
+                //禁止查询非本门店的营销活动
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动不存在");
+            }
+
             //算出活动价和原价
             BigDecimal activityPrice = activityResp.getActivityPrice();
-            BigDecimal srcPrice = new BigDecimal(123);
+            BigDecimal srcPrice = new BigDecimal(0);
             List<ActivityItemResp> activityItemResps = activityResp.getItems();
             for(ActivityItemResp activityItemResp : activityItemResps){
                 if(activityItemResp.getGoodsType()){
@@ -188,13 +243,15 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
                 }
             }
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
-            //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4}
-            String template = messageTemplateLocal.getTemplateContent();
-            String tempPriceStr = activityPrice.toString()+"抵"+srcPrice.toString();
+            //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
+            params.add(activityPrice.toString()+"抵"+srcPrice.toString());
+            params.add(storeDTO.getMobilePhone());
+            params.add(activityResp.getActivityTitle());
             //TODO 替换短链
-            return MessageFormat.format(template,"",tempPriceStr,storeDTO.getMobilePhone(),activityResp.getActivityTitle(),"http://www.baidu.com");
+            params.add("http://www.baidu.com");
         }
-        return null;
+
+        return StringUtils.join(params,",");
     }
 
     /**
@@ -308,14 +365,30 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //根据任务中记录的发送对象信息查询出客户列表
-        List<CustomerAndVehicleReq> customeList = analyseCustomer(addReq);
-        if(CollectionUtils.isEmpty(customeList)){
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"客户群客户不能为空");
+        List<CustomerAndVehicleReq> customerList = analyseCustomer(addReq);
+        if(CollectionUtils.isEmpty(customerList)){
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送对象不能为空");
         }
 
         String currentUser = UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName();
         String sendObject = "";
-        //TODO 查询客户群的名称
+        if(StringUtils.isNotEmpty(addReq.getCustomerGroupIds())) {
+            String[] groupIds = addReq.getCustomerGroupIds().split(",");
+            List<Long> groupList = new ArrayList<>();
+            for(int i=0; i<groupIds.length ;i++){
+                groupList.add(Long.valueOf(groupIds[i]));
+            }
+            CalculateCustomerCountReq req = new CalculateCustomerCountReq();
+            req.setGroupList(groupList);
+            List<CustomerGroupDto> groups = customerGroupService.getCustomerGroupDto(req);
+            if(CollectionUtils.isEmpty(groups)) {
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请选择客群");
+            }
+            sendObject = StringUtils.join(groups.stream().map(x->x.getGroupName()).collect(Collectors.toList()),",");
+        }else {
+            sendObject = "指定客户";
+        }
+
         //构造发送任务和发送记录
         CustomerMarketing customerMarketing = new CustomerMarketing();
         BeanUtils.copyProperties(addReq, customerMarketing);
@@ -352,12 +425,12 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //messageData
-//        customerMarketing.setMessageDatas();
+        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId()));
         insert(customerMarketing);
 
         //写入记录表并将状态设为未发送
         List<MarketingSendRecord> records = new ArrayList();
-        for(CustomerAndVehicleReq customerAndVehicleReq : customeList){
+        for(CustomerAndVehicleReq customerAndVehicleReq : customerList){
             MarketingSendRecord marketingSendRecord = new MarketingSendRecord();
             marketingSendRecord.setMarketingId(customerMarketing.getId().toString());
             marketingSendRecord.setCustomerId(customerAndVehicleReq.getCustomerId());

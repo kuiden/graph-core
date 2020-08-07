@@ -20,10 +20,6 @@
 			<groupId>com.tuhu</groupId>
 			<artifactId>tuhu-spring-cloud-api-common</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.tuhu</groupId>
-			<artifactId>tuhu-boot-starter-logger</artifactId>
-		</dependency>
 
 		<dependency>
 			<groupId>com.tuhu</groupId>
@@ -35,6 +31,10 @@
 			<artifactId>store-saas-order-facade</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.cloopen</groupId>
+			<artifactId>java-sms-sdk</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

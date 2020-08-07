@@ -9,6 +9,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocal;
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocalExample;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MessageTemplateLocalMapper;
 import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,9 +50,15 @@ public class MessageTemplateLocalServiceImpl implements IMessageTemplateLocalSer
             list.addAll(templateLocalMapper.selectByExample(publicExample));
         }
         if(list==null||list.size()<=0){
-            return null;
+            throw new StoreSaasMarketingException("不存在短信模板:"+templateCode);
         }
         return list.get(0);
+    }
+
+    @Override
+    public String getSMSTemplateIdByCodeAndStoreId(String templateCode, Long storeId) {
+        MessageTemplateLocal messageTemplateLocal = getTemplateLocalById(templateCode,storeId);
+        return messageTemplateLocal.getTemplateId();
     }
 
 }

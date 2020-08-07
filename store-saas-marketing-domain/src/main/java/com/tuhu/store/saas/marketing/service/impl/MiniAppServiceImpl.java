@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.WxUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -38,6 +39,12 @@ public class MiniAppServiceImpl implements MiniAppService {
 
     private String tokenUrl = "https://api.yunquecloud.com/auth/wechat/accessToken";
 
+    @Value("${weixin.appid}")
+    private String appid;
+
+    @Value("${weixin.appSecret}")
+    private String appSecret;
+
     /**
      * 获取小程序码图片
      *
@@ -56,8 +63,6 @@ public class MiniAppServiceImpl implements MiniAppService {
 //            log.info("getClientAppToken return blank,clientType=" + clientType);
 //            return null;
 //        }
-        String appid = "wx81f4a5ce35fad733";
-        String appSecret ="74f23e38e813b9dd392f159a9b8ff04a";
         String  accessTokenUrl=  "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s";
         accessTokenUrl = String.format(accessTokenUrl, appid, appSecret);
         URI url = UriComponentsBuilder.fromUriString(accessTokenUrl).build().toUri();

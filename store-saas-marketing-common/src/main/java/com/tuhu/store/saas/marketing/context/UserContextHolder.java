@@ -1,20 +1,20 @@
 package com.tuhu.store.saas.marketing.context;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
-import com.tuhu.store.saas.marketing.remote.CustomUser;
+import com.tuhu.store.saas.marketing.remote.CoreUser;
 
 /**
  * 当前登录用户持有者
  */
 public class UserContextHolder {
-    private static final ThreadLocal<CustomUser> userLocal = new TransmittableThreadLocal<>();
+    private static final ThreadLocal<CoreUser> userLocal = new TransmittableThreadLocal<>();
 
     /**
      * 获取当前登录用户信息
      *
      * @return
      */
-    public static CustomUser getUser() {
+    public static CoreUser getUser() {
         return userLocal.get();
     }
 
@@ -41,7 +41,7 @@ public class UserContextHolder {
      *
      * @param user
      */
-    public static void setUser(CustomUser user) {
+    public static void setUser(CoreUser user) {
         userLocal.set(user);
     }
 
@@ -58,9 +58,9 @@ public class UserContextHolder {
      * @return
      */
     public static Long getTenantId() {
-        CustomUser customUser = UserContextHolder.getUser();
-        if (null != customUser) {
-            return customUser.getTenantId();
+        CoreUser coreUser = UserContextHolder.getUser();
+        if (null != coreUser) {
+            return coreUser.getTenantId();
         }
         return null;
     }
@@ -71,9 +71,9 @@ public class UserContextHolder {
      * @return
      */
     public static Long getCompanyId() {
-        CustomUser customUser = UserContextHolder.getUser();
-        if (null != customUser) {
-            return customUser.getCompanyId();
+        CoreUser coreUser = UserContextHolder.getUser();
+        if (null != coreUser) {
+            return coreUser.getCompanyId();
         }
         return null;
     }
@@ -85,9 +85,9 @@ public class UserContextHolder {
      * @return
      */
     public static Long getStoreId() {
-        CustomUser customUser = UserContextHolder.getUser();
-        if (null != customUser) {
-            return customUser.getStoreId();
+        CoreUser coreUser = UserContextHolder.getUser();
+        if (null != coreUser) {
+            return coreUser.getStoreId();
         }
         return null;
     }
@@ -98,18 +98,18 @@ public class UserContextHolder {
      * @return
      */
     public static String getStoreUserId() {
-        CustomUser customUser = UserContextHolder.getUser();
-        if (null != customUser) {
-            return customUser.getStoreUserId();
+        CoreUser coreUser = UserContextHolder.getUser();
+        if (null != coreUser) {
+            return coreUser.getStoreUserId();
         }
         return null;
     }
 
 
     public static Long getUserId() {
-        CustomUser customUser = UserContextHolder.getUser();
-        if (null != customUser) {
-            return customUser.getAccountId();
+        CoreUser coreUser = UserContextHolder.getUser();
+        if (null != coreUser) {
+            return coreUser.getAccountId();
         }
         return null;
     }
@@ -120,9 +120,9 @@ public class UserContextHolder {
      * @return
      */
     public static Long getRootCompanyId() {
-        CustomUser customUser = UserContextHolder.getUser();
-        if (null != customUser) {
-            return customUser.getCompanyId();
+        CoreUser coreUser = UserContextHolder.getUser();
+        if (null != coreUser) {
+            return coreUser.getCompanyId();
         }
         return null;
     }

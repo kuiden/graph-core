@@ -6,7 +6,6 @@ import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.context.CustomerContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
-import com.tuhu.store.saas.marketing.remote.CustomUser;
 import com.tuhu.store.saas.marketing.remote.CustomerAuthDto;
 import com.tuhu.store.saas.marketing.remote.admin.StoreAdminClient;
 import com.tuhu.store.saas.marketing.remote.auth.AuthClient;

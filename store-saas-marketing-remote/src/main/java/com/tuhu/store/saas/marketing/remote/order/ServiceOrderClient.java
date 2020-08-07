@@ -16,4 +16,7 @@ public interface ServiceOrderClient {
     @PostMapping("/feign/order/list/customerInfos")
     public BizBaseResponse<List<ListCustomerInfoResp>> listCustomerInfos(@RequestBody ListCustomerInfoReq request);
 
+    @PostMapping("/feign/order/list/customerInfoForGoods")
+    public BizBaseResponse<List<ListCustomerInfoResp>> listCustomerInfoForGoods(@RequestBody ListCustomerInfoReq request);
+
 }

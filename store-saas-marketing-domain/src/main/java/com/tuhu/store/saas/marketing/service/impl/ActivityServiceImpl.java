@@ -189,9 +189,9 @@ public class ActivityServiceImpl implements IActivityService {
         }
         List<ActivityItem> activityItemList = new ArrayList<>();
         for (ActivityItemReq activityItemReq : items) {
-            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud()) {
-                issuedGoodOrServiceSpu(activityItemReq, addActivityReq.getTenantId(), addActivityReq.getCreateUser());
-            }
+//            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud()) {
+//                issuedGoodOrServiceSpu(activityItemReq, addActivityReq.getTenantId(), addActivityReq.getCreateUser());
+//            }
             ActivityItem activityItem = new ActivityItem();
             BeanUtils.copyProperties(activityItemReq, activityItem);
             activityItem.setActivityCode(code);
@@ -311,7 +311,7 @@ public class ActivityServiceImpl implements IActivityService {
             return "服务项目及商品信息不能全为空";
         }
         //服务项目-前台只传了商品code时，调接口获取商品id
-        getServiceGoodsList(addActivityReq.getItems(),addActivityReq.getStoreId(),addActivityReq.getTenantId());
+//        getServiceGoodsList(addActivityReq.getItems(),addActivityReq.getStoreId(),addActivityReq.getTenantId());
         StringBuilder sb = new StringBuilder();
         for (ActivityItemReq item : items) {
             if (null == item.getIsFromCloud() || !item.getIsFromCloud()) {

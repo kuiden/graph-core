@@ -31,4 +31,13 @@ public interface IMessageTemplateLocalService {
      */
     MessageTemplateLocal getTemplateLocalById(String templateCode,Long storeId);
 
+    /**
+     * 通过消息模板编码和门店id获取短信平台消息模板id
+     * 优先获取私有模板不存在在获取共有模板
+     * @param templateCode
+     * @param storeId
+     * @return
+     */
+    String getSMSTemplateIdByCodeAndStoreId(String templateCode,Long storeId);
+
 }
