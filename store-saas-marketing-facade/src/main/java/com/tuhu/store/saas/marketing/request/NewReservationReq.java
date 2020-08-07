@@ -46,7 +46,6 @@ public class NewReservationReq implements Serializable {
     /**
      * 预计到店时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "GMT+8")
     private Date estimatedArriveTime;
 
     /**

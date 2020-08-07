@@ -72,7 +72,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("营销活动上下架服务异常，入参：{}", activityChangeStatusReq);
+            log.info("营销活动上下架服务异常，入参：{}", activityChangeStatusReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return BizBaseResponse.success(activityChangeStatusReq);

@@ -197,10 +197,13 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             cardOrderResp.setForever(crdCard.getForever() == 1 ? true : false);
             cardOrderResp.setExpiryDate(crdCard.getExpiryDate());
             cardOrderResp.setCardTemplateId(crdCard.getCardTemplateId());
-            Date date = new Date();
-            Date expiryDate = DataTimeUtil.getDateZeroTime(cardOrderResp.getExpiryDate());
-            if (date.compareTo(expiryDate) > 0){
-                cardOrderResp.setCardStatus("已过期");
+            //如果卡不是永久有效，则判断卡是否过期
+            if (!cardOrderResp.getForever()){
+                Date date = new Date();
+                Date expiryDate = DataTimeUtil.getDateZeroTime(cardOrderResp.getExpiryDate());
+                if (date.compareTo(expiryDate) > 0){
+                    cardOrderResp.setCardStatus("已过期");
+                }
             }
             //计算剩余次数
             Long remainQuantity = 0L;

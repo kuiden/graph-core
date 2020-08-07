@@ -1585,7 +1585,7 @@ public class ActivityServiceImpl implements IActivityService {
                 Activity record = new Activity();
                 record.setId(activityId);
                 record.setWeixinQrUrl(qrUrl);
-                int result = activityMapper.updateByPrimaryKeySelective(record);
+                int result = activityMapper.updateById(record);
             }
         } catch (Exception e) {
             log.error("saveQrUrlToDatabase error:", e);

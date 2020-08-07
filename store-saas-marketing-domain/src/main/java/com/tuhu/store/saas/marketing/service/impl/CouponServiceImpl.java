@@ -753,19 +753,25 @@ public class CouponServiceImpl implements ICouponService {
         if (couponList.size() != codes.size()) {
             throw new StoreSaasMarketingException("要发券的部分优惠券不存在");
         }
+        if (sendCouponReq.getCount() == null) {
+            sendCouponReq.setCount(new HashMap<>());
+        }
         List<Future<CommonResp<CustomerCoupon>>> customerCouponFutureList = new ArrayList<>();
         for (Coupon coupon : couponList) {
             for (CustomerDTO customer : customerList) {
-                try {
-                    Future<CommonResp<CustomerCoupon>> customerCouponFuture = threadPoolTaskExecutor.submit(new Callable<CommonResp<CustomerCoupon>>() {
-                        @Override
-                        public CommonResp<CustomerCoupon> call() throws Exception {
-                            return generateCustomerCoupon(coupon, customer, sendCouponReq);
-                        }
-                    });
-                    customerCouponFutureList.add(customerCouponFuture);
-                } catch (Exception e) {
-                    log.error("submit generateCustomerCoupon task failed", e);
+                int count = sendCouponReq.getCount().containsKey(coupon.getCode()) ? sendCouponReq.getCount().get(coupon.getCode()) : 1;
+                for (int i = 0; i < count; i++) {
+                    try {
+                        Future<CommonResp<CustomerCoupon>> customerCouponFuture = threadPoolTaskExecutor.submit(new Callable<CommonResp<CustomerCoupon>>() {
+                            @Override
+                            public CommonResp<CustomerCoupon> call() throws Exception {
+                                return generateCustomerCoupon(coupon, customer, sendCouponReq);
+                            }
+                        });
+                        customerCouponFutureList.add(customerCouponFuture);
+                    } catch (Exception e) {
+                        log.error("submit generateCustomerCoupon task failed", e);
+                    }
                 }
             }
         }
