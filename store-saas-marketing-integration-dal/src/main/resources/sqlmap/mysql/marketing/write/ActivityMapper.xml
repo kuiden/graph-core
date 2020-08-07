@@ -522,14 +522,14 @@
       <if test="activityPrice != null">
         activity_price = #{activityPrice,jdbcType=DECIMAL},
       </if>
-      <if test="record.activeType != null">
-        active_type = #{record.activeType,jdbcType=TINYINT},
+      <if test="activeType != null">
+        active_type = #{activeType,jdbcType=TINYINT},
       </if>
-      <if test="record.activeDays != null">
-        active_days = #{record.activeDays,jdbcType=BIGINT},
+      <if test="activeDays != null">
+        active_days = #{activeDays,jdbcType=BIGINT},
       </if>
-      <if test="record.activeDate != null">
-        active_date = #{record.activeDate,jdbcType=DATE},
+      <if test="activeDate != null">
+        active_date = #{activeDate,jdbcType=DATE},
       </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
@@ -558,9 +558,9 @@
       create_time = #{createTime,jdbcType=TIMESTAMP},
       update_time = #{updateTime,jdbcType=TIMESTAMP},
       activity_content = #{activityContent,jdbcType=VARCHAR},
-      active_type = #{record.activeType,jdbcType=TINYINT},
-      active_days = #{record.activeDays,jdbcType=BIGINT},
-      active_date = #{record.activeDate,jdbcType=DATE},
+      active_type = #{activeType,jdbcType=TINYINT},
+      active_days = #{activeDays,jdbcType=BIGINT},
+      active_date = #{activeDate,jdbcType=DATE},
       activity_price = #{activityPrice,jdbcType=DECIMAL}
     where id = #{id,jdbcType=BIGINT}
   </update>
