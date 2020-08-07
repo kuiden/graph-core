@@ -1,15 +1,13 @@
 package com.tuhu.store.saas.marketing.controller.client;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.controller.mini.BaseEndUserApi;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.response.ActivityCustomerPageResp;
-import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
-import com.tuhu.store.saas.marketing.response.ActivityResp;
-import com.tuhu.store.saas.marketing.response.CommonResp;
+import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -44,13 +42,19 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
         activityApplyReq.setStoreId(super.getStoreId());
         activityApplyReq.setTenantId(super.getTenantId());
         activityApplyReq.setTelephone(super.getEndUser().getPhone());
-        CommonResp<String> activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
+        CommonResp<String> activityOrderCodeResp = null;
+        try {
+            activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
+        } catch (Exception e) {
+            log.info("营销活动报名服务异常，入参：{}", activityApplyReq, e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         BizBaseResponse resp = BizBaseResponse.success();
-        if (null != activityOrderCodeResp) {
+        if (null != activityOrderCodeResp && StringUtils.isNotEmpty(activityOrderCodeResp.getMessage())) {
             resp.setCode(activityOrderCodeResp.getCode());
             resp.setMessage(activityOrderCodeResp.getMessage());
-            resp.setData(activityOrderCodeResp.getData());
         }
+        resp.setData(activityOrderCodeResp.getData());
         return resp;
     }
 
@@ -87,17 +91,16 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
     @PostMapping(value = "/listActivityCustomer")
     @ApiOperation(value = "营销活动参与详情查询")
     public BizBaseResponse list(@Validated @RequestBody ActivityCustomerListReq activityCustomerListReq) {
-//        if (null == activityCustomerListReq.getStoreId()) {
-//            activityCustomerListReq.setStoreId(super.getStoreId());
-//        } else {
-//            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
-//        }
-//        if (null == activityCustomerListReq.getTenantId()) {
-//            activityCustomerListReq.setTenantId(super.getTenantId());
-//        }
-//        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
-//        return BizBaseResponse.success(activityRespPageInfo);
-        return BizBaseResponse.success();
+        if (null == activityCustomerListReq.getStoreId()) {
+            activityCustomerListReq.setStoreId(super.getStoreId());
+        } else {
+            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
+        }
+        if (null == activityCustomerListReq.getTenantId()) {
+            activityCustomerListReq.setTenantId(super.getTenantId());
+        }
+        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
+        return BizBaseResponse.success(activityRespPageInfo);
     }
 //
     @PostMapping(value = "/list")
@@ -116,8 +119,8 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
 
     @PostMapping(value = "/detail")
     @ApiOperation(value = "营销活动详情")
-    public BizBaseResponse detailForClient(Long activityId, Long storeId) {
-        ActivityResp activityResp = iActivityService.getActivityDetailForClient(activityId, storeId, this.getCustomerId());
+    public BizBaseResponse detailForClient(@RequestBody CActivityDetailReq req) {
+        ActivityResp activityResp = iActivityService.getActivityDetailForClient(req.getActivityId(), req.getStoreId(), this.getCustomerId());
         return BizBaseResponse.success(activityResp);
     }
 

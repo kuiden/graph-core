@@ -4,6 +4,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
+import com.tuhu.store.saas.crm.vo.CustomerSearchVO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.crm.vo.VehicleMaintenanceVo;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -33,5 +34,11 @@ public interface CustomerClient {
 
     @PostMapping("/feign/crm/Customer/getCustomerByVehicleMaintenance")
     BizBaseResponse<List<CustomerDTO>> getCustomerByVehicleMaintenance(@RequestBody VehicleMaintenanceVo vehicleMaintenanceVo);
+
+    @PostMapping("/feign/crm/Customer/getCustomerListByIdList")
+    BizBaseResponse<List<CustomerDTO>> getCustomerListByIdList(@RequestBody BaseIdsReqVO baseIdsReqVO);
+
+    @PostMapping("/feign/crm/Customer/getCustomerListByPhoneOrName")
+    BizBaseResponse<List<CustomerDTO>> getCustomerListByPhoneOrName(@RequestBody CustomerSearchVO customerSearchVO);
 
 }

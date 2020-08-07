@@ -29,6 +29,7 @@ import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -157,6 +158,7 @@ public class RemindServiceImpl implements IRemindService {
         //获取需发短信用户信息
         BaseIdsReqVO baseIdsReqVO = new BaseIdsReqVO();
         baseIdsReqVO.setId(customerIdList);
+        baseIdsReqVO.setTenantId(sendRemindReq.getTenantId());
         baseIdsReqVO.setStoreId(sendRemindReq.getStoreId());
         List<CustomerDTO> customerDTOS = customerClient.getCustomerByIds(baseIdsReqVO).getData();
         MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(sendRemindReq.getMessageTemplateId());
@@ -180,7 +182,9 @@ public class RemindServiceImpl implements IRemindService {
             if(req!=null){
                 //车辆信息不为空
                 remind.setVehicleId(req.getVehicleId());
-                remind.setExpiryDate(DateUtils.parseDate(req.getNextDate()));
+                if (StringUtils.isNotEmpty(req.getNextDate())) {
+                    remind.setExpiryDate(DateUtils.parseDate(req.getNextDate()));
+                }
             }
             //填装提醒信息
             remind.setTemplateId(messageTemplateLocal.getTemplateId());
