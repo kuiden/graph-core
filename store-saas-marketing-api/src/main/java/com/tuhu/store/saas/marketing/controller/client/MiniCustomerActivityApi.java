@@ -45,7 +45,7 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
         activityApplyReq.setCustomerId(super.getCustomerId());
         activityApplyReq.setStoreId(super.getStoreId());
         activityApplyReq.setTenantId(super.getTenantId());
-//        activityApplyReq.setTelephone(super.getClientUserCore().getPhone());
+        activityApplyReq.setTelephone(super.getEndUser().getPhone());
         CommonResp<String> activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
         BizBaseResponse resp = BizBaseResponse.success();
         if (null != activityOrderCodeResp) {
@@ -112,7 +112,7 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
     @PostMapping(value = "/myActivityList")
     @ApiOperation(value = "我的营销活动列表")
     public BizBaseResponse myActivityList(ActivityCustomerListRequest activityCustomerListRequest) {
-//        activityCustomerListRequest.setCustomerId(this.getCustomerId());
+        activityCustomerListRequest.setCustomerId(this.getCustomerId());
         ActivityCustomerPageResp resp = iActivityService.getMyActivityList(activityCustomerListRequest);
         return BizBaseResponse.success(resp);
     }

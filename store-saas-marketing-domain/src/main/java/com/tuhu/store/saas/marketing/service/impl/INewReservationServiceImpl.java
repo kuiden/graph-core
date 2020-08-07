@@ -18,9 +18,11 @@ import com.tuhu.store.saas.marketing.remote.request.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
+import com.tuhu.store.saas.marketing.request.BReservationListReq;
 import com.tuhu.store.saas.marketing.request.CReservationListReq;
 import com.tuhu.store.saas.marketing.request.NewReservationReq;
 import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
+import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
@@ -172,6 +174,7 @@ public class INewReservationServiceImpl implements INewReservationService {
             resp.setReservationDate(DateUtils.addDate(today, i).getTime());
             result.add(resp);
         }
+        //查出往后7天的预约数
         List<ReservationDateDTO> daoList = reservationOrderMapper.getReserveDateList(storeId);
         if(CollectionUtils.isNotEmpty(daoList)){
             for(ReservationDateDTO dao : daoList){
@@ -183,6 +186,58 @@ public class INewReservationServiceImpl implements INewReservationService {
             }
         }
         return result;
+    }
+
+    @Override
+    public List<BReservationListResp> getBReservationList(BReservationListReq req) {
+        List<BReservationListResp> result = new ArrayList<>();
+        //查出规定日期内所有预约单
+        List<SrvReservationOrder> daoList = reservationOrderMapper.getBReservationList(req.getStoreId(),ymdDateFormat.format(new Date(req.getReservationDate())));
+        if(CollectionUtils.isNotEmpty(daoList)){
+            try {
+                //算出一天内所有时间段
+                List<String> allTimePoints = getTimePoints(null,null,30);
+                String ymd = ymdDateFormat.format(req.getReservationDate());
+                //将数据库数据按照时间段归拢
+                for(String s : allTimePoints){
+                    BReservationListResp resp = new BReservationListResp();
+                    List<ReservationDTO> reservationDTOs = new ArrayList<>();
+                    for(SrvReservationOrder order : daoList){
+                        if(s.equals(hmsDateFormat.format(order.getEstimatedArriveTime()))){
+                            ReservationDTO dto = new ReservationDTO();
+                            BeanUtils.copyProperties(order,dto);
+                            reservationDTOs.add(dto);
+                        }
+                    }
+                    resp.setReservationStartTime(ymdhmDateFormat.parse(ymd+" "+s).getTime());
+                    resp.setReservationEndTime(ymdhmDateFormat.parse(ymd+" "+getAfterTime(s)).getTime());
+                    resp.setPeriodName(s + "-" + getAfterTime(s));
+                    resp.setReservationDTOs(reservationDTOs);
+                    result.add(resp);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 将两个时间按照HH:mm格式比较大小
+     * date1 < date2 --true
+     * @return
+     */
+    private boolean compareHMDate(Date date1, Date date2){
+        try{
+            Calendar startTime = Calendar.getInstance();
+            startTime.setTime(hmDateFormat.parse(hmDateFormat.format(date1)));
+            Calendar endTime = Calendar.getInstance();
+            endTime.setTime(hmDateFormat.parse(hmDateFormat.format(date2)));
+            return startTime.before(endTime);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return true;
     }
 
     //C端预约列表的已预约对应B端的待确认和已确认
@@ -215,8 +270,8 @@ public class INewReservationServiceImpl implements INewReservationService {
         }catch (Exception e){
             e.printStackTrace();
         }
-        if (arriveTime.before(startTime)
-                || arriveTime.after(endTime)) {
+        if (compareHMDate(req.getEstimatedArriveTime(),storeMap.get("startTime"))
+                || compareHMDate(storeMap.get("endTime"),req.getEstimatedArriveTime())) {
             throw new StoreSaasMarketingException("当前预约时间段不能预约,门店预约时间范围为：" + hmDateFormat.format(storeMap.get("startTime")) + "-" + hmDateFormat.format(storeMap.get("endTime")));
         }
         //如果手机号不在门店客户中，添加客户(只有小程序和H5会出现这种情况)
@@ -344,6 +399,9 @@ public class INewReservationServiceImpl implements INewReservationService {
                 minute = "0" + minute;
             }
             list.add(hour + ":" + minute + ":00");//拼接为HH:mm格式，添加到集合
+        }
+        if(startTime == null && endTime == null){
+            return list;
         }
         List<String> newList = new ArrayList<>();
         try{

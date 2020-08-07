@@ -24,4 +24,6 @@ public interface SrvReservationOrderMapper extends BaseMapper<SrvReservationOrde
 
     List<ReservationDateDTO> getReserveDateList(@Param("storeId") Long storeId);
 
+    List<SrvReservationOrder> getBReservationList(@Param("storeId") Long storeId , @Param("reservationDate") String reservationDate);
+
 }

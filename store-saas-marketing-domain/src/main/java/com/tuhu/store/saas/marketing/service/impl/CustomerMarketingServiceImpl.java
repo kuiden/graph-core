@@ -3,7 +3,6 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.google.common.collect.Lists;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
@@ -32,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.print.DocFlavor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
@@ -159,9 +157,6 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         if(req.getMarketingMethod().equals(Byte.valueOf("0"))){
 
             MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_COUPON.templateCode(),req.getStoreId());
-            if(messageTemplateLocal==null){
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在优惠券营销短信模板");
-            }
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
             template = messageTemplateLocal.getTemplateContent();
@@ -169,10 +164,6 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }else if(req.getMarketingMethod().equals(Byte.valueOf("1"))){
 
             MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),req.getStoreId());
-            if(messageTemplateLocal==null){
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在活动营销短信模板");
-            }
-
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
             template = messageTemplateLocal.getTemplateContent();

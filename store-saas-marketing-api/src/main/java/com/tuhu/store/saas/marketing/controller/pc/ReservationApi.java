@@ -105,23 +105,11 @@ public class ReservationApi extends BaseApi {
     @ApiOperation(value = "获取门店预约列表")
     public BizBaseResponse<List<BReservationListResp>> getBReservationList(@RequestBody BReservationListReq req){
         BizBaseResponse<List<BReservationListResp>> result= BizBaseResponse.success();
-        List<BReservationListResp> list = new ArrayList<>();
-        BReservationListResp resp = new BReservationListResp();
-        resp.setPeriodName("9:00-10:00");
-        resp.setReservationStartTime(new Date().getTime());
-        resp.setReservationEndTime(new Date().getTime());
-        List<ReservationDTO> dtos = new ArrayList<>();
-        ReservationDTO dto = new ReservationDTO();
-        dto.setCustomerName("杨澜清");
-        dto.setCustomerPhoneNumber("18011111111");
-        dto.setDescription("备注");
-        dto.setId("111111");
-        dto.setSourceChannel("ZXYY");
-        dto.setStatus("UNCONFIRMED");
-        dtos.add(dto);
-        resp.setReservationDTOs(dtos);
-        list.add(resp);
-        result.setData(list);
+        if(req.getReservationDate() == null){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约日期不能为空");
+        }
+        req.setStoreId(super.getStoreId());
+        result.setData(iNewReservationService.getBReservationList(req));
         return result;
     }
 
