@@ -253,4 +253,11 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         }
     }
 
+    @Override
+    public List<CustomerCardOrder> getCustomersForCusGroup( Long storeId, Date beginTime){
+
+        return crdCardOrderMapper.getCustomersForCusGroup(storeId,beginTime);
+
+    }
+
 }

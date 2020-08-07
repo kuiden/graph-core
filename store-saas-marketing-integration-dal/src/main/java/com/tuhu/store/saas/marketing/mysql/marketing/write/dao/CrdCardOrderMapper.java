@@ -2,7 +2,11 @@ package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 
 import com.tuhu.store.saas.marketing.dataobject.CrdCardOrder;
 import com.tuhu.store.saas.marketing.dataobject.CrdCardOrderExample;
+
+import java.util.Date;
 import java.util.List;
+
+import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import org.apache.ibatis.annotations.Param;
 
 public interface CrdCardOrderMapper {
@@ -27,4 +31,8 @@ public interface CrdCardOrderMapper {
     int updateByPrimaryKeySelective(CrdCardOrder record);
 
     int updateByPrimaryKey(CrdCardOrder record);
+
+    List<CustomerCardOrder> getCustomersForCusGroup(@Param("storeId") Long storeId, @Param("beginTime") Date beginTime);
+
+
 }

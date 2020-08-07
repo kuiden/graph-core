@@ -531,6 +531,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 List<String> singleCustomerIdList = CustomerGroupFilterFactory.createFilter(customerGroupDto).filterProcess();
                 StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
                 record.setId(customerGroupDto.getId());
+                record.setTenantId(req.getTenantId());
                 record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
                 storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
                 if(CollectionUtils.isEmpty(customerIdList)){
