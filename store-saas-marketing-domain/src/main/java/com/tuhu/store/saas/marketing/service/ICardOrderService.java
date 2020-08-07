@@ -15,5 +15,13 @@ public interface ICardOrderService {
      */
     String addCardOrder(AddCardOrderReq req);
 
+    /*
+     * 获取开卡单列表
+     */
     PageInfo<CardOrderResp> getCardOrderList(ListCardOrderReq req);
+
+   /*
+    * 更新卡支付状态
+    */
+   void updateCardPaymentStatus(String orderNo, Long storeId, Long tenantId, Long amount);
 }
