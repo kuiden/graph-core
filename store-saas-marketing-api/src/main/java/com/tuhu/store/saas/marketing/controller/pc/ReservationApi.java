@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.controller.pc;
 
+import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
@@ -36,6 +37,7 @@ public class ReservationApi extends BaseApi {
     @PostMapping(value = "/newForB")
     @ApiOperation(value = "B端新增预约单")
     public BizBaseResponse<String> newForB(@RequestBody NewReservationReq req){
+        log.info("B端新增预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<String> result = BizBaseResponse.success();
         validParam(req);
         if(StringUtils.isBlank(req.getCustomerId())){

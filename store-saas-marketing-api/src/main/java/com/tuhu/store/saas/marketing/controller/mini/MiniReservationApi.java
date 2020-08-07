@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
@@ -39,6 +40,7 @@ public class MiniReservationApi extends EndUserApi {
     @PostMapping(value = "/newForC")
     @ApiOperation(value = "C端新增预约单")
     public BizBaseResponse<String> newForC(@RequestBody NewReservationReq req){
+        log.info("C端新增预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<String> result = BizBaseResponse.success();
         validParam(req);
         if(req.getStoreId() == null){
@@ -61,6 +63,7 @@ public class MiniReservationApi extends EndUserApi {
     @PostMapping(value = "/updateForC")
     @ApiOperation(value = "车主小程序端修改预约单")
     public BizBaseResponse<Boolean> updateForC(@RequestBody NewReservationReq req){
+        log.info("车主小程序端修改预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<Boolean> result = BizBaseResponse.success();
         validParam(req);
         if(StringUtils.isBlank(req.getId())){
@@ -113,8 +116,8 @@ public class MiniReservationApi extends EndUserApi {
 
     //新增预约单公共校验
     private void validParam(NewReservationReq req){
-        req.setTenantId(super.getTenantId());
-        req.setUserId(super.getUserId());
+        req.setTenantId(this.getTenantId());
+        req.setUserId(this.getUserId());
         req.setCustomerId(this.getCustomerId());
         if(req.getEstimatedArriveTime() == null){
             throw new StoreSaasMarketingException("请选择到店时间");

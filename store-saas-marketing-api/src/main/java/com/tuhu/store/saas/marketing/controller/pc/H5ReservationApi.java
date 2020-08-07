@@ -1,13 +1,17 @@
 package com.tuhu.store.saas.marketing.controller.pc;
 
+import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
+import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
+import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
 import io.swagger.annotations.ApiOperation;
@@ -35,6 +39,9 @@ public class H5ReservationApi extends BaseApi {
     @Autowired
     ISMSService ismsService;
 
+    @Autowired
+    private ICouponService iCouponService;
+
     @PostMapping(value = "/periodList")
     @ApiOperation(value = "预约时间段list")
     public BizBaseResponse getReservePeriodList(@RequestBody ReservePeriodReq req) {
@@ -52,8 +59,11 @@ public class H5ReservationApi extends BaseApi {
     @PostMapping(value = "/newForH5")
     @ApiOperation(value = "H5新增预约单")
     public BizBaseResponse<String> newForH5(@RequestBody NewReservationReq req){
+        log.info("H5新增预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<String> result = BizBaseResponse.success();
-        validParam(req);
+        if(req.getEstimatedArriveTime() == null){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "请选择到店时间");
+        }
         if(StringUtils.isBlank(req.getCustomerPhoneNumber())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "请输入您的手机号码");
         }
@@ -70,6 +80,19 @@ public class H5ReservationApi extends BaseApi {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动名称不能为空");
         }
         req.setTeminal(0);
+        //根据活动id或优惠券id查出storeId和tenantId
+        if(SrvReservationChannelEnum.COUPON.getEnumCode().equals(req.getSourceChannel())){
+            CouponResp couponResp = iCouponService.getCouponDetailById(Long.parseLong(req.getCouponId()));
+            log.info("根据优惠券id查详情返回", JSONObject.toJSONString(couponResp));
+            if(couponResp != null && couponResp.getStoreId() != null && couponResp.getTenantId() != null){
+                req.setStoreId(couponResp.getStoreId());
+                req.setTenantId(couponResp.getTenantId());
+            }
+        }else if(SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())){
+            req.setStoreId(22156l);
+            req.setTenantId(8l);
+        }
+
         result.setData(iNewReservationService.addReservation(req,2));
         return result;
     }
@@ -110,16 +133,4 @@ public class H5ReservationApi extends BaseApi {
         return new BizBaseResponse("发送成功");
     }
 
-
-    //新增预约单公共校验
-    private void validParam(NewReservationReq req){
-        req.setTenantId(super.getTenantId());
-        req.setUserId(super.getUserId());
-        if(req.getStoreId() == null){
-            throw new StoreSaasMarketingException("门店ID不能为空");
-        }
-        if(req.getEstimatedArriveTime() == null){
-            throw new StoreSaasMarketingException("请选择到店时间");
-        }
-    }
 }
