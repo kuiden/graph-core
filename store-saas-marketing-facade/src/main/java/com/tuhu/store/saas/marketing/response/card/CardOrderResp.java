@@ -150,4 +150,10 @@ public class CardOrderResp {
      * 开卡单状态
      */
     private String status;
+
+
+    /*
+     * 卡类型
+     */
+    private String cardTypeCode;
 }
