@@ -11,10 +11,12 @@ import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -100,105 +102,6 @@ public class MiniActivityApi extends BaseApi {
         return BizBaseResponse.success(editActivityReq);
     }
 
-
-    @PostMapping(value = "/scanForWriteOff")
-    @ApiModelProperty(value = "客户核销信息查询")
-    public BizBaseResponse<ActivityCustomerResp> scanForWriteOff(@Validated @RequestBody ActivityCustomerReq req){
-        ActivityCustomerResp resp = iActivityService.getActivityCustomerDetail(req);
-        return BizBaseResponse.success(resp);
-    }
-
-
-    @PostMapping(value = "/writeOffOrCancel")
-    @ApiModelProperty(value = "活动核销或取消")
-    public BizBaseResponse<String> writeOffOrCacel(@Validated @RequestBody ActivityWriteOffOrCancelReq req){
-
-        return BizBaseResponse.success();
-    }
-
-//    @RequestMapping(value = "/client/apply", method = RequestMethod.POST)
-//    @ApiOperation(value = "营销活动报名")
-//    public BizBaseResponse apply(@Validated @RequestBody ActivityApplyReq activityApplyReq) {
-//        activityApplyReq.setCustomerId(super.getCustomerId());
-//        activityApplyReq.setStoreId(super.getStoreId());
-//        activityApplyReq.setTenantId(super.getTenantId());
-//        activityApplyReq.setTelephone(super.getClientUserCore().getPhone());
-//        CommonResp<String> activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
-//        BizBaseResponse resp = BizBaseResponse.success();
-//        if (null != activityOrderCodeResp) {
-//            resp.setCode(activityOrderCodeResp.getCode());
-//            resp.setMessage(activityOrderCodeResp.getMessage());
-//            resp.setData(activityOrderCodeResp.getData());
-//        }
-//        return resp;
-//    }
-
-//    @RequestMapping(value = "/activityCustomerDetail", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "客户报名营销活动详情")
-//    public BizBaseResponse getActivityCustomerDetail(ActivityCustomerReq activityCustomerReq) {
-//        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
-//            activityCustomerReq.setIsFromClient(Boolean.TRUE);
-//            activityCustomerReq.setCustomerId(super.getCustomerId());
-//            activityCustomerReq.setStoreId(super.getStoreId());
-//        }
-//        ActivityCustomerResp activityCustomerResp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
-//        return BizBaseResponse.success(activityCustomerResp);
-//    }
-
-//    @RequestMapping(value = "/writeOffOrCancel", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "客户报名核销或取消订单")
-//    public ResultObject writeOffOrCancelActivityCustomer(@RequestBody ActivityCustomerReq activityCustomerReq) {
-//        activityCustomerReq.setStoreId(super.getStoreId());
-//        activityCustomerReq.setTenantId(super.getTenantId());
-//        activityCustomerReq.setUserId(super.getUserId());
-//        ActivityCustomerResp activityCustomerResp = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
-//        return new ResultObject(activityCustomerResp);
-//    }
-//
-//    @RequestMapping(value = "/listActivityCustomer", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "营销活动参与详情查询")
-//    @AllowAnonymous
-//    public ResultObject list(@Validated @RequestBody ActivityCustomerListReq activityCustomerListReq) {
-//        if (null == activityCustomerListReq.getStoreId()) {
-//            activityCustomerListReq.setStoreId(super.getStoreId());
-//        } else {
-//            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
-//        }
-//        if (null == activityCustomerListReq.getTenantId()) {
-//            activityCustomerListReq.setTenantId(super.getTenantId());
-//        }
-//        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
-//        return new ResultObject(activityRespPageInfo);
-//    }
-//
-//
-//    @RequestMapping(value = "/client/list", method = RequestMethod.GET)
-//    @ApiOperation(value = "营销活动列表")
-//    public ResultObject activityList(Long storeId) {
-//        if (storeId == null) {
-//            return new ResultObject();
-//        }
-//        List<Activity> activityRespPageInfo = iActivityService.getActivityListByStoreId(storeId);
-//
-//        return new ResultObject(activityRespPageInfo);
-//
-//    }
-//
-//    @RequestMapping(value = "/client/detail", method = RequestMethod.GET)
-//    @AllowAnonymous
-//    @ApiOperation(value = "营销活动详情")
-//    public ResultObject detailForClient(Long activityId, Long storeId) {
-//        ActivityResp activityResp = iActivityService.getActivityDetailForClient(activityId, storeId, this.getCustomerId());
-//        return new ResultObject(activityResp);
-//    }
-//
-//    @RequestMapping(value = "/client/myActivityList", method = RequestMethod.GET)
-//    @ApiOperation(value = "我的营销活动列表")
-//    public ResultObject myActivityList(ActivityCustomerListRequest activityCustomerListRequest) {
-//        activityCustomerListRequest.setCustomerId(this.getCustomerId());
-//        ActivityCustomerPageResp resp = iActivityService.getMyActivityList(activityCustomerListRequest);
-//        return new ResultObject(resp);
-//    }
 
     @GetMapping("/getQrCode")
     @ApiOperation(value = "获取小程序码图片")
