@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -33,31 +34,57 @@ public class MiniCCouponApi extends BaseApi {
 
     @Autowired
     private ICouponService iCouponService;
+    @Autowired
+    private IMCouponService imCouponService;
 
-    @RequestMapping(value = "/send", method = RequestMethod.POST)
-    @ApiOperation(value = "优惠券活动送券")
-    public BizBaseResponse<List<CommonResp<CustomerCoupon>>> send(@Validated @RequestBody SendCouponReq sendCouponReq) {
-        CustomerAuthDto dto = CustomerContextHolder.getUser();
-        sendCouponReq.setUserId(dto.getUserId());
-        sendCouponReq.setStoreId(Long.valueOf(dto.getStoreId()));
-        sendCouponReq.setTenantId(Long.valueOf(dto.getTenantId()));
-        if (sendCouponReq.getReceiveType() == null) {
-            sendCouponReq.setReceiveType(Integer.valueOf(0));//手动发券
-        }
-        List<CommonResp<CustomerCoupon>> customerCouponRespList = iCouponService.sendCoupon(sendCouponReq);
-        boolean hasFailed = false;
-        for (CommonResp<CustomerCoupon> customerCouponResp : customerCouponRespList) {
-            if (!customerCouponResp.isSuccess()) {
-                hasFailed = true;
-                break;
-            }
-        }
-        BizBaseResponse<List<CommonResp<CustomerCoupon>>> resultObject = new BizBaseResponse<List<CommonResp<CustomerCoupon>>>(customerCouponRespList);
-        if (hasFailed) {
-            resultObject.setCode(4000);
-        }
-        return resultObject;
+    @RequestMapping(value = "/getCoupon", method = RequestMethod.POST)
+    @ApiOperation(value = "领券")
+    public BizBaseResponse getCoupon(@Validated @RequestBody CouponRequest req) {
+      //  CustomerAuthDto dto = CustomerContextHolder.getUser();
+      //  Map map = imCouponService.getCoupon(req, dto.getUserId());
+        Map map = imCouponService.getCoupon(req, "159006368380700017990" );
+        return new BizBaseResponse(map);
     }
+
+    /**
+     * 领券中心
+     * @param req
+     * @return
+     */
+    @GetMapping("/client/getCouponList")
+    public BizBaseResponse getCouponList(CouponSearchRequest req) {
+      //  CustomerAuthDto dto = CustomerContextHolder.getUser();
+        //  CouponPageResp result = imCouponService.getCouponList(req, dto.getUserId());
+        CouponPageResp result = imCouponService.getCouponList(req, "159006368380700017990");
+        return new BizBaseResponse(result);
+    }
+
+    /**
+     * 我的优惠券列表
+     *
+     * @param req
+     * @return
+     */
+    @GetMapping("/client/myCouponList")
+    public BizBaseResponse getMyCouponList(CouponReceiveRecordRequest req) {
+      //  CustomerAuthDto dto = CustomerContextHolder.getUser();
+     //   CustomerCouponPageResp map = imCouponService.getMyCouponList(req, dto.getUserId());
+        CustomerCouponPageResp map = imCouponService.getMyCouponList(req, "159006368380700017990");
+        return new BizBaseResponse(map);
+    }
+
+
+    @GetMapping("/client/couponDetail")
+    public ResultObject getCouponDetailForClient(CouponRequest req) {
+        //  CustomerAuthDto dto = CustomerContextHolder.getUser();
+        //    Map result = imCouponService.getCouponDetailForClient(req, customerId);
+        String customerId = "159006368380700017990";
+        Map result = imCouponService.getCouponDetailForClient(req, customerId);
+        return new ResultObject(result);
+    }
+
+
+
 
 
 }

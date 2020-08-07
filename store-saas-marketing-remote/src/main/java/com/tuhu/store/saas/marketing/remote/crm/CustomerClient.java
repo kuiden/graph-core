@@ -26,4 +26,8 @@ public interface CustomerClient {
     @PostMapping("/feign/crm/Customer/listCustomer")
     public BizBaseResponse<List<CustomerDTO>> listCustomer(@RequestBody CustomerVO customerVO);
 
+
+    @PostMapping("/getCustomerByQuery")
+    BizBaseResponse<List<CustomerDTO>> getCustomerByQuery(@RequestBody CustomerVO customerVO);
+
 }

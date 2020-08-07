@@ -756,16 +756,18 @@ public class CouponServiceImpl implements ICouponService {
         List<Future<CommonResp<CustomerCoupon>>> customerCouponFutureList = new ArrayList<>();
         for (Coupon coupon : couponList) {
             for (CustomerDTO customer : customerList) {
-                try {
-                    Future<CommonResp<CustomerCoupon>> customerCouponFuture = threadPoolTaskExecutor.submit(new Callable<CommonResp<CustomerCoupon>>() {
-                        @Override
-                        public CommonResp<CustomerCoupon> call() throws Exception {
-                            return generateCustomerCoupon(coupon, customer, sendCouponReq);
-                        }
-                    });
-                    customerCouponFutureList.add(customerCouponFuture);
-                } catch (Exception e) {
-                    log.error("submit generateCustomerCoupon task failed", e);
+                for (int i = 0; i < 2; i++) {
+                    try {
+                        Future<CommonResp<CustomerCoupon>> customerCouponFuture = threadPoolTaskExecutor.submit(new Callable<CommonResp<CustomerCoupon>>() {
+                            @Override
+                            public CommonResp<CustomerCoupon> call() throws Exception {
+                                return generateCustomerCoupon(coupon, customer, sendCouponReq);
+                            }
+                        });
+                        customerCouponFutureList.add(customerCouponFuture);
+                    } catch (Exception e) {
+                        log.error("submit generateCustomerCoupon task failed", e);
+                    }
                 }
             }
         }
