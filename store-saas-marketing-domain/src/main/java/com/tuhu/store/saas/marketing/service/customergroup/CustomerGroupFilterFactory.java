@@ -73,9 +73,9 @@ public class CustomerGroupFilterFactory {
                 customerBehaviorFilter.setStoreId(storeId);
                 for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
                     if(CustomerGroupConstant.LEAST_AMOUNT.equalsIgnoreCase(attributeDto.getAttribute())){
-                        customerBehaviorFilter.setGreaterThanMoney(Long.valueOf(attributeDto.getAttributeValue()));
+                        customerBehaviorFilter.setGreaterThanMoney(attributeDto.getAttributeValue());
                     }else if(CustomerGroupConstant.MAX_AMOUNT.equalsIgnoreCase(attributeDto.getAttribute())){
-                        customerBehaviorFilter.setLessThanMoney(Long.valueOf(attributeDto.getAttributeValue()));
+                        customerBehaviorFilter.setLessThanMoney(attributeDto.getAttributeValue());
                     }else if(CustomerGroupConstant.RECENT_DAYS.equalsIgnoreCase(attributeDto.getAttribute())){
                         customerBehaviorFilter.setRecentDay(Integer.valueOf(attributeDto.getAttributeValue()));
                     }

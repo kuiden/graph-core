@@ -24,12 +24,12 @@ public class HasCustomerBehaviorMoneyFilter extends AbstractFactorFilter {
     /**
      * 少于多少金额
      */
-    private Long lessThanMoney;
+    private String lessThanMoney;
 
     /**
-     * 多余多少次数
+     * 多余多少金额
      */
-    private Long greaterThanMoney;
+    private String greaterThanMoney;
 
     /**
      * 最近几天有消费行为
@@ -53,20 +53,21 @@ public class HasCustomerBehaviorMoneyFilter extends AbstractFactorFilter {
             for(ListCustomerInfoResp customerInfoResp : customers){
                 if(!hasBehavCus.contains(customerInfoResp.getCostumerId())){
                     Long orderActualAmount = customerInfoResp.getOrderActualAmount();
+                    BigDecimal decimalAmout = new BigDecimal(orderActualAmount).divide(new BigDecimal(100));
                     if(lessThanMoney!=null&&greaterThanMoney!=null){
-                        if(orderActualAmount<greaterThanMoney||orderActualAmount>lessThanMoney){
+                        if(decimalAmout.compareTo(new BigDecimal(greaterThanMoney))<0||decimalAmout.compareTo(new BigDecimal(lessThanMoney))>0){
                             continue;
                         }
                         //大于最少，少于最大
                         hasBehavCus.add(customerInfoResp.getCostumerId());
                     }else if(lessThanMoney!=null){
-                        if(orderActualAmount>lessThanMoney){
+                        if(decimalAmout.compareTo(new BigDecimal(lessThanMoney))>0){
                             continue;
                         }
                         //少于最大
                         hasBehavCus.add(customerInfoResp.getCostumerId());
                     }else if(greaterThanMoney!=null){
-                        if(orderActualAmount<greaterThanMoney){
+                        if(decimalAmout.compareTo(new BigDecimal(greaterThanMoney))<0){
                             continue;
                         }
                         //多余最少
