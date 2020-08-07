@@ -38,4 +38,6 @@ public interface INewReservationService {
     List<ReservationDateResp> getReserveDateList(Long storeId);
 
     List<BReservationListResp> getBReservationList(BReservationListReq req);
+
+    ReservationDTO getCReservationDetail(String id);
 }

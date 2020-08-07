@@ -222,6 +222,17 @@ public class INewReservationServiceImpl implements INewReservationService {
         return result;
     }
 
+    @Override
+    public ReservationDTO getCReservationDetail(String id) {
+        ReservationDTO result = new ReservationDTO();
+        SrvReservationOrder order = reservationOrderMapper.selectById(id);
+        if(order != null){
+            BeanUtils.copyProperties(order,result);
+            result.setReservationTime(order.getEstimatedArriveTime().getTime());
+        }
+        return result;
+    }
+
     /**
      * 将两个时间按照HH:mm格式比较大小
      * date1 < date2 --true

@@ -96,12 +96,10 @@ public class MiniReservationApi extends EndUserApi {
     @ApiOperation(value = "获取车主小程序预约单详情")
     public BizBaseResponse<ReservationDTO> getCReservationDetail(@RequestBody CReservationListReq req){
         BizBaseResponse<ReservationDTO> result = BizBaseResponse.success();
-        ReservationDTO dto = new ReservationDTO();
-        dto.setStatus("ORDERED");
-        dto.setReservationTime(new Date().getTime());
-        dto.setDescription("备注");
-        dto.setCustomerPhoneNumber("18011111111");
-        result.setData(dto);
+        if(req.getId() == null){
+            throw new StoreSaasMarketingException("预约单ID不能为空");
+        }
+        result.setData(iNewReservationService.getCReservationDetail(req.getId()));
         return result;
     }
 
