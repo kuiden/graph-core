@@ -14,7 +14,8 @@ public enum CrmReturnCodeEnum {
     SERVER_ERROR(5000, "服务异常"),
     MOBILE_FORMAT_ERROR(4000, "手机号码格式不匹配"),
     DATA_HAS_EXIST(4000, "数据已存在"),
-	PHONE_NUMVER_ALREDAY_EXISTS(4000,"手机号已存在")
+	PHONE_NUMVER_ALREDAY_EXISTS(4000,"手机号已存在"),
+    CUSTOMER_ID_MISSING(4001,"用户信息未空！")
 	;
 
     private int code;
