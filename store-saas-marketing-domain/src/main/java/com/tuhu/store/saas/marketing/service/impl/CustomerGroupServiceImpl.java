@@ -283,6 +283,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 for(GoodsData goodsData : goodsDataList){
                     GoodsResp goodsResp = new GoodsResp();
                     BeanUtils.copyProperties(goodsData,goodsResp);
+                    goodsResp.setChecked(true);
                     goodsResps.add(goodsResp);
                 }
               //  customerGroupResp.setConsumerServeList(goodsResps);
@@ -363,7 +364,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             if(CollectionUtils.isNotEmpty(goodsResps)) {
                 sb.append(req.getConsumerServeDay() + "天内消费过");
                 for(int i=0;i<goodsResps.size();i++){
-                    sb.append(goodsResps.get(i).getName());
+                    sb.append(goodsResps.get(i).getGoodsName());
                     if(i<goodsResps.size()-1){
                         sb.append(",");
                     }

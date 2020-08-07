@@ -65,6 +65,7 @@ public class CustomerGroupApi extends BaseApi{
             return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "客群ID不能为空");
         }
         req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
         req.setCreateUser(this.getUserId());
         CustomerGroupResp customerGroupResp = null;
         try {

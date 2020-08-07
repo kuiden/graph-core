@@ -105,8 +105,19 @@ public class CustomerGroupFilterFactory {
                 }
                 cugFilters.add(birthdayFilter);
             }else if(CustomerGroupConstant.MAINTENANCE_FACTOR.equalsIgnoreCase(cgrule)){
+
+                MaintenanceDayFilter maintenanceDayFilter = new MaintenanceDayFilter();
+                maintenanceDayFilter.setStoreId(storeId);
+                for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
+                    if(CustomerGroupConstant.MAINTENANCE_LEAST_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
+                        maintenanceDayFilter.setDayStart(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }else if(CustomerGroupConstant.BRITHDAY_MAX_MONTH.equalsIgnoreCase(attributeDto.getAttribute())){
+                        maintenanceDayFilter.setDayEnd(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }
+                }
+                cugFilters.add(maintenanceDayFilter);
                 //保养过滤
-                //TODO
+
             }else if(CustomerGroupConstant.CONSUMER_SERVER_FACTOR.equalsIgnoreCase(cgrule)){
                 //指定服务过滤
                 ConsumerServerListFilter consumerServerListFilter = new ConsumerServerListFilter();
