@@ -80,7 +80,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         if ("DISABLE".equals(cardTemplate.getStatus())){
             throw new MarketingException("卡模板已停用");
         }
-        crdCard.setCustomerGender(req.getCustomerGender() ? "1" : "0");
+        if (null != req.getCustomerGender()){
+            crdCard.setCustomerGender(req.getCustomerGender() ? "1" : "0");
+        }
         crdCard.setForever((byte) (req.getForever() ? 1 : 0));
         crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
         crdCard.setCardCategoryCode(cardTemplate.getCardCategoryCode());
