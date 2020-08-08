@@ -83,7 +83,7 @@ public class CardServiceImpl implements ICardService {
     public PageInfo<CardTemplateModel> getCardTemplatePageInfo(CardTemplateReq req) {
         log.info("CardServiceImpl-> addCardTemplate req={}", req);
         PageInfo<CardTemplateModel> result = new PageInfo<>();
-        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+        PageHelper.startPage(req.getPageNum() == Integer.valueOf(0) ? 1 : req.getPageNum(), req.getPageSize());
         List<CardTemplate> cardTemplates = cardTemplateMapper.selectPage(req.getStatus(), req.getQuery(), req.getTenantId(), req.getStoreId());
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
             PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);

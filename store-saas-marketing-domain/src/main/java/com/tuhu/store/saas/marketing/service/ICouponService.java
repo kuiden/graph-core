@@ -17,6 +17,7 @@ import com.tuhu.store.saas.marketing.request.CouponListReq;
 import com.tuhu.store.saas.marketing.request.EditCouponReq;
 import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.response.CouponResp;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -72,6 +73,9 @@ public interface ICouponService {
      * @return
      */
     List<CommonResp<CustomerCoupon>> sendCoupon(SendCouponReq sendCouponReq);
+
+    @Transactional
+    void setOccupyNum(Coupon x, int num);
 
     /**
      * 通用生成客户优惠券-不保存数据库

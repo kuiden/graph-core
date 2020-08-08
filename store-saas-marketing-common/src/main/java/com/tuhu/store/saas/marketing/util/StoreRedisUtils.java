@@ -102,7 +102,6 @@ public class StoreRedisUtils {
     public Object tryLock(String key,long tryTimeOutSeconds,long timeoutSeconds) {
         long nanosTimeout = TimeUnit.SECONDS.toNanos(tryTimeOutSeconds);
         final long deadline = System.nanoTime() + nanosTimeout;
-        Random random = new Random();
         while (nanosTimeout>0){
             nanosTimeout = deadline - System.nanoTime();
             Object object = getAtomLock(key,timeoutSeconds);
@@ -111,7 +110,7 @@ public class StoreRedisUtils {
             }
             /* 随机延迟 */
             try {
-                Thread.sleep(random.nextInt(1000));
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 log.warn("获取锁等待中断:key={}", key, e);
             }
