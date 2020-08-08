@@ -37,9 +37,14 @@ public class ReservationApi extends BaseApi {
     @PostMapping(value = "/newForB")
     @ApiOperation(value = "B端新增预约单")
     public BizBaseResponse<String> newForB(@RequestBody NewReservationReq req){
-        log.info("B端新增预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<String> result = BizBaseResponse.success();
-        validParam(req);
+        req.setTenantId(super.getTenantId());
+        req.setStoreId(super.getStoreId());
+        req.setUserId(super.getUserId());
+        log.info("B端新增预约单入参：", JSONObject.toJSONString(req));
+        if(req.getEstimatedArriveTime() == null){
+            throw new StoreSaasMarketingException("请选择到店时间");
+        }
         if(StringUtils.isBlank(req.getCustomerId())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
         }
@@ -83,13 +88,4 @@ public class ReservationApi extends BaseApi {
         return rs;
     }
 
-    //新增预约单公共校验
-    private void validParam(NewReservationReq req){
-        req.setTenantId(super.getTenantId());
-        req.setStoreId(super.getStoreId());
-        req.setUserId(super.getUserId());
-        if(req.getEstimatedArriveTime() == null){
-            throw new StoreSaasMarketingException("请选择到店时间");
-        }
-    }
 }

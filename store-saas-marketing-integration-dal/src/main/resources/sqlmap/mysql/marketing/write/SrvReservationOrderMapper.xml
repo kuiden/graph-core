@@ -42,7 +42,7 @@
         where store_id = #{storeId}
         and customer_id = #{customerId}
         ORDER BY estimated_arrive_time DESC
-        limit ${(pageIndex-1)*pageSize},${pageSize}
+        limit ${pageIndex*pageSize},${pageSize}
     </select>
 
     <select id="getCReservationCount" resultType="java.lang.Long">

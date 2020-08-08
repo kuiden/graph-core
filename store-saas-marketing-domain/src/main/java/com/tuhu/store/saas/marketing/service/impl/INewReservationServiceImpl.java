@@ -4,11 +4,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.java.common.utils.DateUtil;
+import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
+import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.enums.SrvReservationStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
+import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.po.ReservationDateDTO;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.remote.reponse.CustomerDTO;
@@ -26,8 +29,10 @@ import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
+import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import com.tuhu.store.saas.marketing.service.IReservationOrderService;
+import com.tuhu.store.saas.marketing.service.ISMSService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.marketing.util.KeyResult;
@@ -69,6 +74,12 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Autowired
     SrvReservationOrderMapper reservationOrderMapper;
+
+    @Autowired
+    IMessageTemplateLocalService iMessageTemplateLocalService;
+
+    @Autowired
+    ISMSService ismsService;
 
     @Value("${store.open.time.begin}")
     private String openBeginTime = "10:00:00";
@@ -116,6 +127,7 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
+        log.info("C端新增预约单addReservation入参：", JSONObject.toJSONString(req));
         //校验
         validReservationParam(req,type,1);
         //写表
@@ -131,11 +143,24 @@ public class INewReservationServiceImpl implements INewReservationService {
         order.setUpdateUser(req.getUserId());
         order.setDelete(false);
         reservationOrderService.insert(order);
+
+        //发送短信
+//        SMSParameter smsParameter = new SMSParameter();
+//        smsParameter.setPhone(req.getCustomerPhoneNumber());
+//        smsParameter.setTemplateId(iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(SMSTypeEnum.SAAS_MINI_ORDER_CREATE_CODE.templateCode(),null));
+//        List<String> list = new ArrayList<>();
+//        list.add(pwd.toString());
+//        smsParameter.setDatas(list);
+//        SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
+//        if(sendResult != null && sendResult.isSendResult()){
+//
+//        }
         return id;
     }
 
     @Override
     public Boolean updateReservation(NewReservationReq req) {
+        log.info("车主小程序端修改预约单updateReservation入参：", JSONObject.toJSONString(req));
         //校验
         validReservationParam(req,1,2);
         SrvReservationOrder newOrder = new SrvReservationOrder();
@@ -354,6 +379,7 @@ public class INewReservationServiceImpl implements INewReservationService {
             StoreInfoVO vo = new StoreInfoVO();
             vo.setStoreId(storeId);
             BizBaseResponse<StoreInfoDTO> resultObject = storeUserClient.getStoreInfo(vo);
+            log.info("==storeAdminClient.getUserByToken=={}", JSONObject.toJSONString(resultObject));
             if(resultObject != null && resultObject.getData() != null){
                 if(resultObject.getData().getOpeningEffectiveDate() != null){
                     result.put("startTime",resultObject.getData().getOpeningEffectiveDate());

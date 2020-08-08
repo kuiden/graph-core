@@ -5,6 +5,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
+import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.parameter.SMSParameter;
@@ -12,8 +13,10 @@ import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.service.ICouponService;
+import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
+import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author: yanglanqing
@@ -33,6 +37,8 @@ import java.util.Random;
 @Slf4j
 public class H5ReservationApi extends BaseApi {
 
+    private static final String verificationCodeKey = "STORE_SAAS_VERI_CODE";
+
     @Autowired
     INewReservationService iNewReservationService;
 
@@ -41,6 +47,12 @@ public class H5ReservationApi extends BaseApi {
 
     @Autowired
     private ICouponService iCouponService;
+
+    @Autowired
+    IMessageTemplateLocalService iMessageTemplateLocalService;
+
+    @Autowired
+    private StoreRedisUtils storeRedisUtils;
 
     @PostMapping(value = "/periodList")
     @ApiOperation(value = "预约时间段list")
@@ -80,6 +92,14 @@ public class H5ReservationApi extends BaseApi {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动名称不能为空");
         }
         req.setTeminal(0);
+        //校验验证码
+        String code = storeRedisUtils.redisGet(verificationCodeKey);
+        if(code == null){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码已过期");
+        }
+        if(!code.equals(req.getVerificationCode())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码错误");
+        }
         //根据活动id或优惠券id查出storeId和tenantId
         if(SrvReservationChannelEnum.COUPON.getEnumCode().equals(req.getSourceChannel())){
             CouponResp couponResp = iCouponService.getCouponDetailById(Long.parseLong(req.getCouponId()));
@@ -123,16 +143,19 @@ public class H5ReservationApi extends BaseApi {
         //发送短信
         SMSParameter smsParameter = new SMSParameter();
         smsParameter.setPhone(phoneNumber);
-        smsParameter.setTemplateId("415424");
+        smsParameter.setTemplateId(iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(SMSTypeEnum.SAAS_MINI_ORDER_CREATE_CODE.templateCode(),null));
         List<String> list = new ArrayList<>();
         list.add(pwd.toString());
         smsParameter.setDatas(list);
-        SMSResult result = ismsService.sendCommonSms(smsParameter);
-        if(result != null && result.isSendResult()){
-            //todo
+        SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
+        if(sendResult != null && sendResult.isSendResult()){
             //将验证码写入redis，并设置过期时间
+            storeRedisUtils.redisSet(verificationCodeKey,pwd.toString());
+            storeRedisUtils.setExpire(verificationCodeKey, 1, TimeUnit.MINUTES);
+            return new BizBaseResponse("发送成功");
+        }else {
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.SYSTEM_INNER_ERROR, "发送失败");
         }
-        return new BizBaseResponse("发送成功");
     }
 
 }
