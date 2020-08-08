@@ -36,7 +36,7 @@ public class ClientCouponApi extends BaseApi {
     @ApiOperation(value = "领券")
     public BizBaseResponse getCoupon(@Validated @RequestBody CouponRequest req) {
         EndUser dto =  EndUserContextHolder.getUser();
-         Map map = imCouponService.getCoupon(req, dto.getUserId());
+        Map map = imCouponService.getCoupon(req, dto.getUserId());
       //  Map map = imCouponService.getCoupon(req, "159006368380700017990" );
         return new BizBaseResponse(map);
     }

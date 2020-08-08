@@ -21,6 +21,7 @@ public interface CustomerCouponMapper {
     int insert(CustomerCoupon record);
 
     int insertSelective(CustomerCoupon record);
+
     int insertBySendCoupon(CustomerCoupon record);
     List<CustomerCoupon> selectByExample(CustomerCouponExample example);
 

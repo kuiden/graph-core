@@ -962,6 +962,8 @@ public class CouponServiceImpl implements ICouponService {
         customerCoupon.setReceiveType(sendCouponReq.getReceiveType().byteValue());
         customerCoupon.setSendUser(sendCouponReq.getUserId());
         customerCoupon.setUseStatus((byte) 0);//未使用
+        String codeNumber = codeFactory.getCodeNumberv2(CodeFactory.customerCouponPrefix.concat(code), sendCouponReq.getStoreId());
+        customerCoupon.setCode(code+codeNumber);
         if (CouponValidityTypeEnum.Fixed.value().equals(validityType)) {
             customerCoupon.setUseStartTime(coupon.getUseStartTime());
             customerCoupon.setUseEndTime(coupon.getUseEndTime());

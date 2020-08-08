@@ -1,16 +1,19 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class CustomerCoupon {
-
+/**
+ * customer_coupon
+ * @author 
+ */
+public class CustomerCoupon implements Serializable {
     public CustomerCoupon() {
     }
 
     public CustomerCoupon(String couponCode) {
         this.couponCode = couponCode;
     }
-
     /**
      * 主键ID
      */
@@ -60,6 +63,13 @@ public class CustomerCoupon {
      * 使用状态 0:未使用 1：已使用
      */
     private Byte useStatus;
+
+    /**
+     * 客户优惠券编码
+     */
+    private String code;
+
+    private static final long serialVersionUID = 1L;
 
     public Long getId() {
         return id;
@@ -139,5 +149,13 @@ public class CustomerCoupon {
 
     public void setUseStatus(Byte useStatus) {
         this.useStatus = useStatus;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 }

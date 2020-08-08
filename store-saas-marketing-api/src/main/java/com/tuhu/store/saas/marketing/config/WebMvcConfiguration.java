@@ -32,7 +32,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                 .excludePathPatterns("/feign/**", "/**/client/detail");
 
         registry.addInterceptor(endUserInterceptor)
-                .addPathPatterns("/client/**")
+                .addPathPatterns("/client/**","/mini/c/**")
                 .excludePathPatterns("/feign/endUser/**");
     }
 
