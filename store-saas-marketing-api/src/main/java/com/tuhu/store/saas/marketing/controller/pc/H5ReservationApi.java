@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -53,6 +54,9 @@ public class H5ReservationApi extends BaseApi {
 
     @Autowired
     private StoreRedisUtils storeRedisUtils;
+
+    @Value("${add.reservation.verificationCode.expireTime}")
+    private Integer expireTime = 5;
 
     @PostMapping(value = "/periodList")
     @ApiOperation(value = "预约时间段list")
@@ -151,7 +155,7 @@ public class H5ReservationApi extends BaseApi {
         if(sendResult != null && sendResult.isSendResult()){
             //将验证码写入redis，并设置过期时间
             storeRedisUtils.redisSet(verificationCodeKey,pwd.toString());
-            storeRedisUtils.setExpire(verificationCodeKey, 1, TimeUnit.MINUTES);
+            storeRedisUtils.setExpire(verificationCodeKey, expireTime, TimeUnit.MINUTES);
             return new BizBaseResponse("发送成功");
         }else {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.SYSTEM_INNER_ERROR, "发送失败");

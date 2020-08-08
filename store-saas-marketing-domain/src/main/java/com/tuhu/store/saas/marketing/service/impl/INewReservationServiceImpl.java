@@ -96,7 +96,7 @@ public class INewReservationServiceImpl implements INewReservationService {
     public List<ReservationPeriodResp> getReservationPeroidList(ReservePeriodReq req) {
         List<ReservationPeriodResp> result = new ArrayList<>();
         //查门店营业时间
-        Map<String,Date> storeMap = getStoreInfo(req.getStoreId());
+        Map<String,Date> storeMap = getStoreWorkingTime(req.getStoreId());
         //算出时间段
         List<String> allTimePoints = getTimePoints(storeMap.get("startTime"),storeMap.get("endTime"),30);
         try{
@@ -125,6 +125,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         return result;
     }
 
+    //teminalType 门店：0,小程序：1,H5:2
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
         log.info("C端新增预约单addReservation入参：", JSONObject.toJSONString(req));
@@ -145,16 +146,31 @@ public class INewReservationServiceImpl implements INewReservationService {
         reservationOrderService.insert(order);
 
         //发送短信
-//        SMSParameter smsParameter = new SMSParameter();
-//        smsParameter.setPhone(req.getCustomerPhoneNumber());
-//        smsParameter.setTemplateId(iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(SMSTypeEnum.SAAS_MINI_ORDER_CREATE_CODE.templateCode(),null));
-//        List<String> list = new ArrayList<>();
-//        list.add(pwd.toString());
-//        smsParameter.setDatas(list);
-//        SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
-//        if(sendResult != null && sendResult.isSendResult()){
-//
-//        }
+        StoreInfoDTO storeInfo = getStoreInfo(req.getStoreId());
+        if(type == 0 || type == 2){//发给客户：【门店名称】（【门店联系手机】），【预约月日时分】，【门店地址，只展示详细地址，不展示省市区】
+            List<String> list = new ArrayList<>();
+            if(storeInfo != null){
+                list.add(storeInfo.getStoreName());
+                list.add(storeInfo.getMobilePhone());
+                list.add(dealMdDate(order.getEstimatedArriveTime()));
+                list.add(storeInfo.getAddress() == null?"":storeInfo.getAddress());
+                sendSms(req.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_STORE_ORDER_SUCCESS.templateCode(),list);
+            }
+        }
+        if(type == 1){//发给门店：客户【客户手机】通过“车主小程序”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
+            List<String> list = new ArrayList<>();
+            list.add(order.getCustomerPhoneNumber());
+            list.add(dealMdDate(order.getEstimatedArriveTime()));
+            sendSms(req.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_MINI_ORDER_CREATE.templateCode(),list);
+        }
+        if(type == 2){//发给门店:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
+            List<String> list = new ArrayList<>();
+            list.add(order.getCustomerPhoneNumber());
+            list.add(req.getCouponName());
+            list.add(dealMdDate(order.getEstimatedArriveTime()));
+            sendSms(storeInfo.getMobilePhone(),SMSTypeEnum.SAAS_MINI_ORDER_SUCCESS.templateCode(),list);
+        }
+
         return id;
     }
 
@@ -258,6 +274,33 @@ public class INewReservationServiceImpl implements INewReservationService {
         return result;
     }
 
+    //01-01 10:30处理成1月1日
+    private String dealMdDate(Date date){
+        String result = "";
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        Integer month = cal.get(Calendar.MONTH) + 1;
+        Integer day = cal.get(Calendar.DAY_OF_MONTH);
+        result += month+"月"+ day +"日"+ cal.get(Calendar.HOUR_OF_DAY) +":"+ cal.get(Calendar.MINUTE);
+        return result;
+    }
+
+    /**
+     * 发送短信
+     */
+    private String sendSms(String phoneNum, String templateId, List<String> msgContent){
+        String result = "" ;
+        SMSParameter smsParameter = new SMSParameter();
+        smsParameter.setPhone(phoneNum);
+        smsParameter.setTemplateId(iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(templateId,null));
+        smsParameter.setDatas(msgContent);
+        SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
+        if(sendResult != null && sendResult.isSendResult()){
+            result = "发送成功";
+        }
+        return result;
+    }
+
     /**
      * 将两个时间按照HH:mm格式比较大小
      * date1 < date2 --true
@@ -296,7 +339,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         if (req.getEstimatedArriveTime().compareTo(new Date()) < 0) {
             throw new StoreSaasMarketingException("到店时间需大于当前时间");
         }
-        Map<String,Date> storeMap = getStoreInfo(req.getStoreId());
+        Map<String,Date> storeMap = getStoreWorkingTime(req.getStoreId());
         Calendar arriveTime = Calendar.getInstance();
         Calendar startTime = Calendar.getInstance();
         Calendar endTime = Calendar.getInstance();
@@ -371,22 +414,36 @@ public class INewReservationServiceImpl implements INewReservationService {
     }
 
     //获取门店营业时间
-    private Map<String,Date> getStoreInfo(Long storeId){
+    private Map<String,Date> getStoreWorkingTime(Long storeId){
         Map<String,Date> result = new HashMap<>();
         try {
             result.put("startTime",hmsDateFormat.parse(openBeginTime));
             result.put("endTime",hmsDateFormat.parse(openEndTime));
+            StoreInfoDTO dto = getStoreInfo(storeId);
+            if(dto != null){
+                if(dto.getOpeningEffectiveDate() != null){
+                    result.put("startTime",dto.getOpeningEffectiveDate());
+                }
+                if(dto.getOpeningExpiryDate() != null){
+                    result.put("endTime",dto.getOpeningExpiryDate());
+                }
+            }
+        }catch (Exception ex) {
+            log.error("INewReservationServiceImpl.getStoreWorkingTime->获取门店信息出错" + ex.getMessage());
+        }
+        return result;
+    }
+
+    //获取门店信息
+    private StoreInfoDTO getStoreInfo(Long storeId){
+        StoreInfoDTO result = new StoreInfoDTO();
+        try {
             StoreInfoVO vo = new StoreInfoVO();
             vo.setStoreId(storeId);
             BizBaseResponse<StoreInfoDTO> resultObject = storeUserClient.getStoreInfo(vo);
             log.info("==storeAdminClient.getUserByToken=={}", JSONObject.toJSONString(resultObject));
             if(resultObject != null && resultObject.getData() != null){
-                if(resultObject.getData().getOpeningEffectiveDate() != null){
-                    result.put("startTime",resultObject.getData().getOpeningEffectiveDate());
-                }
-                if(resultObject.getData().getOpeningExpiryDate() != null){
-                    result.put("endTime",resultObject.getData().getOpeningExpiryDate());
-                }
+                result = resultObject.getData();
             }
         }catch (Exception ex) {
             log.error("INewReservationServiceImpl.getStoreInfo->获取门店信息出错" + ex.getMessage());
