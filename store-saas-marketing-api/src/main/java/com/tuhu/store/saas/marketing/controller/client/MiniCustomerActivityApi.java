@@ -1,17 +1,13 @@
 package com.tuhu.store.saas.marketing.controller.client;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.controller.mini.BaseEndUserApi;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.po.Activity;
-import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
-import com.tuhu.store.saas.marketing.request.ActivityCustomerListReq;
-import com.tuhu.store.saas.marketing.request.ActivityCustomerListRequest;
-import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
-import com.tuhu.store.saas.marketing.response.ActivityCustomerPageResp;
-import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
-import com.tuhu.store.saas.marketing.response.ActivityResp;
-import com.tuhu.store.saas.marketing.response.CommonResp;
+import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -46,25 +42,39 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
         activityApplyReq.setStoreId(super.getStoreId());
         activityApplyReq.setTenantId(super.getTenantId());
         activityApplyReq.setTelephone(super.getEndUser().getPhone());
-        CommonResp<String> activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
+        CommonResp<String> activityOrderCodeResp = null;
+        try {
+            activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
+        } catch (Exception e) {
+            log.info("营销活动报名服务异常，入参：{}", activityApplyReq, e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         BizBaseResponse resp = BizBaseResponse.success();
-        if (null != activityOrderCodeResp) {
+        if (null != activityOrderCodeResp && StringUtils.isNotEmpty(activityOrderCodeResp.getMessage())) {
             resp.setCode(activityOrderCodeResp.getCode());
             resp.setMessage(activityOrderCodeResp.getMessage());
-            resp.setData(activityOrderCodeResp.getData());
         }
+        resp.setData(activityOrderCodeResp.getData());
         return resp;
     }
 
     @PostMapping(value = "/activityCustomerDetail")
     @ApiOperation(value = "客户报名营销活动详情")
-    public BizBaseResponse getActivityCustomerDetail(ActivityCustomerReq activityCustomerReq) {
-        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
-            activityCustomerReq.setIsFromClient(Boolean.TRUE);
-            activityCustomerReq.setCustomerId(super.getCustomerId());
-            activityCustomerReq.setStoreId(super.getStoreId());
+    public BizBaseResponse getActivityCustomerDetail(@RequestBody ActivityCustomerReq activityCustomerReq) {
+//        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
+//            activityCustomerReq.setIsFromClient(Boolean.TRUE);
+//            activityCustomerReq.setCustomerId(super.getCustomerId());
+//            activityCustomerReq.setStoreId(super.getStoreId());
+//        }
+        ActivityCustomerResp activityCustomerResp = null;
+        try {
+            activityCustomerResp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("客户报名营销活动详情服务异常，入参：{}", activityCustomerReq, e);
+            return BizBaseResponse.operationFailed("服务异常");
         }
-        ActivityCustomerResp activityCustomerResp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
         return BizBaseResponse.success(activityCustomerResp);
     }
 
@@ -78,42 +88,38 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
 //        return new ResultObject(activityCustomerResp);
 //    }
 //
-    @PostMapping(value = "/listActivityCustomer")
-    @ApiOperation(value = "营销活动参与详情查询")
-    public BizBaseResponse list(@Validated @RequestBody ActivityCustomerListReq activityCustomerListReq) {
-//        if (null == activityCustomerListReq.getStoreId()) {
-//            activityCustomerListReq.setStoreId(super.getStoreId());
-//        } else {
-//            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
-//        }
-//        if (null == activityCustomerListReq.getTenantId()) {
-//            activityCustomerListReq.setTenantId(super.getTenantId());
-//        }
-//        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
-//        return BizBaseResponse.success(activityRespPageInfo);
-        return BizBaseResponse.success();
-    }
-//
     @PostMapping(value = "/list")
     @ApiOperation(value = "营销活动列表")
-    public BizBaseResponse activityList(Long storeId) {
-        List<Activity> activityRespPageInfo = iActivityService.getActivityListByStoreId(storeId);
+    public BizBaseResponse activityList(@Validated @RequestBody StoreIdRequest req) {
+        List<Activity> activityRespPageInfo = null;
+        try {
+            activityRespPageInfo = iActivityService.getActivityListByStoreId(req.getStoreId());
+        } catch (Exception e) {
+            log.info("营销活动列表服务异常：入参：{}", req.getStoreId(), e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(activityRespPageInfo);
 
     }
 
     @PostMapping(value = "/detail")
     @ApiOperation(value = "营销活动详情")
-    public BizBaseResponse detailForClient(Long activityId, Long storeId) {
-        ActivityResp activityResp = iActivityService.getActivityDetailForClient(activityId, storeId, this.getCustomerId());
+    public BizBaseResponse detailForClient(@RequestBody CActivityDetailReq req) {
+        ActivityResp activityResp = iActivityService.getActivityDetailForClient(req.getActivityId(), req.getStoreId(), this.getCustomerId());
         return BizBaseResponse.success(activityResp);
     }
 
     @PostMapping(value = "/myActivityList")
     @ApiOperation(value = "我的营销活动列表")
-    public BizBaseResponse myActivityList(ActivityCustomerListRequest activityCustomerListRequest) {
+    public BizBaseResponse myActivityList(@RequestBody ActivityCustomerListRequest activityCustomerListRequest) {
         activityCustomerListRequest.setCustomerId(this.getCustomerId());
-        ActivityCustomerPageResp resp = iActivityService.getMyActivityList(activityCustomerListRequest);
+        ActivityCustomerPageResp resp = null;
+        try {
+            resp = iActivityService.getMyActivityList(activityCustomerListRequest);
+        } catch (Exception e) {
+            log.info("我的营销活动列表服务异常：入参：{}", activityCustomerListRequest, e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success(resp);
     }
 //

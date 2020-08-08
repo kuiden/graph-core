@@ -1,9 +1,11 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.marketing.request.BReservationListReq;
 import com.tuhu.store.saas.marketing.request.CReservationListReq;
 import com.tuhu.store.saas.marketing.request.NewReservationReq;
 import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
+import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
@@ -24,14 +26,18 @@ public interface INewReservationService {
     /**
      * 创建预约单
      * @param req
-     * @param type 门店：0,小程序：1,H5:2
+     * @param teminalType 门店：0,小程序：1,H5:2
      * @return
      */
-    String addReservation(NewReservationReq req, Integer type);
+    String addReservation(NewReservationReq req, Integer teminalType);
 
     Boolean updateReservation(NewReservationReq req);
 
     PageInfo<ReservationDTO> getCReservationList(CReservationListReq req);
 
     List<ReservationDateResp> getReserveDateList(Long storeId);
+
+    List<BReservationListResp> getBReservationList(BReservationListReq req);
+
+    ReservationDTO getCReservationDetail(String id);
 }

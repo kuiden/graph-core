@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.service.customergroup.filter;
 
 import com.google.common.collect.Lists;
+import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.service.customergroup.AbstractFactorFilter;
 import com.tuhu.store.saas.marketing.util.SpringApplicationContextUtil;
@@ -8,8 +9,12 @@ import com.tuhu.store.saas.order.request.serviceorder.ListCustomerInfoReq;
 import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * 最近多少天有消费次数的客户id过滤
@@ -46,8 +51,23 @@ public class HasCustomerBehaviorTimesFilter extends AbstractFactorFilter {
         //有消费记录的客户
         List<String> hasBehavCus = Lists.newArrayList();
         List<ListCustomerInfoResp> customers = serviceOrderClient.listCustomerInfos(req).getData();
-        if(customers!=null){
-            for(ListCustomerInfoResp customerInfoResp : customers){
+        List<ListCustomerInfoResp> cardCustomers = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(customers)){
+            cardCustomers = customers;
+        }
+        //有开卡记录的用户
+        List<CustomerCardOrder> CustomerCardOrderList = getCustomersForCusGroup(storeId, recentDay);
+        if(CollectionUtils.isNotEmpty(CustomerCardOrderList)){
+            for(CustomerCardOrder customerCardOrder : CustomerCardOrderList){
+                ListCustomerInfoResp listCustomerInfoResp = new ListCustomerInfoResp();
+                listCustomerInfoResp.setCostumerId(customerCardOrder.getCustomerId());
+                listCustomerInfoResp.setOrderNum(customerCardOrder.getCarNum());
+                cardCustomers.add(listCustomerInfoResp);
+            }
+        }
+
+        if(cardCustomers!=null){
+            for(ListCustomerInfoResp customerInfoResp : cardCustomers){
                 if(!hasBehavCus.contains(customerInfoResp.getCostumerId())){
                     Long orderNum = customerInfoResp.getOrderNum();
                     if(lessThanTimes!=null&&greaterThanTimes!=null){

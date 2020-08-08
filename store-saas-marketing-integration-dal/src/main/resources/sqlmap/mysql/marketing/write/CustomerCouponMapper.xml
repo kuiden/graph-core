@@ -347,22 +347,11 @@
 
   <select id="selectRecordList" resultMap="RecordListResultMap" parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch" >
     select  cp.id, cp.coupon_code, cp.customer_id, cp.receive_type, cp.send_user, cp.create_time, cp.use_start_time,
-    cp.use_end_time, cp.use_time, cp.use_status,cus.name,cus.phone_number
-    from
-    (select
-     <include refid="Base_Column_List" />
-    from customer_coupon
+    cp.use_end_time, cp.use_time, cp.use_status
+    from customer_coupon as cp
     where   coupon_code = #{couponCode,jdbcType=VARCHAR}
     <if test="receiveType != null">
       and receive_type = #{receiveType,jdbcType=TINYINT}
-    </if>) cp
-    left join
-    (select id ,name,phone_number
-    from customer
-    ) cus
-    on cp.customer_id=cus.id
-    <if test="searchKey != null">
-      where cus.name like CONCAT('%',#{searchKey},'%') or cus.phone_number like CONCAT('%',#{searchKey},'%')
     </if>
     order by cp.create_time desc
   </select>
@@ -447,4 +436,8 @@
       order_coupon
       WHERE service_order_id = #{serviceOrderId,jdbcType=VARCHAR})
   </select>
+
+  <update id="updateoccupyNumByCode">
+    update   coupon set  occupy_num = occupy_num- #{occupyNum} where code = #{code}
+  </update>
 </mapper>

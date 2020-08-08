@@ -136,7 +136,7 @@ public interface IActivityService {
      * @param activityCustomerListReq
      * @return
      */
-//    PageInfo<SimpleActivityCustomerResp> listActivityCustomer(ActivityCustomerListReq activityCustomerListReq);
+    PageInfo<SimpleActivityCustomerResp> listActivityCustomer(ActivityCustomerListReq activityCustomerListReq);
 
 
     /**

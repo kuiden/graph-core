@@ -13,6 +13,8 @@ public class StoreCustomerGroupRelation {
 
     private Long storeId;
 
+    private Long tenantId;
+
     private Long customerCount;
 
     private String groupDesc;

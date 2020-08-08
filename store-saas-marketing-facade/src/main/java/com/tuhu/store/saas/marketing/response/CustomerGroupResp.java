@@ -45,9 +45,9 @@ public class CustomerGroupResp implements Serializable {
     //生日结束时间
     private Long brithdayEnd;
     //保养开始时间
-    private Date maintenanceDateStart;
+    private Long maintenanceDateStart;
     //保养结束时间
-    private Date maintenanceDateEnd;
+    private Long maintenanceDateEnd;
 
     private String createUser;
     private String updateUser;

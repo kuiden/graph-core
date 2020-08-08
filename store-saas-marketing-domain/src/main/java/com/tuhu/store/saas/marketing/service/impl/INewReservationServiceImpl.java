@@ -18,9 +18,11 @@ import com.tuhu.store.saas.marketing.remote.request.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
+import com.tuhu.store.saas.marketing.request.BReservationListReq;
 import com.tuhu.store.saas.marketing.request.CReservationListReq;
 import com.tuhu.store.saas.marketing.request.NewReservationReq;
 import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
+import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
@@ -40,6 +42,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Author: yanglanqing
@@ -114,13 +117,13 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
         //校验
-        validReservationParam(req,type);
+        validReservationParam(req,type,1);
         //写表
         SrvReservationOrder order = new SrvReservationOrder();
         BeanUtils.copyProperties(req, order);
         String id = idKeyGen.generateId(req.getTenantId());
         order.setId(id);
-        order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser().getStoreNo()));
+        order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser()==null?null:UserContextHolder.getUser().getStoreNo()));
         order.setStatus(type == 0 ? SrvReservationStatusEnum.CONFIRMED.getEnumCode() : SrvReservationStatusEnum.UNCONFIRMED.getEnumCode());
         order.setCreateTime(new Date());
         order.setUpdateTime(new Date());
@@ -134,12 +137,7 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Override
     public Boolean updateReservation(NewReservationReq req) {
         //校验
-        validReservationParam(req,1);
-        //查原有预约单是否存在
-        SrvReservationOrder oldOrder = reservationOrderMapper.selectById(req.getId());
-        if(oldOrder == null){
-            throw new StoreSaasMarketingException("预约单id:"+req.getId()+"无效");
-        }
+        validReservationParam(req,1,2);
         SrvReservationOrder newOrder = new SrvReservationOrder();
         BeanUtils.copyProperties(req,newOrder);
         return reservationOrderService.update(newOrder) > 0;
@@ -153,6 +151,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         if(CollectionUtils.isNotEmpty(daoList)){
             for(SrvReservationOrder dao : daoList){
                 ReservationDTO dto = new ReservationDTO();
+                dto.setId(dao.getId());
                 dto.setReservationTime(dao.getEstimatedArriveTime().getTime());
                 dto.setStatus(transCStatus(dao));
                 list.add(dto);
@@ -172,6 +171,7 @@ public class INewReservationServiceImpl implements INewReservationService {
             resp.setReservationDate(DateUtils.addDate(today, i).getTime());
             result.add(resp);
         }
+        //查出往后7天的预约数
         List<ReservationDateDTO> daoList = reservationOrderMapper.getReserveDateList(storeId);
         if(CollectionUtils.isNotEmpty(daoList)){
             for(ReservationDateDTO dao : daoList){
@@ -183,6 +183,72 @@ public class INewReservationServiceImpl implements INewReservationService {
             }
         }
         return result;
+    }
+
+    @Override
+    public List<BReservationListResp> getBReservationList(BReservationListReq req) {
+        List<BReservationListResp> result = new ArrayList<>();
+        List<BReservationListResp> allTimeResult = new ArrayList<>();
+        //查出规定日期内所有预约单
+        List<SrvReservationOrder> daoList = reservationOrderMapper.getBReservationList(req.getStoreId(),ymdDateFormat.format(new Date(req.getReservationDate())));
+        if(CollectionUtils.isNotEmpty(daoList)){
+            try {
+                //算出一天内所有时间段
+                List<String> allTimePoints = getTimePoints(null,null,30);
+                String ymd = ymdDateFormat.format(req.getReservationDate());
+                //将数据库数据按照时间段归拢
+                for(String s : allTimePoints){
+                    BReservationListResp resp = new BReservationListResp();
+                    List<ReservationDTO> reservationDTOs = new ArrayList<>();
+                    for(SrvReservationOrder order : daoList){
+                        if(s.equals(hmDateFormat.format(order.getEstimatedArriveTime()))){
+                            ReservationDTO dto = new ReservationDTO();
+                            BeanUtils.copyProperties(order,dto);
+                            reservationDTOs.add(dto);
+                        }
+                    }
+                    resp.setReservationStartTime(ymdhmDateFormat.parse(ymd+" "+s).getTime());
+                    resp.setReservationEndTime(ymdhmDateFormat.parse(ymd+" "+getAfterTime(s)).getTime());
+                    resp.setPeriodName(s + "-" + getAfterTime(s));
+                    resp.setReservationDTOs(reservationDTOs);
+                    allTimeResult.add(resp);
+                }
+                //将没有数据的时间段剔除
+                result = allTimeResult.stream().filter(x->CollectionUtils.isNotEmpty(x.getReservationDTOs())).collect(Collectors.toList());
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public ReservationDTO getCReservationDetail(String id) {
+        ReservationDTO result = new ReservationDTO();
+        SrvReservationOrder order = reservationOrderMapper.selectById(id);
+        if(order != null){
+            BeanUtils.copyProperties(order,result);
+            result.setReservationTime(order.getEstimatedArriveTime().getTime());
+        }
+        return result;
+    }
+
+    /**
+     * 将两个时间按照HH:mm格式比较大小
+     * date1 < date2 --true
+     * @return
+     */
+    private boolean compareHMDate(Date date1, Date date2){
+        try{
+            Calendar startTime = Calendar.getInstance();
+            startTime.setTime(hmDateFormat.parse(hmDateFormat.format(date1)));
+            Calendar endTime = Calendar.getInstance();
+            endTime.setTime(hmDateFormat.parse(hmDateFormat.format(date2)));
+            return startTime.before(endTime);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return true;
     }
 
     //C端预约列表的已预约对应B端的待确认和已确认
@@ -197,9 +263,10 @@ public class INewReservationServiceImpl implements INewReservationService {
     /**
      * 新增和修改预约单共同的校验
      * @param req
-     * @param type 门店：0,小程序：1,H5:2
+     * @param teminalType 门店：0,小程序：1,H5:2
+     * @param operateType 1:新增 ，2：修改
      */
-    private void validReservationParam(NewReservationReq req, Integer type) {
+    private void validReservationParam(NewReservationReq req, Integer teminalType, Integer operateType) {
         //校验预约的时间
         if (req.getEstimatedArriveTime().compareTo(new Date()) < 0) {
             throw new StoreSaasMarketingException("到店时间需大于当前时间");
@@ -215,12 +282,12 @@ public class INewReservationServiceImpl implements INewReservationService {
         }catch (Exception e){
             e.printStackTrace();
         }
-        if (arriveTime.before(startTime)
-                || arriveTime.after(endTime)) {
+        if (compareHMDate(req.getEstimatedArriveTime(),storeMap.get("startTime"))
+                || compareHMDate(storeMap.get("endTime"),req.getEstimatedArriveTime())) {
             throw new StoreSaasMarketingException("当前预约时间段不能预约,门店预约时间范围为：" + hmDateFormat.format(storeMap.get("startTime")) + "-" + hmDateFormat.format(storeMap.get("endTime")));
         }
         //如果手机号不在门店客户中，添加客户(只有小程序和H5会出现这种情况)
-        if(type != 0){
+        if(teminalType != 0){
             AddVehicleReq addVehicleReq = new AddVehicleReq();
             addVehicleReq.setStoreId(req.getStoreId());
             addVehicleReq.setTenantId(req.getTenantId());
@@ -252,8 +319,27 @@ public class INewReservationServiceImpl implements INewReservationService {
                 req.setCustomerPhoneNumber(response.getData().getPhoneNumber());
             }
         }
+        String oldOrderReservationTime = "";
+        if(operateType == 2){
+            //查原有预约单是否存在
+            SrvReservationOrder oldOrder = reservationOrderMapper.selectById(req.getId());
+            if(oldOrder == null){
+                throw new StoreSaasMarketingException("预约单id:" +req.getId()+ "无效");
+            }
+            oldOrderReservationTime = hmDateFormat.format(oldOrder.getEstimatedArriveTime());
+        }
+
         //校验客户是否已预约过当前时间段
         HashSet set = reservationOrderService.getReservedPeriodListForCustomer(req.getEstimatedArriveTime(), req.getCustomerId(), req.getStoreId());
+        //修改预约单时，若传入的预约时间和之前一致，不算重复预约
+        if(StringUtils.isNotBlank(oldOrderReservationTime)){
+            Iterator it = set.iterator();
+            while(it.hasNext()){
+                if(it.next().equals(oldOrderReservationTime)){
+                    it.remove();
+                }
+            }
+        }
         if(CollectionUtils.isNotEmpty(set) && set.contains(hmDateFormat.format(req.getEstimatedArriveTime()))){
             throw new StoreSaasMarketingException("您已预约该时段，请勿重复预约");
         }
@@ -343,12 +429,15 @@ public class INewReservationServiceImpl implements INewReservationService {
             if (minute.length() < 2) {
                 minute = "0" + minute;
             }
-            list.add(hour + ":" + minute + ":00");//拼接为HH:mm格式，添加到集合
+            list.add(hour + ":" + minute);//拼接为HH:mm格式，添加到集合
+        }
+        if(startTime == null && endTime == null){
+            return list;
         }
         List<String> newList = new ArrayList<>();
         try{
             for(String s : list){
-                long now = hmsDateFormat.parse(s).getTime();
+                long now = hmDateFormat.parse(s).getTime();
                 if(now >= startTime.getTime() && now <= endTime.getTime()){
                     newList.add(hmDateFormat.format(hmDateFormat.parse(s)));
                 }

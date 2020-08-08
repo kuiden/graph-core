@@ -47,4 +47,6 @@ public interface CustomerCouponMapper {
     List<Map<String, Object>> getRecievedCountByCouponCode(@Param("couponCodeList") List<String> couponCodeList, @Param("customerId") String customerId);
 
     List<CustomerCoupon> selectByServiceOrderId(@Param("serviceOrderId") String serviceOrderId);
+
+    int updateoccupyNumByCode(@Param("occupyNum") Long occupyNum,@Param("code") String code);
 }

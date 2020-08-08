@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @ToString
-public class CustomerGroupDto implements Serializable {
+public class CustomerGroupDto  implements Serializable {
 
     private Long id;
     private String groupName;
@@ -17,6 +17,8 @@ public class CustomerGroupDto implements Serializable {
     private String groupDesc;
 
     private Long storeId;
+
+    private Long tenantId;
 
     private List<CustomerGroupRuleDto> customerGroupRuleReqList;
 

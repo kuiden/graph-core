@@ -73,4 +73,18 @@ public enum SMSTypeEnum {
     public void setDesc(String desc) {
         this.desc = desc;
     }
+
+    /**
+     * 根据code获取编码
+     * @param templateCode
+     * @return
+     */
+    public static SMSTypeEnum getByCode(String templateCode){
+        for (SMSTypeEnum smsTypeEnum : SMSTypeEnum.values()) {
+            if(smsTypeEnum.templateCode.equals(templateCode)){
+                return smsTypeEnum;
+            }
+        }
+        return null;
+    }
 }

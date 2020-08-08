@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.customergroup.filter;
 import com.google.common.collect.Lists;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
+import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.service.customergroup.AbstractFactorFilter;
@@ -50,6 +51,13 @@ public class NoCustomerBehaviorFilter extends AbstractFactorFilter {
         if(CollectionUtils.isNotEmpty(customers)){
             for(ListCustomerInfoResp customerInfoResp : customers){
                 hasBehavCus.add(customerInfoResp.getCostumerId());
+            }
+        }
+        //有开卡记录的用户
+        List<CustomerCardOrder> CustomerCardOrderList = getCustomersForCusGroup(storeId, recentDay);
+        if(CollectionUtils.isNotEmpty(CustomerCardOrderList)){
+            for(CustomerCardOrder customerCardOrder : CustomerCardOrderList){
+                hasBehavCus.add(customerCardOrder.getCustomerId());
             }
         }
         List<String> result = Lists.newArrayList();

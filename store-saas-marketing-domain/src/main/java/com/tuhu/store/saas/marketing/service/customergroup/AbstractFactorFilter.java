@@ -1,7 +1,13 @@
 package com.tuhu.store.saas.marketing.service.customergroup;
 
 import com.google.common.collect.Lists;
+import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.service.ICardOrderService;
+import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.marketing.util.SpringApplicationContextUtil;
 
+import java.util.Date;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -66,4 +72,18 @@ public abstract class AbstractFactorFilter implements CustomerGroupFactorFilter{
         }
         return customerIds;
     }
+
+    /**
+     * 查看近几天有开卡的用户列表
+     * @param storeId
+     * @param recentDay
+     * @return
+     */
+    public List<CustomerCardOrder> getCustomersForCusGroup(Long storeId, Integer recentDay){
+        ICardOrderService iCardOrderService = SpringApplicationContextUtil.getBean(ICardOrderService.class);
+        Date dayBegin = DateUtils.getDayBegin();
+        Date beginTime = DateUtils.getNextDay(dayBegin,1-recentDay);
+        return iCardOrderService.getCustomersForCusGroup(storeId,beginTime);
+    }
+
 }

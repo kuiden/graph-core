@@ -13,6 +13,7 @@ import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
+import com.tuhu.store.saas.marketing.response.SimpleActivityCustomerResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -49,7 +50,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("营销活动新增服务异常，入参：{}", addActivityReq);
+            log.info("营销活动新增服务异常，入参：{}", addActivityReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return BizBaseResponse.success(addActivityReq);
@@ -72,7 +73,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("营销活动上下架服务异常，入参：{}", activityChangeStatusReq);
+            log.info("营销活动上下架服务异常，入参：{}", activityChangeStatusReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return BizBaseResponse.success(activityChangeStatusReq);
@@ -101,7 +102,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("营销活动编辑服务异常，入参：{}", editActivityReq);
+            log.info("营销活动编辑服务异常，入参：{}", editActivityReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return BizBaseResponse.success(editActivityReq);
@@ -125,9 +126,24 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("获取活动数据服务异常，入参：{}", activityId);
+            log.info("获取活动数据服务异常，入参：{}", activityId, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return new BizBaseResponse(activityStatistics);
+    }
+
+    @PostMapping(value = "/listActivityCustomer")
+    @ApiOperation(value = "营销活动参与详情查询")
+    public BizBaseResponse list(@Validated @RequestBody ActivityCustomerListReq activityCustomerListReq) {
+        if (null == activityCustomerListReq.getStoreId()) {
+            activityCustomerListReq.setStoreId(super.getStoreId());
+        } else {
+            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
+        }
+        if (null == activityCustomerListReq.getTenantId()) {
+            activityCustomerListReq.setTenantId(super.getTenantId());
+        }
+        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
+        return BizBaseResponse.success(activityRespPageInfo);
     }
 }

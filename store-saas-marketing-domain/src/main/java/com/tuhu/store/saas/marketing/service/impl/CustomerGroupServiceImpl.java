@@ -6,7 +6,6 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.dto.product.GoodsData;
 import com.tuhu.store.saas.marketing.constant.CustomerGroupConstant;
 import com.tuhu.store.saas.marketing.dataobject.*;
-import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerGroupRuleMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
@@ -14,8 +13,6 @@ import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.CalculateCustomerCountReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupListReq;
 import com.tuhu.store.saas.marketing.request.CustomerGroupReq;
-import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
-import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
 import com.tuhu.store.saas.marketing.response.CustomerGroupResp;
 import com.tuhu.store.saas.marketing.response.GoodsResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
@@ -31,7 +28,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -69,9 +65,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             id = record.getId();
         }else{//更新
+
             StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
             storeCustomerGroupRelation.setUpdateTime(new Date());
+            storeCustomerGroupRelation.setGroupName(customerGroupDto.getGroupName());
             storeCustomerGroupRelation.setId(customerGroupDto.getId());
             storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);
             CustomerGroupRule customerGroupRule = new CustomerGroupRule();
@@ -122,6 +120,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 customerGroupRule.setCgRuleName(customerGroupRuleDto.getCgRuleName());
                 customerGroupRule.setGroupId(Long.valueOf(relationId));
                 customerGroupRule.setStoreId(customerGroupDto.getStoreId());
+                customerGroupRule.setTenantId(customerGroupDto.getTenantId());
                 customerGroupRule.setCreateUser(customerGroupDto.getCreateUser());
                 customerGroupRule.setCreateTime(new Date());
                 customerGroupRuleList.add(customerGroupRule);
@@ -260,14 +259,14 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
 
         }
         if(amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR)!=null){
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+           // SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String maintenanceStartStr = amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR).get(CustomerGroupConstant.MAINTENANCE_LEAST_DAY);
             String maintenanceEndStr = amap.get(CustomerGroupConstant.MAINTENANCE_FACTOR).get(CustomerGroupConstant.MAINTENANCE_MAX_DAY);
             if(StringUtils.isNotBlank(maintenanceStartStr)){
-                customerGroupResp.setMaintenanceDateStart(sf.parse(maintenanceStartStr));
+                customerGroupResp.setMaintenanceDateStart(Long.valueOf(maintenanceStartStr));
             }
             if(StringUtils.isNotBlank(maintenanceEndStr)){
-                customerGroupResp.setMaintenanceDateEnd(sf.parse(maintenanceEndStr));
+                customerGroupResp.setMaintenanceDateEnd(Long.valueOf(maintenanceEndStr));
             }
         }
     }
@@ -287,6 +286,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 for(GoodsData goodsData : goodsDataList){
                     GoodsResp goodsResp = new GoodsResp();
                     BeanUtils.copyProperties(goodsData,goodsResp);
+                    goodsResp.setChecked(true);
                     goodsResps.add(goodsResp);
                 }
               //  customerGroupResp.setConsumerServeList(goodsResps);
@@ -301,6 +301,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         CustomerGroupDto customerGroupDto = new CustomerGroupDto();
         customerGroupDto.setGroupName(req.getConsumerGroupName());
         customerGroupDto.setStoreId(req.getStoreId());
+        customerGroupDto.setTenantId(req.getTenantId());
         customerGroupDto.setId(req.getId());
         StringBuffer sb = new StringBuffer();
         List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
@@ -367,7 +368,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             if(CollectionUtils.isNotEmpty(goodsResps)) {
                 sb.append(req.getConsumerServeDay() + "天内消费过");
                 for(int i=0;i<goodsResps.size();i++){
-                    sb.append(goodsResps.get(i).getName());
+                    sb.append(goodsResps.get(i).getGoodsName());
                     if(i<goodsResps.size()-1){
                         sb.append(",");
                     }
@@ -405,13 +406,13 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.BRITHDAY_FACTOR,String.valueOf(req.getBrithdayStart()),CustomerGroupConstant.BRITHDAY_LEAST_MONTH,">=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getBrithdayEnd()),CustomerGroupConstant.BRITHDAY_MAX_MONTH,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
-            sb.append("生日在").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("客户;");
+            sb.append("生日在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
         }
         if(req.getMaintenanceDateStart()!=null && req.getMaintenanceDateEnd()!=null){
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,sf.format(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_LEAST_DAY,">=");
-            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, sf.format(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
+            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_LEAST_DAY,">=");
+            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
+            sb.append("保养日期在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
         }
         customerGroupDto.setCustomerGroupRuleReqList(customerGroupRuleReqList);
         customerGroupDto.setGroupDesc(sb.toString());
@@ -474,6 +475,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                     customerGroupDto = new CustomerGroupDto();
                     customerGroupDto.setId(customerGroupRule.getGroupId());
                     customerGroupDto.setStoreId(customerGroupRule.getStoreId());
+                    customerGroupDto.setTenantId(customerGroupRule.getTenantId());
                     result.add(customerGroupDto);
                     customerGroupDtoMap.put(customerGroupRule.getGroupId(),customerGroupDto);
                 }else{
@@ -531,6 +533,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 List<String> singleCustomerIdList = CustomerGroupFilterFactory.createFilter(customerGroupDto).filterProcess();
                 StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
                 record.setId(customerGroupDto.getId());
+                record.setTenantId(req.getTenantId());
                 record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
                 storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
                 if(CollectionUtils.isEmpty(customerIdList)){

@@ -61,4 +61,11 @@
         ORDER BY date_format(estimated_arrive_time, '%Y-%m-%d')
     </select>
 
+    <select id="getBReservationList" resultType="com.tuhu.store.saas.marketing.po.SrvReservationOrder">
+        select * from srv_reservation_order
+        where store_id = #{storeId}
+        and date_format(estimated_arrive_time, '%Y-%m-%d') = #{reservationDate}
+        order by status asc,create_time desc
+    </select>
+
 </mapper>

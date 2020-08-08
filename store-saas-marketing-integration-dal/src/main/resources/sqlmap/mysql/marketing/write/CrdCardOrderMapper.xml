@@ -588,4 +588,21 @@
       is_delete = #{isDelete,jdbcType=TINYINT}
     where id = #{id,jdbcType=BIGINT}
   </update>
+
+
+  <select id="getCustomersForCusGroup" resultType="com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder">
+       SELECT
+        store_id storeId,
+	    customer_id customerId,
+        sum(payed_amount) carAmount,
+	    count(1)  carNum
+    FROM
+	    `crd_card_order`
+    WHERE
+	    store_id = #{storeId}
+	    AND STATUS = 'SETTLE_CARD'
+	    AND payment_time >= #{beginTime}
+	    and is_delete=0
+	    group by customer_id
+    </select>
 </mapper>

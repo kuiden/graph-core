@@ -7,6 +7,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mengfan.common.util.GatewayClient;
+import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponScopeCategoryMapper;
@@ -14,6 +17,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMap
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper;
 import com.tuhu.store.saas.marketing.po.CouponPO;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.response.CouponItemResp;
@@ -34,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -85,7 +90,8 @@ public class IMCouponServiceImpl implements IMCouponService {
     @Autowired
     private MiniAppService miniAppService;
 
-    private static  final String BUSSINESS_CATEGORY_DTOS_PREFIX="bussiness_categories_dtos_";
+    private static final String BUSSINESS_CATEGORY_DTOS_PREFIX = "bussiness_categories_dtos_";
+
     @Override
     public String getQrCodeForCoupon(QrCodeRequest req) {
 
@@ -95,7 +101,7 @@ public class IMCouponServiceImpl implements IMCouponService {
          /*
           2、上传图片到图片服务器，
         */
-        String qrUrl=miniAppService.getQrCodeUrl(req.getScene(),req.getPath(),req.getWidth());
+        String qrUrl = miniAppService.getQrCodeUrl(req.getScene(), req.getPath(), req.getWidth());
         /*
           3、保存url到coupon表
         */
@@ -132,7 +138,6 @@ public class IMCouponServiceImpl implements IMCouponService {
             //领券效果--新增客户数
             resultMap.put("newUserCount", 0);
         }
-
 
 
         //todo
@@ -182,6 +187,8 @@ public class IMCouponServiceImpl implements IMCouponService {
         return null;
     }
 
+    @Autowired
+    private CustomerClient customerClient;
 
     @Override
     public CustomerCouponPageResp getCouponReceiveList(CouponReceiveRecordRequest req) {
@@ -192,15 +199,29 @@ public class IMCouponServiceImpl implements IMCouponService {
         CustomerCouponSearch record = new CustomerCouponSearch();
         record.setCouponCode(req.getCouponCode());
         record.setSearchKey(req.getSearchKey());
-        if (req.getReceiveType()!=null){
+        if (req.getReceiveType() != null) {
             record.setReceiveType(req.getReceiveType().byteValue());
         }
-
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
-
         List<CustomerCouponPO> recordList = null;
         try {
             recordList = customerCouponMapper.selectRecordList(record);
+            if (CollectionUtils.isNotEmpty(recordList)) {
+                CustomerVO vo = new CustomerVO();
+                vo.setStoreId(req.getStoreId());
+                vo.setTenantId(req.getTenantId());
+                List<String> idList = recordList.stream().map(x -> x.getCustomerId()).distinct().collect(Collectors.toList());
+                vo.setCustomerList(idList);
+                vo.setQuery(req.getSearchKey());
+                BizBaseResponse<List<CustomerDTO>> crmResult = customerClient.getCustomerByQuery(vo);
+                if (crmResult != null && CollectionUtils.isNotEmpty(crmResult.getData())) {
+                    Map<String, CustomerDTO> map = crmResult.getData().stream().collect(Collectors.toMap(k -> k.getId(), v -> v));
+                    for (CustomerCouponPO x : recordList) {
+                        x.setCustomerName(map.get(x.getCustomerId()).getName());
+                    }
+                }
+            }
+
         } catch (Exception e) {
             log.error("getCouponReceiveList error", e);
         }
@@ -216,8 +237,8 @@ public class IMCouponServiceImpl implements IMCouponService {
 
             recordList.forEach(recordItem -> {
                 *//*
-                 * 查询发券人姓名
-                 *//*
+         * 查询发券人姓名
+         *//*
                 if (MapUtils.isNotEmpty(userInfoMap)) {
                     UserDTO dto = userInfoMap.get(recordItem.getSendUser());
                     recordItem.setSendUser(dto != null ? dto.getUsername() : "");
@@ -318,7 +339,7 @@ public class IMCouponServiceImpl implements IMCouponService {
             List<String> limitCategoryCouponCodeList = Lists.newArrayList();
             couponRecordList.forEach(couponRecord -> {
                 couponCodeList.add(couponRecord.getCode());
-                if (couponRecord.getScopeType()==2){//限制分类
+                if (couponRecord.getScopeType() == 2) {//限制分类
                     limitCategoryCouponCodeList.add(couponRecord.getCode());
                 }
             });
@@ -768,7 +789,7 @@ public class IMCouponServiceImpl implements IMCouponService {
      * @return
      */
     private Map<String, List<CouponScopeCategory>> getCouponScopeCategories(List<String> couponCodeList) {
-        if (CollectionUtils.isEmpty(couponCodeList)){
+        if (CollectionUtils.isEmpty(couponCodeList)) {
             return Maps.newHashMap();
         }
         CouponScopeCategoryExample example = new CouponScopeCategoryExample();
