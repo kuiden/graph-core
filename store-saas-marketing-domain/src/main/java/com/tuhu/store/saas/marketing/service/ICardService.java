@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
+import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 
 import java.util.function.Function;
 
@@ -34,4 +35,12 @@ public  interface ICardService {
      * @return
      */
     PageInfo<CardTemplateModel> getCardTemplatePageInfo(CardTemplateReq req);
+
+
+    /*
+     * 更新次卡服务项目次数
+     */
+    Boolean updateCardQuantity(UpdateCardVo updateCardVo);
+
+
 }

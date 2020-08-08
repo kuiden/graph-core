@@ -131,6 +131,11 @@ public class CrdCardItem implements Serializable {
      */
     private Byte isDelete;
 
+    /**
+     * 商品类型1：服务 2：商品
+     */
+    private Byte type;
+
     private static final long serialVersionUID = 1L;
 
     public Long getId() {
@@ -331,5 +336,13 @@ public class CrdCardItem implements Serializable {
 
     public void setIsDelete(Byte isDelete) {
         this.isDelete = isDelete;
+    }
+
+    public Byte getType() {
+        return type;
+    }
+
+    public void setType(Byte type) {
+        this.type = type;
     }
 }
