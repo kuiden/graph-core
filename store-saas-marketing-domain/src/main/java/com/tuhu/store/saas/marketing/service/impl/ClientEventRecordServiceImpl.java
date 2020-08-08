@@ -1,25 +1,19 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-//import com.tuhu.saas.common.ClientEventRecordRequest;
-//import com.tuhu.saas.common.EndUserVistiedCouponRequest;
-//import com.tuhu.saas.common.EventContentTypeEnum;
-//import com.tuhu.saas.common.EventTypeEnum;
-//import com.tuhu.saas.dao.ClientEventRecordEntityDao;
-//import com.tuhu.saas.domain.ClientEventRecordEntity;
-//import com.tuhu.saas.domain.EndUserVisitedCouponEntity;
-//import com.tuhu.saas.domain.EndUserVisitedStoreEntity;
-//import com.tuhu.saas.domain.OauthClientDetails;
-//import com.tuhu.saas.service.*;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.tuhu.store.saas.marketing.dataobject.ClientEventRecordDAO;
+import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
+import com.tuhu.store.saas.marketing.entity.EndUserVisitedCouponEntity;
+import com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity;
 import com.tuhu.store.saas.marketing.enums.EventContentTypeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ClientEventRecordMapper;
 import com.tuhu.store.saas.marketing.request.ClientEventRecordReq;
 import com.tuhu.store.saas.marketing.request.ClientEventRecordRequest;
+import com.tuhu.store.saas.marketing.request.EndUserVistiedCouponRequest;
 import com.tuhu.store.saas.marketing.response.ClientEventRecordResp;
-import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
+import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
 import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
 import com.tuhu.store.saas.user.vo.EventTypeEnum;
@@ -27,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.omg.CORBA.UserException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,17 +36,17 @@ import java.util.*;
 @Slf4j
 public class ClientEventRecordServiceImpl implements IClientEventRecordService {
 
-//    @Autowired
-//    private IEndUserVisitedStoreService iEndUserVisitedStoreService;
-//
-//    @Autowired
-//    private IEndUserVisitedCouponService iEndUserVisitedCouponService;
-//
-//    @Autowired
-//    private IOauthClientDetailsService iOauthClientDetailsService;
-//
-//    @Autowired
-//    private IWechatService iWechatService;
+    @Autowired
+    private IEndUserVisitedStoreService iEndUserVisitedStoreService;
+
+    @Autowired
+    private IEndUserVisitedCouponService iEndUserVisitedCouponService;
+
+    @Autowired
+    private IOauthClientDetailsService iOauthClientDetailsService;
+
+    @Autowired
+    private IWechatService iWechatService;
 
     @Autowired
     private ClientEventRecordMapper clientEventRecordMapper;
@@ -72,23 +65,23 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             throw new RuntimeException(validateResult);
         }
         String openId = clientEventRecordRequest.getOpenId();
-//        if (StringUtils.isEmpty(openId)) {
-//            String clientType = clientEventRecordRequest.getClientType();
-//            if (StringUtils.isEmpty(clientType)) {
-//                clientType = "end_user_client";
-//            }
-//            OauthClientDetails oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
-//            if (null == oauthClientDetails) {
-//                log.error("客户端配置信息不存在，clientType={}", clientType);
-//                throw new RuntimeException("客户端配置信息不存在");
-//            }
-//
-//            openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()
-//                    , oauthClientDetails.getWxSecret()
-//                    , clientEventRecordRequest.getOpenIdCode(),
-//                    oauthClientDetails.getWxOpenIdUrl());
-//            clientEventRecordRequest.setOpenId(openId);
-//        }
+        if (StringUtils.isEmpty(openId)) {
+            String clientType = clientEventRecordRequest.getClientType();
+            if (StringUtils.isEmpty(clientType)) {
+                clientType = "end_user_client";
+            }
+            OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
+            if (null == oauthClientDetails) {
+                log.error("客户端配置信息不存在，clientType={}", clientType);
+                throw new RuntimeException("客户端配置信息不存在");
+            }
+
+            openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()
+                    , oauthClientDetails.getWxSecret()
+                    , clientEventRecordRequest.getOpenIdCode(),
+                    oauthClientDetails.getWxOpenidUrl());
+            clientEventRecordRequest.setOpenId(openId);
+        }
         String storeId = clientEventRecordRequest.getStoreId();
         //首选查询现有记录
         String contentValue = null;
@@ -126,28 +119,28 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId());
         }
         //如果是访问门店或优惠券
-//        if (EventTypeEnum.VISIT.getCode().equals(clientEventRecordRequest.getEventType())) {
-//            if (EventContentTypeEnum.STORE.getCode().equals(clientEventRecordRequest.getContentType())) {
-//                EndUserVisitedStoreEntity endUserVisitedStoreEntity = new EndUserVisitedStoreEntity();
-//                endUserVisitedStoreEntity.setOpenId(openId);
-//                endUserVisitedStoreEntity.setStoreId(storeId);
-//                iEndUserVisitedStoreService.recordEndUserVistiedStore(endUserVisitedStoreEntity);
-//            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())) {
-//                EndUserVisitedCouponEntity endUserVisitedCouponEntity = new EndUserVisitedCouponEntity();
-//                endUserVisitedCouponEntity.setOpenId(openId);
-//                endUserVisitedCouponEntity.setStoreId(storeId);
-//                endUserVisitedCouponEntity.setCouponCode(contentValue);
-//                iEndUserVisitedCouponService.recordEndUserVistiedCoupon(endUserVisitedCouponEntity);
-//            }
-//        } else if (EventTypeEnum.LOGIN.getCode().equals(clientEventRecordRequest.getEventType()) || EventTypeEnum.REGISTERED.getCode().equals(clientEventRecordRequest.getEventType())) {
-//            if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())) {
-//                EndUserVistiedCouponRequest endUserVistiedCouponRequest = new EndUserVistiedCouponRequest();
-//                endUserVistiedCouponRequest.setEncryptedCode(contentValue);
-//                endUserVistiedCouponRequest.setOpenId(openId);
-//                endUserVistiedCouponRequest.setStoreId(storeId);
-//                iEndUserVisitedCouponService.recordNewCustomerByVistiedCoupon(endUserVistiedCouponRequest, clientEventRecordRequest.getCustomerId());
-//            }
-//        }
+        if (EventTypeEnum.VISIT.getCode().equals(clientEventRecordRequest.getEventType())) {
+            if (EventContentTypeEnum.STORE.getCode().equals(clientEventRecordRequest.getContentType())) {
+                EndUserVisitedStoreEntity endUserVisitedStoreEntity = new EndUserVisitedStoreEntity();
+                endUserVisitedStoreEntity.setOpenId(openId);
+                endUserVisitedStoreEntity.setStoreId(storeId);
+                iEndUserVisitedStoreService.recordEndUserVistiedStore(endUserVisitedStoreEntity);
+            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())) {
+                EndUserVisitedCouponEntity endUserVisitedCouponEntity = new EndUserVisitedCouponEntity();
+                endUserVisitedCouponEntity.setOpenId(openId);
+                endUserVisitedCouponEntity.setStoreId(storeId);
+                endUserVisitedCouponEntity.setCouponCode(contentValue);
+                iEndUserVisitedCouponService.recordEndUserVistiedCoupon(endUserVisitedCouponEntity);
+            }
+        } else if (EventTypeEnum.LOGIN.getCode().equals(clientEventRecordRequest.getEventType()) || EventTypeEnum.REGISTERED.getCode().equals(clientEventRecordRequest.getEventType())) {
+            if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())) {
+                EndUserVistiedCouponRequest endUserVistiedCouponRequest = new EndUserVistiedCouponRequest();
+                endUserVistiedCouponRequest.setEncryptedCode(contentValue);
+                endUserVistiedCouponRequest.setOpenId(openId);
+                endUserVistiedCouponRequest.setStoreId(storeId);
+                iEndUserVisitedCouponService.recordNewCustomerByVistiedCoupon(endUserVistiedCouponRequest, clientEventRecordRequest.getCustomerId());
+            }
+        }
     }
 
     /**
