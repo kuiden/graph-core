@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.java.common.utils.DateUtil;
@@ -272,6 +273,25 @@ public class INewReservationServiceImpl implements INewReservationService {
             result.setReservationTime(order.getEstimatedArriveTime().getTime());
         }
         return result;
+    }
+
+    @Override
+    public void confirmReservation(CReservationListReq req) {
+        EntityWrapper<SrvReservationOrder> wrapper = new EntityWrapper<>();
+        wrapper.eq("id",req.getId());
+        wrapper.eq("store_id",req.getStoreId());
+        List<SrvReservationOrder> orderList = reservationOrderMapper.selectList(wrapper);
+        if(CollectionUtils.isEmpty(orderList)){
+            throw new StoreSaasMarketingException("预约单id:" +req.getId()+ "无效");
+        }
+        SrvReservationOrder order = orderList.get(0);
+        if(!SrvReservationStatusEnum.UNCONFIRMED.getEnumCode().equals(order.getStatus())){
+            throw new StoreSaasMarketingException("只有待确认的预约单才能确认");
+        }
+        order.setStatus(SrvReservationStatusEnum.CONFIRMED.getEnumCode());
+        order.setUpdateTime(new Date());
+        order.setUpdateUser(UserContextHolder.getStoreUserId());
+        reservationOrderMapper.update(order,wrapper);
     }
 
     //01-01 10:30处理成1月1日

@@ -40,4 +40,6 @@ public interface INewReservationService {
     List<BReservationListResp> getBReservationList(BReservationListReq req);
 
     ReservationDTO getCReservationDetail(String id);
+
+    void confirmReservation(CReservationListReq req);
 }

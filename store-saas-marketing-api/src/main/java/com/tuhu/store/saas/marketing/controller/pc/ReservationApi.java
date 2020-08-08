@@ -77,8 +77,12 @@ public class ReservationApi extends BaseApi {
     @PostMapping(value = "/confirmReservation")
     @ApiOperation(value = "确认预约")
     public BizBaseResponse confirmReservation(@RequestBody CReservationListReq req){
-        BizBaseResponse rs = new BizBaseResponse("确认预约成功");
-        return rs;
+        if(StringUtils.isBlank(req.getId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约单id不能为空");
+        }
+        req.setStoreId(super.getStoreId());
+        iNewReservationService.confirmReservation(req);
+        return new BizBaseResponse("确认预约成功");
     }
 
     @PostMapping(value = "/cancelReservation")
