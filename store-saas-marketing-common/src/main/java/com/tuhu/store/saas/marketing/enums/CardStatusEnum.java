@@ -16,7 +16,10 @@ import lombok.Getter;
 @Getter
 public enum CardStatusEnum {
     INACTIVATED("INACTIVATED","未激活"),
-    ACTIVATED("ACTIVATED","已激活");
+    ACTIVATED("ACTIVATED","已激活"),
+    EXPIRED("EXPIRED","已过期"),
+    FINISHED("FINISHED","已用完");
+
 
     private String enumCode;
 
