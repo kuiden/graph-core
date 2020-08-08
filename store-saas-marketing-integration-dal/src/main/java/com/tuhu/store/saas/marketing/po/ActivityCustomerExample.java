@@ -7,6 +7,7 @@ import java.util.List;
 public class ActivityCustomerExample {
     protected String orderByClause;
 
+    //用来去重的，true就是去了，false就是没去
     protected boolean distinct;
 
     protected List<Criteria> oredCriteria;

@@ -49,7 +49,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("营销活动新增服务异常，入参：{}", addActivityReq);
+            log.info("营销活动新增服务异常，入参：{}", addActivityReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return BizBaseResponse.success(addActivityReq);
@@ -101,7 +101,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("营销活动编辑服务异常，入参：{}", editActivityReq);
+            log.info("营销活动编辑服务异常，入参：{}", editActivityReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return BizBaseResponse.success(editActivityReq);
@@ -125,7 +125,7 @@ public class MiniActivityApi extends BaseApi {
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("获取活动数据服务异常，入参：{}", activityId);
+            log.info("获取活动数据服务异常，入参：{}", activityId, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return new BizBaseResponse(activityStatistics);

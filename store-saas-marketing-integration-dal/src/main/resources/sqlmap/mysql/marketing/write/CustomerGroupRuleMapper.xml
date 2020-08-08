@@ -11,6 +11,7 @@
     <result column="status" property="status" jdbcType="VARCHAR" />
     <result column="group_id" property="groupId" jdbcType="BIGINT" />
     <result column="store_id" property="storeId" jdbcType="BIGINT" />
+    <result column="tenant_id" property="tenantId" jdbcType="BIGINT" />
     <result column="create_user" jdbcType="VARCHAR" property="createUser" />
     <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
@@ -77,7 +78,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, cg_rule_factor, cg_rule_name, attribute_name, attribute_value, compare_operator, status, group_id,store_id,create_user,
+    id, cg_rule_factor, cg_rule_name, attribute_name, attribute_value, compare_operator, status, group_id,store_id,tenant_id,create_user,
     update_user, create_time, update_time
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerGroupRuleExample" >
@@ -148,6 +149,9 @@
       <if test="storeId != null" >
         store_id,
       </if>
+      <if test="tenantId != null" >
+        tenant_id,
+      </if>
       <if test="createUser != null">
         create_user,
       </if>
@@ -188,6 +192,9 @@
       </if>
       <if test="storeId != null" >
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null" >
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="createUser != null">
         #{createUser,jdbcType=VARCHAR},
@@ -238,6 +245,9 @@
       <if test="record.storeId != null" >
         store_id = #{record.storeId,jdbcType=BIGINT},
       </if>
+      <if test="record.tenantId != null" >
+        tenant_id = #{record.tenantId,jdbcType=BIGINT},
+      </if>
       <if test="record.createUser != null">
         create_user = #{record.createUser,jdbcType=VARCHAR},
       </if>
@@ -283,6 +293,9 @@
       <if test="storeId != null" >
         store_id = #{storeId,jdbcType=BIGINT},
       </if>
+      <if test="tenantId != null" >
+        tenant_id = #{tenantId,jdbcType=BIGINT},
+      </if>
       <if test="createUser != null">
         create_user = #{createUser,jdbcType=VARCHAR},
       </if>
@@ -301,14 +314,14 @@
 
   <insert id="insertBatch" parameterType="java.util.List" >
     insert into customer_group_rule ( cg_rule_factor, cg_rule_name,
-    attribute_name, attribute_value, compare_operator,status,group_id,store_id,
+    attribute_name, attribute_value, compare_operator,status,group_id,store_id,tenant_id,
     create_user, create_time)
     values
     <foreach collection="list" item="item" index="index" separator=",">
       (#{item.cgRuleFactor,jdbcType=VARCHAR}, #{item.cgRuleName,jdbcType=VARCHAR},
       #{item.attributeName,jdbcType=VARCHAR}, #{item.attributeValue,jdbcType=VARCHAR},
       #{item.compareOperator,jdbcType=VARCHAR}, #{item.status,jdbcType=VARCHAR},
-      #{item.groupId,jdbcType=BIGINT}, #{item.storeId,jdbcType=BIGINT},
+      #{item.groupId,jdbcType=BIGINT}, #{item.storeId,jdbcType=BIGINT}, #{item.tenantId,jdbcType=BIGINT},
       #{item.createUser,jdbcType=VARCHAR},#{item.createTime,jdbcType=TIMESTAMP}
      )
     </foreach>

@@ -112,7 +112,6 @@ public class EditActivityReq implements Serializable {
     private List<ActivityContent> contents;
 
     @ApiModelProperty("活动费用")
-    @NotNull(message = "活动价格不能为空")
     private BigDecimal activityPrice;
 
     @ApiModelProperty("营销活动项目")

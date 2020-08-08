@@ -197,6 +197,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             cardOrderResp.setForever(crdCard.getForever() == 1 ? true : false);
             cardOrderResp.setExpiryDate(crdCard.getExpiryDate());
             cardOrderResp.setCardTemplateId(crdCard.getCardTemplateId());
+            cardOrderResp.setCardTypeCode(crdCard.getCardTypeCode());
             //如果卡不是永久有效，则判断卡是否过期
             if (!cardOrderResp.getForever()){
                 Date date = new Date();
@@ -217,6 +218,46 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         resp.setTotal(cardOrderPageInfo.getTotal());
 
         return resp;
+    }
+
+    @Override
+    @Transactional
+    public void updateCardPaymentStatus(String orderNo, Long storeId, Long tenantId, Long amount) {
+        log.info("开卡单号：{}, storeId：{}, tenantId：{}, 金额：{}",orderNo,storeId,tenantId,amount);
+
+        CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
+        cardOrderExample.createCriteria().andOrderNoEqualTo(orderNo)
+                        .andStoreIdEqualTo(storeId).andTenantIdEqualTo(tenantId);
+        List<CrdCardOrder> crdCardOrders = crdCardOrderMapper.selectByExample(cardOrderExample);
+        Integer result = 0;
+        if (null != crdCardOrders && !crdCardOrders.isEmpty()){
+            CrdCardOrder cardOrder = crdCardOrders.get(0);
+            Date date = new Date();
+            cardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_OK.getEnumCode());
+            cardOrder.setStatus(CardOrderStatusEnum.SETTLE_CARD.getEnumCode());
+            cardOrder.setCardStatus(CardStatusEnum.ACTIVATED.getEnumCode());
+            cardOrder.setPaymentTime(date);
+            cardOrder.setPayedAmount(new BigDecimal(amount).divide(new BigDecimal(100)));
+            cardOrder.setUpdateTime(date);
+            result += crdCardOrderMapper.updateByPrimaryKeySelective(cardOrder);
+            CrdCard card = crdCardMapper.selectByPrimaryKey(cardOrder.getCardId());
+            if (null != card){
+                card.setStatus(CardStatusEnum.ACTIVATED.getEnumCode());
+                result += crdCardMapper.updateByPrimaryKeySelective(card);
+            }
+        } else{
+            throw new MarketingException("源开卡单不存在，调用updateCardPaymentStatus失败");
+        }
+        if (result != 2){
+            throw new MarketingException("更新卡状态失败");
+        }
+    }
+
+    @Override
+    public List<CustomerCardOrder> getCustomersForCusGroup( Long storeId, Date beginTime){
+
+        return crdCardOrderMapper.getCustomersForCusGroup(storeId,beginTime);
+
     }
 
 }

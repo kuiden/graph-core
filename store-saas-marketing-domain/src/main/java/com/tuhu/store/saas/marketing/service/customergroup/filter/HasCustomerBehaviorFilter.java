@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.service.customergroup.filter;
 
 import com.google.common.collect.Lists;
+import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.service.customergroup.AbstractFactorFilter;
 import com.tuhu.store.saas.marketing.util.SpringApplicationContextUtil;
@@ -8,6 +9,7 @@ import com.tuhu.store.saas.order.request.serviceorder.ListCustomerInfoReq;
 import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.List;
 
@@ -40,6 +42,15 @@ public class HasCustomerBehaviorFilter extends AbstractFactorFilter {
             for(ListCustomerInfoResp customerInfoResp : customers){
                 if(!hasBehavCus.contains(customerInfoResp.getCostumerId())){
                     hasBehavCus.add(customerInfoResp.getCostumerId());
+                }
+            }
+        }
+        //有开卡记录的用户
+        List<CustomerCardOrder> CustomerCardOrderList = getCustomersForCusGroup(storeId, recentDay);
+        if(CollectionUtils.isNotEmpty(CustomerCardOrderList)){
+            for(CustomerCardOrder customerCardOrder : CustomerCardOrderList){
+                if(!hasBehavCus.contains(customerCardOrder.getCustomerId())) {
+                    hasBehavCus.add(customerCardOrder.getCustomerId());
                 }
             }
         }

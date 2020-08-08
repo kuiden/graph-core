@@ -1,18 +1,14 @@
 package com.tuhu.store.saas.marketing.controller.pc;
 
-import com.github.pagehelper.PageInfo;
+import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
-import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
-import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
-import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
 import io.swagger.annotations.ApiOperation;
@@ -21,10 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @Author: yanglanqing
@@ -44,6 +37,7 @@ public class ReservationApi extends BaseApi {
     @PostMapping(value = "/newForB")
     @ApiOperation(value = "B端新增预约单")
     public BizBaseResponse<String> newForB(@RequestBody NewReservationReq req){
+        log.info("B端新增预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<String> result = BizBaseResponse.success();
         validParam(req);
         if(StringUtils.isBlank(req.getCustomerId())){
@@ -52,44 +46,6 @@ public class ReservationApi extends BaseApi {
         req.setTeminal(1);
         req.setSourceChannel(SrvReservationChannelEnum.MD.getEnumCode());
         result.setData(iNewReservationService.addReservation(req,0));
-        return result;
-    }
-
-    @PostMapping(value = "/newForC")
-    @ApiOperation(value = "C端新增预约单")
-    public BizBaseResponse<String> newForC(@RequestBody NewReservationReq req){
-        BizBaseResponse<String> result = BizBaseResponse.success();
-        validParam(req);
-        if(StringUtils.isBlank(req.getCustomerPhoneNumber())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "请输入您的手机号码");
-        }
-        if(StringUtils.isBlank(req.getCustomerId())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
-        }
-        if(StringUtils.isBlank(req.getSourceChannel())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约渠道不能为空");
-        }
-        req.setTeminal(2);
-        result.setData(iNewReservationService.addReservation(req,1));
-        return result;
-    }
-
-    @PostMapping(value = "/updateForC")
-    @ApiOperation(value = "车主小程序端修改预约单")
-    public BizBaseResponse<Boolean> updateForC(@RequestBody NewReservationReq req){
-        BizBaseResponse<Boolean> result = BizBaseResponse.success();
-        validParam(req);
-        if(StringUtils.isBlank(req.getId())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约单id不能为空");
-        }
-        if(StringUtils.isBlank(req.getCustomerPhoneNumber())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户手机号不能为空");
-        }
-        if(StringUtils.isBlank(req.getCustomerId())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
-        }
-        req.setTeminal(2);
-        result.setData(iNewReservationService.updateReservation(req));
         return result;
     }
 
@@ -113,30 +69,6 @@ public class ReservationApi extends BaseApi {
         return result;
     }
 
-    @PostMapping(value = "/getCReservationList")
-    @ApiOperation(value = "获取车主小程序预约列表")
-    public BizBaseResponse getCReservationList(@RequestBody CReservationListReq req){
-        BizBaseResponse<PageInfo<ReservationDTO>> result = BizBaseResponse.success();
-        if(req.getStoreId() == null){
-            throw new StoreSaasMarketingException("门店ID不能为空");
-        }
-        result.setData(iNewReservationService.getCReservationList(req));
-        return result;
-    }
-
-    @PostMapping(value = "/getCReservationDetail")
-    @ApiOperation(value = "获取车主小程序预约单详情")
-    public BizBaseResponse<ReservationDTO> getCReservationDetail(@RequestBody CReservationListReq req){
-        BizBaseResponse<ReservationDTO> result = BizBaseResponse.success();
-        ReservationDTO dto = new ReservationDTO();
-        dto.setStatus("ORDERED");
-        dto.setReservationTime(new Date().getTime());
-        dto.setDescription("备注");
-        dto.setCustomerPhoneNumber("18011111111");
-        result.setData(dto);
-        return result;
-    }
-
     @PostMapping(value = "/confirmReservation")
     @ApiOperation(value = "确认预约")
     public BizBaseResponse confirmReservation(@RequestBody CReservationListReq req){
@@ -151,14 +83,11 @@ public class ReservationApi extends BaseApi {
         return rs;
     }
 
-
     //新增预约单公共校验
     private void validParam(NewReservationReq req){
         req.setTenantId(super.getTenantId());
+        req.setStoreId(super.getStoreId());
         req.setUserId(super.getUserId());
-        if(req.getStoreId() == null){
-            throw new StoreSaasMarketingException("门店ID不能为空");
-        }
         if(req.getEstimatedArriveTime() == null){
             throw new StoreSaasMarketingException("请选择到店时间");
         }
