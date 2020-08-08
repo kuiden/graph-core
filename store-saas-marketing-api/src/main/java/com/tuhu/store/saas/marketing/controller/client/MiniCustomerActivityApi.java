@@ -88,21 +88,6 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
 //        return new ResultObject(activityCustomerResp);
 //    }
 //
-    @PostMapping(value = "/listActivityCustomer")
-    @ApiOperation(value = "营销活动参与详情查询")
-    public BizBaseResponse list(@Validated @RequestBody ActivityCustomerListReq activityCustomerListReq) {
-        if (null == activityCustomerListReq.getStoreId()) {
-            activityCustomerListReq.setStoreId(super.getStoreId());
-        } else {
-            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
-        }
-        if (null == activityCustomerListReq.getTenantId()) {
-            activityCustomerListReq.setTenantId(super.getTenantId());
-        }
-        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
-        return BizBaseResponse.success(activityRespPageInfo);
-    }
-//
     @PostMapping(value = "/list")
     @ApiOperation(value = "营销活动列表")
     public BizBaseResponse activityList(@Validated @RequestBody StoreIdRequest req) {
