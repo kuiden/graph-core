@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,9 @@ import java.util.*;
 @Service
 @Slf4j
 public class RemindServiceImpl implements IRemindService {
+
+    @Value("${marketing.message.try.times:0}")
+    private Integer tryTimes;
 
     @Autowired
     private IMessageTemplateLocalService templateLocalService;
@@ -64,42 +68,42 @@ public class RemindServiceImpl implements IRemindService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean send(SendRemindReq sendRemindReq) {
+    public boolean send(SendRemindReq sendRemindReq, boolean releaseOccupy) {
         log.info("短信发送接口，入参:{}" + JSONObject.toJSONString(sendRemindReq));
         int messageTimes = sendRemindReq.getCustomerList().size();
         MessageQuantity select = new MessageQuantity();
         select.setStoreId(sendRemindReq.getStoreId());
         select.setTenantId(sendRemindReq.getTenantId());
         select.setCreateUser(sendRemindReq.getUserId());
-        //判断剩余提醒次数
-        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
-        if (messageQuantity.getRemainderQuantity() < messageTimes) {
-            throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
-        }
+//        //判断剩余提醒次数
+//        Long availableNum = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
+//        if (availableNum < messageTimes) {
+//            throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
+//        }
         //保存提醒记录
         this.saveMessageRemind(sendRemindReq);
         //更新租户提醒次数
-        messageQuantityService.reduceQuantity(messageQuantity.getId(), messageTimes, sendRemindReq.getUserId());
+        messageQuantityService.reduceQuantity(select, messageTimes, sendRemindReq.getUserId(),releaseOccupy);
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean sendWithPhone(SendRemindReq sendRemindReq, String phone) {
+    public boolean sendWithPhone(SendRemindReq sendRemindReq, String phone, boolean releaseOccupy) {
         log.info("短信发送接口，入参:{},手机号:{}", JSONObject.toJSONString(sendRemindReq), phone);
         MessageQuantity select = new MessageQuantity();
         select.setStoreId(sendRemindReq.getStoreId());
         select.setTenantId(sendRemindReq.getTenantId());
         select.setCreateUser(sendRemindReq.getUserId());
-        //判断剩余提醒次数
-        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
-        if (messageQuantity.getRemainderQuantity() < 1) {
-            throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
-        }
+//        //判断剩余提醒次数
+//        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
+//        if (messageQuantity.getRemainderQuantity() < 1) {
+//            throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
+//        }
         //保存提醒记录
         this.saveMessageRemindWithPhone(sendRemindReq, phone);
         //更新租户提醒次数
-        messageQuantityService.reduceQuantity(messageQuantity.getId(), 1, sendRemindReq.getUserId());
+        messageQuantityService.reduceQuantity(select, 1, sendRemindReq.getUserId(), releaseOccupy);
         return true;
     }
 
@@ -132,7 +136,7 @@ public class RemindServiceImpl implements IRemindService {
         remind.setMessageTemplateCode(messageTemplateLocal.getTemplateCode());
         remind.setMessageContent(messageTemplateLocal.getTemplateContent());
         remind.setStatus(MessageStatusEnum.MESSAGE_WAIT.getCode());
-        remind.setTryTime(0);
+        remind.setTryTime(tryTimes);
         remind.setDatas(datas);
         remind.setSource(sendRemindReq.getSource());
         remind.setSourceId(sendRemindReq.getSourceId());
@@ -192,7 +196,7 @@ public class RemindServiceImpl implements IRemindService {
             remind.setMessageTemplateCode(messageTemplateLocal.getTemplateCode());
             remind.setMessageContent(messageTemplateLocal.getTemplateContent());
             remind.setStatus(MessageStatusEnum.MESSAGE_WAIT.getCode());
-            remind.setTryTime(0);
+            remind.setTryTime(tryTimes);
             // 拼接短信平台短信参数
             if (datas == null || "".equals(datas)) {
                 //dubbo接口获取当前用户门店信息

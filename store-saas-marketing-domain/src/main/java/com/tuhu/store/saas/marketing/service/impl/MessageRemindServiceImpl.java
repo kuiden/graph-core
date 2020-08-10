@@ -7,7 +7,11 @@
  */
 package com.tuhu.store.saas.marketing.service.impl;
 
+import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.MessageRemind;
+import com.tuhu.store.saas.marketing.dataobject.MessageRemindExample;
+import com.tuhu.store.saas.marketing.enums.MessageStatusEnum;
+import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MessageRemindMapper;
 import com.tuhu.store.saas.marketing.service.IMessageRemindService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,5 +34,20 @@ public class MessageRemindServiceImpl implements IMessageRemindService {
     @Override
     public void insertMessageRemindList(List<MessageRemind> list) {
         remindMapper.insertMessageRemindList(list);
+    }
+
+    @Override
+    public List<MessageRemind> getAllNeedSendReminds() {
+        MessageRemindExample remindExample = new MessageRemindExample();
+        MessageRemindExample.Criteria statusUnsend = remindExample.createCriteria();
+        MessageRemindExample.Criteria statusSendFailed = remindExample.createCriteria();
+
+        statusUnsend.andStatusEqualTo(MessageStatusEnum.MESSAGE_WAIT.getCode()).andIsDeleteEqualTo(Boolean.FALSE).andSourceIn(Lists.newArrayList(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(), SMSTypeEnum.MARKETING_COUPON.templateCode()));
+        statusSendFailed.andStatusEqualTo(MessageStatusEnum.MESSAGE_FAIL.getCode()).andTryTimeGreaterThan(0).andIsDeleteEqualTo(Boolean.FALSE).andSourceIn(Lists.newArrayList(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(), SMSTypeEnum.MARKETING_COUPON.templateCode()));
+
+//        remindExample.or(statusUnsend);
+        remindExample.or(statusSendFailed);
+
+        return remindMapper.selectByExample(remindExample);
     }
 }

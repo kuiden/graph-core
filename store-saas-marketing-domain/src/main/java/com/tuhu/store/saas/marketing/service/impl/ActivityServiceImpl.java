@@ -1058,7 +1058,7 @@ public class ActivityServiceImpl implements IActivityService {
         sendRemindReq.setDatas(JSONObject.toJSONString(datas));
         StringBuilder messageStatus = new StringBuilder("000");
         try {
-            iRemindService.send(sendRemindReq);
+            iRemindService.send(sendRemindReq,false);
             messageStatus.replace(0, 1, "1");
         } catch (Exception e) {
             log.error("报名成功发送短信失败，request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));

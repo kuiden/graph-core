@@ -305,10 +305,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             cNum = strArray.length;
         }
         //短信可用数量
-        MessageQuantity messageQuantity = this.getStoreMessageQuantity(addReq.getTenantId(), addReq.getStoreId());
-        int mqNum = Integer.parseInt(messageQuantity.getRemainderQuantity().toString());
-        if(mqNum<cNum){
-            log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,mqNum);
+        Long availableNum = this.getStoreMessageQuantity(addReq.getTenantId(), addReq.getStoreId());
+        if(availableNum<cNum){
+            log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,availableNum);
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
         }
 
@@ -464,19 +463,11 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             BeanUtils.copyProperties(coupon, couponEntity);
             couponService.setOccupyNum(couponEntity, customerList.size());
         }
-//        MessageQuantity select = new MessageQuantity();
-//        select.setStoreId(customerMarketing.getStoreId());
-//        select.setTenantId(customerMarketing.getTenantId());
-//        //判断剩余短信数量够不够
-//        MessageQuantity messageQuantity = messageQuantityService.selectQuantityByTenantIdAndStoreId(select);
-//        if (messageQuantity.getRemainderQuantity() < records.size()) {
-//            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
-//        }
-//        //更新门店可用短信的数量
-//        messageQuantity.setUpdateTime(DateUtils.now());
-//        messageQuantity.setUpdateUser(currentUser);
-//        messageQuantity.setRemainderQuantity(messageQuantity.getRemainderQuantity() - records.size());
-//        messageQuantityService.reduceQuantity(messageQuantity);
+        //占用短信额度
+        MessageQuantity select = new MessageQuantity();
+        select.setTenantId(addReq.getTenantId());
+        select.setStoreId(addReq.getStoreId());
+        iMessageQuantityService.setStoreOccupyQuantity(select,Long.valueOf(customerList.size()), currentUser, true);
     }
 
     /**
@@ -527,12 +518,16 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     }
 
     @Override
-    public MessageQuantity getStoreMessageQuantity(Long tenantId, Long storeId){
+    public Long getStoreMessageQuantity(Long tenantId, Long storeId){
         MessageQuantity req = new MessageQuantity();
         req.setStoreId(storeId);
         req.setTenantId(tenantId);
         req.setCreateUser(UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName());
         MessageQuantity messageQuantity = iMessageQuantityService.selectQuantityByTenantIdAndStoreId(req);
-        return messageQuantity;
+        Long availableNum = messageQuantity.getRemainderQuantity() - messageQuantity.getOccupyQuantity();
+        if(availableNum < 1) {
+            return 0L;
+        }
+        return availableNum;
     }
 }

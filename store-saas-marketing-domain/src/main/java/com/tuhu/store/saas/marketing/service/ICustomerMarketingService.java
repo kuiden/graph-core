@@ -59,5 +59,5 @@ public interface ICustomerMarketingService extends Default {
      * @param storeId
      * @return
      */
-    MessageQuantity getStoreMessageQuantity(Long tenantId, Long storeId);
+    Long getStoreMessageQuantity(Long tenantId, Long storeId);
 }
