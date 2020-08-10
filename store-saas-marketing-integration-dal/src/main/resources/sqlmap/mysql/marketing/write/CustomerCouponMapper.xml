@@ -30,6 +30,7 @@
     <result column="phone_number" property="customerTelephone" jdbcType="VARCHAR" />
     <result column="store_id" property="storeId" jdbcType="BIGINT" />
     <result column="encrypted_code" property="encryptedCode" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
 
   </resultMap>
 
@@ -366,7 +367,7 @@
   <select id="selectMyRecordList" resultMap="RecordListResultMap"
           parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch">
     select cp.id, cp.coupon_code, cp.customer_id, cp.receive_type, cp.send_user, cp.create_time, cp.use_start_time,
-    cp.use_end_time, cp.use_time, cp.use_status,c.store_id,c.encrypted_code
+    cp.use_end_time, cp.use_time, cp.use_status,c.store_id,c.encrypted_code,cp.code
     from
     (
       select

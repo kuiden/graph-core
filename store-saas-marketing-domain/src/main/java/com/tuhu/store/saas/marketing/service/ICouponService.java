@@ -25,6 +25,8 @@ import java.util.List;
  * 优惠券相关接口
  */
 public interface ICouponService {
+
+
     /**
      * 新建优惠券活动
      *

@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.response;
 
 import com.tuhu.store.saas.marketing.dataobject.Coupon;
 import com.tuhu.store.saas.marketing.dataobject.CouponScopeCategory;
+import com.tuhu.store.saas.marketing.dataobject.Customer;
+import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
 import lombok.Data;
 
 import java.util.List;
@@ -31,4 +33,11 @@ public class CouponItemResp extends Coupon {
      * 限定分类信息
      */
     private List<CouponScopeCategory> couponScopeCategories;
+
+    /**
+     * * 使用状态 0:未使用 1：已使用
+     */
+    private Byte customerCouponStatus;
+
+    private String customerCouponCode;
 }

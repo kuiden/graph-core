@@ -847,7 +847,11 @@ public class CouponServiceImpl implements ICouponService {
         Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
         if (value != null) {
             try {
-                long count = x.getGrantNumber() - (x.getOccupyNum() + num);
+                CustomerCouponExample example = new CustomerCouponExample();
+                CustomerCouponExample.Criteria criteria = example.createCriteria();
+                criteria.andCouponCodeEqualTo(x.getCode());
+                int customerReceiveCount = customerCouponMapper.countByExample(example);
+                long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
                 if (count > 0) {
                     Coupon u = new Coupon();
                     u.setOccupyNum(x.getOccupyNum() + num);
@@ -963,7 +967,7 @@ public class CouponServiceImpl implements ICouponService {
         customerCoupon.setSendUser(sendCouponReq.getUserId());
         customerCoupon.setUseStatus((byte) 0);//未使用
         String codeNumber = codeFactory.getCodeNumberv2(CodeFactory.customerCouponPrefix.concat(code), sendCouponReq.getStoreId());
-        customerCoupon.setCode(code+codeNumber);
+        customerCoupon.setCode(code + codeNumber);
         if (CouponValidityTypeEnum.Fixed.value().equals(validityType)) {
             customerCoupon.setUseStartTime(coupon.getUseStartTime());
             customerCoupon.setUseEndTime(coupon.getUseEndTime());
