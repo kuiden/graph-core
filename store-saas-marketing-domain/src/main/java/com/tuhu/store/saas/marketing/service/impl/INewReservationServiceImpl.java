@@ -22,10 +22,7 @@ import com.tuhu.store.saas.marketing.remote.request.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
-import com.tuhu.store.saas.marketing.request.BReservationListReq;
-import com.tuhu.store.saas.marketing.request.CReservationListReq;
-import com.tuhu.store.saas.marketing.request.NewReservationReq;
-import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
+import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.BReservationListResp;
 import com.tuhu.store.saas.marketing.response.ReservationDateResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
@@ -265,9 +262,9 @@ public class INewReservationServiceImpl implements INewReservationService {
     }
 
     @Override
-    public ReservationDTO getCReservationDetail(String id) {
+    public ReservationDTO getCReservationDetail(CReservationListReq req) {
         ReservationDTO result = new ReservationDTO();
-        SrvReservationOrder order = reservationOrderMapper.selectById(id);
+        SrvReservationOrder order = getReservationById(req.getId(),req.getStoreId());
         if(order != null){
             BeanUtils.copyProperties(order,result);
             result.setReservationTime(order.getEstimatedArriveTime().getTime());
@@ -277,21 +274,56 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public void confirmReservation(CReservationListReq req) {
-        EntityWrapper<SrvReservationOrder> wrapper = new EntityWrapper<>();
-        wrapper.eq("id",req.getId());
-        wrapper.eq("store_id",req.getStoreId());
-        List<SrvReservationOrder> orderList = reservationOrderMapper.selectList(wrapper);
-        if(CollectionUtils.isEmpty(orderList)){
-            throw new StoreSaasMarketingException("预约单id:" +req.getId()+ "无效");
-        }
-        SrvReservationOrder order = orderList.get(0);
+        SrvReservationOrder order = getReservationById(req.getId(),req.getStoreId());
         if(!SrvReservationStatusEnum.UNCONFIRMED.getEnumCode().equals(order.getStatus())){
             throw new StoreSaasMarketingException("只有待确认的预约单才能确认");
         }
+        EntityWrapper<SrvReservationOrder> wrapper = new EntityWrapper<>();
+        wrapper.eq("id",req.getId());
+        wrapper.eq("store_id",req.getStoreId());
         order.setStatus(SrvReservationStatusEnum.CONFIRMED.getEnumCode());
         order.setUpdateTime(new Date());
         order.setUpdateUser(UserContextHolder.getStoreUserId());
         reservationOrderMapper.update(order,wrapper);
+    }
+
+    @Override
+    public void cancelReservation(CancelReservationReq req) {
+        SrvReservationOrder order = getReservationById(req.getId(),req.getStoreId());
+        switch (req.getTeminal()){
+            case 1://门店拒绝
+                if(!SrvReservationStatusEnum.UNCONFIRMED.getEnumCode().equals(order.getStatus())){
+                    throw new StoreSaasMarketingException("只有待确认的预约单才能拒绝");
+                }
+                break;
+            case 2://车主自己取消
+                if(!SrvReservationStatusEnum.UNCONFIRMED.getEnumCode().equals(order.getStatus()) &&
+                        !SrvReservationStatusEnum.CONFIRMED.getEnumCode().equals(order.getStatus())){
+                    throw new StoreSaasMarketingException("只有已预约的预约单才能取消");
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 根据id查预约单
+     * @param id
+     * @param storeId
+     * @return
+     */
+    private SrvReservationOrder getReservationById(String id, Long storeId){
+        SrvReservationOrder order;
+        EntityWrapper<SrvReservationOrder> wrapper = new EntityWrapper<>();
+        wrapper.eq("id",id);
+        wrapper.eq("store_id",storeId);
+        List<SrvReservationOrder> orderList = reservationOrderMapper.selectList(wrapper);
+        if(CollectionUtils.isEmpty(orderList)){
+            throw new StoreSaasMarketingException("预约单id:" +id+ "无效");
+        }
+        order = orderList.get(0);
+        return order;
     }
 
     //01-01 10:30处理成1月1日
@@ -410,10 +442,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         String oldOrderReservationTime = "";
         if(operateType == 2){
             //查原有预约单是否存在
-            SrvReservationOrder oldOrder = reservationOrderMapper.selectById(req.getId());
-            if(oldOrder == null){
-                throw new StoreSaasMarketingException("预约单id:" +req.getId()+ "无效");
-            }
+            SrvReservationOrder oldOrder = getReservationById(req.getId(),req.getStoreId());
             oldOrderReservationTime = hmDateFormat.format(oldOrder.getEstimatedArriveTime());
         }
 
@@ -541,7 +570,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         try{
             for(String s : list){
                 long now = hmDateFormat.parse(s).getTime();
-                if(now >= startTime.getTime() && now <= endTime.getTime()){
+                if(now >= startTime.getTime() && now < endTime.getTime()){
                     newList.add(hmDateFormat.format(hmDateFormat.parse(s)));
                 }
             }
