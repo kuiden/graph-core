@@ -20,6 +20,8 @@ public class CodeFactory {
     //优惠券编码
     public static final String couponRedisPrefix = "COUPON_CODE:";
 
+    public  static  final  String  customerCouponPrefix ="customerCoupon";
+
     //优惠券编码序号前缀
     public static final String couponCodePrefix = "YHQ";
 
@@ -49,6 +51,22 @@ public class CodeFactory {
     }
 
     /**
+     *
+     *
+     * @param storeId
+     * @return
+     */
+    public String getCodeNumberv2(String prefix, Long storeId) {
+        Date date = DataTimeUtil.getDateStartTime(new Date());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd");
+        String dateStr = sdf.format(date);
+        String key = prefix + storeId + dateStr;
+        Long currentValue = redisTemplate.opsForValue().increment(key, 1L);
+        String codeNumber = formatCodeWithZero(4, currentValue);
+        return codeNumber;
+    }
+
+    /**
      * 格式化数字，左补零
      *
      * @param length
@@ -62,6 +80,12 @@ public class CodeFactory {
     public String generateCouponCode(Long storeId, String codeNumber) {
         String storeIdStr = formatCodeWithZero(4, storeId);
         String couponCode = couponCodePrefix.concat(storeIdStr).concat(codeNumber);
+        log.info("redis生成序列:{},生成的优惠券编码:{}", codeNumber, couponCode);
+        return couponCode;
+    }
+    public String generateCustomerCouponCode(Long storeId, String codeNumber) {
+        String storeIdStr = formatCodeWithZero(4, storeId);
+        String couponCode = customerCouponPrefix.concat(storeIdStr).concat(codeNumber);
         log.info("redis生成序列:{},生成的优惠券编码:{}", codeNumber, couponCode);
         return couponCode;
     }

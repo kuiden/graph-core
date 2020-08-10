@@ -9,6 +9,7 @@ import com.google.common.collect.Sets;
 import com.mengfan.common.util.GatewayClient;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponMapper;
@@ -18,6 +19,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper
 import com.tuhu.store.saas.marketing.po.CouponPO;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.response.CouponItemResp;
@@ -26,6 +28,10 @@ import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
+import com.tuhu.store.saas.marketing.util.QrCode;
+import com.tuhu.store.saas.user.dto.ClientStoreDTO;
+import com.tuhu.store.saas.user.vo.ClientStoreVO;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -86,6 +92,8 @@ public class IMCouponServiceImpl implements IMCouponService {
      * 优惠券个人领取限制缓存key
      */
     private static final String personalCouponGetNumberPrefix = "COUPON:PERSONAL:";
+
+    private static final String openCouponPrefix = "openCouponPrefix";
 
     @Autowired
     private MiniAppService miniAppService;
@@ -564,6 +572,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         return map;
     }
 
+
     /**
      * c端抵用券详情
      * 1、抵用券信息   2、 门店信息
@@ -697,6 +706,86 @@ public class IMCouponServiceImpl implements IMCouponService {
             redisTemplate.opsForValue().increment(lockKey, -1L);
         }
         return singleResult;
+    }
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+
+    /**
+     * 对外开放获取优惠券信息
+     *
+     * @param code
+     * @return
+     */
+    @Override
+    public CouponItemResp openGetCouponInfo(String code) {
+        log.info("openGetCouponInfo-> req  {}", code);
+        CouponItemResp result = null;
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+        customerCouponExampleCriteria.andCodeEqualTo(code);
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(customerCouponExample);
+        if (CollectionUtils.isNotEmpty(customerCoupons)) {
+            CustomerCoupon customerCoupon = customerCoupons.get(0);
+            CouponExample example = new CouponExample();
+            CouponExample.Criteria criteria = example.createCriteria();
+            criteria.andCodeEqualTo(customerCoupon.getCouponCode());
+            List<Coupon> coupons = couponMapper.selectByExample(example);
+            if (CollectionUtils.isNotEmpty(coupons)) {
+                result = new CouponItemResp();
+                Coupon coupon = coupons.get(0);
+                BeanUtils.copyProperties(coupon, result);
+                result.setCustomerCouponStatus(customerCoupon.getUseStatus());
+                if (customerCoupon.getUseStatus() != Byte.valueOf((byte) 1) && customerCoupon.getUseEndTime().getTime() < System.currentTimeMillis()) {
+                    result.setCustomerCouponStatus(Byte.valueOf((byte) -1));
+                }
+                //补充门店信息
+                ClientStoreVO clientStoreVO = new ClientStoreVO();
+                clientStoreVO.setStoreId(coupon.getStoreId());
+                clientStoreVO.setTenantId(coupon.getTenantId());
+                BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(clientStoreVO);
+                if (resultData != null && resultData.getData() != null) {
+                    CouponItemResp.StoreInfo storeInfo = new CouponItemResp.StoreInfo();
+                    storeInfo.setAddress(resultData.getData().getAddress());
+                    storeInfo.setStoreName(resultData.getData().getStoreName());
+                    storeInfo.setLat(resultData.getData().getLat());
+                    storeInfo.setLon(resultData.getData().getLon());
+                    storeInfo.setOpeningEffectiveDate(resultData.getData().getOpeningEffectiveDate());
+                    storeInfo.setOpeningExpiryDate(resultData.getData().getOpeningExpiryDate());
+                    storeInfo.setMobilePhone(resultData.getData().getMobilePhone());
+                    result.setStoreInfo(storeInfo);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 对外获取优惠券CODE
+     *
+     * @param phone
+     * @param
+     * @return
+     */
+
+    @Override
+    public byte[] openGetCustomerCouponCodeByPhone(String phone, String code) throws Exception {
+        log.info("openGetCustomerCouponCodeByPhone -> {}", phone, code);
+        String result = null;
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+        customerCouponExampleCriteria.andCodeEqualTo(code);
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(customerCouponExample);
+        if (CollectionUtils.isNotEmpty(customerCoupons)) {
+            CustomerCoupon customerCoupon = customerCoupons.get(0);
+            BaseIdReqVO vo = new BaseIdReqVO();
+            vo.setId(customerCoupon.getCustomerId());
+            BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(vo);
+            if (crmResult != null && crmResult.getData() != null && crmResult.getData().getPhoneNumber().equals(phone)) {
+                result = customerCoupon.getCode();
+            }
+        }
+        return QrCode.getQRCodeImage(result, 500, 500);
     }
 
     @Override

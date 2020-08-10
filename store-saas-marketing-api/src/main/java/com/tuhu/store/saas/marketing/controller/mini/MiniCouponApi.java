@@ -292,4 +292,5 @@ public class MiniCouponApi extends BaseApi {
         CouponStatisticsForCustomerMarketResp couponStatisticsForCustomerMarketResp = iCouponService.getCouponStatisticsForCustomerMarket(couponStatisticsForCustomerMarketReq.getCouponCode(), couponStatisticsForCustomerMarketReq.getCustomerIds());
         return new ResultObject(couponStatisticsForCustomerMarketResp);
     }
+
 }
