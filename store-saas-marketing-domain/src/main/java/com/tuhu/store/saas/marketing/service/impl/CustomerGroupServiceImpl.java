@@ -175,7 +175,6 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
     }
     @Override
     public PageInfo<StoreCustomerGroupRelation> getCustomerGroupList(CustomerGroupListReq req) {
-        PageInfo<StoreCustomerGroupRelation> result = new PageInfo<>();
         StoreCustomerGroupRelationExample example = new StoreCustomerGroupRelationExample();
         StoreCustomerGroupRelationExample.Criteria criteria = example.createCriteria();
         criteria.andStoreIdEqualTo(req.getStoreId());
@@ -185,7 +184,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         example.setOrderByClause("create_time desc");
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         List<StoreCustomerGroupRelation> storeCustomerGroupRelations = storeCustomerGroupRelationMapper.selectByExample(example);
-        result.setList(storeCustomerGroupRelations);
+        PageInfo<StoreCustomerGroupRelation> result = new PageInfo<>(storeCustomerGroupRelations);
         return result;
     }
 
