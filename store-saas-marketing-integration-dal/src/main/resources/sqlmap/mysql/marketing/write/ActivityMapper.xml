@@ -90,7 +90,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, activity_code, encrypted_code, store_id, tenantId, `type`, pic_url, activity_title, activity_introduce,
+    id, activity_code, encrypted_code, store_id, tenant_id, `type`, pic_url, activity_title, activity_introduce,
     apply_number, `status`, hotline, pay_type, start_time, end_time, weixin_qr_url, tagString, 
     activity_template_id, pic_activity_template_id, update_user, create_user, create_time, 
     update_time, activity_content, activity_price, active_type, active_days, active_date

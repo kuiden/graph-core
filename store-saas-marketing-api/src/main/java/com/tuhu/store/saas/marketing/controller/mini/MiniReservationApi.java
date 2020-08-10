@@ -105,11 +105,16 @@ public class MiniReservationApi extends EndUserApi {
     }
 
 
-    @PostMapping(value = "/cancelReservation")
-    @ApiOperation(value = "取消预约")
-    public BizBaseResponse cancelReservation(@RequestBody CancelReservationReq req){
-        BizBaseResponse rs = new BizBaseResponse("取消成功");
-        return rs;
+    @PostMapping(value = "/cancelReservationForC")
+    @ApiOperation(value = "C端取消预约")
+    public BizBaseResponse cancelReservationForC(@RequestBody CancelReservationReq req){
+        if(StringUtils.isBlank(req.getId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约单id不能为空");
+        }
+        req.setStoreId(this.getStoreId());
+        req.setTeminal(2);
+        iNewReservationService.cancelReservation(req);
+        return new BizBaseResponse("取消成功");
     }
 
 

@@ -86,14 +86,12 @@ public class ReservationApi extends BaseApi {
     }
 
     @PostMapping(value = "/cancelReservation")
-    @ApiOperation(value = "取消预约")
+    @ApiOperation(value = "B端取消预约")
     public BizBaseResponse cancelReservation(@RequestBody CancelReservationReq req){
         if(StringUtils.isBlank(req.getId())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约单id不能为空");
         }
-        if(req.getTeminal() == null){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "取消终端不能为空");
-        }
+        req.setTeminal(1);
         req.setStoreId(super.getStoreId());
         iNewReservationService.cancelReservation(req);
         return new BizBaseResponse("取消成功");

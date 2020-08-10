@@ -33,7 +33,7 @@
     <update id="updateReservation" parameterType="com.tuhu.store.saas.marketing.po.SrvReservationOrder">
         update srv_reservation_order
         set estimated_arrive_time = #{estimatedArriveTime},customer_phone_number = #{customerPhoneNumber},customer_id = #{customerId},
-        description = #{description},status='UNCONFIRMED',update_time = now()
+        description = #{description},status='UNCONFIRMED',update_time = now(),update_user = #{updateUser}
         where id = #{id}
     </update>
 
