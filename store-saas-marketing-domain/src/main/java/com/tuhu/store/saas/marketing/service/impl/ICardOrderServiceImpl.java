@@ -3,12 +3,15 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardOrderStatusEnum;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
 import com.tuhu.store.saas.marketing.enums.PaymentStatusEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
@@ -17,6 +20,7 @@ import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
+import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.util.CardOrderRedisCache;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
@@ -60,6 +64,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     private StoreReceivingClient storeReceivingClient;
 
     @Autowired
+    private CustomerClient customerClient;
+
+    @Autowired
+    private ICardService iCardService;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     @Autowired
@@ -72,6 +82,18 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     public String addCardOrder(AddCardOrderReq req) {
         log.info("开卡接口请求参数：{}", JSONObject.toJSON(req));
 
+        //获取最新客户信息
+        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+        baseIdReqVO.setId(req.getCustomerId());
+        baseIdReqVO.setStoreId(req.getStoreId());
+        baseIdReqVO.setTenantId(req.getTenantId());
+        CustomerDTO customerDTO = customerClient.getCustomerById(baseIdReqVO).getData();
+        if (null == customerDTO){
+            throw new MarketingException("未获取到客户信息");
+        }
+        req.setCustomerName(customerDTO.getName());
+        req.setCustomerPhoneNumber(customerDTO.getPhoneNumber());
+
         //新增次卡
         CrdCard crdCard = new CrdCard();
         BeanUtils.copyProperties(req, crdCard);
@@ -83,8 +105,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         if ("DISABLE".equals(cardTemplate.getStatus())){
             throw new MarketingException("卡模板已停用");
         }
-        if (null != req.getCustomerGender()){
-            crdCard.setCustomerGender(req.getCustomerGender() ? "1" : "0");
+        if (null != customerDTO.getGender()){
+            crdCard.setCustomerGender(customerDTO.getGender());
         }
         crdCard.setForever((byte) (req.getForever() ? 1 : 0));
         crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
@@ -312,6 +334,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         }
 
         //查询使用记录 -- 调用order
+//        resp.setUseRecord(iCardService.consumptionHistory(resp.getCardId()));
 
         return resp;
     }

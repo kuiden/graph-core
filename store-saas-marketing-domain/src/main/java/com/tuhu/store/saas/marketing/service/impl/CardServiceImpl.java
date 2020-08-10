@@ -3,18 +3,27 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.baomidou.mybatisplus.toolkit.CollectionUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.*;
+import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CardTemplateMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardMapper;
+import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
+import com.tuhu.store.saas.marketing.remote.reponse.CardUseRecordDTO;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateItemModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
+import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
+import com.tuhu.store.saas.marketing.response.card.CardItemResp;
+import com.tuhu.store.saas.marketing.response.card.CardResp;
+import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.service.ICardTemplateItemService;
+import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -37,6 +46,12 @@ public class CardServiceImpl implements ICardService {
 
     @Autowired
     private CrdCardItemMapper cardItemMapper;
+
+    @Autowired
+    private CrdCardMapper cardMapper;
+
+    @Autowired
+    private ServiceOrderClient serviceOrderClient;
 
     @Override
     public Long saveCardTemplate(CardTemplateModel req, String userId) {
@@ -87,7 +102,7 @@ public class CardServiceImpl implements ICardService {
     public PageInfo<CardTemplateModel> getCardTemplatePageInfo(CardTemplateReq req) {
         log.info("CardServiceImpl-> addCardTemplate req={}", req);
         PageInfo<CardTemplateModel> result = new PageInfo<>();
-        PageHelper.startPage(req.getPageNum() == Integer.valueOf(0) ? 1 : req.getPageNum(), req.getPageSize());
+        PageHelper.startPage(req.getPageNum()+1, req.getPageSize());
         List<CardTemplate> cardTemplates = cardTemplateMapper.selectPage(req.getStatus(), req.getQuery(), req.getTenantId(), req.getStoreId());
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
             PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
@@ -130,6 +145,88 @@ public class CardServiceImpl implements ICardService {
             }
         }
         return ok;
+    }
+
+    @Override
+    public PageInfo<CardResp> queryCardRespList(MiniQueryCardReq req) {
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+
+        CrdCardExample cardExample = new CrdCardExample();
+        cardExample.createCriteria().andCustomerIdEqualTo(req.getCustomerId())
+                .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        List<CrdCard> cardList = cardMapper.selectByExample(cardExample);
+
+        List<CardResp> cardRespList = new ArrayList<>();
+        for (CrdCard card : cardList){
+            CardResp resp = new CardResp();
+            BeanUtils.copyProperties(card,resp);
+            resp.setCardStatus(CardStatusEnum.valueOf(card.getStatus()).getDescription());
+            resp.setCardStatusCode(CardStatusEnum.valueOf(card.getStatus()).getEnumCode());
+            resp.setForever(card.getForever() == 1 ? true : false);
+            if (!resp.getForever()){
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日");
+                resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
+                Date date = new Date();
+                Date expiryDate = DataTimeUtil.getDateZeroTime(card.getExpiryDate());
+                if (date.compareTo(expiryDate) > 0){
+                    resp.setCardStatus(CardStatusEnum.EXPIRED.getDescription());
+                    resp.setCardStatusCode(CardStatusEnum.EXPIRED.getEnumCode());
+                }
+            }
+
+            Long remainQuantity = 0L;
+
+            //查询次卡服务项目
+            CrdCardItemExample example = new CrdCardItemExample();
+            example.createCriteria().andCardIdEqualTo(card.getId())
+                    .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+            List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
+            List<CardItemResp> cardServiceItem = new ArrayList<>();
+            List<CardItemResp> cardGoodsItem = new ArrayList<>();
+            for (CrdCardItem item : cardItems){
+                CardItemResp itemResp = new CardItemResp();
+                BeanUtils.copyProperties(item,itemResp);
+                itemResp.setRemainQuantity(itemResp.getMeasuredQuantity() - itemResp.getUsedQuantity());
+                remainQuantity += itemResp.getRemainQuantity();
+                if (item.getType().intValue() == 1){
+                    cardServiceItem.add(itemResp);
+                } else {
+                    cardGoodsItem.add(itemResp);
+                }
+            }
+            resp.setCardServiceItem(cardServiceItem);
+            resp.setCardGoodsItem(cardGoodsItem);
+
+            if (remainQuantity.compareTo(0L) <= 0){
+                resp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
+                resp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
+            }
+            cardRespList.add(resp);
+        }
+        PageInfo<CardResp> pageInfo = new PageInfo<>(cardRespList);
+        return pageInfo;
+    }
+
+    @Override
+    public List<CardUseRecordResp> consumptionHistory(Long id) {
+        List<CardUseRecordDTO> recordDTOList = serviceOrderClient.getCardUseRecord(id.toString()).getData();
+        List<CardUseRecordResp> respList = new ArrayList<>();
+        for (CardUseRecordDTO dto : recordDTOList){
+            CardUseRecordResp resp = new CardUseRecordResp();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+            resp.setTime(dateFormat.format(dto.getUseTime()));
+            resp.setServiceOrderId(dto.getServiceOrderId());
+            List<CardItemResp> item = new ArrayList<>();
+            for (CardUseRecordDTO.ServiceOrderItem serviceOrderItem : dto.getServiceOrderItems()){
+                CardItemResp itemResp = new CardItemResp();
+                itemResp.setServiceItemName(serviceOrderItem.getItemName());
+                itemResp.setUsedQuantity(serviceOrderItem.getQuantity());
+                item.add(itemResp);
+            }
+            resp.setItem(item);
+            respList.add(resp);
+        }
+        return respList;
     }
 
     private CardTemplate convertorToCardTemplate(CardTemplateModel cardTemplateModelReq) {

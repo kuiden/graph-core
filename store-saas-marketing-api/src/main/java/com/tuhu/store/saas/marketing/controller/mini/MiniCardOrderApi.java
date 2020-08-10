@@ -56,10 +56,8 @@ public class MiniCardOrderApi extends BaseApi {
     @PostMapping("/query")
     @ApiOperation("查询开卡单")
     public BizBaseResponse query(@Validated @RequestBody QueryCardOrderReq req){
-        if (null == req.getStoreId()){
-            req.setStoreId(super.getStoreId());
-            req.setTenantId(super.getTenantId());
-        }
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
         return new BizBaseResponse(iCardOrderService.queryCardOrder(req));
     }
 

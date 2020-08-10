@@ -7,10 +7,12 @@
  */
 package com.tuhu.store.saas.marketing.response.card;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -18,29 +20,27 @@ import java.util.List;
  * @author sunkuo
  * @date 2018/11/27  19:06
  */
-@Setter
-@Getter
-@ToString
+@Data
 public class CardResp {
 
     /**
      * 卡Id
      */
-    private String cardId;
+    private Long id;
 
     /**
      * 卡状态
      */
     private String cardStatus;
     /**
-     * 卡状态
+     * 卡状态Code
      */
-    private String cardStatusName;
+    private String cardStatusCode;
 
     /**
      * 卡模板ID
      */
-    private String cardTemplateId;
+    private Long cardTemplateId;
 
     /**
      * 卡分类编码
@@ -68,15 +68,15 @@ public class CardResp {
     /**
      * 有效期
      */
-    private Date expiryDate;
+    private String expiryDate;
     /**
      * 金额
      */
-    private Long faceAmount;
+    private BigDecimal faceAmount;
     /**
      * 优惠金额
      */
-    private Long discountAmount;
+    private BigDecimal discountAmount;
 
     /**
      * 客户ID
@@ -101,19 +101,20 @@ public class CardResp {
     /**
      * 实付金额
      */
-    private Long actualAmount;
+    private BigDecimal actualAmount;
     /**
      * 描述
      */
     private String description;
 
-    /**
-     * 是否有效(有效为true)
+    /*
+     * 次卡服务列表
      */
-    private Boolean validity;
+    private List<CardItemResp> cardServiceItem;
 
-    /**
-     * 卡服务
+    /*
+     * 次卡商品列表
      */
-    private List<CardItemResp> cardItemRespList;
+    private List<CardItemResp> cardGoodsItem;
+
 }
