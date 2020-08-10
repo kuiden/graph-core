@@ -54,6 +54,7 @@ public class ClientCouponApi extends BaseApi {
     @ApiOperation(value = "领券中心")
     public BizBaseResponse getCouponList(CouponSearchRequest req) {
         EndUser dto = EndUserContextHolder.getUser();
+        req.setStoreId(Long.valueOf(dto.getStoreId()));
         CouponPageResp result = imCouponService.getCouponList(req, dto.getUserId());
         //  CouponPageResp result = imCouponService.getCouponList(req, "159006368380700017990");
         return new BizBaseResponse(result);
@@ -69,6 +70,8 @@ public class ClientCouponApi extends BaseApi {
     @GetMapping("/client/myCouponList")
     public BizBaseResponse getMyCouponList(CouponReceiveRecordRequest req) {
         EndUser dto = EndUserContextHolder.getUser();
+        req.setStoreId(Long.valueOf(dto.getStoreId()));
+        req.setTenantId(Long.valueOf(dto.getTenantId()));
         CustomerCouponPageResp map = imCouponService.getMyCouponList(req, dto.getUserId());
         //  CustomerCouponPageResp map = imCouponService.getMyCouponList(req, "159006368380700017990");
         return new BizBaseResponse(map);
@@ -117,11 +120,12 @@ public class ClientCouponApi extends BaseApi {
         if (StringUtils.isBlank(encryptedCode) || StringUtils.isBlank(phone)) {
             throw new StoreSaasMarketingException("参数验证失败");
         }
-        byte[] codeStream = new byte[0];
+        byte[] codeStream = null;
         try {
             codeStream = imCouponService.openGetCustomerCouponCodeByPhone(phone, encryptedCode);
         } catch (Exception e) {
             log.info("获取二维码异常 -> e ->", e);
+            throw new StoreSaasMarketingException("获取优惠券失败");
         }
         return codeStream;
     }

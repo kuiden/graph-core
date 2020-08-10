@@ -19,6 +19,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper
 import com.tuhu.store.saas.marketing.po.CouponPO;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.response.CouponItemResp;
@@ -28,6 +29,8 @@ import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.QrCode;
+import com.tuhu.store.saas.user.dto.ClientStoreDTO;
+import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -705,6 +708,9 @@ public class IMCouponServiceImpl implements IMCouponService {
         return singleResult;
     }
 
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+
     /**
      * 对外开放获取优惠券信息
      *
@@ -733,6 +739,22 @@ public class IMCouponServiceImpl implements IMCouponService {
                 if (customerCoupon.getUseStatus() != Byte.valueOf((byte) 1) && customerCoupon.getUseEndTime().getTime() < System.currentTimeMillis()) {
                     result.setCustomerCouponStatus(Byte.valueOf((byte) -1));
                 }
+                //补充门店信息
+                ClientStoreVO clientStoreVO = new ClientStoreVO();
+                clientStoreVO.setStoreId(coupon.getStoreId());
+                clientStoreVO.setTenantId(coupon.getTenantId());
+                BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(clientStoreVO);
+                if (resultData != null && resultData.getData() != null) {
+                    CouponItemResp.StoreInfo storeInfo = new CouponItemResp.StoreInfo();
+                    storeInfo.setAddress(resultData.getData().getAddress());
+                    storeInfo.setStoreName(resultData.getData().getStoreName());
+                    storeInfo.setLat(resultData.getData().getLat());
+                    storeInfo.setLon(resultData.getData().getLon());
+                    storeInfo.setOpeningEffectiveDate(resultData.getData().getOpeningEffectiveDate());
+                    storeInfo.setOpeningExpiryDate(resultData.getData().getOpeningExpiryDate());
+                    storeInfo.setMobilePhone(resultData.getData().getMobilePhone());
+                    result.setStoreInfo(storeInfo);
+                }
             }
         }
         return result;
@@ -747,7 +769,7 @@ public class IMCouponServiceImpl implements IMCouponService {
      */
 
     @Override
-    public byte [] openGetCustomerCouponCodeByPhone(String phone, String code) throws Exception {
+    public byte[] openGetCustomerCouponCodeByPhone(String phone, String code) throws Exception {
         log.info("openGetCustomerCouponCodeByPhone -> {}", phone, code);
         String result = null;
         CustomerCouponExample customerCouponExample = new CustomerCouponExample();
@@ -763,7 +785,7 @@ public class IMCouponServiceImpl implements IMCouponService {
                 result = customerCoupon.getCode();
             }
         }
-        return QrCode.getQRCodeImage(result,500,500)  ;
+        return QrCode.getQRCodeImage(result, 500, 500);
     }
 
     @Override
