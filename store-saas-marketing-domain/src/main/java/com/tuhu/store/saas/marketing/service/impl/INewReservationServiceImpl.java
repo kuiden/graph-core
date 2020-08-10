@@ -229,7 +229,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         List<BReservationListResp> result = new ArrayList<>();
         List<BReservationListResp> allTimeResult = new ArrayList<>();
         //查出规定日期内所有预约单
-        List<SrvReservationOrder> daoList = reservationOrderMapper.getBReservationList(req.getStoreId(),ymdDateFormat.format(new Date(req.getReservationDate())));
+        List<SrvReservationOrder> daoList = reservationOrderMapper.getBReservationList(req.getStoreId(),ymdDateFormat.format(req.getReservationDate()));
         if(CollectionUtils.isNotEmpty(daoList)){
             try {
                 //算出一天内所有时间段
