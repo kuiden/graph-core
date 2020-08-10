@@ -77,11 +77,11 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Autowired
     private ICustomerGroupService customerGroupService;
-    @Autowired
+   /* @Autowired
     private IUtilityService iUtilityService;
 
-    @Value("${domain.url.pre}")
-    private String domainUrlPre;
+    @Value("${.url.pre}")
+    private String domainUrlPre;*/
 
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
@@ -246,9 +246,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add(storeDTO.getMobilePhone());
             params.add(activityResp.getActivityTitle());
             //生成短连接
-            StringBuffer url = new StringBuffer();
+          /*  StringBuffer url = new StringBuffer();
             url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
-            params.add( iUtilityService.getShortUrl(url.toString()));
+            params.add( iUtilityService.getShortUrl(url.toString()));*/
+            params.add("www.baidu.com");
         }
 
         return StringUtils.join(params,",");

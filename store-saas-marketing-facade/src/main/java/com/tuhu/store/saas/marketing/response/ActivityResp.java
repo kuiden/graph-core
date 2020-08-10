@@ -29,6 +29,9 @@ public class ActivityResp implements Serializable {
     @ApiModelProperty("门店ID")
     private Long storeId;
 
+    @ApiModelProperty("租户ID")
+    private Long tenantId;
+
     @ApiModelProperty("活动类型， 0：营销活动")
     private Byte type;
 

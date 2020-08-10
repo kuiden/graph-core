@@ -49,6 +49,8 @@ public interface IActivityService {
      */
     ActivityResp getActivityDetailById(Long activityId, Long storeId);
 
+    ActivityResp getActivityDetailById(Long activityId);
+
     /**
      * 营销活动上下架操作
      *

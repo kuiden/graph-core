@@ -18,9 +18,11 @@ public class AllCustomerFilter extends AbstractFactorFilter {
 
     private Long storeId;
 
+    private String isAll;
+
     @Override
     public boolean isOpen() {
-        return storeId!=null;
+        return storeId!=null && "1".equals(isAll);
     }
 
     @Override

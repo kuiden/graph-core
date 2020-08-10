@@ -504,6 +504,19 @@ public class ActivityServiceImpl implements IActivityService {
     }
 
     @Override
+    public ActivityResp getActivityDetailById(Long activityId) {
+        ActivityResp activityResp = new ActivityResp();
+        if (null == activityId || activityId.compareTo(0L) <= 0) {
+            return null;
+        }
+        Activity activity = activityMapper.selectByPrimaryKey(activityId);
+        if(activity != null){
+            BeanUtils.copyProperties(activity, activityResp);
+        }
+        return activityResp;
+    }
+
+    @Override
     public ActivityChangeStatusReq changeActivityStatus(ActivityChangeStatusReq activityChangeStatusReq) {
         log.info("修改营销活动上下架状态，request={}", JSONObject.toJSONString(activityChangeStatusReq));
         Activity activity = activityMapper.selectByPrimaryKey(activityChangeStatusReq.getActivityId());

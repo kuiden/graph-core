@@ -141,6 +141,12 @@ public class CustomerGroupFilterFactory {
             }else if(CustomerGroupConstant.ALL_FACTOR.equalsIgnoreCase(cgrule)){
                 AllCustomerFilter allCustomerFilter = new AllCustomerFilter();
                 allCustomerFilter.setStoreId(storeId);
+                for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList) {
+                    if (CustomerGroupConstant.ALL_CUSTOMER.equalsIgnoreCase(attributeDto.getAttribute())) {
+                        allCustomerFilter.setIsAll(attributeDto.getAttributeValue());
+                    }
+                }
+
                 cugFilters.add(allCustomerFilter);
             }
         }
