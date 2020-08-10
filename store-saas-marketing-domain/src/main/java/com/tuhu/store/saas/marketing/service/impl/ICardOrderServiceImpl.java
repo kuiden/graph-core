@@ -124,6 +124,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         for (CardTemplateItem item : cardTemplateItems){
             CrdCardItem crdCardItem = new CrdCardItem();
             BeanUtils.copyProperties(item,crdCardItem);
+            crdCardItem.setAmount(item.getFaceAmount());
             crdCardItem.setCardId(crdCard.getId());
             crdCardItem.setCardName(crdCard.getCardName());
             crdCardItem.setId(null);

@@ -4,7 +4,9 @@ import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
+import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
+import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardResp;
 import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
 
@@ -54,6 +56,11 @@ public  interface ICardService {
      * 查询次卡使用记录
      */
     List<CardUseRecordResp> consumptionHistory(Long id);
+
+    /*
+     * 查询次卡服务项目
+     */
+    List<CardItemResp> queryCardItem(QueryCardItemReq req);
 
 
 }

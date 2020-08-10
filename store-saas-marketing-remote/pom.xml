@@ -31,6 +31,11 @@
 			<artifactId>store-saas-order-facade</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.tuhu.saas.store.wms</groupId>
+			<artifactId>saas-store-wms-facade</artifactId>
+		</dependency>
+
 	</dependencies>
 
 </project>

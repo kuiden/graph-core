@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.remote.crm;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
@@ -8,6 +9,7 @@ import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * @time 2020-08-04
@@ -22,5 +24,8 @@ public interface StoreInfoClient {
 
     @PostMapping("/feign/user/storeInfo/getStoreInfoForClient")
     BizBaseResponse<ClientStoreDTO> getStoreInfoForClient(@RequestBody ClientStoreVO clientStoreVO);
+
+    @PostMapping("/feign/crm/storeInfoRelated/getRelatedInfoByStoreId")
+    BizBaseResponse<StoreInfoRelatedDTO> getRelatedInfoByStoreId(@RequestParam("storeId") Long storeId);
 
 }
