@@ -21,6 +21,8 @@ public class CustomerGroupConstant {
 
     public static final String MAINTENANCE_FACTOR="MAINTENANCE_FACTOR";
 
+    public static final String ALL_FACTOR="ALL_FACTOR";
+
     /**
      * 因子属性
      */
@@ -36,5 +38,6 @@ public class CustomerGroupConstant {
     public  static  final String BRITHDAY_MAX_MONTH="BRITHDAY_MAX_MONTH";
     public  static  final String MAINTENANCE_LEAST_DAY="MAINTENANCE_LEAST_DAY";
     public  static  final String MAINTENANCE_MAX_DAY="MAINTENANCE_MAX_DAY";
+    public  static  final String ALL_CUSTOMER="ALL_CUSTOMER";
 
 }

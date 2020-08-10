@@ -51,6 +51,8 @@ public class CustomerGroupReq implements Serializable {
     private Long maintenanceDateStart;
     @ApiModelProperty("下次保养时间小于天数")
     private Long maintenanceDateEnd;
+    @ApiModelProperty("是否所有用戶")
+    private String isAllCustomer;
     private Long tenantId;
     private String createUser;
     private String updateUser;
