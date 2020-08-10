@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/client/store")
+@RequestMapping("/client/mini/store")
 public class MiniStoreInfoApi extends BaseEndUserApi {
 
     @Autowired
     private StoreInfoClient storeInfoClient;
 
-    @GetMapping("/getStoreInfoForClient")
-    public BizBaseResponse getStoreInfoForClient(@RequestBody ClientStoreVO req) {
+    @GetMapping("/detail")
+    public BizBaseResponse getStoreInfoForClient(ClientStoreVO req) {
         BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(req);
         return resultData;
     }
