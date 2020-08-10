@@ -98,7 +98,7 @@ public class H5ReservationApi extends BaseApi {
         }
         req.setTeminal(0);
         //校验验证码
-        String code = storeRedisUtils.redisGet(verificationCodeKey);
+        String code = storeRedisUtils.redisGet(verificationCodeKey+req.getCustomerPhoneNumber());
         if(code == null){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码已过期");
         }
@@ -160,8 +160,8 @@ public class H5ReservationApi extends BaseApi {
         SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
         if(sendResult != null && sendResult.isSendResult()){
             //将验证码写入redis，并设置过期时间
-            storeRedisUtils.redisSet(verificationCodeKey,pwd.toString());
-            storeRedisUtils.setExpire(verificationCodeKey, expireTime, TimeUnit.MINUTES);
+            storeRedisUtils.redisSet(verificationCodeKey+phoneNumber,pwd.toString());
+            storeRedisUtils.setExpire(verificationCodeKey+phoneNumber, expireTime, TimeUnit.MINUTES);
             return new BizBaseResponse("发送成功");
         }else {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.SYSTEM_INNER_ERROR, "发送失败");
