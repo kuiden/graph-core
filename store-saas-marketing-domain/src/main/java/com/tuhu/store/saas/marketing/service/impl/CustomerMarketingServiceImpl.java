@@ -28,6 +28,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +77,11 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Autowired
     private ICustomerGroupService customerGroupService;
+   /* @Autowired
+    private IUtilityService iUtilityService;
+
+    @Value("${.url.pre}")
+    private String domainUrlPre;*/
 
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
@@ -206,6 +212,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add("价值" + coupon.getContentValue().intValue()+ "元" +coupon.getTitle());
             params.add(storeDTO.getMobilePhone());
             //TODO 替换短链
+
             params.add("http://www.baidu.com");
 
         }else if(marketingMethod.equals(Byte.valueOf("1"))){
@@ -238,8 +245,11 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add(activityPrice.toString()+"抵"+srcPrice.toString());
             params.add(storeDTO.getMobilePhone());
             params.add(activityResp.getActivityTitle());
-            //TODO 替换短链
-            params.add("http://www.baidu.com");
+            //生成短连接
+          /*  StringBuffer url = new StringBuffer();
+            url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
+            params.add( iUtilityService.getShortUrl(url.toString()));*/
+            params.add("www.baidu.com");
         }
 
         return StringUtils.join(params,",");

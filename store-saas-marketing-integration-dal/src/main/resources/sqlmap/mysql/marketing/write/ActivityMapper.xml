@@ -6,6 +6,7 @@
     <result column="activity_code" jdbcType="VARCHAR" property="activityCode" />
     <result column="encrypted_code" jdbcType="VARCHAR" property="encryptedCode" />
     <result column="store_id" jdbcType="BIGINT" property="storeId" />
+    <result column="tenant_id" jdbcType="BIGINT" property="tenantId" />
     <result column="type" jdbcType="TINYINT" property="type" />
     <result column="pic_url" jdbcType="VARCHAR" property="picUrl" />
     <result column="activity_title" jdbcType="VARCHAR" property="activityTitle" />
@@ -89,7 +90,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, activity_code, encrypted_code, store_id, `type`, pic_url, activity_title, activity_introduce, 
+    id, activity_code, encrypted_code, store_id, tenant_id, `type`, pic_url, activity_title, activity_introduce,
     apply_number, `status`, hotline, pay_type, start_time, end_time, weixin_qr_url, tagString, 
     activity_template_id, pic_activity_template_id, update_user, create_user, create_time, 
     update_time, activity_content, activity_price, active_type, active_days, active_date
@@ -167,6 +168,9 @@
       </if>
       <if test="storeId != null">
         store_id,
+      </if>
+      <if test="tenantId != null">
+        tenant_id,
       </if>
       <if test="type != null">
         `type`,
@@ -250,6 +254,9 @@
       </if>
       <if test="storeId != null">
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null">
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="type != null">
         #{type,jdbcType=TINYINT},

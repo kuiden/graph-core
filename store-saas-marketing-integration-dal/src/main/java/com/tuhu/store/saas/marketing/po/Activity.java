@@ -33,6 +33,11 @@ public class Activity implements Serializable {
     private Long storeId;
 
     /**
+     * 租户id
+     */
+    private Long tenantId;
+
+    /**
      * 活动类型， 0：营销活动
      */
     private Byte type;

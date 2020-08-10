@@ -6,6 +6,7 @@ import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.java.common.utils.DateUtil;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
@@ -179,6 +180,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         validReservationParam(req,1,2);
         SrvReservationOrder newOrder = new SrvReservationOrder();
         BeanUtils.copyProperties(req,newOrder);
+        newOrder.setUpdateUser(req.getCustomerId());
         return reservationOrderService.update(newOrder) > 0;
     }
 
@@ -310,7 +312,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         wrapper.eq("store_id",req.getStoreId());
         order.setStatus(SrvReservationStatusEnum.CANCEL.getEnumCode());
         order.setUpdateTime(new Date());
-        order.setUpdateUser(UserContextHolder.getStoreUserId());
+        order.setUpdateUser(req.getTeminal()==1?UserContextHolder.getStoreUserId(): EndUserContextHolder.getCustomerId());
         int updateResult = reservationOrderMapper.update(order,wrapper);
         if(updateResult > 0 && req.getTeminal() == 1){
             //门店拒绝预约给客户发短信:【门店名称】（【门店联系手机】）已取消您【预约月日时分】的到店预约，如有疑问请联系门店
@@ -438,7 +440,9 @@ public class INewReservationServiceImpl implements INewReservationService {
             customerReq.setCustomerSource("ZRJD");
             customerReq.setIsVip(false);
             addVehicleReq.setCustomerReq(customerReq);
+            log.info("新增客户请求参数为:{}", JSONObject.toJSONString(addVehicleReq));
             BizBaseResponse<AddVehicleReq> addObject = storeUserClient.addCustomerForReservation(addVehicleReq);
+            log.info("新增客户返回为:{}", JSONObject.toJSONString(addObject));
             if(addObject != null && addObject.getCode() != 10000){
                 throw new StoreSaasMarketingException("新建客户出错："+addObject.getMessage());
             }
