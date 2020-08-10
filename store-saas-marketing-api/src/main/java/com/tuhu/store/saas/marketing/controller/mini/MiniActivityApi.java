@@ -13,6 +13,7 @@ import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
+import com.tuhu.store.saas.marketing.response.SimpleActivityCustomerResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -129,5 +130,20 @@ public class MiniActivityApi extends BaseApi {
             return BizBaseResponse.operationFailed("服务异常");
         }
         return new BizBaseResponse(activityStatistics);
+    }
+
+    @PostMapping(value = "/listActivityCustomer")
+    @ApiOperation(value = "营销活动参与详情查询")
+    public BizBaseResponse list(@Validated @RequestBody ActivityCustomerListReq activityCustomerListReq) {
+        if (null == activityCustomerListReq.getStoreId()) {
+            activityCustomerListReq.setStoreId(super.getStoreId());
+        } else {
+            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
+        }
+        if (null == activityCustomerListReq.getTenantId()) {
+            activityCustomerListReq.setTenantId(super.getTenantId());
+        }
+        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
+        return BizBaseResponse.success(activityRespPageInfo);
     }
 }

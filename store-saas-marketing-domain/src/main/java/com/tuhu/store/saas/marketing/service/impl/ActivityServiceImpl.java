@@ -707,7 +707,7 @@ public class ActivityServiceImpl implements IActivityService {
             } else {
                 addActivityItems.add(activityItem);
                 BeanUtils.copyProperties(activityItemReq, activityItem);
-                activityItem.setActivityCode(editActivityReq.getActivityCode());
+                activityItem.setActivityCode(oldActivity.getActivityCode());
                 activityItem.setCreateUser(editActivityReq.getUpdateUser());
                 activityItem.setCreateTime(date);
                 activityItem.setUpdateTime(date);
@@ -1035,6 +1035,7 @@ public class ActivityServiceImpl implements IActivityService {
         List<String> datas = new ArrayList<>();
         datas.add(activity.getActivityTitle());
         String datePattern = "yyyy年MM月dd日";
+        // todo 活动截止时间
         datas.add(DateFormatUtils.format(activity.getEndTime(), datePattern));
         sendRemindReq.setDatas(JSONObject.toJSONString(datas));
         StringBuilder messageStatus = new StringBuilder("000");

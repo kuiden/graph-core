@@ -5,6 +5,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
+import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import io.swagger.annotations.ApiOperation;
@@ -52,9 +53,15 @@ public class MiniCardOrderApi extends BaseApi {
         return new BizBaseResponse(iCardOrderService.getCardOrderList(req));
     }
 
-
-
-
+    @PostMapping("/query")
+    @ApiOperation("查询开卡单")
+    public BizBaseResponse query(@Validated @RequestBody QueryCardOrderReq req){
+        if (null == req.getStoreId()){
+            req.setStoreId(super.getStoreId());
+            req.setTenantId(super.getTenantId());
+        }
+        return new BizBaseResponse(iCardOrderService.queryCardOrder(req));
+    }
 
 
 }

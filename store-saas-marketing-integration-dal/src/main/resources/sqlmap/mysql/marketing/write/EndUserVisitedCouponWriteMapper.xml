@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.EndUserVisitedCouponWriteMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.entity.EndUserVisitedCouponEntity">
+        <id column="id" property="id"/>
+        <result column="coupon_code" property="couponCode"/>
+        <result column="open_id" property="openId"/>
+        <result column="store_id" property="storeId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="customer_id" property="customerId"/>
+        <result column="registered_time" property="registeredTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, coupon_code, open_id, store_id, create_time, customer_id,registered_time
+  </sql>
+
+    <select id="findFirstByOpenIdAndCouponCode" resultType="com.tuhu.store.saas.marketing.entity.EndUserVisitedCouponEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        end_user_visited_coupon
+        where
+        open_id = #{openId}
+        coupon_code = #{couponCode}
+        order by create_time desc
+    </select>
+
+</mapper>

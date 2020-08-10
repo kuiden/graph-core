@@ -23,7 +23,7 @@ public class CReservationListReq implements Serializable {
     //预约单id
     private String id;
 
-    private Integer pageNum = 1;
+    private Integer pageNum = 0;
 
     private Integer pageSize = 10;
 

@@ -3,25 +3,26 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.baomidou.mybatisplus.toolkit.CollectionUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.tuhu.store.saas.marketing.dataobject.CardTemplate;
-import com.tuhu.store.saas.marketing.dataobject.CardTemplateItem;
+import com.tuhu.store.saas.marketing.dataobject.*;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CardTemplateMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardMapper;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateItemModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
+import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.service.ICardTemplateItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 @Service
@@ -33,6 +34,9 @@ public class CardServiceImpl implements ICardService {
 
     @Autowired
     private ICardTemplateItemService itemService;
+
+    @Autowired
+    private CrdCardItemMapper cardItemMapper;
 
     @Override
     public Long saveCardTemplate(CardTemplateModel req, String userId) {
@@ -83,7 +87,7 @@ public class CardServiceImpl implements ICardService {
     public PageInfo<CardTemplateModel> getCardTemplatePageInfo(CardTemplateReq req) {
         log.info("CardServiceImpl-> addCardTemplate req={}", req);
         PageInfo<CardTemplateModel> result = new PageInfo<>();
-        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+        PageHelper.startPage(req.getPageNum() == Integer.valueOf(0) ? 1 : req.getPageNum(), req.getPageSize());
         List<CardTemplate> cardTemplates = cardTemplateMapper.selectPage(req.getStatus(), req.getQuery(), req.getTenantId(), req.getStoreId());
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
             PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
@@ -97,6 +101,35 @@ public class CardServiceImpl implements ICardService {
             result.setTotal(cardTemplatePageInfo.getTotal());
         }
         return result;
+    }
+
+    @Override
+    @Transactional
+    public Boolean updateCardQuantity(UpdateCardVo updateCardVo) {
+        Boolean ok = true;
+        CrdCardItemExample example = new CrdCardItemExample();
+        example.createCriteria().andStoreIdEqualTo(updateCardVo.getStoreId())
+                .andTenantIdEqualTo(updateCardVo.getTenantId())
+                .andCardIdEqualTo(updateCardVo.getCardId());
+        List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
+        Map<String, Integer> itemQuantity = updateCardVo.getItemQuantity();
+        Date date = new Date();
+        for (CrdCardItem item : cardItems){
+            if (itemQuantity.containsKey(item.getGoodsId())){
+                //检查更新次数后是否会超过总次数 或 小于0
+                Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
+                if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0){
+                    throw new MarketingException("次卡更新失败");
+                }
+                item.setUsedQuantity(quantity);
+                item.setUpdateTime(date);
+                Integer result = cardItemMapper.updateByPrimaryKeySelective(item);
+                if (result <= 0){
+                    ok = false;
+                }
+            }
+        }
+        return ok;
     }
 
     private CardTemplate convertorToCardTemplate(CardTemplateModel cardTemplateModelReq) {

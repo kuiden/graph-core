@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.EndUserVisitedStoreWriteMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity">
+        <id column="id" property="id"/>
+        <result column="open_id" property="openId"/>
+        <result column="store_id" property="storeId"/>
+        <result column="count" property="count"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, open_id, store_id, `count`, create_time, update_time
+  </sql>
+
+
+    <select id="findFirstByOpenIdAndStoreId" resultType="com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        end_user_visited_store
+        where
+        open_id = #{openId}
+        and store_id = #{storeId}
+        order by update_time desc
+    </select>
+
+    <select id="findAllByOpenId" resultType="com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        end_user_visited_store
+        where
+        open_id = #{openId}
+        order by update_time desc
+    </select>
+
+
+    <update id="updateVisitedTimeById">
+        update
+        end_user_visited_store
+        set count = count + 1,
+        update_time =#{newDate}
+      where id =#{id}
+    </update>
+
+
+</mapper>

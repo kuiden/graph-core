@@ -55,6 +55,7 @@ public class SMSServiceImpl implements ISMSService, InitializingBean {
             datas = smsInfoReq.getDatas().toArray(new String[]{});
         }
         HashMap<String, Object> result = sdk.sendTemplateSMS(smsInfoReq.getPhone(),smsInfoReq.getTemplateId(),datas);
+        log.info(" {},返回参数 : {}", funName, JSON.toJSONString(result));
         smsResult.setSendResult(true);
         if(!"000000".equals(result.get("statusCode"))){
             //异常返回输出错误码和错误信息

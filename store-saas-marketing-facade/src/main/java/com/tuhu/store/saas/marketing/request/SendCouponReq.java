@@ -36,7 +36,7 @@ public class SendCouponReq implements Serializable {
      * 领取类型：
      * 0：主动在线领取
      * 1：手动发券
-     * 2：营销发券
+     * 2：定向营销发券
      */
     private Integer receiveType;
 

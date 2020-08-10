@@ -436,4 +436,8 @@
       order_coupon
       WHERE service_order_id = #{serviceOrderId,jdbcType=VARCHAR})
   </select>
+
+  <update id="updateoccupyNumByCode">
+    update   coupon set  occupy_num = occupy_num- #{occupyNum} where code = #{code}
+  </update>
 </mapper>
