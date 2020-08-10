@@ -1104,6 +1104,7 @@ public class ActivityServiceImpl implements IActivityService {
         String activityCode = activityCustomer.getActivityCode();
         ActivityResp activityResp = this.getActivityByActivityCode(activityCode);
         //response-set:活动详情
+        getOriginalPriceOfActivity(activityResp);
         activityCustomerResp.setActivity(activityResp);
 //        if (!activityCustomerReq.getIsFromClient()) {
             //3.根据客户id查询客户及车辆详情
@@ -1125,6 +1126,20 @@ public class ActivityServiceImpl implements IActivityService {
 //        }
         log.info("客户活动详情，出参:{}", JSONObject.toJSONString(activityCustomerResp));
         return activityCustomerResp;
+    }
+
+
+    @Override
+    public Boolean getOriginalPriceOfActivity(ActivityResp activityResp){
+        BigDecimal totalPrice =BigDecimal.ZERO;
+        if(activityResp.getActivityCode()==null){
+            return false;
+        }
+        for(ActivityItemResp item : activityResp.getItems()){
+            totalPrice = totalPrice.add(new BigDecimal(item.getOriginalPrice()).multiply(new BigDecimal(item.getOriginalPrice())));
+        }
+        activityResp.setOriginalTotalPrice(totalPrice);
+        return true;
     }
 
     @Override

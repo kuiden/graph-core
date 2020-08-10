@@ -78,16 +78,16 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
         return BizBaseResponse.success(activityCustomerResp);
     }
 
-//    @RequestMapping(value = "/writeOffOrCancel", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "客户报名核销或取消订单")
-//    public ResultObject writeOffOrCancelActivityCustomer(@RequestBody ActivityCustomerReq activityCustomerReq) {
-//        activityCustomerReq.setStoreId(super.getStoreId());
-//        activityCustomerReq.setTenantId(super.getTenantId());
-//        activityCustomerReq.setUserId(super.getUserId());
-//        ActivityCustomerResp activityCustomerResp = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
-//        return new ResultObject(activityCustomerResp);
-//    }
-//
+    @RequestMapping(value = "/writeOffOrCancel")
+    @ApiOperation(value = "客户报名核销或取消订单")
+    public BizBaseResponse writeOffOrCancelActivityCustomer(@RequestBody ActivityCustomerReq activityCustomerReq) {
+        activityCustomerReq.setStoreId(super.getStoreId());
+        activityCustomerReq.setTenantId(super.getTenantId());
+        activityCustomerReq.setUserId(super.getUserId());
+        Boolean result = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
+        return BizBaseResponse.success();
+    }
+
     @PostMapping(value = "/list")
     @ApiOperation(value = "营销活动列表")
     public BizBaseResponse activityList(@Validated @RequestBody StoreIdRequest req) {

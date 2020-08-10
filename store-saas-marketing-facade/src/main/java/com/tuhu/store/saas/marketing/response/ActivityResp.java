@@ -116,4 +116,7 @@ public class ActivityResp implements Serializable {
     @ApiModelProperty("活动截止日期")
     private Date activeDate;
 
+    @ApiModelProperty("原价格")
+    private BigDecimal originalTotalPrice;
+
 }

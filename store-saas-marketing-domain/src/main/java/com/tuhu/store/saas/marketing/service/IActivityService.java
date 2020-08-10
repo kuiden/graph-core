@@ -106,6 +106,14 @@ public interface IActivityService {
      */
     ActivityCustomerResp getActivityCustomerDetail(ActivityCustomerReq activityCustomerReq);
 
+
+    /**
+     * 计算活动的原价格
+     * @param activityResp
+     * @return
+     */
+    Boolean getOriginalPriceOfActivity(ActivityResp activityResp);
+
     /**
      * 根据活动编码获取活动信息
      *
