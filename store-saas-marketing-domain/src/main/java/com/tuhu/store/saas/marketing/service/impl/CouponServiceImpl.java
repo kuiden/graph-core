@@ -1641,4 +1641,33 @@ public class CouponServiceImpl implements ICouponService {
         log.info("根据客户ID集合及优惠券编码获取用券数据统计，couponCode={},customerIds={},result={}", couponCode, GsonTool.toJSONString(customerIds), GsonTool.toJSONString(couponStatisticsForCustomerMarketResp));
         return couponStatisticsForCustomerMarketResp;
     }
+
+    @Override
+    public Long getCouponAvailableAccount(Long id, Long storeId) {
+
+        CouponExample couponExample = new CouponExample();
+        CouponExample.Criteria couponCriteria = couponExample.createCriteria();
+        couponCriteria.andIdEqualTo(id);
+        couponCriteria.andStoreIdEqualTo(storeId);
+        List<Coupon> coupons = couponMapper.selectByExample(couponExample);
+
+        if(CollectionUtils.isEmpty(coupons)) {
+            log.info("优惠券 id={}不存在", id);
+            return 0L;
+        }
+
+        Coupon coupon = coupons.get(0);
+
+        //统计已发放数量
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
+        criteria.andCouponCodeEqualTo(coupon.getCode());
+        int sendCount = customerCouponMapper.countByExample(customerCouponExample);
+
+        Long availableAccount = coupon.getGrantNumber() - sendCount - coupon.getOccupyNum();
+        if(availableAccount < 1) {
+            return 0L;
+        }
+        return availableAccount;
+    }
 }

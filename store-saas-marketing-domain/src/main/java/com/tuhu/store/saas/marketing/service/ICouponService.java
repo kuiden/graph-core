@@ -182,4 +182,12 @@ public interface ICouponService {
      * @return
      */
     CouponStatisticsForCustomerMarketResp getCouponStatisticsForCustomerMarket(String couponCode, List<String> customerIds);
+
+    /**
+     * 根据优惠券id获取优惠券的可用额度
+     * @param id
+     * @param storeId
+     * @return
+     */
+    Long getCouponAvailableAccount(Long id, Long storeId);
 }

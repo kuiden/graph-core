@@ -61,11 +61,11 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
     @PostMapping(value = "/activityCustomerDetail")
     @ApiOperation(value = "客户报名营销活动详情")
     public BizBaseResponse getActivityCustomerDetail(@RequestBody ActivityCustomerReq activityCustomerReq) {
-//        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
-//            activityCustomerReq.setIsFromClient(Boolean.TRUE);
-//            activityCustomerReq.setCustomerId(super.getCustomerId());
-//            activityCustomerReq.setStoreId(super.getStoreId());
-//        }
+        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
+            activityCustomerReq.setIsFromClient(Boolean.TRUE);
+            activityCustomerReq.setCustomerId(super.getCustomerId());
+            activityCustomerReq.setStoreId(super.getStoreId());
+        }
         ActivityCustomerResp activityCustomerResp = null;
         try {
             activityCustomerResp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
@@ -87,21 +87,6 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
 //        ActivityCustomerResp activityCustomerResp = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
 //        return new ResultObject(activityCustomerResp);
 //    }
-//
-    @PostMapping(value = "/listActivityCustomer")
-    @ApiOperation(value = "营销活动参与详情查询")
-    public BizBaseResponse list(@Validated @RequestBody ActivityCustomerListReq activityCustomerListReq) {
-        if (null == activityCustomerListReq.getStoreId()) {
-            activityCustomerListReq.setStoreId(super.getStoreId());
-        } else {
-            activityCustomerListReq.setIsFromClient(Boolean.TRUE);
-        }
-        if (null == activityCustomerListReq.getTenantId()) {
-            activityCustomerListReq.setTenantId(super.getTenantId());
-        }
-        PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
-        return BizBaseResponse.success(activityRespPageInfo);
-    }
 //
     @PostMapping(value = "/list")
     @ApiOperation(value = "营销活动列表")

@@ -27,6 +27,7 @@
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="is_delete" jdbcType="TINYINT" property="isDelete" />
+    <result column="type" jdbcType="TINYINT" property="type" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -90,7 +91,7 @@
     id, card_id, card_name, goods_id, PID, service_item_code, service_item_name, business_category, 
     business_category_code, business_category_name, labor_hour, measured_quantity, used_quantity, 
     price, amount, discount_amount, actual_amount, description, store_id, tenant_id, 
-    create_user, update_user, create_time, update_time, is_delete
+    create_user, update_user, create_time, update_time, is_delete, `type`
   </sql>
   <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItemExample" resultMap="BaseResultMap">
     select
@@ -131,7 +132,7 @@
       discount_amount, actual_amount, description, 
       store_id, tenant_id, create_user, 
       update_user, create_time, update_time, 
-      is_delete)
+      is_delete, `type`)
     values (#{id,jdbcType=BIGINT}, #{cardId,jdbcType=BIGINT}, #{cardName,jdbcType=VARCHAR}, 
       #{goodsId,jdbcType=VARCHAR}, #{pid,jdbcType=VARCHAR}, #{serviceItemCode,jdbcType=VARCHAR}, 
       #{serviceItemName,jdbcType=VARCHAR}, #{businessCategory,jdbcType=VARCHAR}, #{businessCategoryCode,jdbcType=VARCHAR}, 
@@ -140,7 +141,7 @@
       #{discountAmount,jdbcType=DECIMAL}, #{actualAmount,jdbcType=DECIMAL}, #{description,jdbcType=VARCHAR}, 
       #{storeId,jdbcType=BIGINT}, #{tenantId,jdbcType=BIGINT}, #{createUser,jdbcType=VARCHAR}, 
       #{updateUser,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, 
-      #{isDelete,jdbcType=TINYINT})
+      #{isDelete,jdbcType=TINYINT}, #{type,jdbcType=TINYINT})
   </insert>
   <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItem">
     insert into crd_card_item
@@ -220,6 +221,9 @@
       <if test="isDelete != null">
         is_delete,
       </if>
+      <if test="type != null">
+        `type`,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -296,6 +300,9 @@
       </if>
       <if test="isDelete != null">
         #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="type != null">
+        #{type,jdbcType=TINYINT},
       </if>
     </trim>
   </insert>
@@ -383,6 +390,9 @@
       <if test="record.isDelete != null">
         is_delete = #{record.isDelete,jdbcType=TINYINT},
       </if>
+      <if test="record.type != null">
+        `type` = #{record.type,jdbcType=TINYINT},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -414,7 +424,8 @@
       update_user = #{record.updateUser,jdbcType=VARCHAR},
       create_time = #{record.createTime,jdbcType=TIMESTAMP},
       update_time = #{record.updateTime,jdbcType=TIMESTAMP},
-      is_delete = #{record.isDelete,jdbcType=TINYINT}
+      is_delete = #{record.isDelete,jdbcType=TINYINT},
+      `type` = #{record.type,jdbcType=TINYINT}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -494,6 +505,9 @@
       <if test="isDelete != null">
         is_delete = #{isDelete,jdbcType=TINYINT},
       </if>
+      <if test="type != null">
+        `type` = #{type,jdbcType=TINYINT},
+      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
@@ -522,7 +536,8 @@
       update_user = #{updateUser,jdbcType=VARCHAR},
       create_time = #{createTime,jdbcType=TIMESTAMP},
       update_time = #{updateTime,jdbcType=TIMESTAMP},
-      is_delete = #{isDelete,jdbcType=TINYINT}
+      is_delete = #{isDelete,jdbcType=TINYINT},
+      `type` = #{type,jdbcType=TINYINT}
     where id = #{id,jdbcType=BIGINT}
   </update>
 </mapper>

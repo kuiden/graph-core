@@ -37,9 +37,14 @@ public class ReservationApi extends BaseApi {
     @PostMapping(value = "/newForB")
     @ApiOperation(value = "B端新增预约单")
     public BizBaseResponse<String> newForB(@RequestBody NewReservationReq req){
-        log.info("B端新增预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<String> result = BizBaseResponse.success();
-        validParam(req);
+        req.setTenantId(super.getTenantId());
+        req.setStoreId(super.getStoreId());
+        req.setUserId(super.getUserId());
+        log.info("B端新增预约单入参：", JSONObject.toJSONString(req));
+        if(req.getEstimatedArriveTime() == null){
+            throw new StoreSaasMarketingException("请选择到店时间");
+        }
         if(StringUtils.isBlank(req.getCustomerId())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
         }
@@ -72,24 +77,26 @@ public class ReservationApi extends BaseApi {
     @PostMapping(value = "/confirmReservation")
     @ApiOperation(value = "确认预约")
     public BizBaseResponse confirmReservation(@RequestBody CReservationListReq req){
-        BizBaseResponse rs = new BizBaseResponse("确认预约成功");
-        return rs;
+        if(StringUtils.isBlank(req.getId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约单id不能为空");
+        }
+        req.setStoreId(super.getStoreId());
+        iNewReservationService.confirmReservation(req);
+        return new BizBaseResponse("确认预约成功");
     }
 
     @PostMapping(value = "/cancelReservation")
     @ApiOperation(value = "取消预约")
     public BizBaseResponse cancelReservation(@RequestBody CancelReservationReq req){
-        BizBaseResponse rs = new BizBaseResponse("取消成功");
-        return rs;
+        if(StringUtils.isBlank(req.getId())){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约单id不能为空");
+        }
+        if(req.getTeminal() == null){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "取消终端不能为空");
+        }
+        req.setStoreId(super.getStoreId());
+        iNewReservationService.cancelReservation(req);
+        return new BizBaseResponse("取消成功");
     }
 
-    //新增预约单公共校验
-    private void validParam(NewReservationReq req){
-        req.setTenantId(super.getTenantId());
-        req.setStoreId(super.getStoreId());
-        req.setUserId(super.getUserId());
-        if(req.getEstimatedArriveTime() == null){
-            throw new StoreSaasMarketingException("请选择到店时间");
-        }
-    }
 }

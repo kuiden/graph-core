@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.response;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.ToString;
 
@@ -55,5 +56,7 @@ public class CustomerGroupResp implements Serializable {
    // private List<GoodsResp> serverList;
 
     private Long tenantId;
+
+    private String isAllCustomer;
 
 }

@@ -138,6 +138,10 @@ public class CustomerGroupFilterFactory {
                     }
                 }
                 cugFilters.add(consumerServerListFilter);
+            }else if(CustomerGroupConstant.ALL_FACTOR.equalsIgnoreCase(cgrule)){
+                AllCustomerFilter allCustomerFilter = new AllCustomerFilter();
+                allCustomerFilter.setStoreId(storeId);
+                cugFilters.add(allCustomerFilter);
             }
         }
         return getFinalGroupFilter(cugFilters);

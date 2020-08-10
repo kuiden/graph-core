@@ -58,22 +58,18 @@ public class SendMarketingSMSJobTask extends IJobHandler {
         //门店ID过滤
         listCriterion.andSendTimeLessThanOrEqualTo(sendTime)
                 .andTaskTypeEqualTo(Byte.valueOf("0"));
-        List<Long> storeIds = customerMarketingMapper.listMatchedStoreIds(customerMarketingExample);
-        for(Long storeId : storeIds){
-            //处理每个门店的短信发送事物
-            //指定门店id
-            listCriterion.andStoreIdEqualTo(storeId);
-            List<CustomerMarketing> customerMarketings = customerMarketingMapper.selectByExample(customerMarketingExample);
-            for(CustomerMarketing customerMarketing : customerMarketings){
-                if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("0"))){
-                    //发送优惠卷
-                    //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
-                    //TODO .发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
 
-                }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
-                    //活动营销，只是根据模板发送短信，更新发送记录和任务状态，发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
-                    doSendSMS4Activity(customerMarketing);
-                }
+        List<CustomerMarketing> customerMarketings = customerMarketingMapper.selectByExample(customerMarketingExample);
+
+        for(CustomerMarketing customerMarketing : customerMarketings){
+            if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("0"))){
+                //发送优惠卷
+                //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
+                //TODO .发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
+
+            }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
+                //活动营销，只是根据模板发送短信，更新发送记录和任务状态，发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
+                doSendSMS4Activity(customerMarketing);
             }
         }
         return ReturnT.SUCCESS;

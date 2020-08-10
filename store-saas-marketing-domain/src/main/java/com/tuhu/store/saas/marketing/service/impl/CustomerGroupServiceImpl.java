@@ -269,6 +269,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 customerGroupResp.setMaintenanceDateEnd(Long.valueOf(maintenanceEndStr));
             }
         }
+        if(amap.get(CustomerGroupConstant.ALL_FACTOR)!=null){
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.ALL_FACTOR).get(CustomerGroupConstant.ALL_CUSTOMER))){
+                customerGroupResp.setIsAllCustomer("1");
+            }
+        }
     }
 
     private List<GoodsResp> queryServerList(Long storeId,Long tenantId ,List<String> serverIdList) {
@@ -413,6 +418,12 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
             sb.append("保养日期在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
+        }
+
+        if("1".equals(req.getIsAllCustomer())){
+            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.ALL_FACTOR,"1",CustomerGroupConstant.ALL_CUSTOMER,"=");
+            customerGroupRuleReqList.add(customerGroupRuleDto);
+            sb.append("门店全部客户").append(";");
         }
         customerGroupDto.setCustomerGroupRuleReqList(customerGroupRuleReqList);
         customerGroupDto.setGroupDesc(sb.toString());
