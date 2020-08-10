@@ -117,16 +117,16 @@ public class MiniActivityApi extends BaseApi {
         return BizBaseResponse.success(resp);
     }
 
-    @RequestMapping(value = "/getActivityStatistics", method = {RequestMethod.GET, RequestMethod.POST})
+    @PostMapping(value = "/getActivityStatistics")
     @ApiOperation(value = "获取活动数据")
-    public BizBaseResponse getActivityStatistics(Long activityId) {
+    public BizBaseResponse getActivityStatistics(@RequestBody ActivityDetailReq req) {
         Map<String, Object> activityStatistics = null;
         try {
-            activityStatistics = iActivityService.getActivityStatistics(activityId, super.getStoreId());
+            activityStatistics = iActivityService.getActivityStatistics(req.getActivityId(), super.getStoreId());
         } catch (MarketingException me) {
             return BizBaseResponse.operationFailed(me.getMessage());
         } catch (Exception e) {
-            log.info("获取活动数据服务异常，入参：{}", activityId, e);
+            log.info("获取活动数据服务异常，入参：{}", req.getActivityId(), e);
             return BizBaseResponse.operationFailed("服务异常");
         }
         return new BizBaseResponse(activityStatistics);

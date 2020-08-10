@@ -4,7 +4,9 @@ import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
+import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
 import feign.hystrix.FallbackFactory;
@@ -30,6 +32,12 @@ public class StoreInfoRemoteFactory implements FallbackFactory<StoreInfoClient> 
             @Override
             public BizBaseResponse<StoreDTO> getStoreInfo(@RequestBody StoreInfoVO storeInfoVO) {
                 log.error("getStoreInfo error,request={},error={}", storeInfoVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<ClientStoreDTO> getStoreInfoForClient(ClientStoreVO clientStoreVO) {
+                log.error("getStoreInfoForClient error,request={},error={}", clientStoreVO, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
         };
