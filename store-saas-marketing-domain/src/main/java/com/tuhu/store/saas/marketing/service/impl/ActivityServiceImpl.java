@@ -18,6 +18,8 @@ import com.tuhu.store.saas.dto.product.IssuedDTO;
 import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
+import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
+import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityCustomerMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityItemMapper;
@@ -81,6 +83,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -91,10 +94,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ActivityServiceImpl implements IActivityService {
 
-    @Autowired
+    @Resource
     private ActivityTemplateMapper activityTemplateMapper;
 
-    @Autowired
+    @Resource
     private ActivityMapper activityMapper;
 
     @Autowired
@@ -118,10 +121,10 @@ public class ActivityServiceImpl implements IActivityService {
     @Autowired
     private StoreProductClient storeProductClient;
 
-    @Autowired
+    @Resource
     private ActivityItemMapper activityItemMapper;
 
-    @Autowired
+    @Resource
     private ActivityCustomerMapper activityCustomerMapper;
 
     /**
@@ -1079,7 +1082,7 @@ public class ActivityServiceImpl implements IActivityService {
         log.info("客户活动详情，入参:{}", JSONObject.toJSONString(activityCustomerReq));
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (null == activityCustomerReq) {
-            throw new MarketingException(CrmReturnCodeEnum.REQUEST_ARG_IS_EMPTY.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_CODE_NOT_INPUT.getDesc());
         }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if (StringUtils.isBlank(activityOrderCode)) {
@@ -1091,6 +1094,10 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomerExampleCriteria.andActivityOrderCodeEqualTo(activityOrderCode);
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
+
+        if(activityCustomer == null){
+            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
+        }
         //response-set:基本信息copy
         BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
         //2.根据活动编码查询活动详情
@@ -1157,93 +1164,75 @@ public class ActivityServiceImpl implements IActivityService {
 
     @Override
     @Transactional
-    public ActivityCustomerResp writeOffOrCancelActivityCustomer(ActivityCustomerReq activityCustomerReq) {
-//        log.info("客户活动报名确认核销或取消订单，入参:{}", JSONObject.toJSONString(activityCustomerReq));
-//        if (null == activityCustomerReq) {
-//            throw new MarketingException(CrmReturnCodeEnum.REQUEST_ARG_IS_EMPTY.getDesc());
-//        }
-//        String activityOrderCode = activityCustomerReq.getActivityOrderCode();
-//        if (StringUtils.isBlank(activityOrderCode)) {
-//            throw new MarketingException("活动报名订单号不能为空");
-//        }
-//        Integer useStatus = activityCustomerReq.getUseStatus();
-//        if (null == useStatus || !Integer.valueOf(1).equals(useStatus) && !Integer.valueOf(2).equals(useStatus)) {
-//            throw new MarketingException("操作类型有误");
-//        }
-//        Long storeId = activityCustomerReq.getStoreId();
-//        if (null == storeId) {
-//            throw new MarketingException("门店ID不能为空");
-//        }
-//        String customerId = activityCustomerReq.getCustomerId();
-//        if (null == customerId) {
-//            throw new MarketingException("客户ID不能为空");
-//        }
-//        //1.根据活动报名订单号查询活动报名信息
-//        ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
-//        ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
-//        activityCustomerExampleCriteria.andActivityOrderCodeEqualTo(activityOrderCode);
-//        activityCustomerExampleCriteria.andCustomerIdEqualTo(customerId);
-//        List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
-//        if (CollectionUtils.isEmpty(activityCustomerList)) {
-//            throw new MarketingException("客户报名信息不存在");
-//        }
-//        ActivityCustomer activityCustomer = activityCustomerList.get(0);
-//        //门店不一致的活动不允许查看
-//        if (!activityCustomer.getStoreId().equals(storeId)) {
-//            throw new MarketingException("客户报名信息不存在");
-//        }
-//        String operation = useStatus.equals(Integer.valueOf(1)) ? "核销" : "取消订单";
-//        if (!activityCustomer.getUseStatus().equals((byte) 0)) {
-//            throw new CrmException("当前订单状态不允许" + operation);
-//        }
-//        //2.根据活动编码查询活动详情
-//        String activityCode = activityCustomer.getActivityCode();
-//        ActivityResp activityResp = this.getActivityByActivityCode(activityCode);
-//        Date endTime = activityResp.getEndTime();
-//        Date date = new Date();
-//        if (endTime.compareTo(date) <= 0) {
-//            throw new MarketingException("当前活动已过期");
-//        }
-//        activityCustomer.setUseStatus(useStatus.byteValue());
-//        activityCustomer.setUseTime(date);
-//        //发送短信通知
-//        SendRemindReq sendRemindReq = new SendRemindReq();
-//        sendRemindReq.setStoreId(activityCustomerReq.getStoreId());
-//        sendRemindReq.setTenantId(activityCustomerReq.getTenantId());
-//        sendRemindReq.setUserId(activityCustomerReq.getUserId());
-//        //核销
-//        if (useStatus.equals(Integer.valueOf(1))) {
-//            sendRemindReq.setMessageTemplateId(writeOffMessageTemplateId);
-//        } else {
-//            sendRemindReq.setMessageTemplateId(cancelMessageTemplateId);
-//        }
-//        CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
-//        customerAndVehicleReq.setCustomerId(activityCustomerReq.getCustomerId());
-//        sendRemindReq.setList(Collections.singletonList(customerAndVehicleReq));
-//        List<String> datas = Collections.singletonList(activityResp.getActivityTitle());
-//        sendRemindReq.setDatas(JSONObject.toJSONString(datas));
-//        StringBuilder messageStatus = new StringBuilder(activityCustomer.getMessageStatus());
-//        try {
+    public Boolean writeOffOrCancelActivityCustomer(ActivityCustomerReq activityCustomerReq) {
+        log.info("客户报名核销或取消订单，入参:{}", JSONObject.toJSONString(activityCustomerReq));
+        if (null == activityCustomerReq) {
+            throw new MarketingException(CrmReturnCodeEnum.REQUEST_ARG_IS_EMPTY.getDesc());
+        }
+        Boolean result=true;
+        Integer useStatus = activityCustomerReq.getUseStatus();
+        if(useStatus==null ||
+            !(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())
+            || useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_CANCELED.getStatus())
+            )){
+            throw new MarketingException(MarketingBizErrorCodeEnum.PARAM_ERROR.getDesc()+",检查useStatus");
+        }
+        String activityOrderCode = activityCustomerReq.getActivityOrderCode();
+        if(activityOrderCode==null){
+            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_CODE_NOT_INPUT.getDesc());
+        }
+        ActivityCustomerExample activityCustomerExample= new ActivityCustomerExample();
+        activityCustomerExample.setDistinct(true);
+        ActivityCustomerExample.Criteria activityExampleCriteria = activityCustomerExample.createCriteria();
+        activityExampleCriteria.andActivityOrderCodeEqualTo(activityOrderCode);
+        String customerId=activityCustomerReq.getCustomerId();
+        if(StringUtils.isNotEmpty(customerId)){
+            activityExampleCriteria.andCustomerIdEqualTo(customerId);
+        }
+        Long storeId = activityCustomerReq .getStoreId();
+        if(storeId != null){
+            activityExampleCriteria.andStoreIdEqualTo(storeId);
+        }
+
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByExampleOne(activityCustomerExample);
+
+        if(activityCustomer == null){
+            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
+        }
+
+        try {
+            //发送短信通知
+//            SendRemindReq sendRemindReq = new SendRemindReq();
+//            sendRemindReq.setStoreId(activityCustomerReq.getStoreId());
+//            sendRemindReq.setTenantId(activityCustomerReq.getTenantId());
+//            sendRemindReq.setUserId(activityCustomerReq.getUserId());
+//            CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
+//            customerAndVehicleReq.setCustomerId(activityCustomerReq.getCustomerId());
+//            sendRemindReq.setList(Collections.singletonList(customerAndVehicleReq));
+//            List<String> datas = Collections.singletonList(activityResp.getActivityTitle());
+//            sendRemindReq.setDatas(JSONObject.toJSONString(datas));
+            StringBuilder messageStatus = new StringBuilder(activityCustomer.getMessageStatus());
+            if(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())) {
+                //核销
+//                sendRemindReq.setMessageTemplateId(writeOffMessageTemplateId);
+                //状态二进制消息更新
+                messageStatus.replace(1, 2, "1");
+            }else{
+                //取消
+//                sendRemindReq.setMessageTemplateId(cancelMessageTemplateId);
+                messageStatus.replace(2, 3, "1");
+                String notCancelKey=activityApplyCountPrefix.concat(activityCustomer.getActivityCode());
+                redisTemplate.opsForValue().increment(notCancelKey,-1L);
+            }
+            activityCustomer.setMessageStatus(messageStatus.toString());
 //            iRemindService.send(sendRemindReq);
-//            if (useStatus.equals(Integer.valueOf(1))) {
-//                messageStatus.replace(1, 2, "1");
-//            } else {
-//                messageStatus.replace(2, 3, "1");
-//            }
-//            activityCustomer.setMessageStatus(messageStatus.toString());
-//        } catch (Exception e) {
-//            log.error("营销活动{}发送短信异常,request={},error={}", operation, JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
-//        }
-//        activityCustomerMapper.updateByPrimaryKeySelective(activityCustomer);
-//        if (!useStatus.equals(1)){//如果是取消订单，需要将缓存中count-1
-//            String notCancelKey=activityApplyCountPrefix.concat(activityCode);
-//            redisTemplate.opsForValue().increment(notCancelKey,-1L);
-//        }
-        ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
-//        BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
-//        activityCustomerResp.setActivity(activityResp);
-        return activityCustomerResp;
+        } catch (Exception e) {
+//            log.error("营销活动发送短信异常,request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
+        }
+        result = activityCustomerMapper.updateByPrimaryKeySelective(activityCustomer) > 0;
+        return result;
     }
+
 
 //    @Override
 //    @Transactional

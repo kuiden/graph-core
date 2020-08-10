@@ -23,6 +23,8 @@ public interface ActivityCustomerMapper extends BaseMapper<ActivityCustomer> {
 
     List<ActivityCustomer> selectByExample(ActivityCustomerExample example);
 
+    ActivityCustomer selectByExampleOne(ActivityCustomerExample example);
+
     ActivityCustomer selectByPrimaryKey(Long id);
 
     int updateByExampleSelective(@Param("record") ActivityCustomer record, @Param("example") ActivityCustomerExample example);
