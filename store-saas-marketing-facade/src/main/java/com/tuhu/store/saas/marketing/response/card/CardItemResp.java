@@ -2,6 +2,8 @@ package com.tuhu.store.saas.marketing.response.card;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 /**
  * @author wangyuqing
  * @since 2020/8/7 16:31
@@ -13,6 +15,11 @@ public class CardItemResp {
      * 服务项目id
      */
     private Long id;
+
+    /**
+     * 商品ID
+     */
+    private String goodsId;
 
     /**
      * 服务项名称
@@ -38,5 +45,30 @@ public class CardItemResp {
      * 商品类型1：服务 2：商品
      */
     private Byte type;
+
+    /**
+     * 工时单价
+     */
+    private BigDecimal price;
+
+    /**
+     * 金额
+     */
+    private BigDecimal amount;
+
+    /**
+     * 优惠金额
+     */
+    private BigDecimal discountAmount;
+
+    /**
+     * 实付金额
+     */
+    private BigDecimal actualAmount;
+
+    /*
+     * 库存
+     */
+    private BigDecimal inventory;
 
 }

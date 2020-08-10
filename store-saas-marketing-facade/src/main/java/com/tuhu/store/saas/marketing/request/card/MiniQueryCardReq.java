@@ -22,6 +22,12 @@ public class MiniQueryCardReq {
     @ApiModelProperty(value = "客户ID ", dataType = "String", required = false, example = "客户ID")
     private String customerId;
 
+    @ApiModelProperty(value = "客户手机号")
+    private String customerPhoneNumber;
+
+    @ApiModelProperty(value = "卡状态")
+    private String cardStatus;
+
     /**
      * 门店ID
      */
