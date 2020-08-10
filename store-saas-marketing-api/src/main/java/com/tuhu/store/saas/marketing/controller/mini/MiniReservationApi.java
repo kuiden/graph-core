@@ -8,6 +8,8 @@ import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.CReservationListReq;
 import com.tuhu.store.saas.marketing.request.CancelReservationReq;
 import com.tuhu.store.saas.marketing.request.NewReservationReq;
+import com.tuhu.store.saas.marketing.request.ReservePeriodReq;
+import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
 import com.tuhu.store.saas.marketing.response.dto.ReservationDTO;
 import com.tuhu.store.saas.marketing.service.INewReservationService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
@@ -20,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Date;
+import java.util.List;
 
 /**
  * @Author: yanglanqing
@@ -36,6 +38,21 @@ public class MiniReservationApi extends EndUserApi {
 
     @Autowired
     ISMSService ismsService;
+
+    @PostMapping(value = "/periodListForC")
+    @ApiOperation(value = "C端预约时间段list")
+    public BizBaseResponse getReservePeriodListForC(@RequestBody ReservePeriodReq req) {
+        BizBaseResponse<List<ReservationPeriodResp>> result = BizBaseResponse.success();
+        if(req.getStoreId() == null){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "门店ID不能为空");
+        }
+        if(req.getDate() == null){
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "日期不能为空");
+        }
+        req.setCustomerId(this.getCustomerId());
+        result.setData(iNewReservationService.getReservationPeroidList(req));
+        return result;
+    }
 
     @PostMapping(value = "/newForC")
     @ApiOperation(value = "C端新增预约单")
