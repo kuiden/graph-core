@@ -14,6 +14,9 @@ import java.io.Serializable;
 public class CancelReservationReq implements Serializable {
     private static final long serialVersionUID = 5131714577428797145L;
 
+    //门店ID
+    private Long storeId;
+
     //预约单id
     private String id;
 

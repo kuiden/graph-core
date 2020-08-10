@@ -9,11 +9,14 @@ import com.tuhu.store.saas.marketing.remote.reponse.StoreInfoDTO;
 import com.tuhu.store.saas.marketing.remote.reponse.UserDTO;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.BaseIdReqVO;
+import com.tuhu.store.saas.marketing.remote.request.EndUserVisitedStoreReq;
 import com.tuhu.store.saas.marketing.remote.request.StoreInfoVO;
+import com.tuhu.store.saas.user.vo.StoreSimpleInfoResp;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,12 @@ public class StoreUserRemoteFactory implements FallbackFactory<StoreUserClient> 
             @Override
             public BizBaseResponse<CustomerDTO> getCustomerById(BaseIdReqVO baseIdReqVO) {
                 log.error("getCustomerById error,request={},error={}", JSONObject.toJSONString(baseIdReqVO), ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<List<StoreSimpleInfoResp>> getHistoryStoreList(@RequestBody List<EndUserVisitedStoreReq> voList) {
+                log.error("getHistoryStoreList error,request={},error={}", JSONObject.toJSONString(voList), ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 

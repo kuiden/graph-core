@@ -99,7 +99,8 @@ public class MiniReservationApi extends EndUserApi {
         if(req.getId() == null){
             throw new StoreSaasMarketingException("预约单ID不能为空");
         }
-        result.setData(iNewReservationService.getCReservationDetail(req.getId()));
+        req.setStoreId(this.getStoreId());
+        result.setData(iNewReservationService.getCReservationDetail(req));
         return result;
     }
 

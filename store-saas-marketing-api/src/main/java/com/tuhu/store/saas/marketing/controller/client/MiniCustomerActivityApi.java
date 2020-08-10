@@ -61,11 +61,11 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
     @PostMapping(value = "/activityCustomerDetail")
     @ApiOperation(value = "客户报名营销活动详情")
     public BizBaseResponse getActivityCustomerDetail(@RequestBody ActivityCustomerReq activityCustomerReq) {
-//        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
-//            activityCustomerReq.setIsFromClient(Boolean.TRUE);
-//            activityCustomerReq.setCustomerId(super.getCustomerId());
-//            activityCustomerReq.setStoreId(super.getStoreId());
-//        }
+        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
+            activityCustomerReq.setIsFromClient(Boolean.TRUE);
+            activityCustomerReq.setCustomerId(super.getCustomerId());
+            activityCustomerReq.setStoreId(super.getStoreId());
+        }
         ActivityCustomerResp activityCustomerResp = null;
         try {
             activityCustomerResp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
