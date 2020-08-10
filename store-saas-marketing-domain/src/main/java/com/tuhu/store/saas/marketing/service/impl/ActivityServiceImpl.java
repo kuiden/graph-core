@@ -201,6 +201,7 @@ public class ActivityServiceImpl implements IActivityService {
             activityItem.setActivityCode(code);
             activityItem.setCreateUser(activityItemReq.getUserId());
             activityItem.setCreateTime(new Date());
+            activityItem.setTenantId(addActivityReq.getTenantId());
             activityItemList.add(activityItem);
         }
         activityItemMapper.insertBatch(activityItemList);
@@ -1015,6 +1016,7 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomer.setCustomerId(activityApplyReq.getCustomerId());
         activityCustomer.setTelephone(activityApplyReq.getTelephone());
         activityCustomer.setStoreId(activityApplyReq.getStoreId());
+        activityCustomer.setTenantId(activityApplyReq.getTenantId());
         activityCustomer.setCreateTime(new Date());
         activityCustomer.setStartTime(activity.getStartTime());
         activityCustomer.setEndTime(activity.getEndTime());

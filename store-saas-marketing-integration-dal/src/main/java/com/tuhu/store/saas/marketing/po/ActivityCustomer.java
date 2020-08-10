@@ -42,6 +42,11 @@ public class ActivityCustomer implements Serializable {
     private Long storeId;
 
     /**
+     * 企业ID
+     */
+    private Long tenantId;
+
+    /**
      * 订单生成时间（活动报名时间）
      */
     private Date createTime;
