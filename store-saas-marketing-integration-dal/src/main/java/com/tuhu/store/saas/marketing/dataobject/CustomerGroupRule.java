@@ -25,6 +25,8 @@ public class CustomerGroupRule {
 
     private Long storeId;
 
+    private Long tenantId;
+
     /**
      * 创建人
      */

@@ -3,7 +3,12 @@ package com.tuhu.store.saas.marketing.service;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
+import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
+import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
+import com.tuhu.store.saas.marketing.response.card.CardResp;
+import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
 
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -34,4 +39,22 @@ public  interface ICardService {
      * @return
      */
     PageInfo<CardTemplateModel> getCardTemplatePageInfo(CardTemplateReq req);
+
+
+    /*
+     * 更新次卡服务项目次数
+     */
+    Boolean updateCardQuantity(UpdateCardVo updateCardVo);
+
+    /*
+     * 查询客户次卡
+     */
+    PageInfo<CardResp> queryCardRespList(MiniQueryCardReq req);
+
+    /*
+     * 查询次卡使用记录
+     */
+    List<CardUseRecordResp> consumptionHistory(Long id);
+
+
 }

@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class GoodsResp {
 
-    private String id;
+    private String goodsId;
 
     /**
      * 租户id
@@ -20,27 +20,11 @@ public class GoodsResp {
     /**
      * 商品名称
      */
-    private String name;
+    private String goodsName;
 
-    /**
-     * spu表主键id
-     */
-    private Long spuId;
+    private String goodsCode;
 
-    /**
-     * 品牌id
-     */
-    private Long brandId;
-
-    /**
-     * 云商品名称
-     */
-    private String spuName;
-
-    /**
-     * 云商品编码
-     */
-    private String spuCode;
+    private Integer online;
 
     private Boolean checked = Boolean.FALSE;
 }

@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.controller.mini;
 
 
 import com.github.pagehelper.PageInfo;
+import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
@@ -83,19 +84,23 @@ public class MiniCouponApi extends BaseApi {
         }
         List<CommonResp<CustomerCoupon>> customerCouponRespList = iCouponService.sendCoupon(sendCouponReq);
         boolean hasFailed = false;
+        CommonResp<CustomerCoupon> fail = new CommonResp<CustomerCoupon>();
         for (CommonResp<CustomerCoupon> customerCouponResp : customerCouponRespList) {
             if (!customerCouponResp.isSuccess()) {
                 hasFailed = true;
+                fail = customerCouponResp;
                 break;
             }
         }
-        BizBaseResponse<List<CommonResp<CustomerCoupon>>> resultObject = new BizBaseResponse<List<CommonResp<CustomerCoupon>>>(customerCouponRespList);
+        BizBaseResponse<List<CommonResp<CustomerCoupon>>> resultObject = new BizBaseResponse<List<CommonResp<CustomerCoupon>>>();
         if (hasFailed) {
+            resultObject.setData(Lists.newArrayList(fail));
             resultObject.setCode(4000);
+        } else {
+            resultObject.setData(customerCouponRespList);
         }
         return resultObject;
     }
-
 
 
     @RequestMapping(value = "/getCouponsForServiceOrder", method = RequestMethod.POST)
@@ -170,6 +175,8 @@ public class MiniCouponApi extends BaseApi {
      */
     @GetMapping("/couponReceiveList")
     public ResultObject getCouponReceiveList(CouponReceiveRecordRequest req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
         CustomerCouponPageResp result = imCouponService.getCouponReceiveList(req);
         return new ResultObject(result);
     }

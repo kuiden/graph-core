@@ -17,6 +17,7 @@ import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,13 +37,16 @@ public class MessageTemplateLocalServiceImpl implements IMessageTemplateLocalSer
 
     @Override
     public MessageTemplateLocal getTemplateLocalById(String templateCode, Long storeId) {
-        MessageTemplateLocalExample privateExample = new MessageTemplateLocalExample();
-        MessageTemplateLocalExample.Criteria privateCriteria =privateExample.createCriteria();
-        privateCriteria.andTypeEqualTo("PRIVATE")
-                .andIsDeleteEqualTo(Boolean.FALSE)
-                .andStoreIdEqualTo(storeId)
-                .andTemplateCodeEqualTo(templateCode);
-        List<MessageTemplateLocal> list = templateLocalMapper.selectByExample(privateExample);
+        List<MessageTemplateLocal> list = new ArrayList<>();
+        if(storeId != null){
+            MessageTemplateLocalExample privateExample = new MessageTemplateLocalExample();
+            MessageTemplateLocalExample.Criteria privateCriteria =privateExample.createCriteria();
+            privateCriteria.andTypeEqualTo("PRIVATE")
+                    .andIsDeleteEqualTo(Boolean.FALSE)
+                    .andStoreIdEqualTo(storeId)
+                    .andTemplateCodeEqualTo(templateCode);
+            list = templateLocalMapper.selectByExample(privateExample);
+        }
         if(list==null||list.size()<=0){
             MessageTemplateLocalExample publicExample = new MessageTemplateLocalExample();
             MessageTemplateLocalExample.Criteria publicCriteria =publicExample.createCriteria();

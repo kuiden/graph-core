@@ -23,11 +23,12 @@ public class CustomerGroupFilterFactory {
      * @return
      */
     public static CustomerGroupFactorFilter createFilter(CustomerGroupDto customerGroupDto){
-        if(customerGroupDto==null||customerGroupDto.getStoreId()==null||customerGroupDto.getCustomerGroupRuleReqList()==null||customerGroupDto.getCustomerGroupRuleReqList().size()<=0){
+        if(customerGroupDto==null||customerGroupDto.getStoreId()==null ||customerGroupDto.getTenantId()==null ||customerGroupDto.getCustomerGroupRuleReqList()==null||customerGroupDto.getCustomerGroupRuleReqList().size()<=0){
             return null;
         }
         List<AbstractFactorFilter> cugFilters = Lists.newArrayList();
         Long storeId = customerGroupDto.getStoreId();
+        Long tenantId = customerGroupDto.getTenantId();
         List<CustomerGroupRuleDto> customerGroupRuleDtos = customerGroupDto.getCustomerGroupRuleReqList();
         for(CustomerGroupRuleDto customerGroupRuleDto : customerGroupRuleDtos){
             String cgrule = customerGroupRuleDto.getCgRuleFactor();
@@ -72,9 +73,9 @@ public class CustomerGroupFilterFactory {
                 customerBehaviorFilter.setStoreId(storeId);
                 for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
                     if(CustomerGroupConstant.LEAST_AMOUNT.equalsIgnoreCase(attributeDto.getAttribute())){
-                        customerBehaviorFilter.setGreaterThanMoney(Long.valueOf(attributeDto.getAttributeValue()));
+                        customerBehaviorFilter.setGreaterThanMoney(attributeDto.getAttributeValue());
                     }else if(CustomerGroupConstant.MAX_AMOUNT.equalsIgnoreCase(attributeDto.getAttribute())){
-                        customerBehaviorFilter.setLessThanMoney(Long.valueOf(attributeDto.getAttributeValue()));
+                        customerBehaviorFilter.setLessThanMoney(attributeDto.getAttributeValue());
                     }else if(CustomerGroupConstant.RECENT_DAYS.equalsIgnoreCase(attributeDto.getAttribute())){
                         customerBehaviorFilter.setRecentDay(Integer.valueOf(attributeDto.getAttributeValue()));
                     }
@@ -105,8 +106,20 @@ public class CustomerGroupFilterFactory {
                 }
                 cugFilters.add(birthdayFilter);
             }else if(CustomerGroupConstant.MAINTENANCE_FACTOR.equalsIgnoreCase(cgrule)){
+
+                MaintenanceDayFilter maintenanceDayFilter = new MaintenanceDayFilter();
+                maintenanceDayFilter.setStoreId(storeId);
+                maintenanceDayFilter.setTenantId(tenantId);
+                for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
+                    if(CustomerGroupConstant.MAINTENANCE_LEAST_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
+                        maintenanceDayFilter.setDayStart(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }else if(CustomerGroupConstant.BRITHDAY_MAX_MONTH.equalsIgnoreCase(attributeDto.getAttribute())){
+                        maintenanceDayFilter.setDayEnd(Integer.valueOf(attributeDto.getAttributeValue()));
+                    }
+                }
+                cugFilters.add(maintenanceDayFilter);
                 //保养过滤
-                //TODO
+
             }else if(CustomerGroupConstant.CONSUMER_SERVER_FACTOR.equalsIgnoreCase(cgrule)){
                 //指定服务过滤
                 ConsumerServerListFilter consumerServerListFilter = new ConsumerServerListFilter();
@@ -125,6 +138,10 @@ public class CustomerGroupFilterFactory {
                     }
                 }
                 cugFilters.add(consumerServerListFilter);
+            }else if(CustomerGroupConstant.ALL_FACTOR.equalsIgnoreCase(cgrule)){
+                AllCustomerFilter allCustomerFilter = new AllCustomerFilter();
+                allCustomerFilter.setStoreId(storeId);
+                cugFilters.add(allCustomerFilter);
             }
         }
         return getFinalGroupFilter(cugFilters);

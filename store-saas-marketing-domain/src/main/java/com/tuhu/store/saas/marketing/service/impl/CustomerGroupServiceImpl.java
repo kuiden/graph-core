@@ -65,9 +65,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             id = record.getId();
         }else{//更新
+
             StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
             storeCustomerGroupRelation.setUpdateTime(new Date());
+            storeCustomerGroupRelation.setGroupName(customerGroupDto.getGroupName());
             storeCustomerGroupRelation.setId(customerGroupDto.getId());
             storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);
             CustomerGroupRule customerGroupRule = new CustomerGroupRule();
@@ -100,6 +102,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
         record.setId(id);
         record.setCustomerCount(Long.valueOf(customerIdList.size()));
+        record.setCountTime(new Date());
         storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
     }
 
@@ -118,6 +121,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 customerGroupRule.setCgRuleName(customerGroupRuleDto.getCgRuleName());
                 customerGroupRule.setGroupId(Long.valueOf(relationId));
                 customerGroupRule.setStoreId(customerGroupDto.getStoreId());
+                customerGroupRule.setTenantId(customerGroupDto.getTenantId());
                 customerGroupRule.setCreateUser(customerGroupDto.getCreateUser());
                 customerGroupRule.setCreateTime(new Date());
                 customerGroupRuleList.add(customerGroupRule);
@@ -172,13 +176,14 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
     @Override
     public PageInfo<StoreCustomerGroupRelation> getCustomerGroupList(CustomerGroupListReq req) {
         PageInfo<StoreCustomerGroupRelation> result = new PageInfo<>();
-        PageHelper.startPage(req.getPageNum(), req.getPageSize());
         StoreCustomerGroupRelationExample example = new StoreCustomerGroupRelationExample();
         StoreCustomerGroupRelationExample.Criteria criteria = example.createCriteria();
         criteria.andStoreIdEqualTo(req.getStoreId());
         if(StringUtils.isNotBlank(req.getQuery())){
             criteria.andGroupNameLike("%".concat(req.getQuery()).concat("%"));
         }
+        example.setOrderByClause("create_time desc");
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
         List<StoreCustomerGroupRelation> storeCustomerGroupRelations = storeCustomerGroupRelationMapper.selectByExample(example);
         result.setList(storeCustomerGroupRelations);
         return result;
@@ -266,6 +271,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 customerGroupResp.setMaintenanceDateEnd(Long.valueOf(maintenanceEndStr));
             }
         }
+        if(amap.get(CustomerGroupConstant.ALL_FACTOR)!=null){
+            if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.ALL_FACTOR).get(CustomerGroupConstant.ALL_CUSTOMER))){
+                customerGroupResp.setIsAllCustomer("1");
+            }
+        }
     }
 
     private List<GoodsResp> queryServerList(Long storeId,Long tenantId ,List<String> serverIdList) {
@@ -283,6 +293,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 for(GoodsData goodsData : goodsDataList){
                     GoodsResp goodsResp = new GoodsResp();
                     BeanUtils.copyProperties(goodsData,goodsResp);
+                    goodsResp.setChecked(true);
                     goodsResps.add(goodsResp);
                 }
               //  customerGroupResp.setConsumerServeList(goodsResps);
@@ -297,6 +308,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         CustomerGroupDto customerGroupDto = new CustomerGroupDto();
         customerGroupDto.setGroupName(req.getConsumerGroupName());
         customerGroupDto.setStoreId(req.getStoreId());
+        customerGroupDto.setTenantId(req.getTenantId());
         customerGroupDto.setId(req.getId());
         StringBuffer sb = new StringBuffer();
         List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
@@ -363,7 +375,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             if(CollectionUtils.isNotEmpty(goodsResps)) {
                 sb.append(req.getConsumerServeDay() + "天内消费过");
                 for(int i=0;i<goodsResps.size();i++){
-                    sb.append(goodsResps.get(i).getName());
+                    sb.append(goodsResps.get(i).getGoodsName());
                     if(i<goodsResps.size()-1){
                         sb.append(",");
                     }
@@ -408,6 +420,12 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
             sb.append("保养日期在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
+        }
+
+        if("1".equals(req.getIsAllCustomer())){
+            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.ALL_FACTOR,"1",CustomerGroupConstant.ALL_CUSTOMER,"=");
+            customerGroupRuleReqList.add(customerGroupRuleDto);
+            sb.append("门店全部客户").append(";");
         }
         customerGroupDto.setCustomerGroupRuleReqList(customerGroupRuleReqList);
         customerGroupDto.setGroupDesc(sb.toString());
@@ -470,6 +488,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                     customerGroupDto = new CustomerGroupDto();
                     customerGroupDto.setId(customerGroupRule.getGroupId());
                     customerGroupDto.setStoreId(customerGroupRule.getStoreId());
+                    customerGroupDto.setTenantId(customerGroupRule.getTenantId());
                     result.add(customerGroupDto);
                     customerGroupDtoMap.put(customerGroupRule.getGroupId(),customerGroupDto);
                 }else{
@@ -527,7 +546,9 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 List<String> singleCustomerIdList = CustomerGroupFilterFactory.createFilter(customerGroupDto).filterProcess();
                 StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
                 record.setId(customerGroupDto.getId());
+                record.setTenantId(req.getTenantId());
                 record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                record.setCountTime(new Date());
                 storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
                 if(CollectionUtils.isEmpty(customerIdList)){
                     customerIdList.addAll(singleCustomerIdList);

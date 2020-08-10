@@ -8,6 +8,7 @@
     <result column="customer_id" jdbcType="VARCHAR" property="customerId" />
     <result column="telephone" jdbcType="VARCHAR" property="telephone" />
     <result column="store_id" jdbcType="BIGINT" property="storeId" />
+    <result column="tenant_id" jdbcType="BIGINT" property="tenantId" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="use_time" jdbcType="TIMESTAMP" property="useTime" />
     <result column="use_status" jdbcType="TINYINT" property="useStatus" />
@@ -171,6 +172,9 @@
       <if test="storeId != null">
         store_id,
       </if>
+      <if test="tenantId != null">
+        tenant_id,
+      </if>
       <if test="createTime != null">
         create_time,
       </if>
@@ -217,6 +221,9 @@
       </if>
       <if test="storeId != null">
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null">
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="createTime != null">
         #{createTime,jdbcType=TIMESTAMP},

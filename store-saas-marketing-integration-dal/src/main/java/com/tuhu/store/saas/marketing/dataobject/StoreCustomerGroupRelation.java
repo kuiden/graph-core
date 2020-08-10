@@ -13,6 +13,8 @@ public class StoreCustomerGroupRelation {
 
     private Long storeId;
 
+    private Long tenantId;
+
     private Long customerCount;
 
     private String groupDesc;
@@ -36,6 +38,10 @@ public class StoreCustomerGroupRelation {
      * 更新时间
      */
     private Date updateTime;
+    /**
+     * 计算人数的时间
+     */
+    private Date countTime;
 
 
 }

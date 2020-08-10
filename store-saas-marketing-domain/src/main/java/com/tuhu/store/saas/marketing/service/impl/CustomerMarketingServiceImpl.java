@@ -28,6 +28,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +77,11 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Autowired
     private ICustomerGroupService customerGroupService;
+    @Autowired
+    private IUtilityService iUtilityService;
+
+    @Value("${domain.url.pre}")
+    private String domainUrlPre;
 
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
@@ -206,6 +212,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add("价值" + coupon.getContentValue().intValue()+ "元" +coupon.getTitle());
             params.add(storeDTO.getMobilePhone());
             //TODO 替换短链
+
             params.add("http://www.baidu.com");
 
         }else if(marketingMethod.equals(Byte.valueOf("1"))){
@@ -238,8 +245,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add(activityPrice.toString()+"抵"+srcPrice.toString());
             params.add(storeDTO.getMobilePhone());
             params.add(activityResp.getActivityTitle());
-            //TODO 替换短链
-            params.add("http://www.baidu.com");
+            //生成短连接
+            StringBuffer url = new StringBuffer();
+            url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
+            params.add( iUtilityService.getShortUrl(url.toString()));
         }
 
         return StringUtils.join(params,",");
@@ -301,6 +310,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,mqNum);
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
         }
+
     }
 
     /**
@@ -314,10 +324,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         if(addReq.getMarketingMethod().equals(0)){
             Long couponId = Long.valueOf(addReq.getCouponOrActiveId());
             coupon = couponService.getCouponDetailById(couponId);
-//            if (null == coupon || !addReq.getStoreId().equals(coupon.getStoreId())) {
-//                //禁止查询非本门店的优惠券
-//                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券不存在或者不属于本店");
-//            }
+            if (null == coupon || !addReq.getStoreId().equals(coupon.getStoreId())) {
+                //禁止查询非本门店的优惠券
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券不存在或者不属于本店");
+            }
 //            if(coupon.getStatus().equals(0)){
 //                //优惠券失效
 //                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请将优惠券启用");
@@ -326,6 +336,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 //                //优惠券结束
 //                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券已过期，不能做营销");
 //            }
+
             if(addReq.getSendTime().before(DateUtils.now())){
                 //发送时间小于当前时间
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
@@ -360,6 +371,15 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         if(CollectionUtils.isEmpty(customerList)){
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送对象不能为空");
         }
+        //如果是优惠券定向营销，需要判断券额度
+        if(addReq.getMarketingMethod().equals(0)) {
+            Long availableAccount = couponService.getCouponAvailableAccount(coupon.getId(), addReq.getStoreId());
+
+            if(availableAccount < customerList.size()) {
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券数量不足");
+            }
+        }
+
 
         String currentUser = UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName();
         String sendObject = "";
@@ -437,6 +457,12 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
         iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
 
+        //如果是优惠券定向营销，需要占用优惠券额度
+        if(addReq.getMarketingMethod().equals(0)){
+            Coupon couponEntity = new Coupon();
+            BeanUtils.copyProperties(coupon, couponEntity);
+            couponService.setOccupyNum(couponEntity, customerList.size());
+        }
 //        MessageQuantity select = new MessageQuantity();
 //        select.setStoreId(customerMarketing.getStoreId());
 //        select.setTenantId(customerMarketing.getTenantId());

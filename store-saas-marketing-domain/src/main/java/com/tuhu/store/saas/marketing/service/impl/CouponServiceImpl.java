@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
@@ -22,16 +23,13 @@ import com.tuhu.store.saas.marketing.response.CouponScopeCategoryResp;
 import com.tuhu.store.saas.marketing.response.dto.*;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
-import com.tuhu.store.saas.marketing.util.GsonTool;
-import com.tuhu.store.saas.marketing.util.Md5Util;
+import com.tuhu.store.saas.marketing.util.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderItemVO;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.CouponStatisticsForCustomerMarketResp;
-import com.tuhu.store.saas.marketing.util.CodeFactory;
-import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.xiangyun.versionhelper.VersionHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -714,6 +712,8 @@ public class CouponServiceImpl implements ICouponService {
     @Autowired
     private CustomerClient customerClient;
 
+    private static final String occupyNumKeyPrefix = "occupyNumKey";
+
     @Override
     @Transactional
     public List<CommonResp<CustomerCoupon>> sendCoupon(SendCouponReq sendCouponReq) {
@@ -747,6 +747,19 @@ public class CouponServiceImpl implements ICouponService {
         CouponExample.Criteria couponCriteria = couponExample.createCriteria();
         couponCriteria.andCodeIn(codes);
         List<Coupon> couponList = couponMapper.selectByExample(couponExample);
+        //除定向营销之外 需要判断余额是否可以发送
+        if (!sendCouponReq.getReceiveType().equals(2)) {
+            for (Coupon x : couponList) {
+                if (!x.getGrantNumber().equals(Long.valueOf(-1))) {
+                    long num = (sendCouponReq.getCount().containsKey(x.getCode())
+                            ? sendCouponReq.getCount().get(x.getCode()) : 1) * sendCouponReq.getCustomerIds().size();
+                    long count = x.getGrantNumber() - (x.getOccupyNum() + num);
+                    if (count < 0) {
+                        throw new StoreSaasMarketingException("优惠券" + x.getTitle() + " 余额不足");
+                    }
+                }
+            }
+        }
         if (CollectionUtils.isEmpty(couponList)) {
             throw new StoreSaasMarketingException("要发券的优惠券不存在");
         }
@@ -761,6 +774,7 @@ public class CouponServiceImpl implements ICouponService {
             for (CustomerDTO customer : customerList) {
                 int count = sendCouponReq.getCount().containsKey(coupon.getCode()) ? sendCouponReq.getCount().get(coupon.getCode()) : 1;
                 for (int i = 0; i < count; i++) {
+                    //     generateCustomerCoupon(coupon, customer, sendCouponReq);
                     try {
                         Future<CommonResp<CustomerCoupon>> customerCouponFuture = threadPoolTaskExecutor.submit(new Callable<CommonResp<CustomerCoupon>>() {
                             @Override
@@ -802,9 +816,58 @@ public class CouponServiceImpl implements ICouponService {
                 }
             }
         } else {
+            //营销发券需要减去预占
+            if (sendCouponReq.getReceiveType() == Integer.valueOf(2)) {
+                Map<String, List<CustomerCoupon>> map = successCustomerCouponList.stream()
+                        .collect(Collectors.groupingBy(x -> x.getCouponCode()));
+                for (String key : map.keySet()) {
+                    long count = map.get(key).size();
+                    customerCouponMapper.updateoccupyNumByCode(count, key);
+                }
+            }
             customerCouponMapper.insertBatch(successCustomerCouponList);
         }
         return customerCouponList;
+    }
+
+    /**
+     * 占用优惠券
+     *
+     * @param x
+     * @param num
+     * @return
+     */
+    @Transactional
+    @Override
+    public void setOccupyNum(Coupon x, int num) {
+        log.info("couponListCheckLock-> req-> {} {}", x, num);
+        String occupyNumKey = occupyNumKeyPrefix + "" + x.getStoreId() + x.getTenantId() + x.getCode();
+        RedisUtils redisUtils = new RedisUtils();
+        StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
+        Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
+        if (value != null) {
+            try {
+                CustomerCouponExample example = new CustomerCouponExample();
+                CustomerCouponExample.Criteria criteria = example.createCriteria();
+                criteria.andCouponCodeEqualTo(x.getCode());
+                int customerReceiveCount = customerCouponMapper.countByExample(example);
+                long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
+                if (count > 0) {
+                    Coupon u = new Coupon();
+                    u.setOccupyNum(x.getOccupyNum() + num);
+                    u.setId(x.getId());
+                    long result = couponMapper.updateByPrimaryKeySelective(u);
+                    if (result <= 0) {
+                        throw new StoreSaasMarketingException("预占失败");
+                    }
+                } else {
+
+                    throw new StoreSaasMarketingException("余额数量不足");
+                }
+            } finally {
+                storeRedisUtils.releaseLock(occupyNumKey, value.toString());
+            }
+        }
     }
 
     @Override
@@ -863,6 +926,7 @@ public class CouponServiceImpl implements ICouponService {
                 CustomerCouponExample.Criteria customerCouponCriteria = customerCouponExample.createCriteria();
                 customerCouponCriteria.andCouponCodeEqualTo(code);
                 int count = customerCouponMapper.countByExample(customerCouponExample);
+                log.info("count ->{}", count);
                 if (Long.valueOf(count + "").compareTo(grantNumber) >= 0) {
                     log.warn("优惠券[code={}],已发放完毕", code);
                     redisTemplate.delete(key);
@@ -1574,5 +1638,34 @@ public class CouponServiceImpl implements ICouponService {
         }
         log.info("根据客户ID集合及优惠券编码获取用券数据统计，couponCode={},customerIds={},result={}", couponCode, GsonTool.toJSONString(customerIds), GsonTool.toJSONString(couponStatisticsForCustomerMarketResp));
         return couponStatisticsForCustomerMarketResp;
+    }
+
+    @Override
+    public Long getCouponAvailableAccount(Long id, Long storeId) {
+
+        CouponExample couponExample = new CouponExample();
+        CouponExample.Criteria couponCriteria = couponExample.createCriteria();
+        couponCriteria.andIdEqualTo(id);
+        couponCriteria.andStoreIdEqualTo(storeId);
+        List<Coupon> coupons = couponMapper.selectByExample(couponExample);
+
+        if(CollectionUtils.isEmpty(coupons)) {
+            log.info("优惠券 id={}不存在", id);
+            return 0L;
+        }
+
+        Coupon coupon = coupons.get(0);
+
+        //统计已发放数量
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
+        criteria.andCouponCodeEqualTo(coupon.getCode());
+        int sendCount = customerCouponMapper.countByExample(customerCouponExample);
+
+        Long availableAccount = coupon.getGrantNumber() - sendCount - coupon.getOccupyNum();
+        if(availableAccount < 1) {
+            return 0L;
+        }
+        return availableAccount;
     }
 }

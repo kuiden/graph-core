@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
@@ -39,6 +40,7 @@ public class MiniReservationApi extends EndUserApi {
     @PostMapping(value = "/newForC")
     @ApiOperation(value = "C端新增预约单")
     public BizBaseResponse<String> newForC(@RequestBody NewReservationReq req){
+        log.info("C端新增预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<String> result = BizBaseResponse.success();
         validParam(req);
         if(req.getStoreId() == null){
@@ -61,6 +63,7 @@ public class MiniReservationApi extends EndUserApi {
     @PostMapping(value = "/updateForC")
     @ApiOperation(value = "车主小程序端修改预约单")
     public BizBaseResponse<Boolean> updateForC(@RequestBody NewReservationReq req){
+        log.info("车主小程序端修改预约单入参：", JSONObject.toJSONString(req));
         BizBaseResponse<Boolean> result = BizBaseResponse.success();
         validParam(req);
         if(StringUtils.isBlank(req.getId())){
@@ -93,12 +96,11 @@ public class MiniReservationApi extends EndUserApi {
     @ApiOperation(value = "获取车主小程序预约单详情")
     public BizBaseResponse<ReservationDTO> getCReservationDetail(@RequestBody CReservationListReq req){
         BizBaseResponse<ReservationDTO> result = BizBaseResponse.success();
-        ReservationDTO dto = new ReservationDTO();
-        dto.setStatus("ORDERED");
-        dto.setReservationTime(new Date().getTime());
-        dto.setDescription("备注");
-        dto.setCustomerPhoneNumber("18011111111");
-        result.setData(dto);
+        if(req.getId() == null){
+            throw new StoreSaasMarketingException("预约单ID不能为空");
+        }
+        req.setStoreId(this.getStoreId());
+        result.setData(iNewReservationService.getCReservationDetail(req));
         return result;
     }
 
@@ -113,8 +115,8 @@ public class MiniReservationApi extends EndUserApi {
 
     //新增预约单公共校验
     private void validParam(NewReservationReq req){
-        req.setTenantId(super.getTenantId());
-        req.setUserId(super.getUserId());
+        req.setTenantId(this.getTenantId());
+        req.setUserId(this.getUserId());
         req.setCustomerId(this.getCustomerId());
         if(req.getEstimatedArriveTime() == null){
             throw new StoreSaasMarketingException("请选择到店时间");

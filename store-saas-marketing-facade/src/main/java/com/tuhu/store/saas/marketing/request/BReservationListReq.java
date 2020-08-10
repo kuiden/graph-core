@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @Author: yanglanqing
@@ -15,7 +16,7 @@ public class BReservationListReq implements Serializable {
     private static final long serialVersionUID = 5131714577428797145L;
 
     //预约日期
-    private Long reservationDate;
+    private Date reservationDate;
 
     //门店ID
     private Long storeId;

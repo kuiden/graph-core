@@ -31,11 +31,11 @@ public class EditActivityReq implements Serializable {
     @NotNull(message = "营销活动ID不能为空")
     private Long id;
 
-    @ApiModelProperty("活动编码")
-    private String activityCode;
+//    @ApiModelProperty("活动编码")
+//    private String activityCode;
 
-    @ApiModelProperty("加密活动编码")
-    private String encryptedCode;
+//    @ApiModelProperty("加密活动编码")
+//    private String encryptedCode;
 
     @ApiModelProperty("门店ID")
     private Long storeId;
@@ -108,11 +108,10 @@ public class EditActivityReq implements Serializable {
     private Date updateTime;
 
     @ApiModelProperty("活动内容")
-    @NotNull(message = "活动内容不能为空")
+//    @NotNull(message = "活动内容不能为空")
     private List<ActivityContent> contents;
 
     @ApiModelProperty("活动费用")
-    @NotNull(message = "活动价格不能为空")
     private BigDecimal activityPrice;
 
     @ApiModelProperty("营销活动项目")

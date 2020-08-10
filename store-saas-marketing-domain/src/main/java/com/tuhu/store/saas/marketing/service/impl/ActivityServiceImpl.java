@@ -12,8 +12,11 @@ import com.google.common.collect.Sets;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
+import com.tuhu.store.saas.crm.vo.CustomerSearchVO;
 import com.tuhu.store.saas.dto.product.IssuedDTO;
 import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
+import com.tuhu.store.saas.marketing.dataobject.Customer;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
@@ -54,6 +57,7 @@ import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.user.rpc.vo.StoreInfoVO;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
+import com.tuhu.store.saas.marketing.service.IRemindService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
@@ -137,13 +141,13 @@ public class ActivityServiceImpl implements IActivityService {
     @Autowired
     private IClientEventRecordService iClientEventRecordService;
 
-//    @Autowired
-//    private IRemindService iRemindService;
+    @Autowired
+    private IRemindService iRemindService;
 
 //    @Autowired
 //    private IGoodsRpcService goodsRpcService;
 
-    @Value("${sms.template.activity.apply:462}")
+    @Value("${sms.template.activity.apply:468}")
     private String applyMessageTemplateId;
     @Value("${sms.template.activity.writeoff:465}")
     private String writeOffMessageTemplateId;
@@ -200,6 +204,7 @@ public class ActivityServiceImpl implements IActivityService {
             activityItem.setActivityCode(code);
             activityItem.setCreateUser(activityItemReq.getUserId());
             activityItem.setCreateTime(new Date());
+            activityItem.setTenantId(addActivityReq.getTenantId());
             activityItemList.add(activityItem);
         }
         activityItemMapper.insertBatch(activityItemList);
@@ -255,6 +260,9 @@ public class ActivityServiceImpl implements IActivityService {
         activity.setUpdateUser(addActivityReq.getCreateUser());
         activity.setStartTime(DataTimeUtil.getDateStartTime(activity.getStartTime()));
         activity.setEndTime(DataTimeUtil.getDateZeroTime(activity.getEndTime()));
+        if (CollectionUtils.isNotEmpty(addActivityReq.getItems())) {
+            activity.setActivityPrice(BigDecimal.valueOf(addActivityReq.getItems().stream().mapToLong(ActivityItemReq::getActualPrice).sum()));
+        }
         return activity;
     }
 
@@ -647,6 +655,9 @@ public class ActivityServiceImpl implements IActivityService {
         if (oldActivity.getStartTime().compareTo(date) <= 0) {
             throw new MarketingException("活动过开始时间，不允许编辑");
         }
+        if (CollectionUtils.isNotEmpty(editActivityReq.getItems())) {
+            editActivityReq.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(ActivityItemReq::getActualPrice).sum()));
+        }
         //校验输入
         String validateResult = this.validateEditActivityReq(oldActivity, editActivityReq);
         if (null != validateResult) {
@@ -700,7 +711,7 @@ public class ActivityServiceImpl implements IActivityService {
             } else {
                 addActivityItems.add(activityItem);
                 BeanUtils.copyProperties(activityItemReq, activityItem);
-                activityItem.setActivityCode(editActivityReq.getActivityCode());
+                activityItem.setActivityCode(oldActivity.getActivityCode());
                 activityItem.setCreateUser(editActivityReq.getUpdateUser());
                 activityItem.setCreateTime(date);
                 activityItem.setUpdateTime(date);
@@ -903,7 +914,7 @@ public class ActivityServiceImpl implements IActivityService {
     public CommonResp<String> applyActivity(ActivityApplyReq activityApplyReq) {
         log.info("活动报名，入参:{}", JSONObject.toJSONString(activityApplyReq));
         if (null == activityApplyReq) {
-            throw new MarketingException(CrmReturnCodeEnum.REQUEST_ARG_IS_EMPTY.getDesc());
+            return CommonResp.failed(4000, CrmReturnCodeEnum.REQUEST_ARG_IS_EMPTY.getDesc());
         }
         String customerId = activityApplyReq.getCustomerId();
         if (StringUtils.isBlank(customerId)) {
@@ -1008,6 +1019,7 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomer.setCustomerId(activityApplyReq.getCustomerId());
         activityCustomer.setTelephone(activityApplyReq.getTelephone());
         activityCustomer.setStoreId(activityApplyReq.getStoreId());
+        activityCustomer.setTenantId(activityApplyReq.getTenantId());
         activityCustomer.setCreateTime(new Date());
         activityCustomer.setStartTime(activity.getStartTime());
         activityCustomer.setEndTime(activity.getEndTime());
@@ -1017,27 +1029,28 @@ public class ActivityServiceImpl implements IActivityService {
         }
 
         //发送报名成功通知短信
-//        SendRemindReq sendRemindReq = new SendRemindReq();
-//        sendRemindReq.setStoreId(activityApplyReq.getStoreId());
-//        sendRemindReq.setTenantId(activityApplyReq.getTenantId());
-//        sendRemindReq.setUserId(activity.getCreateUser());
-//        CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
-//        customerAndVehicleReq.setCustomerId(activityApplyReq.getCustomerId());
-//        sendRemindReq.setList(Collections.singletonList(customerAndVehicleReq));
-//        sendRemindReq.setMessageTemplateId(applyMessageTemplateId);
-//        List<String> datas = new ArrayList<>();
-//        datas.add(activity.getActivityTitle());
-//        String datePattern = "yyyy年MM月dd日";
-//        datas.add(DateFormatUtils.format(activity.getEndTime(), datePattern));
-//        sendRemindReq.setDatas(JSONObject.toJSONString(datas));
-//        StringBuilder messageStatus = new StringBuilder("000");
-//        try {
-//            iRemindService.send(sendRemindReq);
-//            messageStatus.replace(0, 1, "1");
-//        } catch (Exception e) {
-//            log.error("报名成功发送短信失败，request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
-//        }
-//        activityCustomer.setMessageStatus(messageStatus.toString());
+        SendRemindReq sendRemindReq = new SendRemindReq();
+        sendRemindReq.setStoreId(activityApplyReq.getStoreId());
+        sendRemindReq.setTenantId(activityApplyReq.getTenantId());
+        sendRemindReq.setUserId(activity.getCreateUser());
+        CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
+        customerAndVehicleReq.setCustomerId(activityApplyReq.getCustomerId());
+        sendRemindReq.setCustomerList(Collections.singletonList(customerAndVehicleReq));
+        sendRemindReq.setMessageTemplateId(applyMessageTemplateId);
+        List<String> datas = new ArrayList<>();
+        datas.add(activity.getActivityTitle());
+        String datePattern = "yyyy年MM月dd日";
+        // todo 活动截止时间
+        datas.add(DateFormatUtils.format(activity.getEndTime(), datePattern));
+        sendRemindReq.setDatas(JSONObject.toJSONString(datas));
+        StringBuilder messageStatus = new StringBuilder("000");
+        try {
+            iRemindService.send(sendRemindReq);
+            messageStatus.replace(0, 1, "1");
+        } catch (Exception e) {
+            log.error("报名成功发送短信失败，request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
+        }
+        activityCustomer.setMessageStatus(messageStatus.toString());
         activityCustomerMapper.insertSelective(activityCustomer);
         return new CommonResp<>(activityCustomer.getActivityOrderCode());
     }
@@ -1318,68 +1331,74 @@ public class ActivityServiceImpl implements IActivityService {
 //        return null;
 //    }
 
-//    @Override
-//    public PageInfo<SimpleActivityCustomerResp> listActivityCustomer(ActivityCustomerListReq activityCustomerListReq) {
-//        log.info("查询客户营销活动订单列表请求request：{}", JSONObject.toJSONString(activityCustomerListReq));
-//        if (StringUtils.isBlank(activityCustomerListReq.getActivityCode())) {
-//            throw new CrmException("营销活动编码不能为空");
-//        }
-//        PageInfo<SimpleActivityCustomerResp> activityCustomerRespPageInfo = new PageInfo<>();
-//        ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
-//        ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
-//        if (StringUtils.isNotBlank(activityCustomerListReq.getSearch())) {
-//            //如果输入了姓名或手机号查询
-//            List<Customer> customerList = iCustomerService.getCustomerListByPhoneOrName(activityCustomerListReq.getSearch(), activityCustomerListReq.getTenantId(), activityCustomerListReq.getStoreId());
-//            if (CollectionUtils.isEmpty(customerList)) {
-//                activityCustomerRespPageInfo.setList(new ArrayList<>());
-//                return activityCustomerRespPageInfo;
-//            } else {
-//                List<String> customerIdList = customerList.stream().map(Customer::getId).collect(Collectors.toList());
-//                activityCustomerExampleCriteria.andCustomerIdIn(customerIdList);
-//            }
-//        }
-//        activityCustomerExampleCriteria.andStoreIdEqualTo(activityCustomerListReq.getStoreId());
-//        activityCustomerExampleCriteria.andActivityCodeEqualTo(activityCustomerListReq.getActivityCode());
-//        activityCustomerExample.setOrderByClause("create_time desc");
-//        PageHelper.startPage(activityCustomerListReq.getPageNum() + 1, activityCustomerListReq.getPageSize());
-//        List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
-//        PageInfo<ActivityCustomer> activityCustomerPageInfo = new PageInfo<>(activityCustomerList);
-//        BeanUtils.copyProperties(activityCustomerPageInfo, activityCustomerRespPageInfo);
-//        if (CollectionUtils.isEmpty(activityCustomerList)) {
-//            activityCustomerRespPageInfo.setList(new ArrayList<>());
-//            return activityCustomerRespPageInfo;
-//        }
-//        List<String> customerIdList = activityCustomerList.stream().map(ActivityCustomer::getCustomerId).collect(Collectors.toList());
-//        List<Customer> customerList = iCustomerService.getCustomerListByIdList(customerIdList);
-//        if (null == customerList) {
-//            customerList = new ArrayList<>();
-//        }
-//        Map<String, Customer> customerMap = customerList.stream().collect(Collectors.toMap(Customer::getId, customer -> customer));
-//        List<SimpleActivityCustomerResp> simpleActivityCustomerRespList = new ArrayList<>();
-//        for (ActivityCustomer activityCustomer : activityCustomerList) {
-//            SimpleActivityCustomerResp simpleActivityCustomerResp = new SimpleActivityCustomerResp();
-//            BeanUtils.copyProperties(activityCustomer, simpleActivityCustomerResp);
-//            String customerId = activityCustomer.getCustomerId();
-//            Customer customer = customerMap.get(customerId);
-//            if (null != customer) {
-//                simpleActivityCustomerResp.setName(customer.getName());
-//                if (null != activityCustomerListReq.getIsFromClient() && activityCustomerListReq.getIsFromClient()) {
-//                    simpleActivityCustomerResp.setPhoneNumber(makeupPhoneNumber(customer.getPhoneNumber()));
-//                } else {
-//                    simpleActivityCustomerResp.setPhoneNumber(customer.getPhoneNumber());
-//                }
-//            }
-//            simpleActivityCustomerRespList.add(simpleActivityCustomerResp);
-//
-//            if (activityCustomer.getUseStatus()!=null
-//                    && activityCustomer.getUseStatus()==0
-//                    && (new Date()).after(activityCustomer.getEndTime())){
-//                simpleActivityCustomerResp.setUseStatus(Byte.valueOf("-1"));//已过期
-//            }
-//        }
-//        activityCustomerRespPageInfo.setList(simpleActivityCustomerRespList);
-//        return activityCustomerRespPageInfo;
-//    }
+    @Override
+    public PageInfo<SimpleActivityCustomerResp> listActivityCustomer(ActivityCustomerListReq activityCustomerListReq) {
+        log.info("查询客户营销活动订单列表请求request：{}", JSONObject.toJSONString(activityCustomerListReq));
+        if (StringUtils.isBlank(activityCustomerListReq.getActivityCode())) {
+            throw new MarketingException("营销活动编码不能为空");
+        }
+        PageInfo<SimpleActivityCustomerResp> activityCustomerRespPageInfo = new PageInfo<>();
+        ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
+        ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
+        if (StringUtils.isNotBlank(activityCustomerListReq.getSearch())) {
+            //如果输入了姓名或手机号查询
+            CustomerSearchVO customerSearchVO = new CustomerSearchVO();
+            customerSearchVO.setSearch(activityCustomerListReq.getSearch());
+            customerSearchVO.setStoreId(activityCustomerListReq.getStoreId());
+            customerSearchVO.setTenantId(activityCustomerListReq.getTenantId());
+            List<CustomerDTO> customerList = iCustomerService.getCustomerListByPhoneOrName(customerSearchVO).getData();
+            if (CollectionUtils.isEmpty(customerList)) {
+                activityCustomerRespPageInfo.setList(new ArrayList<>());
+                return activityCustomerRespPageInfo;
+            } else {
+                List<String> customerIdList = customerList.stream().map(CustomerDTO::getId).collect(Collectors.toList());
+                activityCustomerExampleCriteria.andCustomerIdIn(customerIdList);
+            }
+        }
+        activityCustomerExampleCriteria.andStoreIdEqualTo(activityCustomerListReq.getStoreId());
+        activityCustomerExampleCriteria.andActivityCodeEqualTo(activityCustomerListReq.getActivityCode());
+        activityCustomerExample.setOrderByClause("create_time desc");
+        PageHelper.startPage(activityCustomerListReq.getPageNum() + 1, activityCustomerListReq.getPageSize());
+        List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
+        PageInfo<ActivityCustomer> activityCustomerPageInfo = new PageInfo<>(activityCustomerList);
+        BeanUtils.copyProperties(activityCustomerPageInfo, activityCustomerRespPageInfo);
+        if (CollectionUtils.isEmpty(activityCustomerList)) {
+            activityCustomerRespPageInfo.setList(new ArrayList<>());
+            return activityCustomerRespPageInfo;
+        }
+        List<String> customerIdList = activityCustomerList.stream().map(ActivityCustomer::getCustomerId).collect(Collectors.toList());
+        BaseIdsReqVO customrIdsReq = new BaseIdsReqVO();
+        customrIdsReq.setId(customerIdList);
+        List<CustomerDTO> customerList = iCustomerService.getCustomerListByIdList(customrIdsReq).getData();
+        if (null == customerList) {
+            customerList = new ArrayList<>();
+        }
+        Map<String, CustomerDTO> customerMap = customerList.stream().collect(Collectors.toMap(CustomerDTO::getId, customer -> customer));
+        List<SimpleActivityCustomerResp> simpleActivityCustomerRespList = new ArrayList<>();
+        for (ActivityCustomer activityCustomer : activityCustomerList) {
+            SimpleActivityCustomerResp simpleActivityCustomerResp = new SimpleActivityCustomerResp();
+            BeanUtils.copyProperties(activityCustomer, simpleActivityCustomerResp);
+            String customerId = activityCustomer.getCustomerId();
+            CustomerDTO customer = customerMap.get(customerId);
+            if (null != customer) {
+                simpleActivityCustomerResp.setName(customer.getName());
+                if (null != activityCustomerListReq.getIsFromClient() && activityCustomerListReq.getIsFromClient()) {
+                    simpleActivityCustomerResp.setPhoneNumber(makeupPhoneNumber(customer.getPhoneNumber()));
+                } else {
+                    simpleActivityCustomerResp.setPhoneNumber(customer.getPhoneNumber());
+                }
+            }
+            simpleActivityCustomerRespList.add(simpleActivityCustomerResp);
+
+            if (activityCustomer.getUseStatus()!=null
+                    && activityCustomer.getUseStatus()==0
+                    && (new Date()).after(activityCustomer.getEndTime())){
+                simpleActivityCustomerResp.setUseStatus(Byte.valueOf("-1"));//已过期
+            }
+        }
+        activityCustomerRespPageInfo.setList(simpleActivityCustomerRespList);
+        return activityCustomerRespPageInfo;
+    }
 
     private String makeupPhoneNumber(String src) {
         if (StringUtils.isBlank(src)) {

@@ -211,7 +211,6 @@ public class IMCouponServiceImpl implements IMCouponService {
                 vo.setStoreId(req.getStoreId());
                 vo.setTenantId(req.getTenantId());
                 List<String> idList = recordList.stream().map(x -> x.getCustomerId()).distinct().collect(Collectors.toList());
-                ;
                 vo.setCustomerList(idList);
                 vo.setQuery(req.getSearchKey());
                 BizBaseResponse<List<CustomerDTO>> crmResult = customerClient.getCustomerByQuery(vo);
