@@ -20,6 +20,7 @@ import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
+import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.util.CardOrderRedisCache;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
@@ -64,6 +65,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
     @Autowired
     private CustomerClient customerClient;
+
+    @Autowired
+    private ICardService iCardService;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -330,6 +334,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         }
 
         //查询使用记录 -- 调用order
+//        resp.setUseRecord(iCardService.consumptionHistory(resp.getCardId()));
 
         return resp;
     }

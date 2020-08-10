@@ -23,11 +23,6 @@ public class MiniQueryCardReq {
     private String customerId;
 
     /**
-     * 次卡id
-     */
-    private String cardId;
-
-    /**
      * 门店ID
      */
     private Long storeId;
