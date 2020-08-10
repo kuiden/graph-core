@@ -103,6 +103,23 @@
       </if>
     </if>
   </select>
+
+  <select id="selectByExampleOne" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    top 1
+    <include refid="Base_Column_List" />
+    from activity_customer
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />

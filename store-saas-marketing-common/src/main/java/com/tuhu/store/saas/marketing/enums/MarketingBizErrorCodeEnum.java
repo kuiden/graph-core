@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.enums;
 
 import com.tuhu.boot.common.enums.BizEnum;
+import io.swagger.annotations.ApiParam;
 
 /**
  * 错误代码枚举 供自定义错误类型使用
@@ -17,6 +18,10 @@ public enum MarketingBizErrorCodeEnum implements BizEnum {
     REPEAT_DATA_VEHICLE(4006, "REPEAT_DATA_VEHICLE", "重复车辆数据"),
     VEHICLE_HAS_ORDER(4007, "VEHICLE_HAS_ORDER", "车辆关联订单"),
     TOO_MANY_REQUEST(4009, "TOO_MANY_REQUEST", "操作过于频繁"),
+
+    MC_ORDER_CODE_NOT_INPUT(4050,"MARKETING_CUSTOMER_ORDER_CODE_NOT_INPUT","未输入活动订单号"),
+    MC_ORDER_NOT_EXIST(4051,"MARKETING_CUSTOMER_NOT_EXIST","查询不到此活动"),
+
 
     SYSTEM_INNER_ERROR(5000, "SYSTEM_INNER_ERROR", "系统内部错误"),
 

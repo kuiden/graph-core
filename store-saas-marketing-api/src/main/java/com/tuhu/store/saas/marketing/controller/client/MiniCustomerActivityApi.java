@@ -17,10 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -57,11 +54,6 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
     @PostMapping(value = "/activityCustomerDetail")
     @ApiOperation(value = "客户报名营销活动详情")
     public BizBaseResponse getActivityCustomerDetail(@RequestBody ActivityCustomerReq activityCustomerReq) {
-//        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
-//            activityCustomerReq.setIsFromClient(Boolean.TRUE);
-//            activityCustomerReq.setCustomerId(super.getCustomerId());
-//            activityCustomerReq.setStoreId(super.getStoreId());
-//        }
         ActivityCustomerResp activityCustomerResp = null;
         try {
             activityCustomerResp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
@@ -74,15 +66,23 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
         return BizBaseResponse.success(activityCustomerResp);
     }
 
-//    @RequestMapping(value = "/writeOffOrCancel", method = {RequestMethod.GET, RequestMethod.POST})
-//    @ApiOperation(value = "客户报名核销或取消订单")
-//    public ResultObject writeOffOrCancelActivityCustomer(@RequestBody ActivityCustomerReq activityCustomerReq) {
-//        activityCustomerReq.setStoreId(super.getStoreId());
-//        activityCustomerReq.setTenantId(super.getTenantId());
-//        activityCustomerReq.setUserId(super.getUserId());
-//        ActivityCustomerResp activityCustomerResp = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
-//        return new ResultObject(activityCustomerResp);
-//    }
+    @RequestMapping(value = "/writeOffOrCancel", method = {RequestMethod.GET, RequestMethod.POST})
+    @ApiOperation(value = "客户报名核销或取消订单")
+    public BizBaseResponse writeOffOrCancelActivityCustomer(@RequestBody ActivityCustomerReq activityCustomerReq) {
+        Boolean writeOffOrCancelResult;
+        try {
+            writeOffOrCancelResult  = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
+        }catch (MarketingException me){
+            return BizBaseResponse.operationFailed(me.getMessage());
+        }catch (Exception e){
+            log.error("客户报名核销或取消订单服务异常，入参：{}",activityCustomerReq);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
+        if(writeOffOrCancelResult){
+            return BizBaseResponse.success("操作成功");
+        }
+        return BizBaseResponse.operationFailed("操作失败");
+    }
 //
     @PostMapping(value = "/listActivityCustomer")
     @ApiOperation(value = "营销活动参与详情查询")

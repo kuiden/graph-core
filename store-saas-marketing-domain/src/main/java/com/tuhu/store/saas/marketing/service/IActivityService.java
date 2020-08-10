@@ -120,7 +120,7 @@ public interface IActivityService {
      * @param activityCustomerReq
      * @return
      */
-    ActivityCustomerResp writeOffOrCancelActivityCustomer(ActivityCustomerReq activityCustomerReq);
+    Boolean writeOffOrCancelActivityCustomer(ActivityCustomerReq activityCustomerReq);
 
     /**
      * 使用或取消使用营销活动
