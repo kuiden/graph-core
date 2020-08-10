@@ -182,7 +182,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             criteria.andGroupNameLike("%".concat(req.getQuery()).concat("%"));
         }
         example.setOrderByClause("create_time desc");
-        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+        PageHelper.startPage(req.getPageNum()+1, req.getPageSize());
         List<StoreCustomerGroupRelation> storeCustomerGroupRelations = storeCustomerGroupRelationMapper.selectByExample(example);
         PageInfo<StoreCustomerGroupRelation> result = new PageInfo<>(storeCustomerGroupRelations);
         return result;
