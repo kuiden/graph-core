@@ -148,12 +148,17 @@ public class CardServiceImpl implements ICardService {
     }
 
     @Override
-    public PageInfo<CardResp> queryCardRespList(MiniQueryCardReq req) {
-        PageHelper.startPage(req.getPageNum(), req.getPageSize());
-
+    public List<CardResp> queryCardRespList(MiniQueryCardReq req) {
         CrdCardExample cardExample = new CrdCardExample();
-        cardExample.createCriteria().andCustomerIdEqualTo(req.getCustomerId())
+        CrdCardExample.Criteria criteria = cardExample.createCriteria();
+        criteria.andCustomerIdEqualTo(req.getCustomerId())
                 .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        if (null != req.getCustomerPhoneNumber()){
+            criteria.andCustomerPhoneNumberEqualTo(req.getCustomerPhoneNumber());
+        }
+        if (null != req.getCardStatus()){
+            criteria.andStatusEqualTo(req.getCardStatus());
+        }
         List<CrdCard> cardList = cardMapper.selectByExample(cardExample);
 
         List<CardResp> cardRespList = new ArrayList<>();
@@ -166,6 +171,8 @@ public class CardServiceImpl implements ICardService {
             if (!resp.getForever()){
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日");
                 resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
+                dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+                resp.setDate(dateFormat.format(card.getExpiryDate()));
                 Date date = new Date();
                 Date expiryDate = DataTimeUtil.getDateZeroTime(card.getExpiryDate());
                 if (date.compareTo(expiryDate) > 0){
@@ -201,10 +208,12 @@ public class CardServiceImpl implements ICardService {
                 resp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
                 resp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
             }
-            cardRespList.add(resp);
+            if (null == req.getCustomerPhoneNumber() ||
+                    resp.getCardStatusCode().equals(CardStatusEnum.ACTIVATED.getEnumCode())){
+                cardRespList.add(resp);
+            }
         }
-        PageInfo<CardResp> pageInfo = new PageInfo<>(cardRespList);
-        return pageInfo;
+        return cardRespList;
     }
 
     @Override
@@ -213,7 +222,7 @@ public class CardServiceImpl implements ICardService {
         List<CardUseRecordResp> respList = new ArrayList<>();
         for (CardUseRecordDTO dto : recordDTOList){
             CardUseRecordResp resp = new CardUseRecordResp();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             resp.setTime(dateFormat.format(dto.getUseTime()));
             resp.setServiceOrderId(dto.getServiceOrderId());
             List<CardItemResp> item = new ArrayList<>();

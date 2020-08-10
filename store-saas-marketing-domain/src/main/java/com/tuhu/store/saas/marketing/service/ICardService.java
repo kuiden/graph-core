@@ -9,7 +9,6 @@ import com.tuhu.store.saas.marketing.response.card.CardResp;
 import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
 
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * 次卡相关接口
@@ -49,7 +48,7 @@ public  interface ICardService {
     /*
      * 查询客户次卡
      */
-    PageInfo<CardResp> queryCardRespList(MiniQueryCardReq req);
+    List<CardResp> queryCardRespList(MiniQueryCardReq req);
 
     /*
      * 查询次卡使用记录

@@ -32,9 +32,9 @@ public class MiniCardApi extends BaseApi {
 
     @PostMapping("/query")
     @ApiOperation("查询客户次卡")
-    public BizBaseResponse<PageInfo<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req){
+    public BizBaseResponse<List<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req){
         String customerId = req.getCustomerId();
-        if (StringUtils.isBlank(customerId)){
+        if (null == customerId || StringUtils.isBlank(customerId)){
             customerId = super.getUserId();
             req.setCustomerId(customerId);
         }
