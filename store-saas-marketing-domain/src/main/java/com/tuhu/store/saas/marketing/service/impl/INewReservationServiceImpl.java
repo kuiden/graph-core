@@ -305,6 +305,24 @@ public class INewReservationServiceImpl implements INewReservationService {
             default:
                 break;
         }
+        EntityWrapper<SrvReservationOrder> wrapper = new EntityWrapper<>();
+        wrapper.eq("id",req.getId());
+        wrapper.eq("store_id",req.getStoreId());
+        order.setStatus(SrvReservationStatusEnum.CANCEL.getEnumCode());
+        order.setUpdateTime(new Date());
+        order.setUpdateUser(UserContextHolder.getStoreUserId());
+        int updateResult = reservationOrderMapper.update(order,wrapper);
+        if(updateResult > 0 && req.getTeminal() == 1){
+            //门店拒绝预约给客户发短信:【门店名称】（【门店联系手机】）已取消您【预约月日时分】的到店预约，如有疑问请联系门店
+            StoreInfoDTO storeInfo = getStoreInfo(req.getStoreId());
+                List<String> list = new ArrayList<>();
+                if(storeInfo != null){
+                    list.add(storeInfo.getStoreName());
+                    list.add(storeInfo.getMobilePhone());
+                    list.add(dealMdDate(order.getEstimatedArriveTime()));
+                    sendSms(order.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_STORE_CANCEL_ORDER.templateCode(),list);
+                }
+        }
     }
 
     /**
@@ -326,14 +344,14 @@ public class INewReservationServiceImpl implements INewReservationService {
         return order;
     }
 
-    //01-01 10:30处理成1月1日
+    //01-01 10:30处理成1月1日10:30
     private String dealMdDate(Date date){
         String result = "";
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         Integer month = cal.get(Calendar.MONTH) + 1;
         Integer day = cal.get(Calendar.DAY_OF_MONTH);
-        result += month+"月"+ day +"日"+ cal.get(Calendar.HOUR_OF_DAY) +":"+ cal.get(Calendar.MINUTE);
+        result += month+"月"+ day +"日"+ cal.get(Calendar.HOUR_OF_DAY) +":"+ (cal.get(Calendar.MINUTE)==0?"00":cal.get(Calendar.MINUTE));
         return result;
     }
 
