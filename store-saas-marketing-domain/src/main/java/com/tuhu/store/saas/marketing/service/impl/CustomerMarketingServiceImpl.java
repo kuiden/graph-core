@@ -505,6 +505,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         BaseIdsReqVO baseIdsReqVO = new BaseIdsReqVO();
         baseIdsReqVO.setId(customerIds);
         baseIdsReqVO.setStoreId(addReq.getStoreId());
+        baseIdsReqVO.setTenantId(addReq.getTenantId());
         List<CustomerDTO> customerDTOS = customerClient.getCustomerByIds(baseIdsReqVO).getData();
         for(CustomerDTO customerDTO : customerDTOS){
             CustomerAndVehicleReq cavReq = new CustomerAndVehicleReq();
