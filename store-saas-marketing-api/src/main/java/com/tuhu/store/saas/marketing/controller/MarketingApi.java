@@ -3,14 +3,10 @@ package com.tuhu.store.saas.marketing.controller;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
-import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
-import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
-import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
-import com.tuhu.store.saas.marketing.service.IMessageRemindService;
-import com.tuhu.store.saas.marketing.service.IUtilityService;
+import com.tuhu.store.saas.marketing.service.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +41,9 @@ public class MarketingApi extends BaseApi {
     @Autowired
     private ICustomerMarketingService  iCustomerMarketingService;
 
+    @Autowired
+    private IMessageQuantityService iMessageQuantityService;
+
     @RequestMapping(value = "/getSmsPreview", method = RequestMethod.POST)
     @ApiOperation(value = "根据营销方式和资源id获取短信预览")
     public BizBaseResponse getSmsPreview(@Validated @RequestBody MarketingSmsReq req) {
@@ -73,7 +72,7 @@ public class MarketingApi extends BaseApi {
     @RequestMapping(value = "/getLastMessageCount", method = RequestMethod.GET)
     @ApiOperation(value = "获取门店剩余的短信数量额度")
     public BizBaseResponse getLastMessageCount() {
-        Long num = iCustomerMarketingService.getStoreMessageQuantity(getTenantId(), getStoreId());
+        Long num = iMessageQuantityService.getStoreMessageQuantity(getTenantId(), getStoreId());
         return new BizBaseResponse(num);
     }
 
