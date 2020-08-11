@@ -327,6 +327,11 @@ public class INewReservationServiceImpl implements INewReservationService {
         }
     }
 
+    @Override
+    public int updateStatusToOver(Long expireTime) {
+        return reservationOrderMapper.updateStatusToOver(expireTime);
+    }
+
     /**
      * 根据id查预约单
      * @param id
