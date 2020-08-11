@@ -1144,14 +1144,14 @@ public class ActivityServiceImpl implements IActivityService {
 
     @Override
     public Boolean getOriginalPriceOfActivity(ActivityResp activityResp){
-        BigDecimal totalPrice =BigDecimal.ZERO;
+        Long totalPrice = 0L;
         if(activityResp.getActivityCode()==null){
             return false;
         }
         for(ActivityItemResp item : activityResp.getItems()){
-            totalPrice = totalPrice.add(new BigDecimal(item.getOriginalPrice()).multiply(new BigDecimal(item.getOriginalPrice())));
+            totalPrice += item.getOriginalPrice() * item.getItemQuantity();
         }
-        activityResp.setOriginalTotalPrice(totalPrice);
+        activityResp.setOriginalTotalPrice(new BigDecimal(totalPrice));
         return true;
     }
 
