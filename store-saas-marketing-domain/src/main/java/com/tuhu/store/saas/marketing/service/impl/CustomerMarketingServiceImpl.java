@@ -297,6 +297,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             }
             CalculateCustomerCountReq req = new CalculateCustomerCountReq();
             req.setGroupList(groupList);
+            req.setStoreId(addReq.getStoreId());
+            req.setTenantId(addReq.getTenantId());
             List<String> customerIds = customerGroupService.calculateCustomerCount(req);
             cNum = customerIds.size();
         }else if(StringUtils.isNotEmpty(addReq.getCustomerIds())){
@@ -391,6 +393,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             }
             CalculateCustomerCountReq req = new CalculateCustomerCountReq();
             req.setGroupList(groupList);
+            req.setTenantId(addReq.getTenantId());
+            req.setStoreId(addReq.getStoreId());
             List<CustomerGroupDto> groups = customerGroupService.getCustomerGroupDto(req);
             if(CollectionUtils.isEmpty(groups)) {
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请选择客群");
@@ -489,6 +493,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             }
             CalculateCustomerCountReq req = new CalculateCustomerCountReq();
             req.setGroupList(groupList);
+            req.setStoreId(addReq.getStoreId());
+            req.setTenantId(addReq.getTenantId());
             customerIds = customerGroupService.calculateCustomerCount(req);
             if(CollectionUtils.isEmpty(customerIds)) {
                 return customeList;
