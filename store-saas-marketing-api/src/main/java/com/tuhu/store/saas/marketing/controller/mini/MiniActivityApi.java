@@ -11,6 +11,7 @@ import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.QrCodeResp;
 import com.tuhu.store.saas.marketing.response.SimpleActivityCustomerResp;
@@ -146,4 +147,35 @@ public class MiniActivityApi extends BaseApi {
         PageInfo<SimpleActivityCustomerResp> activityRespPageInfo = iActivityService.listActivityCustomer(activityCustomerListReq);
         return BizBaseResponse.success(activityRespPageInfo);
     }
+
+    @PostMapping(value = "/activityCustomerDetail")
+    @ApiOperation(value = "客户报名营销活动详情")
+    public BizBaseResponse getActivityCustomerDetail(@RequestBody ActivityCustomerReq activityCustomerReq) {
+        if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
+            activityCustomerReq.setIsFromClient(Boolean.FALSE);
+            activityCustomerReq.setStoreId(super.getStoreId());
+        }
+        ActivityCustomerResp activityCustomerResp = null;
+        try {
+            activityCustomerResp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("客户报名营销活动详情服务异常，入参：{}", activityCustomerReq, e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
+        return BizBaseResponse.success(activityCustomerResp);
+    }
+
+
+    @RequestMapping(value = "/writeOffOrCancel")
+    @ApiOperation(value = "客户报名核销或取消订单")
+    public BizBaseResponse writeOffOrCancelActivityCustomer(@RequestBody ActivityCustomerReq activityCustomerReq) {
+        activityCustomerReq.setStoreId(super.getStoreId());
+        activityCustomerReq.setTenantId(super.getTenantId());
+        activityCustomerReq.setUserId(super.getUserId());
+        Boolean result = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
+        return BizBaseResponse.success();
+    }
+
 }
