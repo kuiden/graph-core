@@ -202,7 +202,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         if(marketingMethod.equals(Byte.valueOf("0"))){
             //优惠券营销
             CouponResp coupon = couponService.getCouponDetailById(Long.valueOf(couponOrActiveId));
-            if (null == coupon) {
+            if (null == coupon || coupon.getId() == null) {
                 //禁止查询非本门店的优惠券
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券不存在");
             }

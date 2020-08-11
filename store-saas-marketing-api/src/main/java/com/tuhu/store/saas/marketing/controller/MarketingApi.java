@@ -57,6 +57,7 @@ public class MarketingApi extends BaseApi {
     @ApiOperation(value = "分页查询定向营销列表")
     public BizBaseResponse customerMarketingList(@Validated @RequestBody MarketingReq req) {
         req.setStoreId(getStoreId());
+        req.setTenantId(getTenantId());
         PageInfo<CustomerMarketing> pageList = iCustomerMarketingService.customerMarketingList(req);
         return new BizBaseResponse(pageList);
     }
@@ -65,6 +66,7 @@ public class MarketingApi extends BaseApi {
     @ApiOperation(value = "创建定向营销")
     public BizBaseResponse addMarketingCustomer(@Validated @RequestBody MarketingAddReq addReq) {
         addReq.setStoreId(getStoreId());
+        addReq.setTenantId(getTenantId());
         boolean success = iCustomerMarketingService.addMarketingCustomer(addReq);
         return new BizBaseResponse(success);
     }

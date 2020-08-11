@@ -36,7 +36,7 @@ public class MarketingAddReq {
     /**
      * 券Ids
      * marketingMethod为0为发送优惠券
-     * marketingMethod为0为发送活动
+     * marketingMethod为1为发送活动
      */
     @ApiModelProperty(value = "券或者活动Id")
     private String couponOrActiveId;
