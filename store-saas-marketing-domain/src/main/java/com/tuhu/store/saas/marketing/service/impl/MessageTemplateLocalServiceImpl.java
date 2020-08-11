@@ -45,7 +45,7 @@ public class MessageTemplateLocalServiceImpl implements IMessageTemplateLocalSer
                     .andIsDeleteEqualTo(Boolean.FALSE)
                     .andStoreIdEqualTo(storeId)
                     .andTemplateCodeEqualTo(templateCode);
-            list = templateLocalMapper.selectByExample(privateExample);
+            list = templateLocalMapper.selectByExampleWithBLOBs(privateExample);
         }
         if(list==null||list.size()<=0){
             MessageTemplateLocalExample publicExample = new MessageTemplateLocalExample();
@@ -53,7 +53,7 @@ public class MessageTemplateLocalServiceImpl implements IMessageTemplateLocalSer
             publicCriteria.andTypeEqualTo("PUBLIC")
                     .andIsDeleteEqualTo(Boolean.FALSE)
                     .andTemplateCodeEqualTo(templateCode);
-            list.addAll(templateLocalMapper.selectByExample(publicExample));
+            list.addAll(templateLocalMapper.selectByExampleWithBLOBs(publicExample));
         }
         if(list==null||list.size()<=0){
             SMSTypeEnum smsTypeEnum = SMSTypeEnum.getByCode(templateCode);
