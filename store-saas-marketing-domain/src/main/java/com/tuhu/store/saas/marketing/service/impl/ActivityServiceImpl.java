@@ -1224,7 +1224,11 @@ public class ActivityServiceImpl implements IActivityService {
             activityExampleCriteria.andStoreIdEqualTo(storeId);
         }
 
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByExampleOne(activityCustomerExample);
+        List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
+        if(activityCustomerList.size() < 1){
+            throw new MarketingException("查询不到活动信息");
+        }
+        ActivityCustomer activityCustomer = activityCustomerList.get(0);
 
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
