@@ -71,12 +71,12 @@ public class NewReservationReq implements Serializable {
     /**
      * 优惠券或活动id
      */
-    private String couponId;
+    private String marketingId;
 
     /**
      * 优惠券或活动名称
      */
-    private String couponName;
+    private String marketingName;
 
 }
 

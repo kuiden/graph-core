@@ -165,7 +165,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         if(type == 2){//发给门店:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
             List<String> list = new ArrayList<>();
             list.add(order.getCustomerPhoneNumber());
-            list.add(req.getCouponName());
+            list.add(req.getMarketingName());
             list.add(dealMdDate(order.getEstimatedArriveTime()));
             sendSms(storeInfo.getMobilePhone(),SMSTypeEnum.SAAS_MINI_ORDER_SUCCESS.templateCode(),list);
         }
@@ -325,6 +325,11 @@ public class INewReservationServiceImpl implements INewReservationService {
                     sendSms(order.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_STORE_CANCEL_ORDER.templateCode(),list);
                 }
         }
+    }
+
+    @Override
+    public int updateStatusToOver(Long expireTime) {
+        return reservationOrderMapper.updateStatusToOver(expireTime);
     }
 
     /**

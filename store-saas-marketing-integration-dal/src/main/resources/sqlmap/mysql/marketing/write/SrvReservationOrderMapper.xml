@@ -68,4 +68,11 @@
         order by status asc,create_time desc
     </select>
 
+    <update id="updateStatusToOver">
+        update srv_reservation_order
+        set update_time=now(),status='OVER'
+        where status in ('UNCONFIRMED','CONFIRMED')
+        and now() <![CDATA[>]]> DATE_ADD(estimated_arrive_time,INTERVAL #{expireTime} SECOND)
+    </update>
+
 </mapper>
