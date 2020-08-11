@@ -86,6 +86,9 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Value("${store.open.time.end}")
     private String openEndTime = "18:00:00";
 
+    @Value("${send.message.switch}")
+    private boolean sendSwitch = true;
+
     private SimpleDateFormat hmDateFormat = new SimpleDateFormat("HH:mm");
     SimpleDateFormat hmsDateFormat = new SimpleDateFormat("HH:mm:ss");
     SimpleDateFormat ymdDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -371,9 +374,11 @@ public class INewReservationServiceImpl implements INewReservationService {
         smsParameter.setPhone(phoneNum);
         smsParameter.setTemplateId(iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(templateId,null));
         smsParameter.setDatas(msgContent);
-        SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
-        if(sendResult != null && sendResult.isSendResult()){
-            result = "发送成功";
+        if(sendSwitch){
+            SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
+            if(sendResult != null && sendResult.isSendResult()){
+                result = "发送成功";
+            }
         }
         return result;
     }
@@ -595,9 +600,12 @@ public class INewReservationServiceImpl implements INewReservationService {
         }
         List<String> newList = new ArrayList<>();
         try{
+            Calendar rightNow = Calendar.getInstance();
+            rightNow.setTime(endTime);
+            rightNow.add(Calendar.HOUR, -1);
             for(String s : list){
                 long now = hmDateFormat.parse(s).getTime();
-                if(now >= startTime.getTime() && now < endTime.getTime()){
+                if(now >= startTime.getTime() && now < rightNow.getTime().getTime()){
                     newList.add(hmDateFormat.format(hmDateFormat.parse(s)));
                 }
             }
