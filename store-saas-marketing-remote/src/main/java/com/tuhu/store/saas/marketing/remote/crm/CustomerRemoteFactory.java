@@ -9,6 +9,7 @@ import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerSearchVO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.crm.vo.VehicleMaintenanceVo;
+import com.tuhu.store.saas.user.dto.UserDTO;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -69,6 +71,12 @@ public class CustomerRemoteFactory implements FallbackFactory<CustomerClient> {
             @Override
             public BizBaseResponse<List<CustomerDTO>> getCustomerListByPhoneOrName(CustomerSearchVO customerSearchVO) {
                 log.error("getCustomerListByPhoneOrName error,request={},error={}", customerSearchVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<Map<String, UserDTO>> getUserInfoMapByIdList(List<String> list) {
+                log.error("getUserInfoMapByIdList error,request={},error={}", list, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 

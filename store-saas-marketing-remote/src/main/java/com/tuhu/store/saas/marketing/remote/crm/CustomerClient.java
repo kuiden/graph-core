@@ -7,11 +7,15 @@ import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerSearchVO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.crm.vo.VehicleMaintenanceVo;
+import com.tuhu.store.saas.user.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(name = "${feign.application.crmServer.name}", fallbackFactory = CustomerRemoteFactory.class)
 public interface CustomerClient {
@@ -39,5 +43,8 @@ public interface CustomerClient {
 
     @PostMapping("/feign/crm/Customer/getCustomerListByPhoneOrName")
     BizBaseResponse<List<CustomerDTO>> getCustomerListByPhoneOrName(@RequestBody CustomerSearchVO customerSearchVO);
+
+    @PostMapping("feign/user/storeInfo/getUserInfoMapByIdList")
+    BizBaseResponse<Map<String, UserDTO>> getUserInfoMapByIdList(@RequestBody List<String> list) ;
 
 }
