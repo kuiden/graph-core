@@ -17,9 +17,29 @@ public class CardItemResp {
     private Long id;
 
     /**
+     * 卡ID
+     */
+    private Long cardId;
+
+    /**
+     * 卡名称
+     */
+    private String cardName;
+
+    /**
      * 商品ID
      */
     private String goodsId;
+
+    /**
+     * 产品PID
+     */
+    private String pid;
+
+    /**
+     * 服务项目code
+     */
+    private String serviceItemCode;
 
     /**
      * 服务项名称
@@ -47,6 +67,26 @@ public class CardItemResp {
     private Byte type;
 
     /**
+     * 业务分类
+     */
+    private String businessCategory;
+
+    /**
+     * 业务分类编码
+     */
+    private String businessCategoryCode;
+
+    /**
+     * 业务分类名称
+     */
+    private String businessCategoryName;
+
+    /**
+     * 工时
+     */
+    private Integer laborHour;
+
+    /**
      * 工时单价
      */
     private BigDecimal price;
@@ -70,5 +110,10 @@ public class CardItemResp {
      * 库存
      */
     private BigDecimal inventory;
+
+    /**
+     * 描述
+     */
+    private String description;
 
 }

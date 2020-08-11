@@ -26,4 +26,6 @@ public interface SrvReservationOrderMapper extends BaseMapper<SrvReservationOrde
 
     List<SrvReservationOrder> getBReservationList(@Param("storeId") Long storeId , @Param("reservationDate") String reservationDate);
 
+    int updateStatusToOver(@Param("expireTime") Long expireTime);
+
 }

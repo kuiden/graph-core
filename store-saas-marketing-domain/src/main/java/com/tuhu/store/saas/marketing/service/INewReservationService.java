@@ -41,4 +41,6 @@ public interface INewReservationService {
     void confirmReservation(CReservationListReq req);
 
     void cancelReservation(CancelReservationReq req);
+
+    int updateStatusToOver(Long expireTime);
 }

@@ -6,6 +6,7 @@
     <result column="initial_quantity" property="initialQuantity" jdbcType="BIGINT" />
     <result column="quantity" property="quantity" jdbcType="BIGINT" />
     <result column="remainder_quantity" property="remainderQuantity" jdbcType="BIGINT" />
+    <result column="occupy_quantity" property="occupyQuantity" jdbcType="BIGINT" />
     <result column="store_id" property="storeId" jdbcType="BIGINT" />
     <result column="tenant_id" property="tenantId" jdbcType="BIGINT" />
     <result column="description" property="description" jdbcType="VARCHAR" />
@@ -74,7 +75,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, initial_quantity, quantity, remainder_quantity, store_id, tenant_id, description, 
+    id, initial_quantity, quantity, remainder_quantity, occupy_quantity, store_id, tenant_id, description,
     create_user, update_user, create_time, update_time, is_delete
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.dataobject.MessageQuantityExample" >
@@ -142,6 +143,9 @@
       <if test="remainderQuantity != null" >
         remainder_quantity,
       </if>
+      <if test="occupyQuantity != null" >
+        occupy_quantity,
+      </if>
       <if test="storeId != null" >
         store_id,
       </if>
@@ -179,6 +183,9 @@
       </if>
       <if test="remainderQuantity != null" >
         #{remainderQuantity,jdbcType=BIGINT},
+      </if>
+      <if test="occupyQuantity != null" >
+        #{occupyQuantity,jdbcType=BIGINT},
       </if>
       <if test="storeId != null" >
         #{storeId,jdbcType=BIGINT},
@@ -227,6 +234,9 @@
       <if test="record.remainderQuantity != null" >
         remainder_quantity = #{record.remainderQuantity,jdbcType=BIGINT},
       </if>
+      <if test="record.occupyQuantity != null" >
+        occupy_quantity = #{record.occupyQuantity,jdbcType=BIGINT},
+      </if>
       <if test="record.storeId != null" >
         store_id = #{record.storeId,jdbcType=BIGINT},
       </if>
@@ -262,6 +272,7 @@
       initial_quantity = #{record.initialQuantity,jdbcType=BIGINT},
       quantity = #{record.quantity,jdbcType=BIGINT},
       remainder_quantity = #{record.remainderQuantity,jdbcType=BIGINT},
+      occupy_quantity = #{record.occupyQuantity,jdbcType=BIGINT},
       store_id = #{record.storeId,jdbcType=BIGINT},
       tenant_id = #{record.tenantId,jdbcType=BIGINT},
       description = #{record.description,jdbcType=VARCHAR},
@@ -285,6 +296,9 @@
       </if>
       <if test="remainderQuantity != null" >
         remainder_quantity = #{remainderQuantity,jdbcType=BIGINT},
+      </if>
+      <if test="occupyQuantity != null" >
+        occupy_quantity = #{occupyQuantity,jdbcType=BIGINT},
       </if>
       <if test="storeId != null" >
         store_id = #{storeId,jdbcType=BIGINT},
@@ -318,6 +332,7 @@
     set initial_quantity = #{initialQuantity,jdbcType=BIGINT},
       quantity = #{quantity,jdbcType=BIGINT},
       remainder_quantity = #{remainderQuantity,jdbcType=BIGINT},
+      occupy_quantity = #{occupyQuantity,jdbcType=BIGINT},
       store_id = #{storeId,jdbcType=BIGINT},
       tenant_id = #{tenantId,jdbcType=BIGINT},
       description = #{description,jdbcType=VARCHAR},

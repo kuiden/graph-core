@@ -7,7 +7,10 @@
  */
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.dataobject.MessageRemind;
 import com.tuhu.store.saas.marketing.request.SendRemindReq;
+
+import java.util.List;
 
 /**
  * @author xuechaofu
@@ -20,7 +23,7 @@ public interface IRemindService {
      * @param sendRemindReq
      * @return
      */
-    boolean send(SendRemindReq sendRemindReq);
+    boolean send(SendRemindReq sendRemindReq, boolean releaseOccupy);
 
     /**
      * 向指定的手机号发送短信通知
@@ -28,7 +31,9 @@ public interface IRemindService {
      * @param sendRemindReq
      * @param phone
      */
-    boolean sendWithPhone(SendRemindReq sendRemindReq, String phone);
+    boolean sendWithPhone(SendRemindReq sendRemindReq, String phone, boolean releaseOccupy);
+
+
 }
 
 

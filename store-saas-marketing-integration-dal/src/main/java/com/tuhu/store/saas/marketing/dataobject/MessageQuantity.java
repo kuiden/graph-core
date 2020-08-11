@@ -23,6 +23,11 @@ public class MessageQuantity implements Serializable {
     private Long remainderQuantity;
 
     /**
+     * 占用容量
+     */
+    private Long occupyQuantity;
+
+    /**
     * 门店id
     */
     private Long storeId;
