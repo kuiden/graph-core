@@ -8,6 +8,7 @@
     <result column="tenant_id" property="tenantId" jdbcType="BIGINT" />
     <result column="customer_count" property="customerCount" jdbcType="TINYINT" />
     <result column="group_desc" property="groupDesc" jdbcType="VARCHAR" />
+    <result column="count_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="create_user" jdbcType="VARCHAR" property="createUser" />
     <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
@@ -135,6 +136,9 @@
       <if test="customerCount != null" >
         customer_count,
       </if>
+      <if test="countTime != null">
+        count_time,
+      </if>
       <if test="createUser != null">
         create_user,
       </if>
@@ -166,6 +170,9 @@
       </if>
       <if test="customerCount != null" >
         #{customerCount,jdbcType=TINYINT},
+      </if>
+      <if test="countTime != null">
+        #{countTime,jdbcType=TIMESTAMP},
       </if>
       <if test="createUser != null">
         #{createUser,jdbcType=VARCHAR},
@@ -207,6 +214,9 @@
       <if test="record.customerCount != null" >
         customer_count = #{record.customerCount,jdbcType=TINYINT},
       </if>
+      <if test="record.countTime != null">
+        count_time = #{record.countTime,jdbcType=TIMESTAMP},
+      </if>
       <if test="record.createUser != null">
         create_user = #{record.createUser,jdbcType=VARCHAR},
       </if>
@@ -242,6 +252,9 @@
       </if>
       <if test="customerCount != null" >
         customer_count = #{customerCount,jdbcType=TINYINT},
+      </if>
+      <if test="countTime != null">
+        count_time = #{countTime,jdbcType=TIMESTAMP},
       </if>
       <if test="createUser != null">
         create_user = #{createUser,jdbcType=VARCHAR},

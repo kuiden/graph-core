@@ -26,6 +26,11 @@ public class ActivityItemReq implements Serializable {
     private Long storeId;
 
     /**
+     * 租户id
+     */
+    private Long tenantId;
+
+    /**
      * 活动编码
      */
     private String activityCode;

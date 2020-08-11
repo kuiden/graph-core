@@ -49,6 +49,8 @@ public interface IActivityService {
      */
     ActivityResp getActivityDetailById(Long activityId, Long storeId);
 
+    ActivityResp getActivityDetailById(Long activityId);
+
     /**
      * 营销活动上下架操作
      *
@@ -106,6 +108,14 @@ public interface IActivityService {
      */
     ActivityCustomerResp getActivityCustomerDetail(ActivityCustomerReq activityCustomerReq);
 
+
+    /**
+     * 计算活动的原价格
+     * @param activityResp
+     * @return
+     */
+    Boolean getOriginalPriceOfActivity(ActivityResp activityResp);
+
     /**
      * 根据活动编码获取活动信息
      *
@@ -120,7 +130,7 @@ public interface IActivityService {
      * @param activityCustomerReq
      * @return
      */
-    ActivityCustomerResp writeOffOrCancelActivityCustomer(ActivityCustomerReq activityCustomerReq);
+    Boolean writeOffOrCancelActivityCustomer(ActivityCustomerReq activityCustomerReq);
 
     /**
      * 使用或取消使用营销活动

@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.util;
 
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -51,8 +52,12 @@ public class WxUtil {
         try {
             Map map = new HashMap();
             map.put("scene", scene);
-            //todo 小程序正式发版后添加此页面
-//            map.put("page", path);
+            //todo 小程序正式发版后传path
+//            if (StringUtils.isEmpty(path)) {
+//                map.put("page", "pages/index/index");
+//            }else {
+//                map.put("page", path);
+//            }
             map.put("width", width);
             String data = JSONObject.toJSONString(map);// 转化成json
             String url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + token;

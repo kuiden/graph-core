@@ -10,12 +10,10 @@ import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.ReservationPeriodResp;
-import com.tuhu.store.saas.marketing.service.ICouponService;
-import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
-import com.tuhu.store.saas.marketing.service.INewReservationService;
-import com.tuhu.store.saas.marketing.service.ISMSService;
+import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -47,13 +45,16 @@ public class H5ReservationApi extends BaseApi {
     ISMSService ismsService;
 
     @Autowired
-    private ICouponService iCouponService;
+    ICouponService iCouponService;
+
+    @Autowired
+    IActivityService iActivityService;
 
     @Autowired
     IMessageTemplateLocalService iMessageTemplateLocalService;
 
     @Autowired
-    private StoreRedisUtils storeRedisUtils;
+    StoreRedisUtils storeRedisUtils;
 
     @Value("${add.reservation.verificationCode.expireTime}")
     private Integer expireTime = 5;
@@ -97,7 +98,7 @@ public class H5ReservationApi extends BaseApi {
         }
         req.setTeminal(0);
         //校验验证码
-        String code = storeRedisUtils.redisGet(verificationCodeKey);
+        String code = storeRedisUtils.redisGet(verificationCodeKey+req.getCustomerPhoneNumber());
         if(code == null){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码已过期");
         }
@@ -115,8 +116,13 @@ public class H5ReservationApi extends BaseApi {
                 req.setTenantId(couponResp.getTenantId());
             }
         }else if(SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())){
-            req.setStoreId(22156l);
-            req.setTenantId(8l);
+            ActivityResp activityResp = iActivityService.getActivityDetailById(Long.parseLong(req.getCouponId()));
+            if(activityResp == null){
+                return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "活动不存在");
+            }else if(activityResp.getStoreId() != null && activityResp.getTenantId() != null){
+                req.setStoreId(activityResp.getStoreId());
+                req.setTenantId(activityResp.getTenantId());
+            }
         }
 
         result.setData(iNewReservationService.addReservation(req,2));
@@ -154,8 +160,8 @@ public class H5ReservationApi extends BaseApi {
         SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
         if(sendResult != null && sendResult.isSendResult()){
             //将验证码写入redis，并设置过期时间
-            storeRedisUtils.redisSet(verificationCodeKey,pwd.toString());
-            storeRedisUtils.setExpire(verificationCodeKey, expireTime, TimeUnit.MINUTES);
+            storeRedisUtils.redisSet(verificationCodeKey+phoneNumber,pwd.toString());
+            storeRedisUtils.setExpire(verificationCodeKey+phoneNumber, expireTime, TimeUnit.MINUTES);
             return new BizBaseResponse("发送成功");
         }else {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.SYSTEM_INNER_ERROR, "发送失败");

@@ -8,6 +8,7 @@
     <result column="customer_id" jdbcType="VARCHAR" property="customerId" />
     <result column="telephone" jdbcType="VARCHAR" property="telephone" />
     <result column="store_id" jdbcType="BIGINT" property="storeId" />
+    <result column="tenant_id" jdbcType="BIGINT" property="tenantId" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="use_time" jdbcType="TIMESTAMP" property="useTime" />
     <result column="use_status" jdbcType="TINYINT" property="useStatus" />
@@ -103,6 +104,23 @@
       </if>
     </if>
   </select>
+
+  <select id="selectByExampleOne" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    top 1
+    <include refid="Base_Column_List" />
+    from activity_customer
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
@@ -154,6 +172,9 @@
       <if test="storeId != null">
         store_id,
       </if>
+      <if test="tenantId != null">
+        tenant_id,
+      </if>
       <if test="createTime != null">
         create_time,
       </if>
@@ -200,6 +221,9 @@
       </if>
       <if test="storeId != null">
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null">
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="createTime != null">
         #{createTime,jdbcType=TIMESTAMP},

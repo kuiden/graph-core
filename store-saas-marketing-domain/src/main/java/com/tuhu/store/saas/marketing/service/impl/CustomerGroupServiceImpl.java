@@ -102,6 +102,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
         record.setId(id);
         record.setCustomerCount(Long.valueOf(customerIdList.size()));
+        record.setCountTime(new Date());
         storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
     }
 
@@ -174,16 +175,16 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
     }
     @Override
     public PageInfo<StoreCustomerGroupRelation> getCustomerGroupList(CustomerGroupListReq req) {
-        PageInfo<StoreCustomerGroupRelation> result = new PageInfo<>();
-        PageHelper.startPage(req.getPageNum(), req.getPageSize());
         StoreCustomerGroupRelationExample example = new StoreCustomerGroupRelationExample();
         StoreCustomerGroupRelationExample.Criteria criteria = example.createCriteria();
         criteria.andStoreIdEqualTo(req.getStoreId());
         if(StringUtils.isNotBlank(req.getQuery())){
             criteria.andGroupNameLike("%".concat(req.getQuery()).concat("%"));
         }
+        example.setOrderByClause("create_time desc");
+        PageHelper.startPage(req.getPageNum()+1, req.getPageSize());
         List<StoreCustomerGroupRelation> storeCustomerGroupRelations = storeCustomerGroupRelationMapper.selectByExample(example);
-        result.setList(storeCustomerGroupRelations);
+        PageInfo<StoreCustomerGroupRelation> result = new PageInfo<>(storeCustomerGroupRelations);
         return result;
     }
 
@@ -325,11 +326,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             sb.append(req.getConsumerTimeDay()+"天内消费次数");
             boolean hasLeast =false;
             boolean hasMax =false;
-            if(req.getConsumerLeastTime()!=null && req.getConsumerLeastTime()>0){
+            if(req.getConsumerLeastTime()!=null && req.getConsumerLeastTime()>=0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerLeastTime()),CustomerGroupConstant.LEAST_TIME,">=");
                 hasLeast = true;
             }
-            if(req.getConsumerMaxTime()!=null && req.getConsumerMaxTime()>0){
+            if(req.getConsumerMaxTime()!=null && req.getConsumerMaxTime()>=0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerMaxTime()),CustomerGroupConstant.MAX_TIME,"<=");
                 hasMax = true;
             }
@@ -347,11 +348,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             sb.append(req.getConsumerAmountDay()+"天内消费金额");
             boolean hasLeast =false;
             boolean hasMax =false;
-            if(req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount()>0){
+            if(req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount()>=0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerLeastAmount()),CustomerGroupConstant.LEAST_AMOUNT,">=");
                 hasLeast = true;
             }
-            if(req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount()>0){
+            if(req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount()>=0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerMaxAmount()),CustomerGroupConstant.MAX_AMOUNT,"<=");
                 hasMax = true;
             }
@@ -546,6 +547,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 record.setId(customerGroupDto.getId());
                 record.setTenantId(req.getTenantId());
                 record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                record.setCountTime(new Date());
                 storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
                 if(CollectionUtils.isEmpty(customerIdList)){
                     customerIdList.addAll(singleCustomerIdList);
