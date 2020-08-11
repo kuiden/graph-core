@@ -8,7 +8,9 @@ import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.service.ISMSService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -32,6 +34,9 @@ public class SMSServiceImpl implements ISMSService, InitializingBean {
     @Value("${saas.sms.yuntongxun.appid}")
     private String smsShopAppID;
 
+    @Autowired
+    private ApplicationContext context;
+
     /**
      * 短信sdk
      */
@@ -54,6 +59,15 @@ public class SMSServiceImpl implements ISMSService, InitializingBean {
         if(smsInfoReq.getDatas()!=null){
             datas = smsInfoReq.getDatas().toArray(new String[]{});
         }
+
+        String profile = context.getEnvironment().getActiveProfiles()[0];
+        if ("test".equals(profile) || "dev".equals(profile)) {
+            smsResult.setSendResult(true);
+            smsResult.setStatusCode("000000");
+            smsResult.setStatusMsg("短信发送成功");
+            return smsResult;
+        }
+
         HashMap<String, Object> result = sdk.sendTemplateSMS(smsInfoReq.getPhone(),smsInfoReq.getTemplateId(),datas);
         log.info(" {},返回参数 : {}", funName, JSON.toJSONString(result));
         smsResult.setSendResult(true);
