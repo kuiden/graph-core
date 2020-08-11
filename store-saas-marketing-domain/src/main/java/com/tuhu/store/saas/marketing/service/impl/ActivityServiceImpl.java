@@ -1229,9 +1229,19 @@ public class ActivityServiceImpl implements IActivityService {
             throw new MarketingException("查询不到活动信息");
         }
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
-
+        //查询结果
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
+        }
+        //状态检查
+        if(useStatus.equals(activityCustomer.getUseStatus())){
+            if(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())) {
+                //重复核销
+                throw new MarketingException("已核销，请勿重复执行");
+            }else{
+                //取消
+                throw new MarketingException("已取消，无法操作");
+            }
         }
 
         try {
@@ -1260,6 +1270,7 @@ public class ActivityServiceImpl implements IActivityService {
             }
             activityCustomer.setUseTime(new Date());
             activityCustomer.setMessageStatus(messageStatus.toString());
+            activityCustomer.setUseStatus(useStatus.byteValue());
 //            iRemindService.send(sendRemindReq);
         } catch (Exception e) {
 //            log.error("营销活动发送短信异常,request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
