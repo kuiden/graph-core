@@ -114,7 +114,7 @@ public class ClientCouponApi extends BaseApi {
      * @param code
      * @return
      */
-    @GetMapping(value = "/open/openGetCustomerCouponCodeByPhone", produces = MediaType.IMAGE_JPEG_VALUE)
+    @GetMapping(value = "/open/openGetCustomerCouponCodeByPhone")
     @ResponseBody
     public byte[] openGetCustomerCouponCodeByPhone(@RequestParam String phone, String code) {
         if (StringUtils.isBlank(code) || StringUtils.isBlank(phone)) {

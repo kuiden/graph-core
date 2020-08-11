@@ -12,6 +12,7 @@ import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponScopeCategoryMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper;
@@ -595,7 +596,6 @@ public class IMCouponServiceImpl implements IMCouponService {
         List<String> couponCodeList = Lists.newArrayList();
         couponCodeList.add(couponItemResp.getCode());
         Map sendNumberMap = getUsedCouponNumberMap(couponCodeList);
-
          /*
                   获取优惠券剩余数量
                   grantNumber==-1: 领取张数不限
@@ -778,6 +778,8 @@ public class IMCouponServiceImpl implements IMCouponService {
             BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(vo);
             if (crmResult != null && crmResult.getData() != null && crmResult.getData().getPhoneNumber().equals(phone)) {
                 result = customerCoupon.getCode();
+            }else {
+                throw  new StoreSaasMarketingException("用户数据校验失败");
             }
         }
         return QrCode.getQRCodeImage(result, 500, 500);
