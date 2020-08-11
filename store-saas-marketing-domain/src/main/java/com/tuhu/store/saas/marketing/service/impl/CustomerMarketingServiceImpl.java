@@ -321,7 +321,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
         CouponResp coupon = null;
         ActivityResponse activity = null;
-        if(addReq.getMarketingMethod().equals(0)){
+        if("0".equals(addReq.getMarketingMethod().toString())){
             Long couponId = Long.valueOf(addReq.getCouponOrActiveId());
             coupon = couponService.getCouponDetailById(couponId);
             if (null == coupon || !addReq.getStoreId().equals(coupon.getStoreId())) {
