@@ -37,7 +37,7 @@ public class MessageRemindServiceImpl implements IMessageRemindService {
     }
 
     @Override
-    public List<MessageRemind> getAllNeedSendReminds() {
+    public List<MessageRemind> getAllNeedSendMarketingReminds() {
         MessageRemindExample remindExample = new MessageRemindExample();
         MessageRemindExample.Criteria statusUnsend = remindExample.createCriteria();
         MessageRemindExample.Criteria statusSendFailed = remindExample.createCriteria();
@@ -49,5 +49,10 @@ public class MessageRemindServiceImpl implements IMessageRemindService {
         remindExample.or(statusSendFailed);
 
         return remindMapper.selectByExample(remindExample);
+    }
+
+    @Override
+    public void updateMessageRemindById(MessageRemind messageRemind) {
+        remindMapper.updateByPrimaryKey(messageRemind);
     }
 }

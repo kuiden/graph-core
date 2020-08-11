@@ -61,7 +61,7 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
             messageQuantity.setQuantity(initNum);
             messageQuantity.setOccupyQuantity(0L);
             messageQuantity.setRemainderQuantity(initNum);
-            quantityMapper.insert(messageQuantity);
+            quantityMapper.insertSelective(messageQuantity);
             return messageQuantity;
         }
         MessageQuantity messageQuantity = list.get(0);

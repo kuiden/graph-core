@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.controller.mini;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Maps;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
@@ -37,14 +38,18 @@ public class MiniCardApi extends BaseApi {
     @Autowired
     private ICardService iCardService;
 
+    @PostMapping("/client/query")
+    @ApiOperation("C端-查询客户次卡")
+    public BizBaseResponse<List<CardResp>> clientQuery(@Validated @RequestBody MiniQueryCardReq req){
+        req.setCustomerId(EndUserContextHolder.getCustomerId());
+        req.setStoreId(EndUserContextHolder.getStoreId());
+        req.setTenantId(EndUserContextHolder.getTenantId());
+        return new BizBaseResponse(iCardService.queryCardRespList(req));
+    }
+
     @PostMapping("/query")
-    @ApiOperation("查询客户次卡")
-    public BizBaseResponse<List<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req) {
-        String customerId = req.getCustomerId();
-        if (null == customerId || StringUtils.isBlank(customerId)) {
-            customerId = super.getUserId();
-            req.setCustomerId(customerId);
-        }
+    @ApiOperation("B端-查询客户次卡")
+    public BizBaseResponse<List<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req){
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(iCardService.queryCardRespList(req));

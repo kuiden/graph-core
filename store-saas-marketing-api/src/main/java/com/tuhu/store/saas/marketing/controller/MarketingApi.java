@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @Version: 1.0.0
  */
 @RestController
-@RequestMapping(value = "/crm/marketing")
+@RequestMapping(value = "/marketing")
 @Api(value = "定向营销相关api")
 @Slf4j
 public class MarketingApi extends BaseApi {
@@ -80,7 +80,7 @@ public class MarketingApi extends BaseApi {
     @RequestMapping(value = "/test", method = RequestMethod.GET)
     @ApiOperation(value = "test")
     public BizBaseResponse test() {
-        return new BizBaseResponse(iMessageRemindService.getAllNeedSendReminds());
+        return new BizBaseResponse(iMessageRemindService.getAllNeedSendMarketingReminds());
     }
 
 

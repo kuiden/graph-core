@@ -179,6 +179,7 @@ public class CardServiceImpl implements ICardService {
 
     @Override
     public List<CardResp> queryCardRespList(MiniQueryCardReq req) {
+        log.info("查询客户次卡，请求参数：{}",JSONObject.toJSON(req));
         CrdCardExample cardExample = new CrdCardExample();
         CrdCardExample.Criteria criteria = cardExample.createCriteria();
         criteria.andCustomerIdEqualTo(req.getCustomerId())
