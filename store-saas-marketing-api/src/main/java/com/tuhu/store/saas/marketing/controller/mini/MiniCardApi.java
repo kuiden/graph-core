@@ -69,32 +69,5 @@ public class MiniCardApi extends BaseApi {
         return new BizBaseResponse(iCardService.consumptionHistory(cardId));
     }
 
-    @Autowired
-    private ICouponService couponService;
-    @Autowired
-    private IActivityService activityService;
-
-    /**
-     * 核销扫码
-     *
-     * @param code
-     * @return
-     */
-    @RequestMapping(value = "/writeOff", method = RequestMethod.GET)
-    public BizBaseResponse<Boolean> writeOff(@RequestParam String code) {
-        Boolean result = Boolean.FALSE;
-        if (code.startsWith("YHQ")) {
-            log.info("调用优惠券核销接口 -> {}", code);
-            couponService.writeOffCustomerCouponV2(code);
-            result = Boolean.FALSE;
-        } else if (code.startsWith("YXHD")) {
-            log.info("调用活动核销接口P{" + code);
-            ActivityCustomerReq req = new ActivityCustomerReq();
-            req.setActivityOrderCode(code);
-            req.setUseStatus(Integer.valueOf(1));
-            result = activityService.writeOffOrCancelActivityCustomer(req);
-        }
-        return new BizBaseResponse<>(result);
-    }
 
 }
