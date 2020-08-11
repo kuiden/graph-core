@@ -24,7 +24,9 @@ public interface IMessageRemindService {
      * 获取所有的未发送和尝试次数为0的发送失败的记录
      *
      */
-    List<MessageRemind> getAllNeedSendReminds();
+    List<MessageRemind> getAllNeedSendMarketingReminds();
+
+    void updateMessageRemindById(MessageRemind messageRemind);
 
 }
 

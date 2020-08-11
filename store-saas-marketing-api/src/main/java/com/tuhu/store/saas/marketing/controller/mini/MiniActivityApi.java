@@ -168,7 +168,7 @@ public class MiniActivityApi extends BaseApi {
     }
 
 
-    @RequestMapping(value = "/writeOffOrCancel")
+    @PostMapping(value = "/writeOffOrCancel")
     @ApiOperation(value = "客户报名核销或取消订单")
     public BizBaseResponse writeOffOrCancelActivityCustomer(@RequestBody ActivityCustomerReq activityCustomerReq) {
         activityCustomerReq.setStoreId(super.getStoreId());

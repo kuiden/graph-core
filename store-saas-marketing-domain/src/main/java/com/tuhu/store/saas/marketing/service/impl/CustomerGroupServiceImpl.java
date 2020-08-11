@@ -53,8 +53,15 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         if(CollectionUtils.isEmpty(customerGroupDto.getCustomerGroupRuleReqList())){
             throw new StoreSaasMarketingException("请填写特征信息");
         }
+        if(StringUtils.isBlank(customerGroupDto.getGroupName())){
+            throw new StoreSaasMarketingException("客群名称不能为空");
+        }
         Long id = null;
         if(customerGroupDto.getId()==null){//新增
+
+            if(hasSameGroupName(customerGroupDto.getGroupName(),null)){
+                throw new StoreSaasMarketingException("客群名称["+customerGroupDto.getGroupName()+"]已存在");
+            }
             customerGroupDto.setCreateUser(req.getCreateUser());
             customerGroupDto.setCreateTime(new Date());
             StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
@@ -65,7 +72,10 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             id = record.getId();
         }else{//更新
-
+            //校验重名
+            if(hasSameGroupName(customerGroupDto.getGroupName(),customerGroupDto.getId())){
+                throw new StoreSaasMarketingException("客群名称["+customerGroupDto.getGroupName()+"]已存在");
+            }
             StoreCustomerGroupRelation storeCustomerGroupRelation = new StoreCustomerGroupRelation();
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
             storeCustomerGroupRelation.setUpdateTime(new Date());
@@ -91,6 +101,20 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         //计算客群数量
         updateCustomerCountInfo(req.getStoreId(), id);
 
+    }
+
+    private Boolean hasSameGroupName(String groupName,Long groupId) {
+        StoreCustomerGroupRelationExample storeCustomerGroupRelationExample = new StoreCustomerGroupRelationExample();
+        StoreCustomerGroupRelationExample.Criteria criteria1 = storeCustomerGroupRelationExample.createCriteria();
+        criteria1.andGroupNameEqualTo(groupName);
+        if(groupId!=null){
+            criteria1.andGroupIdNotEqualTo(groupId);
+        }
+        List<StoreCustomerGroupRelation> storeCustomerGroupRelations = storeCustomerGroupRelationMapper.selectByExample(storeCustomerGroupRelationExample);
+        if(CollectionUtils.isNotEmpty(storeCustomerGroupRelations)){
+            return true;
+        }
+        return false;
     }
 
     private void updateCustomerCountInfo(Long storeId, Long id) {
