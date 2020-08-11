@@ -86,9 +86,6 @@ public class INewReservationServiceImpl implements INewReservationService {
     @Value("${store.open.time.end}")
     private String openEndTime = "18:00:00";
 
-    @Value("${send.message.switch}")
-    private boolean sendSwitch = true;
-
     private SimpleDateFormat hmDateFormat = new SimpleDateFormat("HH:mm");
     SimpleDateFormat hmsDateFormat = new SimpleDateFormat("HH:mm:ss");
     SimpleDateFormat ymdDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -374,11 +371,9 @@ public class INewReservationServiceImpl implements INewReservationService {
         smsParameter.setPhone(phoneNum);
         smsParameter.setTemplateId(iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(templateId,null));
         smsParameter.setDatas(msgContent);
-        if(sendSwitch){
-            SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
-            if(sendResult != null && sendResult.isSendResult()){
-                result = "发送成功";
-            }
+        SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
+        if(sendResult != null && sendResult.isSendResult()){
+            result = "发送成功";
         }
         return result;
     }
