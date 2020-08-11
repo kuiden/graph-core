@@ -141,6 +141,11 @@ public interface ICouponService {
      */
     void writeOffCustomerCoupon(CustomerCoupon customerCoupon, ServiceOrderCouponUseVO serviceOrderCouponUseVO);
 
+
+
+    @Transactional
+    void writeOffCustomerCouponV2(String code);
+
     /**
      * 根据工单取消核销客户优惠券
      *
