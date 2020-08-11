@@ -180,7 +180,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         if(StringUtils.isEmpty(paramStr)) {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信参数生成失败");
         }
-        String[] params = StringUtils.split(","+paramStr,",");
+        String[] params = StringUtils.splitByWholeSeparatorPreserveAllTokens(","+paramStr,",");
 
         return MessageFormat.format(template,params);
     }

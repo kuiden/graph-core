@@ -279,7 +279,7 @@ public class CardServiceImpl implements ICardService {
                 .andTenantIdEqualTo(req.getTenantId())
                 .andTypeEqualTo(req.getType().byteValue());
         if (null != req.getSearch()){
-            criteria.andCardNameEqualTo("%" + req.getSearch() + "%");
+            criteria.andCardNameLike("%" + req.getSearch() + "%");
         }
         List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
         List<CardItemResp> cardItemRespList = new ArrayList<>();
