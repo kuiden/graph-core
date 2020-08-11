@@ -4,6 +4,7 @@ import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
+import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.response.card.CardResp;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import io.swagger.annotations.Api;
@@ -32,9 +33,9 @@ public class MiniCardApi extends BaseApi {
 
     @PostMapping("/query")
     @ApiOperation("查询客户次卡")
-    public BizBaseResponse<PageInfo<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req){
+    public BizBaseResponse<List<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req){
         String customerId = req.getCustomerId();
-        if (StringUtils.isBlank(customerId)){
+        if (null == customerId || StringUtils.isBlank(customerId)){
             customerId = super.getUserId();
             req.setCustomerId(customerId);
         }
@@ -43,20 +44,13 @@ public class MiniCardApi extends BaseApi {
         return new BizBaseResponse(iCardService.queryCardRespList(req));
     }
 
-    @PostMapping("/queryServiceItem")
+    @PostMapping("/queryCardItem")
     @ApiOperation("查询次卡服务项目")
-    public BizBaseResponse queryServiceItem(@Validated @RequestBody MiniQueryCardReq req){
-
-        return new BizBaseResponse();
+    public BizBaseResponse queryCardItem(@Validated @RequestBody QueryCardItemReq req){
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        return new BizBaseResponse(iCardService.queryCardItem(req));
     }
-
-    @PostMapping("/queryGoodsItem")
-    @ApiOperation("查询次卡服务项目")
-    public BizBaseResponse queryGoodsItem(@Validated @RequestBody MiniQueryCardReq req){
-
-        return new BizBaseResponse();
-    }
-
 
     @GetMapping("/consumptionHistory")
     @ApiOperation("次卡消费历史")

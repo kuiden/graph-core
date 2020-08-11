@@ -30,7 +30,7 @@ import java.io.IOException;
  * Description:
  */
 @Slf4j
-@Component
+//@Component
 /**
  * 获取C端用户信息拦截逻辑
  */

@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.remote.crm;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
@@ -38,6 +39,12 @@ public class StoreInfoRemoteFactory implements FallbackFactory<StoreInfoClient> 
             @Override
             public BizBaseResponse<ClientStoreDTO> getStoreInfoForClient(ClientStoreVO clientStoreVO) {
                 log.error("getStoreInfoForClient error,request={},error={}", clientStoreVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<StoreInfoRelatedDTO> getRelatedInfoByStoreId(Long storeId) {
+                log.error("getRelatedInfoByStoreId error,request={},error={}", storeId, org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
         };

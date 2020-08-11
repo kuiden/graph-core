@@ -3,13 +3,10 @@ package com.tuhu.store.saas.marketing.controller;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
-import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
-import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
-import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
-import com.tuhu.store.saas.marketing.service.IUtilityService;
+import com.tuhu.store.saas.marketing.service.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +34,15 @@ public class MarketingApi extends BaseApi {
     private IUtilityService iUtilityService;
 
     @Autowired
+    private IMessageRemindService iMessageRemindService;
+
+    @Autowired
     private IMarketingSendRecordService marketingSendRecordService;
     @Autowired
     private ICustomerMarketingService  iCustomerMarketingService;
+
+    @Autowired
+    private IMessageQuantityService iMessageQuantityService;
 
     @RequestMapping(value = "/getSmsPreview", method = RequestMethod.POST)
     @ApiOperation(value = "根据营销方式和资源id获取短信预览")
@@ -69,15 +72,15 @@ public class MarketingApi extends BaseApi {
     @RequestMapping(value = "/getLastMessageCount", method = RequestMethod.GET)
     @ApiOperation(value = "获取门店剩余的短信数量额度")
     public BizBaseResponse getLastMessageCount() {
-        MessageQuantity messageQuantity = iCustomerMarketingService.getStoreMessageQuantity(getTenantId(), getStoreId());
-        return new BizBaseResponse(messageQuantity.getRemainderQuantity());
+        Long num = iMessageQuantityService.getStoreMessageQuantity(getTenantId(), getStoreId());
+        return new BizBaseResponse(num);
     }
 
 
     @RequestMapping(value = "/test", method = RequestMethod.GET)
     @ApiOperation(value = "test")
-    public BizBaseResponse test(String longUrl) {
-        return new BizBaseResponse(iUtilityService.getShortUrl(longUrl));
+    public BizBaseResponse test() {
+        return new BizBaseResponse(iMessageRemindService.getAllNeedSendReminds());
     }
 
 
