@@ -141,6 +141,11 @@ public class StoreCustomerGroupRelationExample {
             return (StoreCustomerGroupRelationExample.Criteria) this;
         }
 
+        public StoreCustomerGroupRelationExample.Criteria andGroupNameEqualTo(String value) {
+            addCriterion("group_name =", value, "groupName");
+            return (StoreCustomerGroupRelationExample.Criteria) this;
+        }
+
 
     }
 
