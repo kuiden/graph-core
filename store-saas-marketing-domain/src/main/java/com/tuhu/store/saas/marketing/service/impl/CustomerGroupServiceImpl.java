@@ -309,6 +309,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         customerGroupDto.setGroupName(req.getConsumerGroupName());
         customerGroupDto.setStoreId(req.getStoreId());
         customerGroupDto.setTenantId(req.getTenantId());
+        customerGroupDto.setCreateUser(req.getCreateUser());
         customerGroupDto.setId(req.getId());
         StringBuffer sb = new StringBuffer();
         List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();
