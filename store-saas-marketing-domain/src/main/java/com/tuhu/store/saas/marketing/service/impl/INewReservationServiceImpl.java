@@ -595,9 +595,12 @@ public class INewReservationServiceImpl implements INewReservationService {
         }
         List<String> newList = new ArrayList<>();
         try{
+            Calendar rightNow = Calendar.getInstance();
+            rightNow.setTime(endTime);
+            rightNow.add(Calendar.HOUR, -1);
             for(String s : list){
                 long now = hmDateFormat.parse(s).getTime();
-                if(now >= startTime.getTime() && now < endTime.getTime()){
+                if(now >= startTime.getTime() && now < rightNow.getTime().getTime()){
                     newList.add(hmDateFormat.format(hmDateFormat.parse(s)));
                 }
             }
