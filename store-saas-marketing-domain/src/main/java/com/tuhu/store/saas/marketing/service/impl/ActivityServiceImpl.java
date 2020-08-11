@@ -1252,6 +1252,7 @@ public class ActivityServiceImpl implements IActivityService {
                 String notCancelKey=activityApplyCountPrefix.concat(activityCustomer.getActivityCode());
                 redisTemplate.opsForValue().increment(notCancelKey,-1L);
             }
+            activityCustomer.setUseTime(new Date());
             activityCustomer.setMessageStatus(messageStatus.toString());
 //            iRemindService.send(sendRemindReq);
         } catch (Exception e) {
