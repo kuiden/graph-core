@@ -90,11 +90,8 @@ public class H5ReservationApi extends BaseApi {
         if(StringUtils.isBlank(req.getSourceChannel())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约渠道不能为空");
         }
-        if(StringUtils.isBlank(req.getCouponId())){
+        if(StringUtils.isBlank(req.getMarketingId())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动id不能为空");
-        }
-        if(StringUtils.isBlank(req.getCouponName())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动名称不能为空");
         }
         req.setTeminal(0);
         //校验验证码
@@ -107,21 +104,23 @@ public class H5ReservationApi extends BaseApi {
         }
         //根据活动id或优惠券id查出storeId和tenantId
         if(SrvReservationChannelEnum.COUPON.getEnumCode().equals(req.getSourceChannel())){
-            CouponResp couponResp = iCouponService.getCouponDetailById(Long.parseLong(req.getCouponId()));
+            CouponResp couponResp = iCouponService.getCouponDetailById(Long.parseLong(req.getMarketingId()));
             log.info("根据优惠券id查详情返回", JSONObject.toJSONString(couponResp));
             if(couponResp == null){
                 return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券不存在");
             }else if(couponResp.getStoreId() != null && couponResp.getTenantId() != null){
                 req.setStoreId(couponResp.getStoreId());
                 req.setTenantId(couponResp.getTenantId());
+                req.setMarketingName(couponResp.getTitle());
             }
         }else if(SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())){
-            ActivityResp activityResp = iActivityService.getActivityDetailById(Long.parseLong(req.getCouponId()));
+            ActivityResp activityResp = iActivityService.getActivityDetailById(Long.parseLong(req.getMarketingId()));
             if(activityResp == null){
                 return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "活动不存在");
             }else if(activityResp.getStoreId() != null && activityResp.getTenantId() != null){
                 req.setStoreId(activityResp.getStoreId());
                 req.setTenantId(activityResp.getTenantId());
+                req.setMarketingName(activityResp.getActivityTitle());
             }
         }
 
