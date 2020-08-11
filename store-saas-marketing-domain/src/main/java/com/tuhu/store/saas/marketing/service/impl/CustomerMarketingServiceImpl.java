@@ -305,7 +305,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             cNum = strArray.length;
         }
         //短信可用数量
-        Long availableNum = this.getStoreMessageQuantity(addReq.getTenantId(), addReq.getStoreId());
+        Long availableNum = iMessageQuantityService.getStoreMessageQuantity(addReq.getTenantId(), addReq.getStoreId());
         if(availableNum<cNum){
             log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,availableNum);
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
@@ -517,17 +517,5 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         return customeList;
     }
 
-    @Override
-    public Long getStoreMessageQuantity(Long tenantId, Long storeId){
-        MessageQuantity req = new MessageQuantity();
-        req.setStoreId(storeId);
-        req.setTenantId(tenantId);
-        req.setCreateUser(UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName());
-        MessageQuantity messageQuantity = iMessageQuantityService.selectQuantityByTenantIdAndStoreId(req);
-        Long availableNum = messageQuantity.getRemainderQuantity() - messageQuantity.getOccupyQuantity();
-        if(availableNum < 1) {
-            return 0L;
-        }
-        return availableNum;
-    }
+
 }

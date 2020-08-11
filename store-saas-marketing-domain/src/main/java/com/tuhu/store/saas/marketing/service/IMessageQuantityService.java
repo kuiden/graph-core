@@ -34,6 +34,14 @@ public interface IMessageQuantityService {
      */
     void setStoreOccupyQuantity(MessageQuantity select, Long occupyNum, String updateUser, boolean occupy);
 
+    /**
+     * 获取门店的短信数量信息
+     * @param tenantId
+     * @param storeId
+     * @return
+     */
+    Long getStoreMessageQuantity(Long tenantId, Long storeId);
+
 }
 
 

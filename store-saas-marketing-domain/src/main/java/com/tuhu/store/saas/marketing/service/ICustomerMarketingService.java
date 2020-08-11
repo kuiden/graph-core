@@ -53,11 +53,4 @@ public interface ICustomerMarketingService extends Default {
      */
     String getSmsPreview(MarketingSmsReq req);
 
-    /**
-     * 获取门店的短信数量信息
-     * @param tenantId
-     * @param storeId
-     * @return
-     */
-    Long getStoreMessageQuantity(Long tenantId, Long storeId);
 }

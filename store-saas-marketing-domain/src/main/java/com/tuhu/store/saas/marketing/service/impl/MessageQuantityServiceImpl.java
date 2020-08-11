@@ -8,6 +8,7 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.dataobject.MessageQuantityExample;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
@@ -99,6 +100,20 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
         messageQuantity.setUpdateTime(new Date());
         messageQuantity.setUpdateUser(updateUser);
         quantityMapper.updateByPrimaryKey(messageQuantity);
+    }
+
+    @Override
+    public Long getStoreMessageQuantity(Long tenantId, Long storeId){
+        MessageQuantity req = new MessageQuantity();
+        req.setStoreId(storeId);
+        req.setTenantId(tenantId);
+        req.setCreateUser(UserContextHolder.getUser()==null?"system":UserContextHolder.getUserName());
+        MessageQuantity messageQuantity = this.selectQuantityByTenantIdAndStoreId(req);
+        Long availableNum = messageQuantity.getRemainderQuantity() - messageQuantity.getOccupyQuantity();
+        if(availableNum < 1) {
+            return 0L;
+        }
+        return availableNum;
     }
 
 }
