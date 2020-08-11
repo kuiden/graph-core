@@ -111,18 +111,18 @@ public class ClientCouponApi extends BaseApi {
      * 对外 获取小程序核销二维码
      *
      * @param phone
-     * @param encryptedCode
+     * @param code
      * @return
      */
     @GetMapping(value = "/open/openGetCustomerCouponCodeByPhone", produces = MediaType.IMAGE_JPEG_VALUE)
     @ResponseBody
-    public byte[] openGetCustomerCouponCodeByPhone(@RequestParam String phone, String encryptedCode) {
-        if (StringUtils.isBlank(encryptedCode) || StringUtils.isBlank(phone)) {
+    public byte[] openGetCustomerCouponCodeByPhone(@RequestParam String phone, String code) {
+        if (StringUtils.isBlank(code) || StringUtils.isBlank(phone)) {
             throw new StoreSaasMarketingException("参数验证失败");
         }
         byte[] codeStream = null;
         try {
-            codeStream = imCouponService.openGetCustomerCouponCodeByPhone(phone, encryptedCode);
+            codeStream = imCouponService.openGetCustomerCouponCodeByPhone(phone, code);
         } catch (Exception e) {
             log.info("获取二维码异常 -> e ->", e);
             throw new StoreSaasMarketingException("获取优惠券失败");

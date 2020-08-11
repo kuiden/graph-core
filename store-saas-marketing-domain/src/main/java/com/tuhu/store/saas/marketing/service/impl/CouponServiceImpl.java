@@ -748,13 +748,24 @@ public class CouponServiceImpl implements ICouponService {
         couponCriteria.andCodeIn(codes);
         List<Coupon> couponList = couponMapper.selectByExample(couponExample);
         //除定向营销之外 需要判断余额是否可以发送
-        if (!sendCouponReq.getReceiveType().equals(2)) {
-            for (Coupon x : couponList) {
-                if (!x.getGrantNumber().equals(Long.valueOf(-1))) {
-                    long num = (sendCouponReq.getCount().containsKey(x.getCode())
-                            ? sendCouponReq.getCount().get(x.getCode()) : 1) * sendCouponReq.getCustomerIds().size();
-                    long count = x.getGrantNumber() - (x.getOccupyNum() + num);
+
+        for (Coupon x : couponList) {
+            if (!x.getGrantNumber().equals(Long.valueOf(-1))) {
+                //改券总共发放数
+                long num = (sendCouponReq.getCount().containsKey(x.getCode())
+                        ? sendCouponReq.getCount().get(x.getCode()) : 1) * sendCouponReq.getCustomerIds().size();
+                if (!sendCouponReq.getReceiveType().equals(2)) {
+                    CustomerCouponExample example = new CustomerCouponExample();
+                    CustomerCouponExample.Criteria criteria = example.createCriteria();
+                    criteria.andCouponCodeEqualTo(x.getCode());
+                    int customerReceiveCount = customerCouponMapper.countByExample(example);
+                    long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
                     if (count < 0) {
+                        throw new StoreSaasMarketingException("优惠券" + x.getTitle() + " 余额不足");
+                    }
+                } else {
+                    //占用数-当前发放数不能小于0
+                    if (x.getOccupyNum() - num < 0) {
                         throw new StoreSaasMarketingException("优惠券" + x.getTitle() + " 余额不足");
                     }
                 }
@@ -822,7 +833,14 @@ public class CouponServiceImpl implements ICouponService {
                         .collect(Collectors.groupingBy(x -> x.getCouponCode()));
                 for (String key : map.keySet()) {
                     long count = map.get(key).size();
-                    customerCouponMapper.updateoccupyNumByCode(count, key);
+                    //因为没有分布式事务 把扣除库存的操作 放在数据库判断
+                    if (customerCouponMapper.updateoccupyNumByCode(count, key) <= 0) {
+                        String cache = redisTemplate.opsForValue().get(couponSendNumberPrefix.concat(key));
+                        if (StringUtils.isNotBlank(cache)) {
+                            redisTemplate.opsForValue().increment(key, 0 - count);
+                        }
+                        throw new StoreSaasMarketingException(key + "扣除占用数时失败! ");
+                    }
                 }
             }
             customerCouponMapper.insertBatch(successCustomerCouponList);
@@ -1442,6 +1460,26 @@ public class CouponServiceImpl implements ICouponService {
         log.info("核销优惠券持久化结束,customerCoupon={},serviceOrderCouponUseVO={},duration={}", GsonTool.toJSONString(customerCoupon), GsonTool.toJSONString(serviceOrderCouponUseVO), endTimeTwo - startTime);
     }
 
+
+    @Transactional
+    @Override
+    public void writeOffCustomerCouponV2(String code) {
+        log.info("核销优惠券持久化开始,->{}", code);
+        Date now = new Date();
+        CustomerCoupon customerCoupon = new CustomerCoupon();
+        customerCoupon.setUseTime(now);
+        customerCoupon.setUseStatus((byte) 1);
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+        customerCouponExampleCriteria.andCodeEqualTo(code);
+        customerCouponExampleCriteria.andUseTimeIsNull();
+        customerCouponExampleCriteria.andUseStatusEqualTo((byte) 0);
+        int updateCount = customerCouponMapper.updateByExampleSelective(customerCoupon, customerCouponExample);
+        if (updateCount == 0) {
+            throw new StoreSaasMarketingException("指定的客户优惠券已被使用:" + code);
+        }
+    }
+
     /**
      * 构建客户优惠券返回对象
      *
@@ -1651,7 +1689,7 @@ public class CouponServiceImpl implements ICouponService {
         couponCriteria.andStoreIdEqualTo(storeId);
         List<Coupon> coupons = couponMapper.selectByExample(couponExample);
 
-        if(CollectionUtils.isEmpty(coupons)) {
+        if (CollectionUtils.isEmpty(coupons)) {
             log.info("优惠券 id={}不存在", id);
             return 0L;
         }
@@ -1665,7 +1703,7 @@ public class CouponServiceImpl implements ICouponService {
         int sendCount = customerCouponMapper.countByExample(customerCouponExample);
 
         Long availableAccount = coupon.getGrantNumber() - sendCount - coupon.getOccupyNum();
-        if(availableAccount < 1) {
+        if (availableAccount < 1) {
             return 0L;
         }
         return availableAccount;

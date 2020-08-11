@@ -38,6 +38,7 @@ public class CouponItemResp extends Coupon {
 
     private CouponItemResp.StoreInfo storeInfo;
 
+
     /**
      * * 使用状态 0:未使用 1：已使用
      */

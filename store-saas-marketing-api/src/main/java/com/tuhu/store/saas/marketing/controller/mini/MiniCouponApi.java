@@ -244,43 +244,6 @@ public class MiniCouponApi extends BaseApi {
         return new ResultObject(result);
     }
 
-    /**
-     * 领券
-     *
-     * @param req
-     * @return
-     */
-    @PostMapping("/client/getCoupon")
-    public ResultObject getCoupon(@RequestBody CouponRequest req) {
-        //TODO 需要登录获取客户id
-/*        if (StringUtils.isBlank(this.getCustomerId())) {
-            return new ResultObject(401, "未登录");
-        }*/
-        //TODO 需要登录获取客户id
-        //Map map = imCouponService.getCoupon(req, this.getCustomerId());
-        String customerId = "";
-        Map map = imCouponService.getCoupon(req, customerId);
-        return new ResultObject(map);
-    }
-
-    /**
-     * 我的优惠券列表
-     *
-     * @param req
-     * @return
-     */
-    @GetMapping("/client/myCouponList")
-    public ResultObject getMyCouponList(CouponReceiveRecordRequest req) {
-        //TODO 需要登录获取客户id
-/*        if (StringUtils.isBlank(this.getCustomerId())) {
-            return new ResultObject(401, "未登录");
-        }*/
-        //TODO 需要登录获取客户id
-        //CustomerCouponPageResp map = imCouponService.getMyCouponList(req, this.getCustomerId());
-        String customerId = "";
-        CustomerCouponPageResp map = imCouponService.getMyCouponList(req, customerId);
-        return new ResultObject(map);
-    }
 
     /**
      * 营销发券统计数据
