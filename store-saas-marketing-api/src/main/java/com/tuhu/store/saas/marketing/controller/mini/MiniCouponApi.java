@@ -174,11 +174,11 @@ public class MiniCouponApi extends BaseApi {
      * @return
      */
     @GetMapping("/couponReceiveList")
-    public ResultObject getCouponReceiveList(CouponReceiveRecordRequest req) {
+    public BizBaseResponse getCouponReceiveList(CouponReceiveRecordRequest req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         CustomerCouponPageResp result = imCouponService.getCouponReceiveList(req);
-        return new ResultObject(result);
+        return new BizBaseResponse(result);
     }
 
     /**
@@ -202,9 +202,9 @@ public class MiniCouponApi extends BaseApi {
      * @return
      */
     @GetMapping("/getCouponDetail")
-    public ResultObject getCouponDetail(CouponRequest req) {
+    public BizBaseResponse getCouponDetail(CouponRequest req) {
         Map result = imCouponService.getCouponDetail(req);
-        return new ResultObject(result);
+        return new BizBaseResponse(result);
     }
 
     /**

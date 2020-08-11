@@ -34,6 +34,9 @@ public class SMSServiceImpl implements ISMSService, InitializingBean {
     @Value("${saas.sms.yuntongxun.appid}")
     private String smsShopAppID;
 
+    @Value("${send.message.switch}")
+    private boolean sendSwitch = true;
+
     @Autowired
     private ApplicationContext context;
 
@@ -60,8 +63,8 @@ public class SMSServiceImpl implements ISMSService, InitializingBean {
             datas = smsInfoReq.getDatas().toArray(new String[]{});
         }
 
-        String profile = context.getEnvironment().getActiveProfiles()[0];
-        if ("test".equals(profile) || "dev".equals(profile)) {
+        //开关开了才发短信
+        if (!sendSwitch) {
             smsResult.setSendResult(true);
             smsResult.setStatusCode("000000");
             smsResult.setStatusMsg("短信发送成功");
