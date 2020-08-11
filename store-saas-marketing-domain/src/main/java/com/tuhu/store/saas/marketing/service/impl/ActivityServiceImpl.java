@@ -566,6 +566,8 @@ public class ActivityServiceImpl implements IActivityService {
                 case 2:
                     activityExampleCriteria.andEndTimeLessThan(date);
                     break;
+                case 3:
+                    activityExampleCriteria.andEndTimeGreaterThan(date);
                 default:
                     break;
             }
