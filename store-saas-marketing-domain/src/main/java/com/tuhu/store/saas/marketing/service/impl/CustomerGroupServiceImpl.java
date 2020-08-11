@@ -70,6 +70,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             storeCustomerGroupRelation.setUpdateUser(req.getCreateUser());
             storeCustomerGroupRelation.setUpdateTime(new Date());
             storeCustomerGroupRelation.setGroupName(customerGroupDto.getGroupName());
+            storeCustomerGroupRelation.setGroupDesc(customerGroupDto.getGroupDesc());
             storeCustomerGroupRelation.setId(customerGroupDto.getId());
             storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(storeCustomerGroupRelation);
             CustomerGroupRule customerGroupRule = new CustomerGroupRule();
@@ -308,6 +309,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         customerGroupDto.setGroupName(req.getConsumerGroupName());
         customerGroupDto.setStoreId(req.getStoreId());
         customerGroupDto.setTenantId(req.getTenantId());
+        customerGroupDto.setCreateUser(req.getCreateUser());
         customerGroupDto.setId(req.getId());
         StringBuffer sb = new StringBuffer();
         List<CustomerGroupRuleDto> customerGroupRuleReqList = new ArrayList<>();

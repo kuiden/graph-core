@@ -52,7 +52,7 @@ public interface IMCouponService extends Default {
 
     Map getCoupon(CouponRequest req, String customerId);
 
-    byte [] openGetCustomerCouponCodeByPhone(String phone, String encryptedCode) throws Exception;
+    byte [] openGetCustomerCouponCodeByPhone(String phone, String code) throws Exception;
 
     CustomerCouponPageResp getMyCouponList(CouponReceiveRecordRequest req, String customerId);
 

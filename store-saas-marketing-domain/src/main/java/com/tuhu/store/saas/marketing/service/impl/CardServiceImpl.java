@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.toolkit.CollectionUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
@@ -25,6 +26,7 @@ import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.service.ICardTemplateItemService;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
+import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.scmc.arch.model.facade.rsp.BizRsp;
 import org.scmc.store.stk.qty.dto.StkQtyDto;
@@ -32,6 +34,7 @@ import org.scmc.store.stk.qty.request.StkQtyRequest;
 import org.scmc.wms.stkcenter.enums.DamagedEnum;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +67,9 @@ public class CardServiceImpl implements ICardService {
 
     @Autowired
     private StoreWmsClient storeWmsClient;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Override
     public Long saveCardTemplate(CardTemplateModel req, String userId) {
@@ -133,28 +139,40 @@ public class CardServiceImpl implements ICardService {
     @Override
     @Transactional
     public Boolean updateCardQuantity(UpdateCardVo updateCardVo) {
+        String key = "updateCardQuantity:" + updateCardVo.getCardId();
+        RedisUtils redisUtils = new RedisUtils(redisTemplate,"STORE-SAAS-MARKETING-");
+        StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
+        Object value = storeRedisUtils.tryLock(key, 1000, 1000);
         Boolean ok = true;
-        CrdCardItemExample example = new CrdCardItemExample();
-        example.createCriteria().andStoreIdEqualTo(updateCardVo.getStoreId())
-                .andTenantIdEqualTo(updateCardVo.getTenantId())
-                .andCardIdEqualTo(updateCardVo.getCardId());
-        List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
-        Map<String, Integer> itemQuantity = updateCardVo.getItemQuantity();
-        Date date = new Date();
-        for (CrdCardItem item : cardItems){
-            if (itemQuantity.containsKey(item.getGoodsId())){
-                //检查更新次数后是否会超过总次数 或 小于0
-                Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
-                if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0){
-                    throw new MarketingException("次卡更新失败");
+        if (null != value){
+            try {
+                CrdCardItemExample example = new CrdCardItemExample();
+                example.createCriteria().andStoreIdEqualTo(updateCardVo.getStoreId())
+                        .andTenantIdEqualTo(updateCardVo.getTenantId())
+                        .andCardIdEqualTo(updateCardVo.getCardId());
+                List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
+                Map<String, Integer> itemQuantity = updateCardVo.getItemQuantity();
+                Date date = new Date();
+                for (CrdCardItem item : cardItems){
+                    if (itemQuantity.containsKey(item.getGoodsId())){
+                        //检查更新次数后是否会超过总次数 或 小于0
+                        Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
+                        if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0){
+                            throw new MarketingException("次卡更新失败");
+                        }
+                        item.setUsedQuantity(quantity);
+                        item.setUpdateTime(date);
+                        Integer result = cardItemMapper.updateByPrimaryKeySelective(item);
+                        if (result <= 0){
+                            ok = false;
+                        }
+                    }
                 }
-                item.setUsedQuantity(quantity);
-                item.setUpdateTime(date);
-                Integer result = cardItemMapper.updateByPrimaryKeySelective(item);
-                if (result <= 0){
-                    ok = false;
-                }
+            } finally {
+                storeRedisUtils.releaseLock(key, value.toString());
             }
+        } else {
+            ok = false;
         }
         return ok;
     }

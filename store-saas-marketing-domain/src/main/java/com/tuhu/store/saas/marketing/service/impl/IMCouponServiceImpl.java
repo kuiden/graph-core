@@ -30,6 +30,7 @@ import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.QrCode;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
+import com.tuhu.store.saas.user.dto.UserDTO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -203,7 +204,6 @@ public class IMCouponServiceImpl implements IMCouponService {
         CustomerCouponPageResp customerCouponPageResp = new CustomerCouponPageResp();
         Page<CustomerCouponPO> customerCouponPosPage = new Page<>();
         customerCouponPageResp.setCustomerCouponPOS(customerCouponPosPage);
-
         CustomerCouponSearch record = new CustomerCouponSearch();
         record.setCouponCode(req.getCouponCode());
         record.setSearchKey(req.getSearchKey());
@@ -233,34 +233,27 @@ public class IMCouponServiceImpl implements IMCouponService {
         } catch (Exception e) {
             log.error("getCouponReceiveList error", e);
         }
-
-
-        //todo
-/*        if (CollectionUtils.isNotEmpty(recordList)) {
+        if (CollectionUtils.isNotEmpty(recordList)) {
             List<String> sendUserIdList = Lists.newArrayList();
             recordList.forEach(recordItem -> {
-                sendUserIdList.add(recordItem.getSendUser());
-            });
-            Map<String, UserDTO> userInfoMap = iUserRpcService.getUserInfoMapByIdList(sendUserIdList);
+                if (StringUtils.isNotBlank(recordItem.getSendUser())) {
 
-            recordList.forEach(recordItem -> {
-                *//*
-         * 查询发券人姓名
-         *//*
-                if (MapUtils.isNotEmpty(userInfoMap)) {
-                    UserDTO dto = userInfoMap.get(recordItem.getSendUser());
-                    recordItem.setSendUser(dto != null ? dto.getUsername() : "");
+                    sendUserIdList.add(recordItem.getSendUser());
                 }
-                    *//*
-                      判断券是否已失效
-                     *//*
+            });
+            BizBaseResponse<Map<String, UserDTO>> crmResult = customerClient.getUserInfoMapByIdList(sendUserIdList);
+            Map<String, UserDTO> userInfoMap = crmResult != null && crmResult.getData() != null ? crmResult.getData() : new HashMap<>();
+            recordList.forEach(recordItem -> {
+                //* 查询发券人姓名
+                UserDTO dto = userInfoMap.get(recordItem.getSendUser());
+                recordItem.setSendUser(dto != null ? dto.getUsername() : "");
+                //* 判断券是否已失效
                 Date date = new Date();
                 if (recordItem.getUseEndTime() != null && date.after(recordItem.getUseEndTime())) {
                     recordItem.setUseStatus((byte) -1);
                 }
             });
-        }*/
-
+        }
         customerCouponPosPage.addAll(recordList);
         PageInfo<CustomerCouponPO> customerCouponPOPageInfo = new PageInfo<>(recordList);
         CustomerCouponPageResp.PageInfo pageInfo = new CustomerCouponPageResp.PageInfo();
@@ -739,6 +732,8 @@ public class IMCouponServiceImpl implements IMCouponService {
                 if (customerCoupon.getUseStatus() != Byte.valueOf((byte) 1) && customerCoupon.getUseEndTime().getTime() < System.currentTimeMillis()) {
                     result.setCustomerCouponStatus(Byte.valueOf((byte) -1));
                 }
+                result.setUseStartTime(customerCoupon.getUseStartTime());
+                result.setUseEndTime(customerCoupon.getUseEndTime());
                 //补充门店信息
                 ClientStoreVO clientStoreVO = new ClientStoreVO();
                 clientStoreVO.setStoreId(coupon.getStoreId());

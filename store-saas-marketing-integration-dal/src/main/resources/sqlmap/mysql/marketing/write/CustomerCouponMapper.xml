@@ -449,7 +449,7 @@
   </select>
 
   <update id="updateoccupyNumByCode">
-    update   coupon set  occupy_num = occupy_num- #{occupyNum} where code = #{code}
+    update   coupon set  occupy_num = occupy_num- #{occupyNum} where code = #{code} and  occupy_num- #{occupyNum}>=0
   </update>
 
   <insert id="insertBySendCoupon" parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch" >
