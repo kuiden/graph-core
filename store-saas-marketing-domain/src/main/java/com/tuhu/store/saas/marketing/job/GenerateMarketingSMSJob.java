@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@JobHandler("summarySassOrderJobTask")
+@JobHandler("generateMarketingSMSJob")
 public class GenerateMarketingSMSJob extends IJobHandler {
 
     /**
