@@ -874,22 +874,28 @@ public class CouponServiceImpl implements ICouponService {
         Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
         if (value != null) {
             try {
-                CustomerCouponExample example = new CustomerCouponExample();
-                CustomerCouponExample.Criteria criteria = example.createCriteria();
-                criteria.andCouponCodeEqualTo(x.getCode());
-                int customerReceiveCount = customerCouponMapper.countByExample(example);
-                long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
-                if (count > 0) {
+                if(x.getGrantNumber() < 0) {//不限量，直接叠加预占数
                     Coupon u = new Coupon();
                     u.setOccupyNum(x.getOccupyNum() + num);
                     u.setId(x.getId());
-                    long result = couponMapper.updateByPrimaryKeySelective(u);
-                    if (result <= 0) {
-                        throw new StoreSaasMarketingException("预占失败");
+                    couponMapper.updateByPrimaryKeySelective(u);
+                }else {
+                    CustomerCouponExample example = new CustomerCouponExample();
+                    CustomerCouponExample.Criteria criteria = example.createCriteria();
+                    criteria.andCouponCodeEqualTo(x.getCode());
+                    int customerReceiveCount = customerCouponMapper.countByExample(example);
+                    long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
+                    if (count > 0) {
+                        Coupon u = new Coupon();
+                        u.setOccupyNum(x.getOccupyNum() + num);
+                        u.setId(x.getId());
+                        long result = couponMapper.updateByPrimaryKeySelective(u);
+                        if (result <= 0) {
+                            throw new StoreSaasMarketingException("预占失败");
+                        }
+                    } else {
+                        throw new StoreSaasMarketingException("余额数量不足");
                     }
-                } else {
-
-                    throw new StoreSaasMarketingException("余额数量不足");
                 }
             } finally {
                 storeRedisUtils.releaseLock(occupyNumKey, value.toString());
@@ -1735,11 +1741,16 @@ public class CouponServiceImpl implements ICouponService {
 
         Coupon coupon = coupons.get(0);
 
+        if(coupon.getGrantNumber().equals(-1)) {//不限量直接返回
+            return -1L;
+        }
+
         //统计已发放数量
         CustomerCouponExample customerCouponExample = new CustomerCouponExample();
         CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
         criteria.andCouponCodeEqualTo(coupon.getCode());
         int sendCount = customerCouponMapper.countByExample(customerCouponExample);
+
 
         Long availableAccount = coupon.getGrantNumber() - sendCount - coupon.getOccupyNum();
         if (availableAccount < 1) {

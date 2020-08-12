@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.controller;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
+import com.tuhu.store.saas.marketing.job.GenerateMarketingSMSJob;
+import com.tuhu.store.saas.marketing.job.SendMarketingSMSJob;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
 import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
@@ -37,7 +39,10 @@ public class MarketingApi extends BaseApi {
     private IMessageRemindService iMessageRemindService;
 
     @Autowired
-    private IMarketingSendRecordService marketingSendRecordService;
+    private GenerateMarketingSMSJob generateMarketingSMSJob;
+
+    @Autowired
+    private SendMarketingSMSJob sendMarketingSMSJob;
     @Autowired
     private ICustomerMarketingService  iCustomerMarketingService;
 
@@ -82,7 +87,24 @@ public class MarketingApi extends BaseApi {
     @RequestMapping(value = "/test", method = RequestMethod.GET)
     @ApiOperation(value = "test")
     public BizBaseResponse test() {
-        return new BizBaseResponse(iMessageRemindService.getAllNeedSendMarketingReminds());
+        try {
+            generateMarketingSMSJob.execute("");
+        }catch (Exception e) {
+            log.error("定时任务报错",e);
+        }
+
+        return new BizBaseResponse(true);
+    }
+    @RequestMapping(value = "/test2", method = RequestMethod.GET)
+    @ApiOperation(value = "test2")
+    public BizBaseResponse test2() {
+        try {
+            sendMarketingSMSJob.execute("");
+        }catch (Exception e) {
+            log.error("定时任务报错",e);
+        }
+
+        return new BizBaseResponse(true);
     }
 
 
