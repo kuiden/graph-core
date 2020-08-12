@@ -122,8 +122,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     public Boolean addMarketingCustomer(MarketingAddReq addReq) {
         String funName = "定向营销任务新增";
         log.info("{} -> 请求参数: {}", funName, JSONObject.toJSONString(addReq));
-        checkCommonParams(addReq);
-        addMarketing(addReq);
+        List<String> customerIds = checkCommonParams(addReq);
+        addMarketing(addReq,customerIds);
         return true;
     }
 
@@ -310,8 +310,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * 校验用户数量和短信数量
      * @param addReq
      */
-    private void checkCommonParams(MarketingAddReq addReq) {
+    private List<String>  checkCommonParams(MarketingAddReq addReq) {
         int cNum = 0;
+        List<String> customerIds = null;
         if (StringUtils.isNotEmpty(addReq.getCustomerGroupIds())) {
             log.info("客群客户数量");
             String[] groupIds = addReq.getCustomerGroupIds().split(",");
@@ -323,12 +324,17 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             req.setGroupList(groupList);
             req.setStoreId(addReq.getStoreId());
             req.setTenantId(addReq.getTenantId());
-            List<String> customerIds = customerGroupService.calculateCustomerCount(req);
+            customerIds = customerGroupService.calculateCustomerCount(req);
             cNum = customerIds.size();
         }else if(StringUtils.isNotEmpty(addReq.getCustomerIds())){
             log.info("指定用户数量");
             String[] strArray = addReq.getCustomerIds().split(",");
             cNum = strArray.length;
+            if(cNum>0){
+                customerIds = Arrays.asList(strArray);
+            }else{
+                customerIds = new ArrayList<>();
+            }
         }
         //短信可用数量
         Long availableNum = iMessageQuantityService.getStoreMessageQuantity(addReq.getTenantId(), addReq.getStoreId());
@@ -336,6 +342,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,availableNum);
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
         }
+        return customerIds;
+
+
 
     }
 
@@ -343,7 +352,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * 添加活动定向营销
      * @param addReq
      */
-    private void addMarketing(MarketingAddReq addReq){
+    private void addMarketing(MarketingAddReq addReq,List<String> customerIds){
 
         CouponResp coupon = null;
         ActivityResponse activity = null;
@@ -393,7 +402,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //根据任务中记录的发送对象信息查询出客户列表
-        List<CustomerAndVehicleReq> customerList = analyseCustomer(addReq);
+        List<CustomerAndVehicleReq> customerList = analyseCustomer(addReq, customerIds);
         if(CollectionUtils.isEmpty(customerList)){
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送对象不能为空");
         }
@@ -509,14 +518,14 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * @param addReq
      * @return
      */
-    private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq){
+    private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq,List<String> customerIdList){
         //根据任务中记录的发送对象信息查询出客户列表
         List<CustomerAndVehicleReq> customeList = new ArrayList();
 
         List<String> customerIds = new ArrayList<>();
         //客群客户
         if (StringUtils.isNotBlank(addReq.getCustomerGroupIds())){
-            String[] groupIds = addReq.getCustomerGroupIds().split(",");
+           /* String[] groupIds = addReq.getCustomerGroupIds().split(",");
             List<Long> groupList = new ArrayList<>();
             for(int i=0; i<groupIds.length ;i++){
                 groupList.add(Long.valueOf(groupIds[i]));
@@ -525,7 +534,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             req.setGroupList(groupList);
             req.setStoreId(addReq.getStoreId());
             req.setTenantId(addReq.getTenantId());
-            customerIds = customerGroupService.calculateCustomerCount(req);
+            customerIds = customerGroupService.calculateCustomerCount(req);*/
+            customerIds  = customerIdList;
             if(CollectionUtils.isEmpty(customerIds)) {
                 return customeList;
             }
