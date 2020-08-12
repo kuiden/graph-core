@@ -227,6 +227,7 @@ public class IMCouponServiceImpl implements IMCouponService {
                     Map<String, CustomerDTO> map = crmResult.getData().stream().collect(Collectors.toMap(k -> k.getId(), v -> v));
                     for (CustomerCouponPO x : recordList) {
                         x.setCustomerName(map.get(x.getCustomerId()).getName());
+
                     }
                 }
             }
@@ -755,6 +756,57 @@ public class IMCouponServiceImpl implements IMCouponService {
         return result;
     }
 
+    @Override
+    public CustomerCouponPO getCouponDetailv2(CouponRequest req) {
+        log.info("getCouponDetailv2-> {} ", req);
+        CustomerCouponPO result = null;
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+        customerCouponExampleCriteria.andCodeEqualTo(req.getCustomerCouponCode());
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(customerCouponExample);
+        if (CollectionUtils.isNotEmpty(customerCoupons)) {
+            CustomerCoupon customerCoupon = customerCoupons.get(0);
+            result = new CustomerCouponPO();
+            BeanUtils.copyProperties(customerCoupon,result);
+
+            CouponExample example = new CouponExample();
+            CouponExample.Criteria criteria = example.createCriteria();
+            criteria.andCodeEqualTo(customerCoupon.getCouponCode()).andStoreIdEqualTo(req.getStoreId())
+                    .andTenantIdEqualTo(req.getTenantId());
+            List<Coupon> coupons = couponMapper.selectByExample(example);
+            if (CollectionUtils.isNotEmpty(coupons)) {
+                Coupon coupon = coupons.get(0);
+                CouponPO po = new CouponPO();
+                BeanUtils.copyProperties(coupon, po);
+                result.setCouponInfo(po);
+                //获取客户信息
+                if (StringUtils.isNotBlank(customerCoupon.getCustomerId())) {
+                    BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+                    baseIdReqVO.setId(customerCoupon.getCustomerId());
+                    baseIdReqVO.setStoreId(req.getStoreId());
+                    baseIdReqVO.setTenantId(req.getTenantId());
+                    BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(baseIdReqVO);
+                    result.setSendUserName(crmResult != null && crmResult.getData() != null ? crmResult.getData().getName() : null);
+                }
+                //获取发券人
+                if (StringUtils.isNotBlank(customerCoupon.getSendUser())) {
+                    BizBaseResponse<Map<String, UserDTO>>  crmResult = customerClient.getUserInfoMapByIdList(Lists.newArrayList(customerCoupon.getSendUser()));
+                    result.setCustomerName(crmResult != null
+                            && crmResult.getData() != null
+                            && crmResult.getData().containsKey(customerCoupon.getSendUser())
+                            ? crmResult.getData().get(customerCoupon.getSendUser()).getUsername() : null);
+                }
+                //获取过期状态
+                Date date = new Date();
+                if (customerCoupon.getUseEndTime() != null && date.after(customerCoupon.getUseEndTime())) {
+                    result.setUseStatus((byte) -1);
+                }
+
+            }
+        }
+        return result;
+    }
+
     /**
      * 对外获取优惠券CODE
      *
@@ -778,8 +830,8 @@ public class IMCouponServiceImpl implements IMCouponService {
             BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(vo);
             if (crmResult != null && crmResult.getData() != null && crmResult.getData().getPhoneNumber().equals(phone)) {
                 result = customerCoupon.getCode();
-            }else {
-                throw  new StoreSaasMarketingException("用户数据校验失败");
+            } else {
+                throw new StoreSaasMarketingException("用户数据校验失败");
             }
         }
         return QrCode.getQRCodeImage(result, 500, 500);

@@ -11,6 +11,7 @@ import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
@@ -28,17 +29,13 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -77,6 +74,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Autowired
     private ICustomerGroupService customerGroupService;
+    @Autowired
+    private StoreCustomerGroupRelationMapper storeCustomerGroupRelationMapper;
    /* @Autowired
     private IUtilityService iUtilityService;
 
@@ -105,6 +104,13 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
         List<CustomerMarketing> customerMarketingList = customerMarketingMapper.selectByExample(customerMarketingExample);
 
+        List<String> customerMarketingIds = customerMarketingList.stream().map(x->x.getId().toString()).collect(Collectors.toList());
+
+        Map<String,Long> countMap = iMarketingSendRecordService.getMarketingSendRecordCount(customerMarketingIds);
+
+        for(CustomerMarketing customerMarketing : customerMarketingList) {
+            customerMarketing.setCustomerNum(countMap.get(customerMarketing.getId().toString()));
+        }
         pageInfo.setList(customerMarketingList);
         pageInfo.setStartRow(req.getPageNum());
         pageInfo.setPageSize(req.getPageSize());
@@ -119,8 +125,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     public Boolean addMarketingCustomer(MarketingAddReq addReq) {
         String funName = "定向营销任务新增";
         log.info("{} -> 请求参数: {}", funName, JSONObject.toJSONString(addReq));
-        checkCommonParams(addReq);
-        addMarketing(addReq);
+        List<String> customerIds = checkCommonParams(addReq);
+        addMarketing(addReq,customerIds);
         return true;
     }
 
@@ -307,8 +313,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * 校验用户数量和短信数量
      * @param addReq
      */
-    private void checkCommonParams(MarketingAddReq addReq) {
+    private List<String>  checkCommonParams(MarketingAddReq addReq) {
         int cNum = 0;
+        List<String> customerIds = null;
         if (StringUtils.isNotEmpty(addReq.getCustomerGroupIds())) {
             log.info("客群客户数量");
             String[] groupIds = addReq.getCustomerGroupIds().split(",");
@@ -320,12 +327,17 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             req.setGroupList(groupList);
             req.setStoreId(addReq.getStoreId());
             req.setTenantId(addReq.getTenantId());
-            List<String> customerIds = customerGroupService.calculateCustomerCount(req);
+            customerIds = customerGroupService.calculateCustomerCount(req);
             cNum = customerIds.size();
         }else if(StringUtils.isNotEmpty(addReq.getCustomerIds())){
             log.info("指定用户数量");
             String[] strArray = addReq.getCustomerIds().split(",");
             cNum = strArray.length;
+            if(cNum>0){
+                customerIds = Arrays.asList(strArray);
+            }else{
+                customerIds = new ArrayList<>();
+            }
         }
         //短信可用数量
         Long availableNum = iMessageQuantityService.getStoreMessageQuantity(addReq.getTenantId(), addReq.getStoreId());
@@ -333,6 +345,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             log.warn("storeId:{} has not enough Sms,need:{},has:{}",addReq.getStoreId(),cNum,availableNum);
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信余额不足");
         }
+        return customerIds;
+
+
 
     }
 
@@ -340,7 +355,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * 添加活动定向营销
      * @param addReq
      */
-    private void addMarketing(MarketingAddReq addReq){
+    private void addMarketing(MarketingAddReq addReq,List<String> customerIds){
 
         CouponResp coupon = null;
         ActivityResponse activity = null;
@@ -390,7 +405,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //根据任务中记录的发送对象信息查询出客户列表
-        List<CustomerAndVehicleReq> customerList = analyseCustomer(addReq);
+        List<CustomerAndVehicleReq> customerList = analyseCustomer(addReq, customerIds);
         if(CollectionUtils.isEmpty(customerList)){
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送对象不能为空");
         }
@@ -412,11 +427,16 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             for(int i=0; i<groupIds.length ;i++){
                 groupList.add(Long.valueOf(groupIds[i]));
             }
-            CalculateCustomerCountReq req = new CalculateCustomerCountReq();
+           /* CalculateCustomerCountReq req = new CalculateCustomerCountReq();
             req.setGroupList(groupList);
             req.setTenantId(addReq.getTenantId());
             req.setStoreId(addReq.getStoreId());
-            List<CustomerGroupDto> groups = customerGroupService.getCustomerGroupDto(req);
+            List<CustomerGroupDto> groups = customerGroupService.getCustomerGroupDto(req);*/
+            StoreCustomerGroupRelationExample storeCustomerGroupRelationExample = new StoreCustomerGroupRelationExample();
+            StoreCustomerGroupRelationExample.Criteria criteria = storeCustomerGroupRelationExample.createCriteria();
+            criteria.andGroupIdIn(groupList);
+            criteria.andStoreIdEqualTo(addReq.getStoreId());
+            List<StoreCustomerGroupRelation> groups = storeCustomerGroupRelationMapper.selectByExample(storeCustomerGroupRelationExample);
             if(CollectionUtils.isEmpty(groups)) {
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请选择客群");
             }
@@ -448,6 +468,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         customerMarketing.setRemark(addReq.getRemark());
         customerMarketing.setSendObject(sendObject);//客户群名称
         customerMarketing.setTaskType(Byte.valueOf("0"));
+        customerMarketing.setIsDelete(Byte.valueOf("0"));
 
         //原有字段共用，存放活动相关信息
         if(coupon != null && activity == null) {
@@ -500,14 +521,14 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * @param addReq
      * @return
      */
-    private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq){
+    private List<CustomerAndVehicleReq> analyseCustomer(MarketingAddReq addReq,List<String> customerIdList){
         //根据任务中记录的发送对象信息查询出客户列表
         List<CustomerAndVehicleReq> customeList = new ArrayList();
 
         List<String> customerIds = new ArrayList<>();
         //客群客户
         if (StringUtils.isNotBlank(addReq.getCustomerGroupIds())){
-            String[] groupIds = addReq.getCustomerGroupIds().split(",");
+           /* String[] groupIds = addReq.getCustomerGroupIds().split(",");
             List<Long> groupList = new ArrayList<>();
             for(int i=0; i<groupIds.length ;i++){
                 groupList.add(Long.valueOf(groupIds[i]));
@@ -516,7 +537,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             req.setGroupList(groupList);
             req.setStoreId(addReq.getStoreId());
             req.setTenantId(addReq.getTenantId());
-            customerIds = customerGroupService.calculateCustomerCount(req);
+            customerIds = customerGroupService.calculateCustomerCount(req);*/
+            customerIds  = customerIdList;
             if(CollectionUtils.isEmpty(customerIds)) {
                 return customeList;
             }

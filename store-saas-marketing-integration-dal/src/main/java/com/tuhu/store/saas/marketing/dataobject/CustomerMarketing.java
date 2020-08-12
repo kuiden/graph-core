@@ -116,4 +116,9 @@ public class CustomerMarketing {
     */
     private String customerId;
 
+    /**
+     * 客户人数
+     */
+    private Long customerNum;
+
 }

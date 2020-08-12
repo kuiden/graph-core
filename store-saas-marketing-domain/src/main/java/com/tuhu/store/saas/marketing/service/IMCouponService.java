@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CouponItemResp;
 import com.tuhu.store.saas.marketing.response.CouponPageResp;
@@ -57,4 +58,6 @@ public interface IMCouponService extends Default {
     CustomerCouponPageResp getMyCouponList(CouponReceiveRecordRequest req, String customerId);
 
     CouponItemResp openGetCouponInfo(String code);
+
+    CustomerCouponPO getCouponDetailv2(CouponRequest req);
 }

@@ -6,6 +6,8 @@ import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.remote.ResultObject;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
@@ -16,6 +18,7 @@ import com.tuhu.store.saas.marketing.response.dto.ServiceOrderCouponDTO;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -206,6 +209,19 @@ public class MiniCouponApi extends BaseApi {
         Map result = imCouponService.getCouponDetail(req);
         return new BizBaseResponse(result);
     }
+
+
+    @GetMapping("/getCouponDetailV2")
+    public BizBaseResponse getCouponDetailv2(CouponRequest req) {
+        if (StringUtils.isBlank(req.getCustomerCouponCode())){
+            throw  new StoreSaasMarketingException("参数验证失败");
+        }
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        CustomerCouponPO result = imCouponService.getCouponDetailv2(req);
+        return new BizBaseResponse(result);
+    }
+
 
     /**
      * 优惠券列表

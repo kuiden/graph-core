@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IMarketingSendRecordService {
     /**
@@ -25,4 +26,10 @@ public interface IMarketingSendRecordService {
      * @return
      */
     public List<MarketingSendRecord> listMarketingSendRecord(String marketingId,List<Byte> sendTypes);
+
+    /**
+     * 根据营销id和发送状态列表查询营销发送记录
+     * @return
+     */
+    public Map<String,Long> getMarketingSendRecordCount(List<String> marketingIds);
 }

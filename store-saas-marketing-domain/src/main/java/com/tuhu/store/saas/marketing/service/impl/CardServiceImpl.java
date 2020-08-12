@@ -296,7 +296,7 @@ public class CardServiceImpl implements ICardService {
                 StoreInfoRelatedDTO storeRelatedResponse = storeInfoClient.getRelatedInfoByStoreId(req.getStoreId()).getData();
                 log.info("查询门店仓库信息返回：{}", JSON.toJSONString(storeRelatedResponse));
                 if (null == storeRelatedResponse) {
-                    throw new MarketingException("获取门店关联的信息异常");
+                    throw new StoreSaasMarketingException("获取门店关联的信息异常");
                 }
                 log.info("获取门店WMS库存,ids={}", JSONObject.toJSONString(goodsIds));
                 StkQtyRequest request = new StkQtyRequest();
@@ -318,11 +318,11 @@ public class CardServiceImpl implements ICardService {
                     } else {
                         log.warn("根据门店商品ID和仓库ID未查询到库存信息,goodsIdList={},warehouseId={}",
                                 JSONObject.toJSONString(goodsIds), storeRelatedResponse.getStoreOutPurchaseWarehouseId());
-                        throw new MarketingException("获取门店关联的信息异常");
+                        throw new StoreSaasMarketingException("获取门店关联的信息异常");
                     }
                 } catch (Exception e) {
                     log.error("根据门店商品ID和仓库ID查询库存信息异常", e);
-                    throw new MarketingException("根据门店商品ID和仓库ID查询库存信息异常");
+                    throw new StoreSaasMarketingException("根据门店商品ID和仓库ID查询库存信息异常");
                 }
             }
         }

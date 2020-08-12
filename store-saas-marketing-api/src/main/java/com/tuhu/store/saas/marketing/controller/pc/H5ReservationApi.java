@@ -2,13 +2,12 @@ package com.tuhu.store.saas.marketing.controller.pc;
 
 import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.controller.VerificationCodeUtils;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
-import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.CouponResp;
@@ -22,9 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,19 +39,16 @@ public class H5ReservationApi extends BaseApi {
     INewReservationService iNewReservationService;
 
     @Autowired
-    ISMSService ismsService;
-
-    @Autowired
     ICouponService iCouponService;
 
     @Autowired
     IActivityService iActivityService;
 
     @Autowired
-    IMessageTemplateLocalService iMessageTemplateLocalService;
+    StoreRedisUtils storeRedisUtils;
 
     @Autowired
-    StoreRedisUtils storeRedisUtils;
+    VerificationCodeUtils verificationCodeUtils;
 
     @Value("${add.reservation.verificationCode.expireTime}")
     private Integer expireTime = 5;
@@ -135,36 +129,8 @@ public class H5ReservationApi extends BaseApi {
         if(StringUtils.isBlank(phoneNumber)){
             throw new StoreSaasMarketingException("请输入手机号");
         }
-        //生成随机验证码
-        int  maxNum = 10;
-        int i;
-        int count = 0;
-        char[] str = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-        StringBuffer pwd = new StringBuffer("");
-        Random r = new Random();
-        while(count < 6){
-            i = Math.abs(r.nextInt(maxNum));
-            if (i >= 0 && i < str.length) {
-                pwd.append(str[i]);
-                count ++;
-            }
-        }
-        //发送短信
-        SMSParameter smsParameter = new SMSParameter();
-        smsParameter.setPhone(phoneNumber);
-        smsParameter.setTemplateId(iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(SMSTypeEnum.SAAS_MINI_ORDER_CREATE_CODE.templateCode(),null));
-        List<String> list = new ArrayList<>();
-        list.add(pwd.toString());
-        smsParameter.setDatas(list);
-        SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
-        if(sendResult != null && sendResult.isSendResult()){
-            //将验证码写入redis，并设置过期时间
-            storeRedisUtils.redisSet(verificationCodeKey+phoneNumber,pwd.toString());
-            storeRedisUtils.setExpire(verificationCodeKey+phoneNumber, expireTime, TimeUnit.MINUTES);
-            return new BizBaseResponse("发送成功");
-        }else {
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.SYSTEM_INNER_ERROR, "发送失败");
-        }
+        String result = verificationCodeUtils.send(SMSTypeEnum.SAAS_MINI_ORDER_CREATE_CODE.templateCode(),phoneNumber,expireTime,TimeUnit.MINUTES);
+        return new BizBaseResponse(result);
     }
 
 }
