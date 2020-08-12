@@ -88,6 +88,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -1048,7 +1050,7 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomer.setTenantId(activityApplyReq.getTenantId());
         activityCustomer.setCreateTime(new Date());
         activityCustomer.setStartTime(activity.getStartTime());
-        activityCustomer.setEndTime(activity.getEndTime());
+        activityCustomer.setEndTime(this.getApplyedEndDate(activity.getStartTime(), activity.getEndTime(), activity.getActiveType(), activity.getActiveDays(), activity.getActiveDate()));
         activityCustomer.setUseStatus((byte) 0);
         if (null != activityApplyReq.getCustomerName()){
             activityCustomer.setCustomerName(activityApplyReq.getCustomerName());
@@ -2265,5 +2267,21 @@ public class ActivityServiceImpl implements IActivityService {
         //1.根据活动编码查询活动详情
         resp = this.getActivityByActivityCode(activity.getActivityCode());
         return resp;
+    }
+
+    private Date getApplyedEndDate(Date activityStartDate, Date activityEndDate, Integer activeType, Integer activeDays, Date activeDate) {
+        if (activeType == null) {
+            return activityEndDate;
+        }else if (activeType == 0) {
+            LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays);
+            Date appDate = Date.from(appLocalDate.atZone(ZoneId.systemDefault()).toInstant());
+            if (appDate.before(activityEndDate)) {
+                return appDate;
+            }else {
+                return activeDate;
+            }
+        }else {
+            return activeDate;
+        }
     }
 }
