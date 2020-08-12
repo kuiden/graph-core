@@ -24,7 +24,7 @@
         end_user_visited_coupon
         where
         open_id = #{openId}
-        coupon_code = #{couponCode}
+        and coupon_code = #{couponCode}
         order by create_time desc
     </select>
 

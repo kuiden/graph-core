@@ -126,13 +126,8 @@ public class EndUserVisitedCouponServiceImpl extends BaseServiceImpl<EndUserVisi
         EndUserVisitedCouponEntity oldEndUserVisitedCouponEntity = this.findFirstByOpenIdAndCouponCode(openId, couponCode);
         //如果没有记录
         if (null == oldEndUserVisitedCouponEntity || StringUtils.isEmpty(oldEndUserVisitedCouponEntity.getId())) {
-            endUserVisitedCouponEntity = new EndUserVisitedCouponEntity();
             endUserVisitedCouponEntity.setId(UUID.randomUUID().toString());
-            endUserVisitedCouponEntity.setOpenId(openId);
-            endUserVisitedCouponEntity.setStoreId(endUserVisitedCouponEntity.getStoreId());
-            endUserVisitedCouponEntity.setCouponCode(couponCode);
-            Date date = new Date();
-            endUserVisitedCouponEntity.setCreateTime(date);
+            endUserVisitedCouponEntity.setCreateTime(new Date());
             try {
                 this.addNewEndUserVisitedCoupon(endUserVisitedCouponEntity);
             } catch (Exception e) {
