@@ -22,6 +22,7 @@ import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CouponScopeCategoryResp;
 import com.tuhu.store.saas.marketing.response.dto.*;
 import com.tuhu.store.saas.marketing.service.ICouponService;
+import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.util.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
@@ -435,6 +436,9 @@ public class CouponServiceImpl implements ICouponService {
         return couponRespPageInfo;
     }
 
+    @Autowired
+    private ICustomerMarketingService customerMarketingService;
+
     @Override
     @Transactional
     public EditCouponReq editCoupon(EditCouponReq editCouponReq) {
@@ -448,6 +452,9 @@ public class CouponServiceImpl implements ICouponService {
         CouponResp oldCoupon = getCouponDetailById(couponId);
         if (null == oldCoupon) {
             throw new StoreSaasMarketingException("优惠券不存在");
+        }
+        if (customerMarketingService.customerMarketingContainsCoupon(editCouponReq.getId(), editCouponReq.getTenantId(), editCouponReq.getStoreId())) {
+            throw new StoreSaasMarketingException("该优惠券已经关联营销活动");
         }
         //校验输入
         String validateResult = this.validateEditCouponReq(oldCoupon, editCouponReq);
@@ -1463,21 +1470,51 @@ public class CouponServiceImpl implements ICouponService {
 
     @Transactional
     @Override
-    public void writeOffCustomerCouponV2(String code) {
+    public String writeOffCustomerCouponV2(String code) {
         log.info("核销优惠券持久化开始,->{}", code);
-        Date now = new Date();
-        CustomerCoupon customerCoupon = new CustomerCoupon();
-        customerCoupon.setUseTime(now);
-        customerCoupon.setUseStatus((byte) 1);
-        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
-        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
-        customerCouponExampleCriteria.andCodeEqualTo(code);
-        customerCouponExampleCriteria.andUseTimeIsNull();
-        customerCouponExampleCriteria.andUseStatusEqualTo((byte) 0);
-        int updateCount = customerCouponMapper.updateByExampleSelective(customerCoupon, customerCouponExample);
-        if (updateCount == 0) {
-            throw new StoreSaasMarketingException("指定的客户优惠券已被使用:" + code);
+        String result = null;
+        String cacheKey = "writeOffCustomerCouponV2" + "" + code;
+        RedisUtils redisUtils = new RedisUtils(redisTemplate,"writeOffCustomer");
+        StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
+        Object value = storeRedisUtils.tryLock(cacheKey, 1000, 1000);
+        if (value != null) {
+            try {
+                CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+                customerCouponExample.createCriteria().andCodeEqualTo(code);
+                List<CustomerCoupon> customerCouponList = customerCouponMapper.selectByExample(customerCouponExample);
+                if (CollectionUtils.isEmpty(customerCouponList)) {
+                    throw new StoreSaasMarketingException("优惠券查询失败");
+                }
+                CustomerCoupon customerCoupon = customerCouponList.get(0);
+                if (customerCoupon.getUseStatus() == Byte.valueOf((byte) 1)) {
+                    throw new StoreSaasMarketingException("优惠券已经被使用");
+                }
+                if (customerCoupon.getUseEndTime().getTime() < System.currentTimeMillis()) {
+                    throw new StoreSaasMarketingException("优惠券已经过期");
+                }
+                Date now = new Date();
+                customerCoupon = new CustomerCoupon();
+                customerCoupon.setUseTime(now);
+                customerCoupon.setUseStatus((byte) 1);
+                customerCouponExample = new CustomerCouponExample();
+                CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+                customerCouponExampleCriteria.andCodeEqualTo(code);
+                customerCouponExampleCriteria.andUseTimeIsNull();
+                customerCouponExampleCriteria.andUseStatusEqualTo((byte) 0);
+                int updateCount = customerCouponMapper.updateByExampleSelective(customerCoupon, customerCouponExample);
+                if (updateCount == 0) {
+                    throw new StoreSaasMarketingException("指定的客户优惠券已被使用:" + code);
+                }
+                result = "核销成功";
+
+            } finally {
+                storeRedisUtils.releaseLock(cacheKey, value.toString());
+            }
+        } else {
+            result = "请求太频繁";
         }
+        return result;
+
     }
 
     /**

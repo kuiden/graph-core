@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -53,4 +54,28 @@ public class MiniWriteOffApi extends BaseApi {
         }
         return new BizBaseResponse<>(result);
     }
+
+    /**
+     * 核销优惠券
+     *
+     * @param code
+     * @return
+     */
+    @RequestMapping(value = "/writeOffCustomerCouponV2", method = RequestMethod.GET)
+    public BizBaseResponse writeOffCustomerCouponV2(@RequestParam String code) {
+        if (StringUtils.isBlank(code)) {
+            throw new StoreSaasMarketingException("参数验证失败");
+        }
+        if (!code.startsWith("YHQ")) {
+            throw new StoreSaasMarketingException("优惠券校验失败");
+        }
+        long storeId = super.getStoreId();
+        if (!code.startsWith("YHQ" + storeId)) {
+            throw new StoreSaasMarketingException("门店校验失败");
+        }
+        //进入核销流程
+        return new BizBaseResponse(couponService.writeOffCustomerCouponV2(code));
+    }
+
+
 }
