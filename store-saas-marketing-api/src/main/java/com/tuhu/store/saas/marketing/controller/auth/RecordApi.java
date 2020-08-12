@@ -21,7 +21,7 @@ import javax.validation.constraints.NotNull;
 @RequestMapping("/record")
 @Api(tags = "营销数据记录")
 @Slf4j
-public class RecordController {
+public class RecordApi {
 
     @Autowired
     private IClientEventRecordService iClientEventRecordService;
