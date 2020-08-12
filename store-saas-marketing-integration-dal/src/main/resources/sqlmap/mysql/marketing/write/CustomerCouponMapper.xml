@@ -354,7 +354,7 @@
 
   <select id="selectRecordList" resultMap="RecordListResultMap" parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch" >
     select  cp.id, cp.coupon_code, cp.customer_id, cp.receive_type, cp.send_user, cp.create_time, cp.use_start_time,
-    cp.use_end_time, cp.use_time, cp.use_status
+    cp.use_end_time, cp.use_time, cp.use_status, cp.code
     from customer_coupon as cp
     where   coupon_code = #{couponCode,jdbcType=VARCHAR}
     <if test="receiveType != null">

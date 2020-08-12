@@ -1,6 +1,8 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.ICouponService;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Api("核销API")
 @RestController
 @RequestMapping("/mini/writeOff")
-public class MiniWriteOffApi {
+public class MiniWriteOffApi extends BaseApi {
 
     @Autowired
     private ICouponService couponService;
@@ -31,18 +33,23 @@ public class MiniWriteOffApi {
      * @return
      */
     @RequestMapping(value = "/writeOff", method = RequestMethod.GET)
-    public BizBaseResponse<Boolean> writeOff(@RequestParam String code) {
-        Boolean result = Boolean.FALSE;
+    public BizBaseResponse<String> writeOff(@RequestParam String code) {
+        String result = "";
+        long storeId = super.getStoreId();
+        //code门店校验
+        //
         if (code.startsWith("YHQ")) {
-            log.info("调用优惠券核销接口 -> {}", code);
-            couponService.writeOffCustomerCouponV2(code);
-            result = Boolean.FALSE;
+            if (!code.startsWith("YHQ" + storeId)) {
+                throw new StoreSaasMarketingException("门店校验失败");
+            }
+            //   couponService.writeOffCustomerCouponV2(code);
+            result = "customerCoupon";
         } else if (code.startsWith("YXHD")) {
-            log.info("调用活动核销接口 -> {}", code);
-            ActivityCustomerReq req = new ActivityCustomerReq();
-            req.setActivityOrderCode(code);
-            req.setUseStatus(Integer.valueOf(1));
-            result = activityService.writeOffOrCancelActivityCustomer(req);
+
+            if (!code.startsWith("YXHD" + storeId)) {
+                throw new StoreSaasMarketingException("门店校验失败");
+            }
+            result = "activity";
         }
         return new BizBaseResponse<>(result);
     }
