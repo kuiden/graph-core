@@ -148,7 +148,7 @@ public interface ICouponService {
      * @return
      */
     @Transactional
-    String writeOffCustomerCouponV2(String code);
+    String  writeOffCustomerCouponV2(String code);
 
     /**
      * 根据工单取消核销客户优惠券

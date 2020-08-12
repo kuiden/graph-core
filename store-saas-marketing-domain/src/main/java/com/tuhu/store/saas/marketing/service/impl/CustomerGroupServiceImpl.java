@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.dto.product.GoodsData;
+import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.constant.CustomerGroupConstant;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -270,8 +272,8 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             String serverArrayStr = amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.SPECIFIED_SERVER);
             if(StringUtils.isNotBlank(serverArrayStr)){
-                List<String> serverIdList =  Arrays.asList(serverArrayStr.split(","));
-                List<GoodsResp> goodsResps = queryServerList(customerGroupResp.getStoreId(), customerGroupResp.getTenantId(), serverIdList);
+                List<String> serverCodeList =  Arrays.asList(serverArrayStr.split(","));
+                List<GoodsResp> goodsResps = queryServerList(customerGroupResp.getStoreId(), customerGroupResp.getTenantId(), serverCodeList);
                 if(CollectionUtils.isNotEmpty(goodsResps)){
                     customerGroupResp.setConsumerServeList(goodsResps);
                 }
@@ -319,25 +321,24 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
     }
 
-    private List<GoodsResp> queryServerList(Long storeId,Long tenantId ,List<String> serverIdList) {
+    private List<GoodsResp> queryServerList(Long storeId,Long tenantId ,List<String> serverCodeList) {
         //查询服务
         List<GoodsResp> goodsResps = null;
-        GoodsListVO goodsVO = new GoodsListVO();
-        goodsVO.setStoreId(storeId);
-        goodsVO.setTenantId(tenantId);
-        goodsVO.setGoodsIdSet( new HashSet<String>(serverIdList));
-        BizBaseResponse<List<GoodsData>> goodsByIDListResponse = storeProductClient.getGoodsByIDList(goodsVO);
+        BizBaseResponse<List<ServiceGoodDTO>> goodsByIDListResponse = storeProductClient.queryServiceGoodListBySpuCodes(serverCodeList, storeId, tenantId);
         if(goodsByIDListResponse!=null) {
-            List<GoodsData> goodsDataList = goodsByIDListResponse.getData();
+            List<ServiceGoodDTO> goodsDataList = goodsByIDListResponse.getData();
             if(CollectionUtils.isNotEmpty(goodsDataList)) {
                 goodsResps = new ArrayList<>();
-                for(GoodsData goodsData : goodsDataList){
+                for(ServiceGoodDTO goodsData : goodsDataList){
                     GoodsResp goodsResp = new GoodsResp();
-                    BeanUtils.copyProperties(goodsData,goodsResp);
+                    goodsResp.setGoodsId(goodsData.getId());
+                    goodsResp.setGoodsName(goodsData.getServiceName());
+                    goodsResp.setGoodsCode(goodsData.getCode());
+                    goodsResp.setTenantId(tenantId);
+                    goodsResp.setStoreId(storeId);
                     goodsResp.setChecked(true);
                     goodsResps.add(goodsResp);
                 }
-              //  customerGroupResp.setConsumerServeList(goodsResps);
             }
         }
         return goodsResps;
@@ -410,7 +411,9 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
         if (req.getConsumerServeDay() != null && req.getConsumerServeDay() > 0 && CollectionUtils.isNotEmpty(req.getConsumerServeList())) {
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CONSUMER_SERVER_FACTOR,String.valueOf(req.getConsumerServeDay()),CustomerGroupConstant.RECENT_DAYS,"=");
-            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, StringUtils.join(req.getConsumerServeList().toArray(),","),CustomerGroupConstant.SPECIFIED_SERVER,"in");
+            List<String> consumerServeList = req.getConsumerServeList();
+            consumerServeList = consumerServeList.stream().distinct().collect(Collectors.toList());
+            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, StringUtils.join(consumerServeList.toArray(),","),CustomerGroupConstant.SPECIFIED_SERVER,"in");
             customerGroupRuleReqList.add(customerGroupRuleDto);
             // 查询服务
             List<GoodsResp> goodsResps = queryServerList(req.getStoreId(), req.getTenantId(), req.getConsumerServeList());

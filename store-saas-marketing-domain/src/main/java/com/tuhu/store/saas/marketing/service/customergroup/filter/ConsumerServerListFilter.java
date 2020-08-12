@@ -41,6 +41,8 @@ public class ConsumerServerListFilter extends AbstractFactorFilter {
         ListCustomerInfoReq req = new ListCustomerInfoReq();
         req.setStoreId(storeId);
         req.setRecentDays(recentDay);
+
+
         req.setGoodsList(serverIdList);
         //有消费记录的客户
         List<String> customerIdList = Lists.newArrayList();
