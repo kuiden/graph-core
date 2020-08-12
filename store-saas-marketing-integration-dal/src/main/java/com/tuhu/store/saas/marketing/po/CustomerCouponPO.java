@@ -17,4 +17,5 @@ public class CustomerCouponPO extends CustomerCoupon {
     private Long storeId;
     private String encryptedCode;
     private CouponPO couponInfo;
+    private String sendUserName;
 }

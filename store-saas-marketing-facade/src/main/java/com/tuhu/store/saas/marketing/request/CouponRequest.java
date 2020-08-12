@@ -12,7 +12,7 @@ import java.io.Serializable;
  * Description:
  */
 @Data
-public class CouponRequest implements Serializable {
+public class CouponRequest extends BaseReq implements Serializable {
     private static final long serialVersionUID = -3882881413700823622L;
     private Long couponId;
 
@@ -27,6 +27,11 @@ public class CouponRequest implements Serializable {
     领取类型：0：主动在线领取 1：手动发券 2：营销发券
      */
     private Integer receiveType ;
+
+
+    private  String  customerCouponCode;
+
+
 
 
 }
