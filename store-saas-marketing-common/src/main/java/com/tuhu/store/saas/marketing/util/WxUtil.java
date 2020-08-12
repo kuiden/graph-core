@@ -46,8 +46,8 @@ public class WxUtil {
 //        System.out.println(urlString);
     }
 
-    public static String getQrCode(String token, String scene, String path, Long width) {
-        String qr = "";
+    public static InputStream getQrCode(String token, String scene, String path, Long width) {
+        InputStream qr = null;
 
         try {
             Map map = new HashMap();
@@ -68,8 +68,8 @@ public class WxUtil {
         return qr;
     }
 
-    private static String httpPostWithJSON(String url, String json) throws IOException {
-        String result = null;
+    private static InputStream httpPostWithJSON(String url, String json) throws IOException {
+        InputStream result = null;
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         HttpPost httpPost = new HttpPost(url);
         httpPost.addHeader(HTTP.CONTENT_TYPE, "application/json");
@@ -81,9 +81,8 @@ public class WxUtil {
         HttpResponse response = httpClient.execute(httpPost);
         if (response != null) {
             HttpEntity resEntity = response.getEntity();
-            InputStream instreams = resEntity.getContent();
-
-            result = getBase64FromInputStream(instreams);
+            result = resEntity.getContent();
+          //  result = getBase64FromInputStream(instreams);
 //            result = "data:image/png;base64," + result;
         }
         httpPost.abort();
