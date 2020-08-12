@@ -29,17 +29,13 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,6 +104,13 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
         List<CustomerMarketing> customerMarketingList = customerMarketingMapper.selectByExample(customerMarketingExample);
 
+        List<String> customerMarketingIds = customerMarketingList.stream().map(x->x.getId().toString()).collect(Collectors.toList());
+
+        Map<String,Long> countMap = iMarketingSendRecordService.getMarketingSendRecordCount(customerMarketingIds);
+
+        for(CustomerMarketing customerMarketing : customerMarketingList) {
+            customerMarketing.setCustomerNum(countMap.get(customerMarketing.getId().toString()));
+        }
         pageInfo.setList(customerMarketingList);
         pageInfo.setStartRow(req.getPageNum());
         pageInfo.setPageSize(req.getPageSize());

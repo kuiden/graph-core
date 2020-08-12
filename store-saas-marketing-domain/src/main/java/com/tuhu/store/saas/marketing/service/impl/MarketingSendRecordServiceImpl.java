@@ -4,19 +4,19 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecordExample;
-import com.tuhu.store.saas.marketing.dataobject.MessageRemind;
-import com.tuhu.store.saas.marketing.dataobject.MessageRemindExample;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MarketingSendRecordMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MessageRemindMapper;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -66,6 +66,32 @@ public class MarketingSendRecordServiceImpl implements IMarketingSendRecordServi
         criteria.andMarketingIdEqualTo(marketingId)
                 .andSendTypeIn(sendTypes);
         return marketingSendRecordMapper.selectByExample(example);
+    }
+
+    @Override
+    public Map<String, Long> getMarketingSendRecordCount(List<String> marketingIds) {
+
+        log.info("根据营销ids{}查询发送记录", JSON.toJSONString(marketingIds));
+        MarketingSendRecordExample example = new MarketingSendRecordExample();
+        MarketingSendRecordExample.Criteria criteria = example.createCriteria();
+        criteria.andMarketingIdIn(marketingIds);
+        List<MarketingSendRecord> list = marketingSendRecordMapper.selectByExample(example);
+
+        Map<String, Long> map = new HashMap<>();
+
+        if(CollectionUtils.isEmpty(list)) {
+            return map;
+        }
+
+        for(MarketingSendRecord marketingSendRecord : list) {
+            if(map.get(marketingSendRecord.getMarketingId()) == null) {
+                map.put(marketingSendRecord.getMarketingId() , 0L);
+            }
+            Long num = map.get(marketingSendRecord.getMarketingId());
+            map.put(marketingSendRecord.getMarketingId(), num + 1);
+        }
+
+        return map;
     }
 
     /**
