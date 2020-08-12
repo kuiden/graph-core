@@ -454,13 +454,13 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.BRITHDAY_FACTOR,String.valueOf(req.getBrithdayStart()),CustomerGroupConstant.BRITHDAY_LEAST_MONTH,">=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getBrithdayEnd()),CustomerGroupConstant.BRITHDAY_MAX_MONTH,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
-            sb.append("生日在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
+            sb.append("生日在").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("月的客户;");
         }
         if(req.getMaintenanceDateStart()!=null && req.getMaintenanceDateEnd()!=null){
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_LEAST_DAY,">=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
-            sb.append("保养日期在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
+            sb.append("保养日期在最近").append(req.getMaintenanceDateStart()).append("~").append(req.getMaintenanceDateEnd()).append("天的客户;");
         }
 
         if("1".equals(req.getIsAllCustomer())){
