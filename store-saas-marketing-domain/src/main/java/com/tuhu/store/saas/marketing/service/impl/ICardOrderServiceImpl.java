@@ -9,7 +9,7 @@ import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardOrderStatusEnum;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
 import com.tuhu.store.saas.marketing.enums.PaymentStatusEnum;
-import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
@@ -20,14 +20,12 @@ import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
-import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.util.CardOrderRedisCache;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,12 +65,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     private CustomerClient customerClient;
 
     @Autowired
-    private ICardService iCardService;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-
-    @Autowired
     private CardOrderRedisCache cardOrderRedisCache;
 
     public static final String cardOrderRedisPrefix = "CARDORDER:KKD:NO:";
@@ -89,7 +81,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         baseIdReqVO.setTenantId(req.getTenantId());
         CustomerDTO customerDTO = customerClient.getCustomerById(baseIdReqVO).getData();
         if (null == customerDTO){
-            throw new MarketingException("未获取到客户信息");
+            throw new StoreSaasMarketingException("未获取到客户信息");
         }
         req.setCustomerName(customerDTO.getName());
         req.setCustomerPhoneNumber(customerDTO.getPhoneNumber());
@@ -100,10 +92,10 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         Long templateId = req.getCardTemplateId();
         CardTemplate cardTemplate = cardTemplateMapper.getCardTemplateById(templateId,req.getTenantId(),req.getStoreId());
         if (null == cardTemplate){
-            throw new MarketingException("无此卡模板数据");
+            throw new StoreSaasMarketingException("无此卡模板数据");
         }
         if ("DISABLE".equals(cardTemplate.getStatus())){
-            throw new MarketingException("卡模板已停用");
+            throw new StoreSaasMarketingException("卡模板已停用");
         }
         if (null != customerDTO.getGender()){
             crdCard.setCustomerGender(customerDTO.getGender());
@@ -170,7 +162,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
         Boolean result = storeReceivingClient.addReceiving(addReceivingVO).getData();
         if (null == result || !result){
-            throw new MarketingException("创建待收记录失败");
+            throw new StoreSaasMarketingException("创建待收记录失败");
         }
         return addReceivingVO.getOrderId();
     }
@@ -278,10 +270,10 @@ public class ICardOrderServiceImpl implements ICardOrderService {
                 result += crdCardMapper.updateByPrimaryKeySelective(card);
             }
         } else{
-            throw new MarketingException("源开卡单不存在，调用updateCardPaymentStatus失败");
+            throw new StoreSaasMarketingException("源开卡单不存在，调用updateCardPaymentStatus失败");
         }
         if (result != 2){
-            throw new MarketingException("更新卡状态失败");
+            throw new StoreSaasMarketingException("更新卡状态失败");
         }
     }
 
