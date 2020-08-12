@@ -30,6 +30,7 @@ import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.request.vo.ClientStoreInfoVO;
 import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.crm.bo.response.resp.CommonResp;
 //import com.tuhu.saas.crm.enums.CrmReturnCodeEnum;
@@ -63,9 +64,11 @@ import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
 import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
+import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.dto.StoreInfoDTO;
 import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
+import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import com.tuhu.store.saas.user.vo.EventTypeEnum;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
@@ -1189,6 +1192,30 @@ public class ActivityServiceImpl implements IActivityService {
             }
             activityResp.setItems(activityItemRespList);
         }
+        //原价计算
+        getOriginalPriceOfActivity(activityResp);
+        //补充门店信息
+        ClientStoreVO clientStoreVO = new ClientStoreVO();
+        clientStoreVO.setStoreId(activity.getStoreId());
+        clientStoreVO.setTenantId(activity.getTenantId());
+        BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(clientStoreVO);
+        if (resultData != null && resultData.getData() != null) {
+            ClientStoreInfoVO storeInfo = new ClientStoreInfoVO();
+            BeanUtils.copyProperties(resultData.getData(),storeInfo);
+            activityResp.setStoreInfo(storeInfo);
+        }
+        //计算已报名人数,排除不限人数
+        if(activityResp.getApplyNumber()>0){
+            List<String> activityCodeList=new ArrayList<>();
+            activityCodeList.add(activityCode);
+            List<Integer> useStatusList = new ArrayList<>();
+            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_NEVER_USE.getStatus());
+            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_CLOSE.getStatus());
+            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus());
+            List<Map<String, Object>> numberList = activityCustomerMapper.countByActivityCodeAndUseStatus(activityCodeList,useStatusList);
+            Long applyCount = Long.valueOf(numberList.get(0).get("number").toString());
+            activityResp.setApplyCount(applyCount);
+        }
         return activityResp;
     }
 
@@ -2209,5 +2236,25 @@ public class ActivityServiceImpl implements IActivityService {
 //        int count = activityCustomerMapper.countByExample(customerExample);
 //        return count;
         return 0;
+    }
+
+    @Override
+    public ActivityResp getActivityDetailByEncryptedCode(String encryptedCode){
+        log.info("活动详情，入参:{}", JSONObject.toJSONString(encryptedCode));
+        ActivityResp resp = new ActivityResp();
+        if (StringUtils.isBlank(encryptedCode)) {
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_ENCRYPTED_CODE_NOT_INPUT.getDesc());
+        }
+        ActivityExample activityExample = new ActivityExample();
+        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
+        activityExampleCriteria.andEncryptedCodeEqualTo(encryptedCode);
+        List<Activity> activityList = activityMapper.selectByExample(activityExample);
+        if(activityList.size() < 1){
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
+        }
+        Activity activity = activityList.get(0);
+        //1.根据活动编码查询活动详情
+        resp = this.getActivityByActivityCode(activity.getActivityCode());
+        return resp;
     }
 }
