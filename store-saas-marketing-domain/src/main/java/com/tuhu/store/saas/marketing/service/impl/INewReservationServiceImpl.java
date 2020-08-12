@@ -600,7 +600,7 @@ public class INewReservationServiceImpl implements INewReservationService {
             rightNow.add(Calendar.HOUR, -1);
             for(String s : list){
                 long now = hmDateFormat.parse(s).getTime();
-                if(now >= startTime.getTime() && now < rightNow.getTime().getTime()){
+                if(now >= startTime.getTime() && now <= rightNow.getTime().getTime()){
                     newList.add(hmDateFormat.format(hmDateFormat.parse(s)));
                 }
             }
