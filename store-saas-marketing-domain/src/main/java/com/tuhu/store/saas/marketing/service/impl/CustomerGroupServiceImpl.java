@@ -59,7 +59,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         Long id = null;
         if(customerGroupDto.getId()==null){//新增
 
-            if(hasSameGroupName(customerGroupDto.getGroupName(),null)){
+            if(hasSameGroupName(customerGroupDto.getGroupName(),null,customerGroupDto.getStoreId())){
                 throw new StoreSaasMarketingException("客群名称["+customerGroupDto.getGroupName()+"]已存在");
             }
             customerGroupDto.setCreateUser(req.getCreateUser());
@@ -75,7 +75,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             id = record.getId();
         }else{//更新
             //校验重名
-            if(hasSameGroupName(customerGroupDto.getGroupName(),customerGroupDto.getId())){
+            if(hasSameGroupName(customerGroupDto.getGroupName(),customerGroupDto.getId(),customerGroupDto.getStoreId())){
                 throw new StoreSaasMarketingException("客群名称["+customerGroupDto.getGroupName()+"]已存在");
             }
             //校验当前门店下是否存在此门店
@@ -119,10 +119,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         return storeCustomerGroupRelations;
     }
 
-    private Boolean hasSameGroupName(String groupName,Long groupId) {
+    private Boolean hasSameGroupName(String groupName,Long groupId,Long storeId) {
         StoreCustomerGroupRelationExample storeCustomerGroupRelationExample = new StoreCustomerGroupRelationExample();
         StoreCustomerGroupRelationExample.Criteria criteria1 = storeCustomerGroupRelationExample.createCriteria();
         criteria1.andGroupNameEqualTo(groupName);
+        criteria1.andStoreIdEqualTo(storeId);
         if(groupId!=null){
             criteria1.andGroupIdNotEqualTo(groupId);
         }
