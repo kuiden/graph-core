@@ -11,6 +11,7 @@ import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
@@ -77,6 +78,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Autowired
     private ICustomerGroupService customerGroupService;
+    @Autowired
+    private StoreCustomerGroupRelationMapper storeCustomerGroupRelationMapper;
    /* @Autowired
     private IUtilityService iUtilityService;
 
@@ -412,11 +415,16 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             for(int i=0; i<groupIds.length ;i++){
                 groupList.add(Long.valueOf(groupIds[i]));
             }
-            CalculateCustomerCountReq req = new CalculateCustomerCountReq();
+           /* CalculateCustomerCountReq req = new CalculateCustomerCountReq();
             req.setGroupList(groupList);
             req.setTenantId(addReq.getTenantId());
             req.setStoreId(addReq.getStoreId());
-            List<CustomerGroupDto> groups = customerGroupService.getCustomerGroupDto(req);
+            List<CustomerGroupDto> groups = customerGroupService.getCustomerGroupDto(req);*/
+            StoreCustomerGroupRelationExample storeCustomerGroupRelationExample = new StoreCustomerGroupRelationExample();
+            StoreCustomerGroupRelationExample.Criteria criteria = storeCustomerGroupRelationExample.createCriteria();
+            criteria.andGroupIdIn(groupList);
+            criteria.andStoreIdEqualTo(addReq.getStoreId());
+            List<StoreCustomerGroupRelation> groups = storeCustomerGroupRelationMapper.selectByExample(storeCustomerGroupRelationExample);
             if(CollectionUtils.isEmpty(groups)) {
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请选择客群");
             }

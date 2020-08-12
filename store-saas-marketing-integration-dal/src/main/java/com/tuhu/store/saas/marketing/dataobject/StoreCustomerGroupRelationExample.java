@@ -136,6 +136,11 @@ public class StoreCustomerGroupRelationExample {
             return (StoreCustomerGroupRelationExample.Criteria) this;
         }
 
+        public StoreCustomerGroupRelationExample.Criteria andGroupIdIn(List<Long> values) {
+            addCriterion("id in", values, "id");
+            return (StoreCustomerGroupRelationExample.Criteria) this;
+        }
+
         public StoreCustomerGroupRelationExample.Criteria andGroupIdNotEqualTo(Long value) {
             addCriterion("id !=", value, "id");
             return (StoreCustomerGroupRelationExample.Criteria) this;
