@@ -65,7 +65,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
                 .andTaskTypeEqualTo(Byte.valueOf("0"));
 
         List<CustomerMarketing> customerMarketings = customerMarketingMapper.selectByExample(customerMarketingExample);
-        customerMarketings = Lists.newArrayList(customerMarketings.get(customerMarketings.size()-1));
+//        customerMarketings = Lists.newArrayList(customerMarketings.get(customerMarketings.size()-1));
         for(CustomerMarketing customerMarketing : customerMarketings){
             MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId());
             if(messageTemplateLocal==null){
