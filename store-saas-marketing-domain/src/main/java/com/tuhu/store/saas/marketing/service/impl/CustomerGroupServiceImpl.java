@@ -568,6 +568,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         customerGroupRuleDto.setCgRuleFactor(customerGroupRule.getCgRuleFactor());
         customerGroupRuleDto.setGroupId(customerGroupDto.getId());
         customerGroupRuleDto.setStoreId(customerGroupDto.getStoreId());
+        customerGroupRuleDto.setTenantId(customerGroupDto.getTenantId());
         List<CustomerGroupRuleAttributeDto> attributeReqList = new ArrayList<>();
         attributeReqList.add(getCustomerGroupRuleAttribute(customerGroupRule));
         customerGroupRuleDto.setAttributeReqList(attributeReqList);

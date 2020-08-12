@@ -113,7 +113,7 @@ public class CustomerGroupFilterFactory {
                 for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
                     if(CustomerGroupConstant.MAINTENANCE_LEAST_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
                         maintenanceDayFilter.setDayStart(Integer.valueOf(attributeDto.getAttributeValue()));
-                    }else if(CustomerGroupConstant.BRITHDAY_MAX_MONTH.equalsIgnoreCase(attributeDto.getAttribute())){
+                    }else if(CustomerGroupConstant.MAINTENANCE_MAX_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
                         maintenanceDayFilter.setDayEnd(Integer.valueOf(attributeDto.getAttributeValue()));
                     }
                 }
