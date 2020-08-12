@@ -39,28 +39,35 @@ public class CustomerCreateTimeFilter extends AbstractFactorFilter {
         CustomerClient customerClient = SpringApplicationContextUtil.getBean(CustomerClient.class);
         CustomerVO customerVO = new CustomerVO();
         customerVO.setStoreId(storeId);
+        if(lessThanDay!=null){
+            customerVO.setBeginTime(getBeginTime(lessThanDay));
+        }
+        if(greaterThanDay!=null){
+            customerVO.setEndTime(getEndTime(greaterThanDay));
+        }
         List<CustomerDTO> customerDTOS = customerClient.listCustomer(customerVO).getData();
         if(customerDTOS==null||customerDTOS.size()<=0){
             return null;
         }
         List<String> result = Lists.newArrayList();
         for(CustomerDTO customerDTO : customerDTOS){
-            Date createTime = customerDTO.getCreateTime();
-            if(createTime==null){
-                continue;
-            }
-            int days = DateUtils.getDiffDays(createTime,DateUtils.now());
-            if(lessThanDay!=null&&days>lessThanDay){
-                continue;
-            }
-            if(greaterThanDay!=null&&days<greaterThanDay){
-                continue;
-            }
             if(!result.contains(customerDTO.getId())){
                 result.add(customerDTO.getId());
             }
         }
         return result;
+    }
+
+    private Date getEndTime(Integer dayLength){
+        int differ = 1-dayLength;
+        Date dayEnd = DateUtils.getDayEnd();
+        return DateUtils.getNextDay(dayEnd,differ);
+    }
+
+    private Date getBeginTime(Integer dayLength){
+        int differ = 1-dayLength;
+        Date dayBegin = DateUtils.getDayBegin();
+        return DateUtils.getNextDay(dayBegin,differ);
     }
 
     @Override
