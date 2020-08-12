@@ -53,4 +53,10 @@ public interface ICustomerMarketingService extends Default {
      */
     String getSmsPreview(MarketingSmsReq req);
 
+    /**
+     * 优惠券是否建立过定向营销
+     * @return
+     */
+    Boolean customerMarketingContainsCoupon(Long couponId, Long tenantId, Long storeId);
+
 }

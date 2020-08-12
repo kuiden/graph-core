@@ -185,6 +185,27 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         return MessageFormat.format(template,params);
     }
 
+    @Override
+    public Boolean customerMarketingContainsCoupon(Long couponId, Long tenantId, Long storeId) {
+
+        CustomerMarketingExample customerMarketingExample = new CustomerMarketingExample();
+        CustomerMarketingExample.Criteria listCriterion = customerMarketingExample.createCriteria();
+        //查询该优惠券建立的定向营销
+        listCriterion.andMarketingMethodEqualTo(Byte.valueOf("0"))
+                .andCouponIdEqualTo(couponId.toString())
+                .andTenantIdEqualTo(tenantId)
+                .andStoreIdEqualTo(storeId)
+                .andIsDeleteEqualTo(Byte.valueOf("0"));
+        //统计分页信息
+        Integer total = customerMarketingMapper.countByExample(customerMarketingExample);
+
+        if(total > 0) {
+            return true;
+        }else {
+            return false;
+        }
+    }
+
     /**
      * 获取短信参数信息
      * @param storeId
