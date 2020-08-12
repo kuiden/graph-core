@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.response;
 
 import com.tuhu.store.saas.marketing.request.ActivityContent;
+import com.tuhu.store.saas.marketing.request.vo.ClientStoreInfoVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -121,5 +122,8 @@ public class ActivityResp implements Serializable {
 
     @ApiModelProperty("原价格")
     private BigDecimal originalTotalPrice;
+
+    @ApiModelProperty("门店信息")
+    private ClientStoreInfoVO storeInfo;
 
 }

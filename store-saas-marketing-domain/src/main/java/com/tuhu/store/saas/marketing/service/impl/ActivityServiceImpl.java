@@ -30,6 +30,7 @@ import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.request.vo.ClientStoreInfoVO;
 import com.tuhu.store.saas.marketing.response.*;
 //import com.tuhu.saas.crm.bo.response.resp.CommonResp;
 //import com.tuhu.saas.crm.enums.CrmReturnCodeEnum;
@@ -63,9 +64,11 @@ import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
 import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
+import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.dto.StoreInfoDTO;
 import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
+import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import com.tuhu.store.saas.user.vo.EventTypeEnum;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
@@ -1097,7 +1100,7 @@ public class ActivityServiceImpl implements IActivityService {
         log.info("客户活动详情，入参:{}", JSONObject.toJSONString(activityCustomerReq));
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (null == activityCustomerReq) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if (StringUtils.isBlank(activityOrderCode)) {
@@ -1111,7 +1114,7 @@ public class ActivityServiceImpl implements IActivityService {
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
 
         if(activityCustomer == null){
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
         //response-set:基本信息copy
         BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
@@ -1189,6 +1192,30 @@ public class ActivityServiceImpl implements IActivityService {
             }
             activityResp.setItems(activityItemRespList);
         }
+        //原价计算
+        getOriginalPriceOfActivity(activityResp);
+        //补充门店信息
+        ClientStoreVO clientStoreVO = new ClientStoreVO();
+        clientStoreVO.setStoreId(activity.getStoreId());
+        clientStoreVO.setTenantId(activity.getTenantId());
+        BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(clientStoreVO);
+        if (resultData != null && resultData.getData() != null) {
+            ClientStoreInfoVO storeInfo = new ClientStoreInfoVO();
+            BeanUtils.copyProperties(resultData.getData(),storeInfo);
+            activityResp.setStoreInfo(storeInfo);
+        }
+        //计算已报名人数,排除不限人数
+        if(activityResp.getApplyNumber()>0){
+            List<String> activityCodeList=new ArrayList<>();
+            activityCodeList.add(activityCode);
+            List<Integer> useStatusList = new ArrayList<>();
+            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_NEVER_USE.getStatus());
+            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_CLOSE.getStatus());
+            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus());
+            List<Map<String, Object>> numberList = activityCustomerMapper.countByActivityCodeAndUseStatus(activityCodeList,useStatusList);
+            Long applyCount = Long.valueOf(numberList.get(0).get("number").toString());
+            activityResp.setApplyCount(applyCount);
+        }
         return activityResp;
     }
 
@@ -1202,15 +1229,16 @@ public class ActivityServiceImpl implements IActivityService {
         Boolean result=true;
         Integer useStatus = activityCustomerReq.getUseStatus();
         if(useStatus==null ||
-            !(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())
-            || useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_CANCELED.getStatus())
+            !(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())
+            || useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_CANCELED.getStatus())
             )){
             throw new MarketingException(MarketingBizErrorCodeEnum.PARAM_ERROR.getDesc()+",检查useStatus");
         }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if(activityOrderCode==null){
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
+        //查询开始
         ActivityCustomerExample activityCustomerExample= new ActivityCustomerExample();
         activityCustomerExample.setDistinct(true);
         ActivityCustomerExample.Criteria activityExampleCriteria = activityCustomerExample.createCriteria();
@@ -1231,11 +1259,11 @@ public class ActivityServiceImpl implements IActivityService {
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
         //查询结果
         if(activityCustomer == null){
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
         //状态检查
-        if(useStatus.equals(activityCustomer.getUseStatus())){
-            if(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())) {
+        if(activityCustomer.getUseStatus().intValue() == useStatus.intValue() ){
+            if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
                 //重复核销
                 throw new MarketingException("已核销，请勿重复执行");
             }else{
@@ -1256,7 +1284,7 @@ public class ActivityServiceImpl implements IActivityService {
 //            List<String> datas = Collections.singletonList(activityResp.getActivityTitle());
 //            sendRemindReq.setDatas(JSONObject.toJSONString(datas));
             StringBuilder messageStatus = new StringBuilder(activityCustomer.getMessageStatus());
-            if(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())) {
+            if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
                 //核销
 //                sendRemindReq.setMessageTemplateId(writeOffMessageTemplateId);
                 //状态二进制消息更新
@@ -2208,5 +2236,25 @@ public class ActivityServiceImpl implements IActivityService {
 //        int count = activityCustomerMapper.countByExample(customerExample);
 //        return count;
         return 0;
+    }
+
+    @Override
+    public ActivityResp getActivityDetailByEncryptedCode(String encryptedCode){
+        log.info("活动详情，入参:{}", JSONObject.toJSONString(encryptedCode));
+        ActivityResp resp = new ActivityResp();
+        if (StringUtils.isBlank(encryptedCode)) {
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_ENCRYPTED_CODE_NOT_INPUT.getDesc());
+        }
+        ActivityExample activityExample = new ActivityExample();
+        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
+        activityExampleCriteria.andEncryptedCodeEqualTo(encryptedCode);
+        List<Activity> activityList = activityMapper.selectByExample(activityExample);
+        if(activityList.size() < 1){
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
+        }
+        Activity activity = activityList.get(0);
+        //1.根据活动编码查询活动详情
+        resp = this.getActivityByActivityCode(activity.getActivityCode());
+        return resp;
     }
 }

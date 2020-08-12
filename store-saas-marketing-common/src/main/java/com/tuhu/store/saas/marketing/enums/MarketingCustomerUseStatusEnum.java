@@ -16,10 +16,10 @@ package com.tuhu.store.saas.marketing.enums;
  */
 public enum  MarketingCustomerUseStatusEnum {
 
-    MC_ORDER_NEVER_USE(0,"未核销"),
-    MC_ORDER_IS_USED(1,"已核销"),
-    MC_ORDER_IS_CANCELED(2,"被取消"),
-    MC_ORDER_CLOSE(3,"已开单")
+    AC_ORDER_NEVER_USE(0,"未核销"),
+    AC_ORDER_IS_USED(1,"已核销"),
+    AC_ORDER_IS_CANCELED(2,"被取消"),
+    AC_ORDER_CLOSE(3,"已开单")
     ;
 
     private Integer status;

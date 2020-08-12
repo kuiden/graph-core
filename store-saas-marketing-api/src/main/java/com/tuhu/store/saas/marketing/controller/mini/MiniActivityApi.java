@@ -174,7 +174,17 @@ public class MiniActivityApi extends BaseApi {
         activityCustomerReq.setStoreId(super.getStoreId());
         activityCustomerReq.setTenantId(super.getTenantId());
         activityCustomerReq.setUserId(super.getUserId());
-        Boolean result = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
+        try {
+            Boolean result = iActivityService.writeOffOrCancelActivityCustomer(activityCustomerReq);
+            if(!result){
+                return BizBaseResponse.operationFailed("服务异常");
+            }
+        } catch (MarketingException me) {
+            return BizBaseResponse.operationFailed(me.getMessage());
+        } catch (Exception e) {
+            log.info("客户报名核销或取消订单，入参：{}", activityCustomerReq, e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
         return BizBaseResponse.success();
     }
 
