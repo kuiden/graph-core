@@ -1097,7 +1097,7 @@ public class ActivityServiceImpl implements IActivityService {
         log.info("客户活动详情，入参:{}", JSONObject.toJSONString(activityCustomerReq));
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (null == activityCustomerReq) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if (StringUtils.isBlank(activityOrderCode)) {
@@ -1111,7 +1111,7 @@ public class ActivityServiceImpl implements IActivityService {
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
 
         if(activityCustomer == null){
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
         //response-set:基本信息copy
         BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
@@ -1202,15 +1202,16 @@ public class ActivityServiceImpl implements IActivityService {
         Boolean result=true;
         Integer useStatus = activityCustomerReq.getUseStatus();
         if(useStatus==null ||
-            !(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())
-            || useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_CANCELED.getStatus())
+            !(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())
+            || useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_CANCELED.getStatus())
             )){
             throw new MarketingException(MarketingBizErrorCodeEnum.PARAM_ERROR.getDesc()+",检查useStatus");
         }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if(activityOrderCode==null){
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
+        //查询开始
         ActivityCustomerExample activityCustomerExample= new ActivityCustomerExample();
         activityCustomerExample.setDistinct(true);
         ActivityCustomerExample.Criteria activityExampleCriteria = activityCustomerExample.createCriteria();
@@ -1231,11 +1232,11 @@ public class ActivityServiceImpl implements IActivityService {
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
         //查询结果
         if(activityCustomer == null){
-            throw new MarketingException(MarketingBizErrorCodeEnum.MC_ORDER_NOT_EXIST.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
         //状态检查
-        if(useStatus.equals(activityCustomer.getUseStatus())){
-            if(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())) {
+        if(activityCustomer.getUseStatus().intValue() == useStatus.intValue() ){
+            if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
                 //重复核销
                 throw new MarketingException("已核销，请勿重复执行");
             }else{
@@ -1256,7 +1257,7 @@ public class ActivityServiceImpl implements IActivityService {
 //            List<String> datas = Collections.singletonList(activityResp.getActivityTitle());
 //            sendRemindReq.setDatas(JSONObject.toJSONString(datas));
             StringBuilder messageStatus = new StringBuilder(activityCustomer.getMessageStatus());
-            if(useStatus.equals(MarketingCustomerUseStatusEnum.MC_ORDER_IS_USED.getStatus())) {
+            if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
                 //核销
 //                sendRemindReq.setMessageTemplateId(writeOffMessageTemplateId);
                 //状态二进制消息更新
