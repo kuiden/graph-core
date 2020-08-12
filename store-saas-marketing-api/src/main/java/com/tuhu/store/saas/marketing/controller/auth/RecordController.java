@@ -26,7 +26,7 @@ public class RecordController {
     @Autowired
     private IClientEventRecordService iClientEventRecordService;
 
-    @PostMapping(value = "/user/{contentType}/record")
+    @GetMapping(value = "/user/{contentType}/record")
     public BizBaseResponse recordEndUserEvent(@PathVariable String contentType, @NotNull @Validated ClientEventRecordRequest clientEventRecordRequest) {
         clientEventRecordRequest.setContentType(contentType);
         clientEventRecordRequest.setEventType(EventTypeEnum.VISIT.getCode());
@@ -34,7 +34,7 @@ public class RecordController {
         return BizBaseResponse.success();
     }
 
-    @PostMapping(value = "/user/{contentType}/forward")
+    @GetMapping(value = "/user/{contentType}/forward")
     public BizBaseResponse recordEndUserForwardEvent(@PathVariable String contentType, @NotNull @Validated ClientEventRecordRequest clientEventRecordRequest) {
         clientEventRecordRequest.setContentType(contentType);
         clientEventRecordRequest.setEventType(EventTypeEnum.WECHATFORWARD.getCode());

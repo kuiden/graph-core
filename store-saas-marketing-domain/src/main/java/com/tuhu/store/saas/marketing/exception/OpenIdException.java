@@ -1,7 +1,7 @@
 package com.tuhu.store.saas.marketing.exception;
 
 
-public class OpenIdException extends SaasAuthException {
+public class OpenIdException extends StoreSaasMarketingException {
     public OpenIdException() {
     }
 
