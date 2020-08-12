@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.config;
 
 
+import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.remote.ResultObject;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.xiangyun.versionhelper.VersionPersistenceException;
@@ -62,6 +63,15 @@ public class ApiExceptionHandlerAdvice {
     @ExceptionHandler(value = StoreSaasMarketingException.class)
     @ResponseBody
     public ResultObject itemException(StoreSaasMarketingException exception) {
+        ResultObject errorResult = new ResultObject();
+        errorResult.setMessage(exception.getMessage());
+        errorResult.setCode(4000);
+        return errorResult;
+    }
+
+    @ExceptionHandler(value = OpenIdException.class)
+    @ResponseBody
+    public ResultObject openIdException(OpenIdException exception) {
         ResultObject errorResult = new ResultObject();
         errorResult.setMessage(exception.getMessage());
         errorResult.setCode(4000);
