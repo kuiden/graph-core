@@ -448,6 +448,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         customerMarketing.setRemark(addReq.getRemark());
         customerMarketing.setSendObject(sendObject);//客户群名称
         customerMarketing.setTaskType(Byte.valueOf("0"));
+        customerMarketing.setIsDelete(Byte.valueOf("0"));
 
         //原有字段共用，存放活动相关信息
         if(coupon != null && activity == null) {
