@@ -64,6 +64,8 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             customerGroupDto.setCreateUser(req.getCreateUser());
             customerGroupDto.setCreateTime(new Date());
+            customerGroupDto.setUpdateUser(req.getCreateUser());
+            customerGroupDto.setUpdateTime(new Date());
             StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
             BeanUtils.copyProperties(customerGroupDto,record);
             storeCustomerGroupRelationMapper.insertSelective(record);
