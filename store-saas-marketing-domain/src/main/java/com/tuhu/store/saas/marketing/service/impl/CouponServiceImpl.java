@@ -358,6 +358,7 @@ public class CouponServiceImpl implements ICouponService {
 //                resp.setCategories(scopeCategoryRespList);
 //            }
 //        }
+        resp.setIsMarketingCoupon(customerMarketingService.customerMarketingContainsCoupon(resp.getId(), resp.getTenantId(), resp.getStoreId()));
         log.info("查询优惠券详情响应response：{}", GsonTool.toJSONString(resp));
         return resp;
     }
@@ -453,9 +454,10 @@ public class CouponServiceImpl implements ICouponService {
         if (null == oldCoupon) {
             throw new StoreSaasMarketingException("优惠券不存在");
         }
-        if (customerMarketingService.customerMarketingContainsCoupon(editCouponReq.getId(), editCouponReq.getTenantId(), editCouponReq.getStoreId())) {
-            throw new StoreSaasMarketingException("该优惠券已经关联营销活动");
+         /*   if (customerMarketingService.customerMarketingContainsCoupon(editCouponReq.getId(), editCouponReq.getTenantId(), editCouponReq.getStoreId())) {
+             throw new StoreSaasMarketingException("该优惠券已经关联营销活动");
         }
+        */
         //校验输入
         String validateResult = this.validateEditCouponReq(oldCoupon, editCouponReq);
         if (null != validateResult) {

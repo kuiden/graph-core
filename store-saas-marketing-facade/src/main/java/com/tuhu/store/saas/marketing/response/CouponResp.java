@@ -155,4 +155,9 @@ public class CouponResp implements Serializable {
      * 限定的分类
      */
     private List<CouponScopeCategoryResp> categories;
+
+    /**
+     * 是否创建营销活动
+     */
+    private  Boolean isMarketingCoupon;
 }
