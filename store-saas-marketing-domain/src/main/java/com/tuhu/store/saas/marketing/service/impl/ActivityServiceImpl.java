@@ -575,6 +575,9 @@ public class ActivityServiceImpl implements IActivityService {
                     break;
             }
         }
+        if (activityListReq.getStatus() != null) {
+            activityExampleCriteria.andStatusEqualTo(activityListReq.getStatus());
+        }
         activityExample.setOrderByClause("create_time desc");
         PageHelper.startPage(activityListReq.getPageNum() + 1, activityListReq.getPageSize());
         List<Activity> activityList = activityMapper.selectByExample(activityExample);
