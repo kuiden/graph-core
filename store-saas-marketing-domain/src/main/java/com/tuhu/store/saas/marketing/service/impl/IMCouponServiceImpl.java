@@ -779,14 +779,22 @@ public class IMCouponServiceImpl implements IMCouponService {
                 CouponPO po = new CouponPO();
                 BeanUtils.copyProperties(coupon, po);
                 result.setCouponInfo(po);
-                //获取发券人
-                if (StringUtils.isNotBlank(customerCoupon.getSendUser())) {
+                //获取客户信息
+                if (StringUtils.isNotBlank(customerCoupon.getCustomerId())) {
                     BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
-                    baseIdReqVO.setId(customerCoupon.getSendUser());
+                    baseIdReqVO.setId(customerCoupon.getCustomerId());
                     baseIdReqVO.setStoreId(req.getStoreId());
                     baseIdReqVO.setTenantId(req.getTenantId());
                     BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(baseIdReqVO);
                     result.setSendUserName(crmResult != null && crmResult.getData() != null ? crmResult.getData().getName() : null);
+                }
+                //获取发券人
+                if (StringUtils.isNotBlank(customerCoupon.getSendUser())) {
+                    BizBaseResponse<Map<String, UserDTO>>  crmResult = customerClient.getUserInfoMapByIdList(Lists.newArrayList(customerCoupon.getSendUser()));
+                    result.setCustomerName(crmResult != null
+                            && crmResult.getData() != null
+                            && crmResult.getData().containsKey(customerCoupon.getSendUser())
+                            ? crmResult.getData().get(customerCoupon.getSendUser()).getUsername() : null);
                 }
                 //获取过期状态
                 Date date = new Date();
