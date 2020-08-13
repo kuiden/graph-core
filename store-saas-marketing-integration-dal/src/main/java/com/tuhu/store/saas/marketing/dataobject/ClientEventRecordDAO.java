@@ -40,6 +40,8 @@ public class ClientEventRecordDAO implements Serializable {
     private String customerId;
     @TableField("store_id")
     private String storeId;
+    @TableField("source_type")
+    private Integer sourceType;
     @TableField("create_time")
     private Date createTime;
     @TableField("event_count")

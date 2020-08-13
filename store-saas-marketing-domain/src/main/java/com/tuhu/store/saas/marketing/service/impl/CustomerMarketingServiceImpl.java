@@ -76,10 +76,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     private ICustomerGroupService customerGroupService;
     @Autowired
     private StoreCustomerGroupRelationMapper storeCustomerGroupRelationMapper;
-   /* @Autowired
+   @Autowired
     private IUtilityService iUtilityService;
 
-    @Value("${.url.pre}")
+    /* @Value("${.url.pre}")
     private String domainUrlPre;*/
 
     @Override
@@ -181,7 +181,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             template = messageTemplateLocal.getTemplateContent();
         }
 
-        String paramStr = getMessageData(req.getStoreId(), req.getMarketingMethod(), req.getCouponOrActiveId());
+        String paramStr = getMessageData(req.getStoreId(), req.getMarketingMethod(), req.getCouponOrActiveId(),req.getOrginUrl());
 
         if(StringUtils.isEmpty(paramStr)) {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信参数生成失败");
@@ -219,7 +219,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
      * @param couponOrActiveId
      * @return
      */
-    private String getMessageData(Long storeId, Byte marketingMethod, String couponOrActiveId) {
+    private String getMessageData(Long storeId, Byte marketingMethod, String couponOrActiveId,String orginUrl) {
         List<String> params = new ArrayList<>();
         //查询门店信息
         StoreInfoVO storeInfoVO = new StoreInfoVO();
@@ -239,8 +239,11 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add("价值" + coupon.getContentValue().intValue()+ "元" +coupon.getTitle());
             params.add(storeDTO.getMobilePhone());
             //TODO 替换短链
+            if(StringUtils.isNotBlank(orginUrl)){
+                params.add(iUtilityService.getShortUrl(orginUrl));
 
-            params.add("http://www.baidu.com");
+            }
+
 
         }else if(marketingMethod.equals(Byte.valueOf("1"))){
             //活动营销
@@ -276,7 +279,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
           /*  StringBuffer url = new StringBuffer();
             url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
             params.add( iUtilityService.getShortUrl(url.toString()));*/
-            params.add("www.baidu.com");
+            if(StringUtils.isNotBlank(orginUrl)){
+                params.add(iUtilityService.getShortUrl(orginUrl));
+
+            }
         }
 
         return StringUtils.join(params,",");
@@ -482,7 +488,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //messageData
-        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId()));
+        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId(),addReq.getOrginUrl()));
         insert(customerMarketing);
 
         //写入记录表并将状态设为未发送
