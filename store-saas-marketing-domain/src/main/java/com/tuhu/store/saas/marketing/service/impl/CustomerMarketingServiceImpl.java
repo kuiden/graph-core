@@ -413,7 +413,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         if(addReq.getMarketingMethod().equals(0)) {
             Long availableAccount = couponService.getCouponAvailableAccount(coupon.getId(), addReq.getStoreId());
 
-            if(availableAccount < customerList.size()) {
+            if(availableAccount >=0 && availableAccount < customerList.size()) {//如果是限量优惠券，需要判断剩余额度
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券数量不足");
             }
         }

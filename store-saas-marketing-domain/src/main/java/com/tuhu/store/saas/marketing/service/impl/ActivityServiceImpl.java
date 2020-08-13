@@ -88,6 +88,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -264,7 +266,9 @@ public class ActivityServiceImpl implements IActivityService {
         activity.setStartTime(DataTimeUtil.getDateStartTime(activity.getStartTime()));
         activity.setEndTime(DataTimeUtil.getDateZeroTime(activity.getEndTime()));
         if (CollectionUtils.isNotEmpty(addActivityReq.getItems())) {
-            activity.setActivityPrice(BigDecimal.valueOf(addActivityReq.getItems().stream().mapToLong(ActivityItemReq::getActualPrice).sum()));
+            activity.setActivityPrice(BigDecimal.valueOf(addActivityReq.getItems().stream().mapToLong(r->{
+                return r.getActualPrice()*r.getItemQuantity();
+            }).sum()));
         }
         return activity;
     }
@@ -575,6 +579,9 @@ public class ActivityServiceImpl implements IActivityService {
                     break;
             }
         }
+        if (activityListReq.getStatus() != null) {
+            activityExampleCriteria.andStatusEqualTo(activityListReq.getStatus());
+        }
         activityExample.setOrderByClause("create_time desc");
         PageHelper.startPage(activityListReq.getPageNum() + 1, activityListReq.getPageSize());
         List<Activity> activityList = activityMapper.selectByExample(activityExample);
@@ -674,7 +681,9 @@ public class ActivityServiceImpl implements IActivityService {
             throw new MarketingException("活动过开始时间，不允许编辑");
         }
         if (CollectionUtils.isNotEmpty(editActivityReq.getItems())) {
-            editActivityReq.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(ActivityItemReq::getActualPrice).sum()));
+            editActivityReq.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(r->{
+                return r.getItemQuantity()*r.getActualPrice();
+            }).sum()));
         }
         //校验输入
         String validateResult = this.validateEditActivityReq(oldActivity, editActivityReq);
@@ -714,9 +723,9 @@ public class ActivityServiceImpl implements IActivityService {
         List<ActivityItem> addActivityItems = new ArrayList<>();
         List<ActivityItem> updateActivityItems = new ArrayList<>();
         for (ActivityItemReq activityItemReq : editActivityReq.getItems()) {
-            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud() && null == activityItemReq.getGoodsId()) {
-                issuedGoodOrServiceSpu(activityItemReq, editActivityReq.getTenantId(), editActivityReq.getUpdateUser());
-            }
+//            if (null != activityItemReq.getIsFromCloud() && activityItemReq.getIsFromCloud() && null == activityItemReq.getGoodsId()) {
+//                issuedGoodOrServiceSpu(activityItemReq, editActivityReq.getTenantId(), editActivityReq.getUpdateUser());
+//            }
             Long itemId = activityItemReq.getId();
             ActivityItem activityItem = new ActivityItem();
             if (null != itemId) {
@@ -733,6 +742,7 @@ public class ActivityServiceImpl implements IActivityService {
                 activityItem.setCreateUser(editActivityReq.getUpdateUser());
                 activityItem.setCreateTime(date);
                 activityItem.setUpdateTime(date);
+                activityItem.setTenantId(editActivityReq.getTenantId());
             }
         }
         //新增活动项目
@@ -1040,7 +1050,7 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomer.setTenantId(activityApplyReq.getTenantId());
         activityCustomer.setCreateTime(new Date());
         activityCustomer.setStartTime(activity.getStartTime());
-        activityCustomer.setEndTime(activity.getEndTime());
+        activityCustomer.setEndTime(this.getApplyedEndDate(activity.getStartTime(), activity.getEndTime(), activity.getActiveType(), activity.getActiveDays(), activity.getActiveDate()));
         activityCustomer.setUseStatus((byte) 0);
         if (null != activityApplyReq.getCustomerName()){
             activityCustomer.setCustomerName(activityApplyReq.getCustomerName());
@@ -1058,7 +1068,6 @@ public class ActivityServiceImpl implements IActivityService {
         List<String> datas = new ArrayList<>();
         datas.add(activity.getActivityTitle());
         String datePattern = "yyyy年MM月dd日";
-        // todo 活动截止时间
         datas.add(DateFormatUtils.format(activity.getEndTime(), datePattern));
         sendRemindReq.setDatas(JSONObject.toJSONString(datas));
         StringBuilder messageStatus = new StringBuilder("000");
@@ -1136,7 +1145,9 @@ public class ActivityServiceImpl implements IActivityService {
                 activityCustomerResp.setCustomerName(customer.getName());
             }
 
-
+        if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
+            activityCustomerResp.setUseStatus((byte) -1);
+        }
 
             // todo 获取用户车辆详情
 //            CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId, customer.getTenantId(), customer.getStoreId());
@@ -2256,5 +2267,21 @@ public class ActivityServiceImpl implements IActivityService {
         //1.根据活动编码查询活动详情
         resp = this.getActivityByActivityCode(activity.getActivityCode());
         return resp;
+    }
+
+    private Date getApplyedEndDate(Date activityStartDate, Date activityEndDate, Integer activeType, Integer activeDays, Date activeDate) {
+        if (activeType == null) {
+            return activityEndDate;
+        }else if (activeType == 0) {
+            LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays);
+            Date appDate = Date.from(appLocalDate.atZone(ZoneId.systemDefault()).toInstant());
+            if (appDate.before(activityEndDate)) {
+                return appDate;
+            }else {
+                return activeDate;
+            }
+        }else {
+            return activeDate;
+        }
     }
 }

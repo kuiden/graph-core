@@ -72,8 +72,11 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
     @Transactional
     public void reduceQuantity(MessageQuantity select, Integer usedNum, String updateUser, boolean releaseOccupy) {
         MessageQuantity messageQuantity = this.selectQuantityByTenantIdAndStoreId(select);
-
-        Long availableNum = messageQuantity.getRemainderQuantity() - messageQuantity.getOccupyQuantity();
+        Long occupyQuantity = 0l;
+        if (messageQuantity.getOccupyQuantity() != null) {
+            occupyQuantity = messageQuantity.getOccupyQuantity();
+        }
+        Long availableNum = messageQuantity.getRemainderQuantity() - occupyQuantity;
         if(availableNum < usedNum) {
             throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
         }

@@ -45,7 +45,7 @@ import java.util.*;
 @Slf4j
 public class RemindServiceImpl implements IRemindService {
 
-    @Value("${marketing.message.try.times:0}")
+    @Value("${marketing.message.try.times:1}")
     private Integer tryTimes;
 
     @Autowired

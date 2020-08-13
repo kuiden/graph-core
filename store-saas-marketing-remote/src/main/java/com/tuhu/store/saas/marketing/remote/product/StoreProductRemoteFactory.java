@@ -41,8 +41,14 @@ public class StoreProductRemoteFactory implements FallbackFactory<StoreProductCl
             }
 
             @Override
-            public BizBaseResponse<List<GoodsData>> getGoodsByIDList(GoodsListVO goodsVO) {
-                log.error("getGoodsByIDList error,request={},error={}", goodsVO, ExceptionUtils.getStackTrace(throwable));
+            public BizBaseResponse<List<GoodsData>> queryServiceGoodListByCodesAndStoreId(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId) {
+                log.error("queryServiceGoodListByCodesAndStoreId error,codeList={},storeId={},error={}", codeList,storeId, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse queryBatchGoods(List<String> codeList, Long storeId, Long tenantId, String carPosition) {
+                log.error("queryBatchGoods error,codeList={},storeId={},tenantId={},carPosition={},error={}", codeList,storeId,tenantId,carPosition, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
         };

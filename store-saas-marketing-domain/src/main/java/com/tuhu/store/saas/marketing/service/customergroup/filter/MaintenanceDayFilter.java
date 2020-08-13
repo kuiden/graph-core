@@ -59,11 +59,11 @@ public class MaintenanceDayFilter extends AbstractFactorFilter {
 
     private Date geStartDateAfterAdd(Integer dayLength){
         Date dayBegain = DateUtils.getDayBegin();
-        return DateUtils.getNextDay(dayBegain,dayLength);
+        return DateUtils.getNextDay(dayBegain,dayLength-1);
     }
 
     private Date geEndDateAfterAdd(Integer dayLength){
         Date dayEnd = DateUtils.getDayEnd();
-        return DateUtils.getNextDay(dayEnd,dayLength);
+        return DateUtils.getNextDay(dayEnd,dayLength-1);
     }
 }

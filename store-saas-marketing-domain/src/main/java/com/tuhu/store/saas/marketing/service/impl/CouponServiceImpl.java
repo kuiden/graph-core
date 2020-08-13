@@ -558,7 +558,7 @@ public class CouponServiceImpl implements ICouponService {
     private Coupon convertToEditCoupon(CouponResp oldCoupon, EditCouponReq editCouponReq) {
         Coupon editCoupon = new Coupon();
         BeanUtils.copyProperties(oldCoupon, editCoupon);
-        Long sendNumber = oldCoupon.getSendNumber();
+        Long sendNumber = oldCoupon.getSendNumber() + oldCoupon.getOccupyNum();
         //券数量
         editCoupon.setGrantNumber(editCouponReq.getGrantNumber());
         //券状态
@@ -621,7 +621,15 @@ public class CouponServiceImpl implements ICouponService {
         }
         if (number.compareTo(0L) > 0) {
             //已发放的券只允许编辑券数量，是否允许领券，券状态；
-            return null;
+            if (oldCoupon.getTitle().equals(editCouponReq.getTitle())
+                    && oldCoupon.getContentValue().compareTo(editCouponReq.getContentValue()) == 0
+                    && oldCoupon.getConditionLimit().compareTo(editCouponReq.getConditionLimit()) == 0
+                    && oldCoupon.getRelativeDaysNum().equals(editCouponReq.getRelativeDaysNum())
+                    && oldCoupon.getRemark().equals(editCouponReq.getRemark())){
+                return null;
+            } else {
+                return "优惠券已发放，请从券列表重新进入编辑";
+            }
         }
         //使用门槛
         BigDecimal conditionLimit = editCouponReq.getConditionLimit();
@@ -874,22 +882,28 @@ public class CouponServiceImpl implements ICouponService {
         Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
         if (value != null) {
             try {
-                CustomerCouponExample example = new CustomerCouponExample();
-                CustomerCouponExample.Criteria criteria = example.createCriteria();
-                criteria.andCouponCodeEqualTo(x.getCode());
-                int customerReceiveCount = customerCouponMapper.countByExample(example);
-                long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
-                if (count > 0) {
+                if(x.getGrantNumber() < 0) {//不限量，直接叠加预占数
                     Coupon u = new Coupon();
                     u.setOccupyNum(x.getOccupyNum() + num);
                     u.setId(x.getId());
-                    long result = couponMapper.updateByPrimaryKeySelective(u);
-                    if (result <= 0) {
-                        throw new StoreSaasMarketingException("预占失败");
+                    couponMapper.updateByPrimaryKeySelective(u);
+                }else {
+                    CustomerCouponExample example = new CustomerCouponExample();
+                    CustomerCouponExample.Criteria criteria = example.createCriteria();
+                    criteria.andCouponCodeEqualTo(x.getCode());
+                    int customerReceiveCount = customerCouponMapper.countByExample(example);
+                    long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
+                    if (count > 0) {
+                        Coupon u = new Coupon();
+                        u.setOccupyNum(x.getOccupyNum() + num);
+                        u.setId(x.getId());
+                        long result = couponMapper.updateByPrimaryKeySelective(u);
+                        if (result <= 0) {
+                            throw new StoreSaasMarketingException("预占失败");
+                        }
+                    } else {
+                        throw new StoreSaasMarketingException("余额数量不足");
                     }
-                } else {
-
-                    throw new StoreSaasMarketingException("余额数量不足");
                 }
             } finally {
                 storeRedisUtils.releaseLock(occupyNumKey, value.toString());
@@ -1735,11 +1749,16 @@ public class CouponServiceImpl implements ICouponService {
 
         Coupon coupon = coupons.get(0);
 
+        if(coupon.getGrantNumber().equals(-1)) {//不限量直接返回
+            return -1L;
+        }
+
         //统计已发放数量
         CustomerCouponExample customerCouponExample = new CustomerCouponExample();
         CustomerCouponExample.Criteria criteria = customerCouponExample.createCriteria();
         criteria.andCouponCodeEqualTo(coupon.getCode());
         int sendCount = customerCouponMapper.countByExample(customerCouponExample);
+
 
         Long availableAccount = coupon.getGrantNumber() - sendCount - coupon.getOccupyNum();
         if (availableAccount < 1) {

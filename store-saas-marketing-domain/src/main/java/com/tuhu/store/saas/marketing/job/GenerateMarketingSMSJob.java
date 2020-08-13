@@ -65,7 +65,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
                 .andTaskTypeEqualTo(Byte.valueOf("0"));
 
         List<CustomerMarketing> customerMarketings = customerMarketingMapper.selectByExample(customerMarketingExample);
-
+//        customerMarketings = Lists.newArrayList(customerMarketings.get(customerMarketings.size()-1));
         for(CustomerMarketing customerMarketing : customerMarketings){
             MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId());
             if(messageTemplateLocal==null){
@@ -152,14 +152,20 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
         List<String> customerIds = marketingSendRecords.stream().map(x->x.getCustomerId()).collect(Collectors.toList());
         sendCouponReq.setCustomerIds(customerIds);
-        List<CommonResp<CustomerCoupon>> customerCouponRespList = iCouponService.sendCoupon(sendCouponReq);
+        try{
+            List<CommonResp<CustomerCoupon>> customerCouponRespList = iCouponService.sendCoupon(sendCouponReq);
 
-        Long successNum = customerCouponRespList.stream().filter(x->x.isSuccess()).count();
+            Long successNum = customerCouponRespList.stream().filter(x->x.isSuccess()).count();
 
-        if(successNum < customerIds.size()) {
-            log.error("定向营销{}创建优惠券{}失败！", customerMarketing.getId(),customerMarketing.getCouponCode());
+            if(successNum < customerIds.size()) {
+                log.error("定向营销{}创建优惠券{}失败！", customerMarketing.getId(),customerMarketing.getCouponCode());
+                return;
+            }
+        }catch (Exception e) {
+            log.error("定向营销优惠券送券失败！", e);
             return;
         }
+
 
 
         for(MarketingSendRecord marketingSendRecord : marketingSendRecords){

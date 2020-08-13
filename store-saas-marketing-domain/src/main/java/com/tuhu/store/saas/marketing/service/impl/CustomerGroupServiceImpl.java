@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.dto.product.GoodsData;
+import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.constant.CustomerGroupConstant;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -59,11 +61,13 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         Long id = null;
         if(customerGroupDto.getId()==null){//新增
 
-            if(hasSameGroupName(customerGroupDto.getGroupName(),null)){
+            if(hasSameGroupName(customerGroupDto.getGroupName(),null,customerGroupDto.getStoreId())){
                 throw new StoreSaasMarketingException("客群名称["+customerGroupDto.getGroupName()+"]已存在");
             }
             customerGroupDto.setCreateUser(req.getCreateUser());
             customerGroupDto.setCreateTime(new Date());
+            customerGroupDto.setUpdateUser(req.getCreateUser());
+            customerGroupDto.setUpdateTime(new Date());
             StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
             BeanUtils.copyProperties(customerGroupDto,record);
             storeCustomerGroupRelationMapper.insertSelective(record);
@@ -73,7 +77,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             id = record.getId();
         }else{//更新
             //校验重名
-            if(hasSameGroupName(customerGroupDto.getGroupName(),customerGroupDto.getId())){
+            if(hasSameGroupName(customerGroupDto.getGroupName(),customerGroupDto.getId(),customerGroupDto.getStoreId())){
                 throw new StoreSaasMarketingException("客群名称["+customerGroupDto.getGroupName()+"]已存在");
             }
             //校验当前门店下是否存在此门店
@@ -117,10 +121,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         return storeCustomerGroupRelations;
     }
 
-    private Boolean hasSameGroupName(String groupName,Long groupId) {
+    private Boolean hasSameGroupName(String groupName,Long groupId,Long storeId) {
         StoreCustomerGroupRelationExample storeCustomerGroupRelationExample = new StoreCustomerGroupRelationExample();
         StoreCustomerGroupRelationExample.Criteria criteria1 = storeCustomerGroupRelationExample.createCriteria();
         criteria1.andGroupNameEqualTo(groupName);
+        criteria1.andStoreIdEqualTo(storeId);
         if(groupId!=null){
             criteria1.andGroupIdNotEqualTo(groupId);
         }
@@ -267,8 +272,8 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
             String serverArrayStr = amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR).get(CustomerGroupConstant.SPECIFIED_SERVER);
             if(StringUtils.isNotBlank(serverArrayStr)){
-                List<String> serverIdList =  Arrays.asList(serverArrayStr.split(","));
-                List<GoodsResp> goodsResps = queryServerList(customerGroupResp.getStoreId(), customerGroupResp.getTenantId(), serverIdList);
+                List<String> serverCodeList =  Arrays.asList(serverArrayStr.split(","));
+                List<GoodsResp> goodsResps = queryServerList(customerGroupResp.getStoreId(), customerGroupResp.getTenantId(), serverCodeList);
                 if(CollectionUtils.isNotEmpty(goodsResps)){
                     customerGroupResp.setConsumerServeList(goodsResps);
                 }
@@ -316,25 +321,24 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
     }
 
-    private List<GoodsResp> queryServerList(Long storeId,Long tenantId ,List<String> serverIdList) {
+    private List<GoodsResp> queryServerList(Long storeId,Long tenantId ,List<String> serverCodeList) {
         //查询服务
         List<GoodsResp> goodsResps = null;
-        GoodsListVO goodsVO = new GoodsListVO();
-        goodsVO.setStoreId(storeId);
-        goodsVO.setTenantId(tenantId);
-        goodsVO.setGoodsIdSet( new HashSet<String>(serverIdList));
-        BizBaseResponse<List<GoodsData>> goodsByIDListResponse = storeProductClient.getGoodsByIDList(goodsVO);
+        BizBaseResponse<List<ServiceGoodDTO>> goodsByIDListResponse = storeProductClient.queryServiceGoodListBySpuCodes(serverCodeList, storeId, tenantId);
         if(goodsByIDListResponse!=null) {
-            List<GoodsData> goodsDataList = goodsByIDListResponse.getData();
+            List<ServiceGoodDTO> goodsDataList = goodsByIDListResponse.getData();
             if(CollectionUtils.isNotEmpty(goodsDataList)) {
                 goodsResps = new ArrayList<>();
-                for(GoodsData goodsData : goodsDataList){
+                for(ServiceGoodDTO goodsData : goodsDataList){
                     GoodsResp goodsResp = new GoodsResp();
-                    BeanUtils.copyProperties(goodsData,goodsResp);
+                    goodsResp.setGoodsId(goodsData.getId());
+                    goodsResp.setGoodsName(goodsData.getServiceName());
+                    goodsResp.setGoodsCode(goodsData.getCode());
+                    goodsResp.setTenantId(tenantId);
+                    goodsResp.setStoreId(storeId);
                     goodsResp.setChecked(true);
                     goodsResps.add(goodsResp);
                 }
-              //  customerGroupResp.setConsumerServeList(goodsResps);
             }
         }
         return goodsResps;
@@ -407,7 +411,9 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
         if (req.getConsumerServeDay() != null && req.getConsumerServeDay() > 0 && CollectionUtils.isNotEmpty(req.getConsumerServeList())) {
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CONSUMER_SERVER_FACTOR,String.valueOf(req.getConsumerServeDay()),CustomerGroupConstant.RECENT_DAYS,"=");
-            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, StringUtils.join(req.getConsumerServeList().toArray(),","),CustomerGroupConstant.SPECIFIED_SERVER,"in");
+            List<String> consumerServeList = req.getConsumerServeList();
+            consumerServeList = consumerServeList.stream().distinct().collect(Collectors.toList());
+            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, StringUtils.join(consumerServeList.toArray(),","),CustomerGroupConstant.SPECIFIED_SERVER,"in");
             customerGroupRuleReqList.add(customerGroupRuleDto);
             // 查询服务
             List<GoodsResp> goodsResps = queryServerList(req.getStoreId(), req.getTenantId(), req.getConsumerServeList());
@@ -452,13 +458,13 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.BRITHDAY_FACTOR,String.valueOf(req.getBrithdayStart()),CustomerGroupConstant.BRITHDAY_LEAST_MONTH,">=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getBrithdayEnd()),CustomerGroupConstant.BRITHDAY_MAX_MONTH,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
-            sb.append("生日在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
+            sb.append("生日在").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("月的客户;");
         }
         if(req.getMaintenanceDateStart()!=null && req.getMaintenanceDateEnd()!=null){
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_LEAST_DAY,">=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
-            sb.append("保养日期在最近").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("天的客户;");
+            sb.append("保养日期在最近").append(req.getMaintenanceDateStart()).append("~").append(req.getMaintenanceDateEnd()).append("天的客户;");
         }
 
         if("1".equals(req.getIsAllCustomer())){
@@ -562,6 +568,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         customerGroupRuleDto.setCgRuleFactor(customerGroupRule.getCgRuleFactor());
         customerGroupRuleDto.setGroupId(customerGroupDto.getId());
         customerGroupRuleDto.setStoreId(customerGroupDto.getStoreId());
+        customerGroupRuleDto.setTenantId(customerGroupDto.getTenantId());
         List<CustomerGroupRuleAttributeDto> attributeReqList = new ArrayList<>();
         attributeReqList.add(getCustomerGroupRuleAttribute(customerGroupRule));
         customerGroupRuleDto.setAttributeReqList(attributeReqList);
@@ -586,7 +593,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
                 record.setId(customerGroupDto.getId());
                 record.setTenantId(req.getTenantId());
-                record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                if(CollectionUtils.isNotEmpty(singleCustomerIdList)) {
+                    record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                }else{
+                    record.setCustomerCount(0L);
+                }
                 record.setCountTime(new Date());
                 storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
                 if(CollectionUtils.isEmpty(customerIdList)){

@@ -113,7 +113,7 @@ public class CustomerGroupFilterFactory {
                 for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
                     if(CustomerGroupConstant.MAINTENANCE_LEAST_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
                         maintenanceDayFilter.setDayStart(Integer.valueOf(attributeDto.getAttributeValue()));
-                    }else if(CustomerGroupConstant.BRITHDAY_MAX_MONTH.equalsIgnoreCase(attributeDto.getAttribute())){
+                    }else if(CustomerGroupConstant.MAINTENANCE_MAX_DAY.equalsIgnoreCase(attributeDto.getAttribute())){
                         maintenanceDayFilter.setDayEnd(Integer.valueOf(attributeDto.getAttributeValue()));
                     }
                 }
@@ -124,16 +124,17 @@ public class CustomerGroupFilterFactory {
                 //指定服务过滤
                 ConsumerServerListFilter consumerServerListFilter = new ConsumerServerListFilter();
                 consumerServerListFilter.setStoreId(storeId);
+                consumerServerListFilter.setTenantId(tenantId);
                 for(CustomerGroupRuleAttributeDto attributeDto : attributeReqList){
                     if(CustomerGroupConstant.RECENT_DAYS.equalsIgnoreCase(attributeDto.getAttribute())){
                         consumerServerListFilter.setRecentDay(Integer.valueOf(attributeDto.getAttributeValue()));
                     }
                     if(CustomerGroupConstant.SPECIFIED_SERVER.equalsIgnoreCase(attributeDto.getAttribute())){
-                        String serverIds = attributeDto.getAttributeValue();
-                        if(StringUtils.isNotBlank(serverIds)){
-                            String[] serverIdArray = serverIds.split(",");
-                            List<String> serverIdList = Arrays.asList(serverIdArray);
-                            consumerServerListFilter.setServerIdList(serverIdList);
+                        String serverCodes = attributeDto.getAttributeValue();
+                        if(StringUtils.isNotBlank(serverCodes)){
+                            String[] serverCodeArray = serverCodes.split(",");
+                            List<String> serverCodeList = Arrays.asList(serverCodeArray);
+                            consumerServerListFilter.setServerCodeList(serverCodeList);
                         }
                     }
                 }

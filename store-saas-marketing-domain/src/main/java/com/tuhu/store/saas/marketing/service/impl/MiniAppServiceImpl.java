@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.mengfan.common.util.GatewayClient;
 import com.tuhu.store.saas.marketing.service.ImageUploadService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
+import com.tuhu.store.saas.marketing.util.ImageUtil;
 import com.tuhu.store.saas.marketing.util.WxUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.*;
 import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +38,9 @@ public class MiniAppServiceImpl implements MiniAppService {
 
     @Autowired
     private GatewayClient getwayClient;
+
+    @Autowired
+    private ImageUtil imageUtil;
 
     private String tokenUrl = "https://api.yunquecloud.com/auth/wechat/accessToken";
 
@@ -73,12 +78,16 @@ public class MiniAppServiceImpl implements MiniAppService {
         /*
          * 2、调微信api,根据当前各参数生成二维码图片buffer,并转base64编码
          */
-        String qrBase64 = WxUtil.getQrCode(token, scene, path, width);
-
+        InputStream inputStream = WxUtil.getQrCode(token, scene, path, width);
         /*
          * 3、上传图片到图片服务器
          */
-        String image = imageUploadService.uploadImageByBase64(qrBase64, width, width);
+        String fileName = UUID.randomUUID()  + ".jpeg";
+        String image = imageUtil.uploadFileToWx(inputStream,"/store/marketing/coupon/".concat(fileName));
+
+        //String image = imageUploadService.uploadImageByBase64(qrBase64, width, width);
+        //上传到腾讯云服务器
+
         log.info("图片url:{}",image);
 
         return image;

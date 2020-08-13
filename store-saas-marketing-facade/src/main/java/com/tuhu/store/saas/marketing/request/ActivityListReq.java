@@ -21,8 +21,11 @@ public class ActivityListReq implements Serializable {
     @ApiModelProperty("活动名称，模糊查找")
     private String title;
 
-    @ApiModelProperty("活动状态,全部，未开始:0,进行中:1,已结束:2,未结束:3")
+    @ApiModelProperty("活动状态,全部：null，未开始:0,进行中:1,已结束:2,未结束:3")
     private Integer dateStatus;
+
+    @ApiModelProperty("活动上下架，全部：null，0：下架，1：上架")
+    private Boolean status;
 
     @ApiModelProperty("用户ID")
     private String userId;
