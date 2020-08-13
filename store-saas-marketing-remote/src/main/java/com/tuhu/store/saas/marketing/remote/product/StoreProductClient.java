@@ -29,4 +29,6 @@ public interface StoreProductClient {
 
     @PostMapping("/feign/product/Goods/queryServiceGoodListByCodesAndStoreId")
     BizBaseResponse<List<GoodsData>> queryServiceGoodListByCodesAndStoreId(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId);
+    @PostMapping("/feign/product/Goods/queryBatchGoods")
+    BizBaseResponse<List<ServiceGoodDTO>> queryBatchGoods(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId, @RequestParam("tenantId") Long tenantId, @RequestParam("carPosition") String carPosition) ;
 }
