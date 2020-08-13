@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.toolkit.StringUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.springcloud.common.util.RedisUtils;
@@ -141,11 +142,11 @@ public class CardServiceImpl implements ICardService {
     @Transactional
     public Boolean updateCardQuantity(UpdateCardVo updateCardVo) {
         String key = "updateCardQuantity:" + updateCardVo.getCardId();
-        RedisUtils redisUtils = new RedisUtils(redisTemplate,"STORE-SAAS-MARKETING-");
+        RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         Object value = storeRedisUtils.tryLock(key, 1000, 1000);
         Boolean ok = true;
-        if (null != value){
+        if (null != value) {
             try {
                 CrdCardItemExample example = new CrdCardItemExample();
                 example.createCriteria().andStoreIdEqualTo(updateCardVo.getStoreId())
@@ -154,17 +155,17 @@ public class CardServiceImpl implements ICardService {
                 List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
                 Map<String, Integer> itemQuantity = updateCardVo.getItemQuantity();
                 Date date = new Date();
-                for (CrdCardItem item : cardItems){
-                    if (itemQuantity.containsKey(item.getGoodsId())){
+                for (CrdCardItem item : cardItems) {
+                    if (itemQuantity.containsKey(item.getGoodsId())) {
                         //检查更新次数后是否会超过总次数 或 小于0
                         Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
-                        if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0){
+                        if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0) {
                             throw new MarketingException("次卡更新失败");
                         }
                         item.setUsedQuantity(quantity);
                         item.setUpdateTime(date);
                         Integer result = cardItemMapper.updateByPrimaryKeySelective(item);
-                        if (result <= 0){
+                        if (result <= 0) {
                             ok = false;
                         }
                     }
@@ -179,35 +180,50 @@ public class CardServiceImpl implements ICardService {
     }
 
     @Override
+    public Boolean hasCardByCustomerId(String id, Long storeId, Long tenantId) {
+        log.info("hasCardByCustomerId -> req= {},{},{}", id, storeId, tenantId);
+        Boolean result = Boolean.FALSE;
+        if (StringUtils.isNotEmpty(id) && storeId != null && tenantId != null) {
+            CrdCardExample cardExample = new CrdCardExample();
+            cardExample.createCriteria().andCustomerIdEqualTo(id)
+                    .andStoreIdEqualTo(storeId).andTenantIdEqualTo(tenantId);
+            result = cardMapper.countByExample(cardExample) > 0;
+        } else {
+            throw new StoreSaasMarketingException("参数验证失败");
+        }
+        return result;
+    }
+
+    @Override
     public List<CardResp> queryCardRespList(MiniQueryCardReq req) {
-        log.info("查询客户次卡，请求参数：{}",JSONObject.toJSON(req));
+        log.info("查询客户次卡，请求参数：{}", JSONObject.toJSON(req));
         CrdCardExample cardExample = new CrdCardExample();
         CrdCardExample.Criteria criteria = cardExample.createCriteria();
         criteria.andCustomerIdEqualTo(req.getCustomerId())
                 .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
-        if (null != req.getCustomerPhoneNumber()){
+        if (null != req.getCustomerPhoneNumber()) {
             criteria.andCustomerPhoneNumberEqualTo(req.getCustomerPhoneNumber());
         }
-        if (null != req.getCardStatus()){
+        if (null != req.getCardStatus()) {
             criteria.andStatusEqualTo(req.getCardStatus());
         }
         List<CrdCard> cardList = cardMapper.selectByExample(cardExample);
 
         List<CardResp> cardRespList = new ArrayList<>();
-        for (CrdCard card : cardList){
+        for (CrdCard card : cardList) {
             CardResp resp = new CardResp();
-            BeanUtils.copyProperties(card,resp);
+            BeanUtils.copyProperties(card, resp);
             resp.setCardStatus(CardStatusEnum.valueOf(card.getStatus()).getDescription());
             resp.setCardStatusCode(CardStatusEnum.valueOf(card.getStatus()).getEnumCode());
             resp.setForever(card.getForever() == 1 ? true : false);
-            if (!resp.getForever()){
+            if (!resp.getForever()) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日");
                 resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
                 dateFormat = new SimpleDateFormat("yyyy.MM.dd");
                 resp.setDate(dateFormat.format(card.getExpiryDate()));
                 Date date = new Date();
                 Date expiryDate = DataTimeUtil.getDateZeroTime(card.getExpiryDate());
-                if (date.compareTo(expiryDate) > 0){
+                if (date.compareTo(expiryDate) > 0) {
                     resp.setCardStatus(CardStatusEnum.EXPIRED.getDescription());
                     resp.setCardStatusCode(CardStatusEnum.EXPIRED.getEnumCode());
                 }
@@ -222,12 +238,12 @@ public class CardServiceImpl implements ICardService {
             List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
             List<CardItemResp> cardServiceItem = new ArrayList<>();
             List<CardItemResp> cardGoodsItem = new ArrayList<>();
-            for (CrdCardItem item : cardItems){
+            for (CrdCardItem item : cardItems) {
                 CardItemResp itemResp = new CardItemResp();
-                BeanUtils.copyProperties(item,itemResp);
+                BeanUtils.copyProperties(item, itemResp);
                 itemResp.setRemainQuantity(itemResp.getMeasuredQuantity() - itemResp.getUsedQuantity());
                 remainQuantity += itemResp.getRemainQuantity();
-                if (item.getType().intValue() == 1){
+                if (item.getType().intValue() == 1) {
                     cardServiceItem.add(itemResp);
                 } else {
                     cardGoodsItem.add(itemResp);
@@ -236,12 +252,12 @@ public class CardServiceImpl implements ICardService {
             resp.setCardServiceItem(cardServiceItem);
             resp.setCardGoodsItem(cardGoodsItem);
 
-            if (remainQuantity.compareTo(0L) <= 0){
+            if (remainQuantity.compareTo(0L) <= 0) {
                 resp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
                 resp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
             }
             if (null == req.getCustomerPhoneNumber() ||
-                    resp.getCardStatusCode().equals(CardStatusEnum.ACTIVATED.getEnumCode())){
+                    resp.getCardStatusCode().equals(CardStatusEnum.ACTIVATED.getEnumCode())) {
                 cardRespList.add(resp);
             }
         }
@@ -252,13 +268,13 @@ public class CardServiceImpl implements ICardService {
     public List<CardUseRecordResp> consumptionHistory(Long id) {
         List<CardUseRecordDTO> recordDTOList = serviceOrderClient.getCardUseRecord(id.toString()).getData();
         List<CardUseRecordResp> respList = new ArrayList<>();
-        for (CardUseRecordDTO dto : recordDTOList){
+        for (CardUseRecordDTO dto : recordDTOList) {
             CardUseRecordResp resp = new CardUseRecordResp();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             resp.setTime(dateFormat.format(dto.getUseTime()));
             resp.setServiceOrderId(dto.getServiceOrderId());
             List<CardItemResp> item = new ArrayList<>();
-            for (CardUseRecordDTO.ServiceOrderItem serviceOrderItem : dto.getServiceOrderItems()){
+            for (CardUseRecordDTO.ServiceOrderItem serviceOrderItem : dto.getServiceOrderItems()) {
                 CardItemResp itemResp = new CardItemResp();
                 itemResp.setServiceItemName(serviceOrderItem.getItemName());
                 itemResp.setUsedQuantity(serviceOrderItem.getQuantity());
@@ -279,21 +295,21 @@ public class CardServiceImpl implements ICardService {
                 .andStoreIdEqualTo(req.getStoreId())
                 .andTenantIdEqualTo(req.getTenantId())
                 .andTypeEqualTo(req.getType().byteValue());
-        if (null != req.getSearch()){
+        if (null != req.getSearch()) {
             criteria.andCardNameLike("%" + req.getSearch() + "%");
         }
         List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
         List<CardItemResp> cardItemRespList = new ArrayList<>();
-        for (CrdCardItem item : cardItems){
+        for (CrdCardItem item : cardItems) {
             CardItemResp itemResp = new CardItemResp();
-            BeanUtils.copyProperties(item,itemResp);
+            BeanUtils.copyProperties(item, itemResp);
             itemResp.setRemainQuantity(itemResp.getMeasuredQuantity() - itemResp.getUsedQuantity());
             cardItemRespList.add(itemResp);
         }
         // 商品 - 查库存
-        if (req.getType() == 2){
+        if (req.getType() == 2) {
             List<String> goodsIds = cardItemRespList.stream().map(x -> x.getGoodsId()).distinct().collect(Collectors.toList());
-            if (!goodsIds.isEmpty()){
+            if (!goodsIds.isEmpty()) {
                 StoreInfoRelatedDTO storeRelatedResponse = storeInfoClient.getRelatedInfoByStoreId(req.getStoreId()).getData();
                 log.info("查询门店仓库信息返回：{}", JSON.toJSONString(storeRelatedResponse));
                 if (null == storeRelatedResponse) {
@@ -310,11 +326,11 @@ public class CardServiceImpl implements ICardService {
                     if (null != stkQtyDtoListResp && 1 == stkQtyDtoListResp.getStatus() && stkQtyDtoListResp.getData() != null) {
                         List<StkQtyDto> stkQtyDtoList = stkQtyDtoListResp.getData();
                         LinkedHashMap<String, BigDecimal> result = new LinkedHashMap();
-                        for (StkQtyDto dto : stkQtyDtoList){
+                        for (StkQtyDto dto : stkQtyDtoList) {
                             result.put(dto.getSkuId(), dto.getQty());
                         }
-                        for (CardItemResp resp : cardItemRespList){
-                            resp.setInventory(result.getOrDefault(resp.getGoodsId(),BigDecimal.ZERO));
+                        for (CardItemResp resp : cardItemRespList) {
+                            resp.setInventory(result.getOrDefault(resp.getGoodsId(), BigDecimal.ZERO));
                         }
                     } else {
                         log.warn("根据门店商品ID和仓库ID未查询到库存信息,goodsIdList={},warehouseId={}",
