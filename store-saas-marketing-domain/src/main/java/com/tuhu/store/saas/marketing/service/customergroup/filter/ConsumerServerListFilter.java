@@ -52,7 +52,7 @@ public class ConsumerServerListFilter extends AbstractFactorFilter {
         List<String> customerIdList = Lists.newArrayList();
         //根据goodCode查询goodId
         StoreProductClient storeProductClient = SpringApplicationContextUtil.getBean(StoreProductClient.class);
-        List<ServiceGoodDTO> serviceGoodDTOList = storeProductClient.queryBatchGoods(serverCodeList, storeId, tenantId, null).getData();
+        List<ServiceGoodDTO> serviceGoodDTOList = storeProductClient.queryBatchGoods(serverCodeList, storeId, tenantId, "").getData();
         if(CollectionUtils.isNotEmpty(serviceGoodDTOList)){
             List<String> goodIdList = serviceGoodDTOList.stream().map(x -> x.getId()).distinct().collect(Collectors.toList());
             req.setGoodsList(goodIdList);
