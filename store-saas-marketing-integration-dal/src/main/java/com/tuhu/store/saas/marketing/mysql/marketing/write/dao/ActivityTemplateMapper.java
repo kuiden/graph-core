@@ -16,4 +16,8 @@ public interface ActivityTemplateMapper extends BaseMapper<ActivityTemplate> {
     int deleteByPrimaryKey(Long id);
 
     int referById(@Param("id") Long id);
+
+    void insertActivityTemplate(ActivityTemplate template);
+
+    List<ActivityTemplate> queryList(@Param("title") String title, @Param("status") Boolean status, @Param("forB") Boolean forB);
 }

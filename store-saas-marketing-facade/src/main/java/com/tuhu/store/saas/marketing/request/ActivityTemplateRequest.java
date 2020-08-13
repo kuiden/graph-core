@@ -21,4 +21,9 @@ public class ActivityTemplateRequest implements Serializable {
      * 模板状态，0：禁用，1：启用
      */
     private Boolean status;
+
+    /**
+     * 是否B平台的查询
+     */
+    private Boolean forB;
 }
