@@ -826,7 +826,7 @@ public class IMCouponServiceImpl implements IMCouponService {
                     BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(baseIdReqVO);
                     if (crmResult != null && crmResult.getData() != null) {
                         result.setCustomerName(crmResult.getData().getName());
-                        result.setCustomerName(crmResult.getData().getPhoneNumber());
+                        result.setCustomerTelephone(crmResult.getData().getPhoneNumber());
                     }
                 }
                 //获取发券人
