@@ -23,17 +23,22 @@ public enum  MarketingCustomerUseStatusEnum {
     ;
 
     private Integer status;
+    private Byte statusOfByte;
     private String desc;
 
 
     MarketingCustomerUseStatusEnum(Integer status, String desc) {
         this.status = status;
+        this.statusOfByte = Byte.parseByte(status.toString());
         this.desc = desc;
     }
+
 
     public Integer getStatus() {
         return status;
     }
+
+    public Byte getStatusOfByte(){return statusOfByte;}
 
 
 }
