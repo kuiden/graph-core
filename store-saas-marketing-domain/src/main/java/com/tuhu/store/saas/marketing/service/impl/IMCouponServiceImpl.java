@@ -23,15 +23,20 @@ import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.response.CouponItemResp;
 import com.tuhu.store.saas.marketing.response.CouponPageResp;
 import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
+import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.QrCode;
+import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.dto.UserDTO;
+import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
+import com.tuhu.store.saas.user.vo.EventTypeEnum;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -103,6 +108,9 @@ public class IMCouponServiceImpl implements IMCouponService {
 
     private static final String BUSSINESS_CATEGORY_DTOS_PREFIX = "bussiness_categories_dtos_";
 
+    @Autowired
+    private IClientEventRecordService iClientEventRecordService;
+
     @Override
     public String getQrCodeForCoupon(QrCodeRequest req) {
 
@@ -134,30 +142,45 @@ public class IMCouponServiceImpl implements IMCouponService {
         Coupon couponInfo = couponMapper.selectByCouponCode(req.getCouponCode());
         if (couponInfo != null) {
             resultMap.put("couponInfo", couponInfo);
+            CustomerCoupon record = new CustomerCoupon(req.getCouponCode());
+            Map overViewDataMap = customerCouponMapper.queryCountForOverViewData(record);
+            resultMap.putAll(overViewDataMap);
 
-            //整体情况--使用数
-            resultMap.put("useTotalCount", 0);
-            //整体情况--发放数
-            resultMap.put("sendTotalCount", 0);
-
-            //领券效果--领用数
-            resultMap.put("onlineGetCount", 0);
-            //领券效果--使用数
-            resultMap.put("onlineGetUseCount", 0);
-            //领券效果--访问用户数
-            resultMap.put("visitUserCount", 0);
-            //领券效果--新增客户数
-            resultMap.put("newUserCount", 0);
+            //查询访问用户数和新增客户数
+            ClientEventRecordVO clientEventRecordVO = new ClientEventRecordVO();
+            clientEventRecordVO.setStoreId(String.valueOf(req.getStoreId()));
+            clientEventRecordVO.setContentType("coupon");
+            clientEventRecordVO.setContentValue(couponInfo.getEncryptedCode());
+            List<String> eventTypes = Arrays.stream(EventTypeEnum.values()).map(EventTypeEnum::getCode).collect(Collectors.toList());
+            clientEventRecordVO.setEventTypes(eventTypes);
+            Map<String, ClientEventRecordDTO> clientEventRecordDTOMap = iClientEventRecordService.getClientEventRecordStatisticsByEvent(clientEventRecordVO);
+            if (MapUtils.isNotEmpty(clientEventRecordDTOMap)) {
+                ClientEventRecordDTO visitRecord = clientEventRecordDTOMap.get(EventTypeEnum.VISIT.getCode());
+                if (null != visitRecord) {
+                    resultMap.put("visitUserCount", visitRecord.getUserCount());//访问用户数
+                } else {
+                    resultMap.put("visitUserCount", 0L);//访问用户数
+                }
+                //通过登录新增的客户数
+                ClientEventRecordDTO loginRecord = clientEventRecordDTOMap.get(EventTypeEnum.LOGIN.getCode());
+                Long loginUserCount = 0L;
+                if (null != loginRecord) {
+                    loginUserCount = loginRecord.getUserCount();
+                }
+                //通过注册新增的客户数
+                Long registeredUserCount = 0L;
+                ClientEventRecordDTO registeredRecord = clientEventRecordDTOMap.get(EventTypeEnum.REGISTERED.getCode());
+                if (null != registeredRecord) {
+                    registeredUserCount = registeredRecord.getUserCount();
+                }
+                resultMap.put("newUserCount", loginUserCount + registeredUserCount);//新增客户数
+            } else {
+                resultMap.put("visitUserCount", 0L);
+                resultMap.put("newUserCount", 0L);
+            }
         }
 
-
-        //todo
- /*       CustomerCoupon record = new CustomerCoupon(req.getCouponCode());
-        Map overViewDataMap = customerCouponMapper.queryCountForOverViewData(record);
-        Map endUserDataMap = storeInfoRpcService.getStoreCouponUserData(couponInfo.getEncryptedCode());
-        resultMap.putAll(overViewDataMap);
-        resultMap.putAll(endUserDataMap);
-
+/*
         //限定范围
         if (couponInfo.getScopeType() == 2) {//限定分类
             CouponScopeCategoryExample example = new CouponScopeCategoryExample();
@@ -182,7 +205,6 @@ public class IMCouponServiceImpl implements IMCouponService {
 
             resultMap.put("couponScopeCategories", couponScopeCategories);
         }*/
-
         return resultMap;
     }
 
