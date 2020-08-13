@@ -462,14 +462,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         customerMarketing.setCustomerGroupId(addReq.getCustomerGroupIds());
         customerMarketing.setCustomerId(addReq.getCustomerIds());
         customerMarketing.setMarketingMethod(addReq.getMarketingMethod());
-        //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo，存入在message_template_local表
-        MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),addReq.getStoreId());
-        if(messageTemplateLocal==null){
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在活动营销短信模板");
-        }
-        customerMarketing.setMessageTemplate(messageTemplateLocal.getTemplateName());
-        //存的是本地的message模板，发送短信时需要单独查询
-        customerMarketing.setMessageTemplateId(messageTemplateLocal.getId());
+
         customerMarketing.setSendTime(addReq.getSendTime());
         customerMarketing.setRemark(addReq.getRemark());
         customerMarketing.setSendObject(sendObject);//客户群名称
@@ -478,10 +471,26 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
         //原有字段共用，存放活动相关信息
         if(coupon != null && activity == null) {
+            //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo，存入在message_template_local表
+            MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_COUPON.templateCode(),addReq.getStoreId());
+            if(messageTemplateLocal==null){
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在优惠券营销短信模板");
+            }
+            customerMarketing.setMessageTemplate(messageTemplateLocal.getTemplateName());
+            //存的是本地的message模板，发送短信时需要单独查询
+            customerMarketing.setMessageTemplateId(messageTemplateLocal.getId());
             customerMarketing.setCouponId(coupon.getId().toString());
             customerMarketing.setCouponCode(coupon.getCode());
             customerMarketing.setCouponTitle(coupon.getTitle());
         }else if(coupon == null && activity != null){
+            //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo，存入在message_template_local表
+            MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),addReq.getStoreId());
+            if(messageTemplateLocal==null){
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在活动营销短信模板");
+            }
+            customerMarketing.setMessageTemplate(messageTemplateLocal.getTemplateName());
+            //存的是本地的message模板，发送短信时需要单独查询
+            customerMarketing.setMessageTemplateId(messageTemplateLocal.getId());
             customerMarketing.setCouponId(activity.getId().toString());
             customerMarketing.setCouponCode(activity.getActivityCode());
             customerMarketing.setCouponTitle(activity.getActivityTitle());

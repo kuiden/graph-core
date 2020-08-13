@@ -66,6 +66,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         }
         String openId = clientEventRecordRequest.getOpenId();
         Integer sourceType = clientEventRecordRequest.getSourceType();
+        //获取微信用户openId
         if (StringUtils.isEmpty(openId) && sourceType == 0) {
             String clientType = clientEventRecordRequest.getClientType();
             if (StringUtils.isEmpty(clientType)) {
@@ -108,6 +109,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             clientEventRecordEntity.setCreateTime(date);
             clientEventRecordEntity.setUpdateTime(date);
             clientEventRecordEntity.setEventCount(1);
+            clientEventRecordEntity.setSourceType(sourceType);
             try {
                 this.addNewClientEventRecord(clientEventRecordEntity);
             } catch (Exception e) {

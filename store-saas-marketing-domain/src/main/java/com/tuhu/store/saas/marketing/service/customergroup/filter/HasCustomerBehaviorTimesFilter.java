@@ -10,9 +10,12 @@ import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 
@@ -65,32 +68,43 @@ public class HasCustomerBehaviorTimesFilter extends AbstractFactorFilter {
                 cardCustomers.add(listCustomerInfoResp);
             }
         }
-
-        if(cardCustomers!=null){
+        //计算次数
+        if(CollectionUtils.isNotEmpty(cardCustomers)){
+            Map<String,Long> amap = new HashMap<String,Long>();
             for(ListCustomerInfoResp customerInfoResp : cardCustomers){
-                if(!hasBehavCus.contains(customerInfoResp.getCostumerId())){
-                    Long orderNum = customerInfoResp.getOrderNum();
+                if(StringUtils.isNotBlank(customerInfoResp.getCostumerId())) {
+                    if (amap.get(customerInfoResp.getCostumerId()) == null) {
+                        amap.put(customerInfoResp.getCostumerId(), customerInfoResp.getOrderNum());
+                    } else {
+                        amap.put(customerInfoResp.getCostumerId(), amap.get(customerInfoResp.getCostumerId()) + customerInfoResp.getOrderNum());
+                    }
+                }
+            }
+            for (Map.Entry<String, Long> entry : amap.entrySet()) {
+                if(!hasBehavCus.contains(entry.getKey())){
+                    Long orderNum = entry.getValue();
                     if(lessThanTimes!=null&&greaterThanTimes!=null){
                         if(orderNum<greaterThanTimes||orderNum>lessThanTimes){
                             continue;
                         }
                         //大于最少，少于最大
-                        hasBehavCus.add(customerInfoResp.getCostumerId());
+                        hasBehavCus.add(entry.getKey());
                     }else if(lessThanTimes!=null){
                         if(orderNum>lessThanTimes){
                             continue;
                         }
                         //少于最大
-                        hasBehavCus.add(customerInfoResp.getCostumerId());
+                        hasBehavCus.add(entry.getKey());
                     }else if(greaterThanTimes!=null){
                         if(orderNum<greaterThanTimes){
                             continue;
                         }
                         //多余最少
-                        hasBehavCus.add(customerInfoResp.getCostumerId());
+                        hasBehavCus.add(entry.getKey());
                     }
                 }
             }
+
         }
         return hasBehavCus;
     }
