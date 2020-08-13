@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -137,7 +138,7 @@ public class ClientCouponApi extends BaseApi {
      * @param code
      * @return
      */
-    @GetMapping(value = "/open/openGetCustomerCouponCodeByPhone")
+    @GetMapping(value = "/open/openGetCustomerCouponCodeByPhone",produces = MediaType.IMAGE_JPEG_VALUE )
     @ResponseBody
     public byte[] openGetCustomerCouponCodeByPhone(@RequestParam String phone, String code) {
         if (StringUtils.isBlank(code) || StringUtils.isBlank(phone)) {

@@ -47,6 +47,8 @@ public  interface ICardService {
      */
     Boolean updateCardQuantity(UpdateCardVo updateCardVo);
 
+    Boolean hasCardByCustomerId(String id, Long storeId, Long tenantId);
+
     /*
      * 查询客户次卡
      */
