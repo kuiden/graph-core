@@ -467,7 +467,13 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             }
         }
 
-        if(req.getBrithdayStart()!=null && req.getBrithdayEnd()!=null){
+        if(req.getBrithdayStart()!=null || req.getBrithdayEnd()!=null){
+            if(req.getBrithdayStart()==null){
+                req.setBrithdayStart(1l);
+            }
+            if(req.getBrithdayEnd()==null){
+                req.setBrithdayEnd(12l);
+            }
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.BRITHDAY_FACTOR,String.valueOf(req.getBrithdayStart()),CustomerGroupConstant.BRITHDAY_LEAST_MONTH,">=");
             customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getBrithdayEnd()),CustomerGroupConstant.BRITHDAY_MAX_MONTH,"<=");
             customerGroupRuleReqList.add(customerGroupRuleDto);
@@ -477,14 +483,32 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 sb.append("生日在").append(req.getBrithdayStart()).append("~").append(req.getBrithdayEnd()).append("月的客户;");
             }
         }
-        if(req.getMaintenanceDateStart()!=null && req.getMaintenanceDateEnd()!=null){
-            CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_LEAST_DAY,">=");
-            customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
-            customerGroupRuleReqList.add(customerGroupRuleDto);
-            if(req.getMaintenanceDateStart().equals(req.getMaintenanceDateEnd())){
-                sb.append("保养日期在最近").append(req.getMaintenanceDateStart()).append("天的客户;");
-            }else {
-                sb.append("保养日期在最近").append(req.getMaintenanceDateStart()).append("~").append(req.getMaintenanceDateEnd()).append("天的客户;");
+        if(req.getMaintenanceDateStart()!=null || req.getMaintenanceDateEnd()!=null){
+            boolean hasLeast =false;
+            boolean hasMax =false;
+            if(req.getMaintenanceDateStart()!=null){
+                hasLeast = true;
+                CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_LEAST_DAY,">=");
+                if(req.getMaintenanceDateEnd()!=null){
+                    customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
+                    hasMax = true;
+                }
+                customerGroupRuleReqList.add(customerGroupRuleDto);
+            }else{
+                CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
+                customerGroupRuleReqList.add(customerGroupRuleDto);
+                hasMax = true;
+            }
+            if(hasLeast && hasMax) {
+                if (req.getMaintenanceDateStart().equals(req.getMaintenanceDateEnd())) {
+                    sb.append("保养日期在最近").append(req.getMaintenanceDateStart()).append("天的客户;");
+                } else {
+                    sb.append("保养日期在最近").append(req.getMaintenanceDateStart()).append("~").append(req.getMaintenanceDateEnd()).append("天的客户;");
+                }
+            }else if(hasLeast){
+                sb.append("保养日期在最近").append(req.getMaintenanceDateStart()).append("天以上的客户;");
+            }else{
+                sb.append("保养日期在最近").append(req.getMaintenanceDateEnd()).append("天以内的客户;");
             }
         }
 

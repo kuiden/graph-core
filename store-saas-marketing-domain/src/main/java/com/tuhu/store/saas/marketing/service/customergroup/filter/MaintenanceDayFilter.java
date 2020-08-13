@@ -34,7 +34,7 @@ public class MaintenanceDayFilter extends AbstractFactorFilter {
 
     @Override
     public boolean isOpen() {
-        return storeId!=null && dayStart!=null && dayEnd!=null;
+        return storeId!=null && (dayStart!=null || dayEnd!=null);
     }
 
     @Override
@@ -43,8 +43,12 @@ public class MaintenanceDayFilter extends AbstractFactorFilter {
         VehicleMaintenanceVo vehicleMaintenanceVo = new VehicleMaintenanceVo();
         vehicleMaintenanceVo.setTenantId(tenantId);
         vehicleMaintenanceVo.setStoreId(storeId);
-        vehicleMaintenanceVo.setNextMaintenanceDateStart(geStartDateAfterAdd(dayStart));
-        vehicleMaintenanceVo.setNextMaintenanceDateEnd(geEndDateAfterAdd(dayEnd));
+        if(dayStart!=null) {
+            vehicleMaintenanceVo.setNextMaintenanceDateStart(geStartDateAfterAdd(dayStart));
+        }
+        if(dayEnd!=null) {
+            vehicleMaintenanceVo.setNextMaintenanceDateEnd(geEndDateAfterAdd(dayEnd));
+        }
         List<CustomerDTO> CustomerDTOList = customerClient.getCustomerByVehicleMaintenance(vehicleMaintenanceVo).getData();
         List<String> customerIdList = Lists.newArrayList();
         if(CollectionUtils.isNotEmpty(CustomerDTOList)){
