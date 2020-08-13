@@ -48,6 +48,12 @@ public enum SMSTypeEnum {
      */
     SAAS_MINI_ORDER_CREATE_CODE("SAAS_MINI_ORDER_CREATE_CODE","H5新建预约发验证码"),
 
+    /**
+     * 公共模板
+     * @TODO 暂无短信模板
+     */
+    SAAS_ACTIVITY_APPLY_CODE("SAAS_ACTIVITY_APPLY_CODE","H5活动报名验证码")
+
     ;
     private String templateCode;
 

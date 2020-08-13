@@ -15,6 +15,9 @@ import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
+import com.tuhu.store.saas.marketing.po.Activity;
+import com.tuhu.store.saas.marketing.po.ActivityExample;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
@@ -52,10 +55,22 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     @Autowired
     StoreUserClient storeUserClient;
 
+    @Autowired
+    private ActivityMapper activityMapper;
+
     @Override
     @Transactional
     public ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq){
         //获取当前的客户信息
+        ActivityExample activityExample = new ActivityExample();
+        ActivityExample.Criteria activityCriteria = activityExample.createCriteria();
+        activityCriteria.andEncryptedCodeEqualTo(applyReq.getEncryptedCode());
+        List<Activity> activities = activityMapper.selectByExample(activityExample);
+        if(activities.size()<1){
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
+        }
+        applyReq.setStoreId(activities.get(0).getStoreId());
+        applyReq.setTenantId(activities.get(0).getTenantId());
         ActivityApplyResp activityApplyResp = new ActivityApplyResp();
         CustomerVO customerVO = new CustomerVO();
         customerVO.setPhone(applyReq.getTelephone());
