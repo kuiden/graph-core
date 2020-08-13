@@ -155,6 +155,8 @@ public class MiniCouponApi extends BaseApi {
      */
     @GetMapping("/getOveralEffect")
     public BizBaseResponse getCouponOveral(CouponRequest req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
         Map result = imCouponService.getOveralEffect(req);
         return new BizBaseResponse(result);
     }
