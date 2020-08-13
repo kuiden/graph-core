@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.toolkit.StringUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
@@ -266,7 +267,11 @@ public class CardServiceImpl implements ICardService {
 
     @Override
     public List<CardUseRecordResp> consumptionHistory(Long id) {
-        List<CardUseRecordDTO> recordDTOList = serviceOrderClient.getCardUseRecord(id.toString()).getData();
+        BizBaseResponse<List<CardUseRecordDTO>> bizBaseResponse = serviceOrderClient.getCardUseRecord(id.toString());
+        if (!bizBaseResponse.isSuccess()){
+            throw new StoreSaasMarketingException("获取使用记录失败");
+        }
+        List<CardUseRecordDTO> recordDTOList = bizBaseResponse.getData();
         List<CardUseRecordResp> respList = new ArrayList<>();
         for (CardUseRecordDTO dto : recordDTOList) {
             CardUseRecordResp resp = new CardUseRecordResp();
