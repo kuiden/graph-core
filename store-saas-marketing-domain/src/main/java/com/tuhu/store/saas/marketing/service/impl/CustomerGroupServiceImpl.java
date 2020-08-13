@@ -677,9 +677,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 }
                 record.setCountTime(new Date());
                 storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
-                if(CollectionUtils.isEmpty(customerIdList)){
-                    customerIdList.addAll(singleCustomerIdList);
-                }else{
+                if(CollectionUtils.isNotEmpty(singleCustomerIdList)){
                     customerIdList.addAll(singleCustomerIdList.stream().filter(item -> !customerIdList.contains(item)).collect(toList()));
                 }
             }
