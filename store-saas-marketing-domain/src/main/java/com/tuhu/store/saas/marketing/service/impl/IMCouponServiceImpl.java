@@ -225,6 +225,8 @@ public class IMCouponServiceImpl implements IMCouponService {
                 if (crmResult != null && CollectionUtils.isNotEmpty(crmResult.getData())) {
                     List<String> idList = crmResult.getData().stream().map(x -> x.getId()).distinct().collect(Collectors.toList());
                     record.setCustomerIdList(idList);
+                } else {
+                    return customerCouponPageResp;
                 }
             }
             recordList = customerCouponMapper.selectRecordList(record);
