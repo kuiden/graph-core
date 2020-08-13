@@ -840,6 +840,9 @@ public class IMCouponServiceImpl implements IMCouponService {
                     result.setUseStatus((byte) -1);
                 }
 
+            }else
+            {
+                throw  new StoreSaasMarketingException("查询不到该优惠券信息");
             }
         }
         return result;
