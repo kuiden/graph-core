@@ -21,6 +21,7 @@ import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
+import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
 import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
@@ -53,8 +54,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
 
     @Override
     @Transactional
-    public ActivityCustomerResp clientActivityApply(ActivityApplyReq applyReq){
+    public ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq){
         //获取当前的客户信息
+        ActivityApplyResp activityApplyResp = new ActivityApplyResp();
         CustomerVO customerVO = new CustomerVO();
         customerVO.setPhone(applyReq.getTelephone());
         customerVO.setStoreId(applyReq.getStoreId());
@@ -92,13 +94,25 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         //报名
         log.info("报名请求："+JSONObject.toJSONString(applyReq));
         CommonResp<String> stringCommonResp= iActivityService.applyActivity(applyReq);
-        log.info("报名返回："+stringCommonResp.getMessage());
+        log.info("报名返回："+JSONObject.toJSONString(stringCommonResp));
         if(stringCommonResp==null ||StringUtils.isBlank(stringCommonResp.getData())){
             log.error("报名异常，iActivityService.applyActivity,request:{},cause:{}",applyReq,stringCommonResp.getMessage());
-            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_APPLY_FAILED.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_APPLY_FAILED.getDesc()+stringCommonResp.getMessage());
+        }
+        if(stringCommonResp.getCode() == 4005){
+            //已报名，重复操作
+            activityApplyResp.setActivityCustomerOrderCode(stringCommonResp.getData());
+            activityApplyResp.setAppliedSuccess(false);
+            return activityApplyResp;
         }
         ActivityCustomerReq activityCustomerReq = new ActivityCustomerReq();
         activityCustomerReq.setActivityOrderCode(stringCommonResp.getData());
-        return iActivityService.getActivityCustomerDetail(activityCustomerReq);
+        ActivityCustomerResp resp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
+        if(resp==null || StringUtils.isBlank(resp.getActivityOrderCode())){
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_APPLY_FAILED.getDesc());
+        }
+        activityApplyResp.setActivityCustomerOrderCode(resp.getActivityOrderCode());
+        activityApplyResp.setAppliedSuccess(true);
+        return activityApplyResp;
     }
 }

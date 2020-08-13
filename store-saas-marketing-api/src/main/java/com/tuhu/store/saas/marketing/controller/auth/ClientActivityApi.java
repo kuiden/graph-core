@@ -12,6 +12,7 @@ import com.tuhu.store.saas.marketing.remote.auth.StoreAuthClient;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.GetValidCodeReq;
+import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
 import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
@@ -66,7 +67,7 @@ public class ClientActivityApi {
 
     @GetMapping("/activity/detail")
     @ApiOperation("C端H5营销活动详情")
-    public BizBaseResponse detail(@RequestParam String encryptedCode,Boolean logged,HttpServletRequest request) {
+    public BizBaseResponse detail(@RequestParam String encryptedCode,@RequestParam(required=false, defaultValue="false") Boolean logged,HttpServletRequest request) {
         ActivityResp resp = null;
         try {
             if(logged){
@@ -104,7 +105,6 @@ public class ClientActivityApi {
     @PostMapping("/activity/apply")
     @ApiOperation("C端H5营销活动报名")
     public BizBaseResponse apply(@Validated @RequestBody ActivityApplyReq applyReq) {
-        String applyResult = null;
         if(applyReq == null){
             return BizBaseResponse.operationFailed("参数错误！");
         }
@@ -133,12 +133,7 @@ public class ClientActivityApi {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码错误");
         }
         try {
-            ActivityCustomerResp activityCustomerResp = null;
-            activityCustomerResp = iClientActivityService.clientActivityApply(applyReq);
-            if(activityCustomerResp == null || StringUtils.isBlank(activityCustomerResp.getActivityOrderCode())){
-                return BizBaseResponse.operationFailed("报名失败，请重试");
-            }
-            applyResult = activityCustomerResp.getActivityOrderCode();
+            return new BizBaseResponse(iClientActivityService.clientActivityApply(applyReq));
         } catch (MarketingException e){
             log.error("营销活动报名失败",e.getMessage());
             return BizBaseResponse.operationFailed("报名失败，",e.getMessage());
@@ -146,7 +141,6 @@ public class ClientActivityApi {
             log.error("营销活动报名服务异常，入参：{}", applyReq, e);
             return BizBaseResponse.operationFailed("服务异常");
         }
-        return BizBaseResponse.success(applyResult);
     }
 
 }
