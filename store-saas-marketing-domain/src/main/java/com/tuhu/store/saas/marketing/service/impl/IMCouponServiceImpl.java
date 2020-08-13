@@ -824,7 +824,10 @@ public class IMCouponServiceImpl implements IMCouponService {
                     baseIdReqVO.setStoreId(req.getStoreId());
                     baseIdReqVO.setTenantId(req.getTenantId());
                     BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(baseIdReqVO);
-                    result.setCustomerName(crmResult != null && crmResult.getData() != null ? crmResult.getData().getName() : null);
+                    if (crmResult != null && crmResult.getData() != null) {
+                        result.setCustomerName(crmResult.getData().getName());
+                        result.setCustomerName(crmResult.getData().getPhoneNumber());
+                    }
                 }
                 //获取发券人
                 if (StringUtils.isNotBlank(customerCoupon.getSendUser())) {
@@ -840,9 +843,8 @@ public class IMCouponServiceImpl implements IMCouponService {
                     result.setUseStatus((byte) -1);
                 }
 
-            }else
-            {
-                throw  new StoreSaasMarketingException("查询不到该优惠券信息");
+            } else {
+                throw new StoreSaasMarketingException("查询不到该优惠券信息");
             }
         }
         return result;
@@ -870,7 +872,7 @@ public class IMCouponServiceImpl implements IMCouponService {
             vo.setId(customerCoupon.getCustomerId());
             BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(vo);
             if (crmResult != null && crmResult.getData() != null && crmResult.getData().getPhoneNumber().equals(phone)) {
-                result = " { \"code\": \""+customerCoupon.getCode().concat("\", \"type\":1 }");
+                result = " { \"code\": \"" + customerCoupon.getCode().concat("\", \"type\":1 }");
             } else {
                 throw new StoreSaasMarketingException("用户数据校验失败");
             }
