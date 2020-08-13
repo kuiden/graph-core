@@ -11,6 +11,7 @@
         <result column="open_id" property="openId" />
         <result column="customer_id" property="customerId" />
         <result column="store_id" property="storeId" />
+        <result column="source_type" property="sourceType" />
         <result column="create_time" property="createTime" />
         <result column="event_count" property="eventCount" />
         <result column="update_time" property="updateTime" />
