@@ -16,10 +16,10 @@ public class ActivityTemplate implements Serializable {
      */
     private Long id;
 
-    /**
-     * 活动模板编码
-     */
-    private String code;
+//    /**
+//     * 活动模板编码
+//     */
+//    private String code;
 
 //    /**
 //     * 活动类型， 0：营销活动

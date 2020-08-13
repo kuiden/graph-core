@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.request;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -18,20 +19,20 @@ public class ActivityTemplateAdd implements Serializable {
     /**
      * 活动图片url
      */
-    @NotNull(message = "活动图片url不能为空")
+    @NotBlank(message = "活动图片url不能为空")
     private String picUrl;
 
     /**
      * 活动标题
      */
-    @NotNull(message = "活动标题不能为空")
+    @NotBlank(message = "活动标题不能为空")
     @Size(max = 30, message = "活动标题最多30个汉字")
     private String activityTitle;
 
     /**
      * 活动介绍
      */
-    @NotNull(message = "活动介绍不能为空")
+    @NotBlank(message = "活动介绍不能为空")
     @Size(max = 200, message = "活动介绍最多200个汉字")
     private String activityIntroduce;
 

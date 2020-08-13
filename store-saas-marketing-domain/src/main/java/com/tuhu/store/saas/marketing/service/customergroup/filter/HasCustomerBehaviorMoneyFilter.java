@@ -10,9 +10,12 @@ import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 最近多少天有消费金额的客户id过滤
@@ -49,30 +52,13 @@ public class HasCustomerBehaviorMoneyFilter extends AbstractFactorFilter {
         //有消费记录的客户
         List<String> hasBehavCus = Lists.newArrayList();
         List<ListCustomerInfoResp> customers = serviceOrderClient.listCustomerInfos(req).getData();
+        Map<String,BigDecimal> amap = new HashMap<String,BigDecimal>();
         if(customers!=null){
             for(ListCustomerInfoResp customerInfoResp : customers){
                 if(!hasBehavCus.contains(customerInfoResp.getCostumerId())){
                     Long orderActualAmount = customerInfoResp.getOrderActualAmount();
                     BigDecimal decimalAmout = new BigDecimal(orderActualAmount).divide(new BigDecimal(100));
-                    if(lessThanMoney!=null&&greaterThanMoney!=null){
-                        if(decimalAmout.compareTo(new BigDecimal(greaterThanMoney))<0||decimalAmout.compareTo(new BigDecimal(lessThanMoney))>0){
-                            continue;
-                        }
-                        //大于最少，少于最大
-                        hasBehavCus.add(customerInfoResp.getCostumerId());
-                    }else if(lessThanMoney!=null){
-                        if(decimalAmout.compareTo(new BigDecimal(lessThanMoney))>0){
-                            continue;
-                        }
-                        //少于最大
-                        hasBehavCus.add(customerInfoResp.getCostumerId());
-                    }else if(greaterThanMoney!=null){
-                        if(decimalAmout.compareTo(new BigDecimal(greaterThanMoney))<0){
-                            continue;
-                        }
-                        //多余最少
-                        hasBehavCus.add(customerInfoResp.getCostumerId());
-                    }
+                    amap.put(customerInfoResp.getCostumerId(),decimalAmout);
                 }
             }
         }
@@ -82,27 +68,23 @@ public class HasCustomerBehaviorMoneyFilter extends AbstractFactorFilter {
             for(CustomerCardOrder customerCardOrder : CustomerCardOrderList){
                 if(!hasBehavCus.contains(customerCardOrder.getCustomerId())){
                     BigDecimal carAmount = customerCardOrder.getCarAmount();
-                    if(lessThanMoney!=null&&greaterThanMoney!=null){
-                        if(carAmount.compareTo(new BigDecimal(greaterThanMoney))<0 || carAmount.compareTo(new BigDecimal(lessThanMoney))>0){
-                            continue;
-                        }
-                        //大于最少，少于最大
-                        hasBehavCus.add(customerCardOrder.getCustomerId());
-                    }else if(lessThanMoney!=null){
-                        if(carAmount.compareTo(new BigDecimal(lessThanMoney))>0){
-                            continue;
-                        }
-                        //少于最大
-                        hasBehavCus.add(customerCardOrder.getCustomerId());
-                    }else if(greaterThanMoney!=null){
-                        if(carAmount.compareTo(new BigDecimal(greaterThanMoney))<0){
-                            continue;
-                        }
-                        //多余最少
-                        hasBehavCus.add(customerCardOrder.getCustomerId());
+                    if(amap.get(customerCardOrder.getCustomerId())==null) {
+                        amap.put(customerCardOrder.getCustomerId(), carAmount);
+                    }else{
+                        amap.put(customerCardOrder.getCustomerId(), carAmount.add(amap.get(customerCardOrder.getCustomerId())));
                     }
                 }
             }
+        }
+
+        for (Map.Entry<String, BigDecimal> entry : amap.entrySet()) {
+            if(StringUtils.isNotBlank(lessThanMoney) && (new BigDecimal(lessThanMoney).compareTo(entry.getValue())<0)){
+                continue;
+            }
+            if(StringUtils.isNotBlank(greaterThanMoney) && (new BigDecimal(greaterThanMoney).compareTo(entry.getValue())>0)){
+                continue;
+            }
+            hasBehavCus.add(entry.getKey());
         }
 
         return hasBehavCus;

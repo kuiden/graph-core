@@ -18,6 +18,6 @@ public class EndUserVistiedStoreRequest {
     @NotEmpty
     private String clientType;
 
-    @ApiModelProperty("客户端类型，0-C端小程序，1-C端H5")
+    @ApiModelProperty("客户端类型，0-C端小程序，1-C端H5， 默认0")
     private Integer sourceType = 0;
 }

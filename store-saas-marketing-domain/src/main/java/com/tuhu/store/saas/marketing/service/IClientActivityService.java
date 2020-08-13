@@ -8,6 +8,7 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
+import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
 import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 
 /**
@@ -24,6 +25,6 @@ public interface IClientActivityService {
      * @param applyReq
      * @return
      */
-    ActivityCustomerResp clientActivityApply(ActivityApplyReq applyReq);
+    ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq);
 
 }
