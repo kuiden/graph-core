@@ -99,6 +99,7 @@ public class ClientCouponApi extends BaseApi {
     }
 
     private String cacheKeyPre = "COUPON:";
+
     /**
      * 获取客户优惠券信息
      *
@@ -106,27 +107,32 @@ public class ClientCouponApi extends BaseApi {
      */
     @GetMapping("/open/openGetCouponInfo")
     public BizBaseResponse openGetCouponInfo(@RequestParam String code, HttpServletRequest request) {
-        log.info("open获取客户优惠券信息开始 -> {} ",code);
-        if (StringUtils.isBlank(code)){
+        log.info("open获取客户优惠券信息开始 -> {} ", code);
+        if (StringUtils.isBlank(code)) {
             log.info("参数验证失败");
             return null;
         }
         CouponItemResp couponItemResp = null;
         String ip = getIpAddress(request);
-        String cacheKey = cacheKeyPre.concat(StringUtils.isNotBlank(ip)?ip:"").concat(code);
+        String cacheKey = cacheKeyPre.concat(StringUtils.isNotBlank(ip) ? ip : "").concat(code);
         String key = cacheKey.concat("num");
-        Long num = redisTemplate.opsForValue().increment(key,1L);
-        if (num.equals(1L)){
-            redisTemplate.expire(key,2,TimeUnit.SECONDS);
+        Long num = redisTemplate.opsForValue().increment(key, 1L);
+        if (num.equals(1L)) {
+            redisTemplate.expire(key, 2, TimeUnit.SECONDS);
         }
-        if (!redisTemplate.hasKey(cacheKey)){
+        if (!redisTemplate.hasKey(cacheKey)) {
             couponItemResp = imCouponService.openGetCouponInfo(code);
-            redisTemplate.opsForValue().set(cacheKey,couponItemResp,2,TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(cacheKey, couponItemResp, 6, TimeUnit.SECONDS);
         } else {
-            if (num.equals(20L)){
-                redisTemplate.expire(cacheKey,30,TimeUnit.SECONDS);
+            if (num.equals(20L)) {
+                /**
+                 * 方案1 ：  判定某个IP 在短时间内请求次数到达N次 直接返回Null (可能存在信号站发包  暂时放置)
+                 * 方案2 ： 在某个IP 在 设定直接内访问次数达到N次 加长缓存时间
+                 * 方案3 ： 每个优惠券 在某个时间短内只能访问一次 加分布式计时锁
+                 */
+                redisTemplate.expire(cacheKey, 30, TimeUnit.SECONDS);
             }
-            couponItemResp = (CouponItemResp)redisTemplate.opsForValue().get(cacheKey);
+            couponItemResp = (CouponItemResp) redisTemplate.opsForValue().get(cacheKey);
         }
         return new BizBaseResponse(couponItemResp);
     }
@@ -138,18 +144,24 @@ public class ClientCouponApi extends BaseApi {
      * @param code
      * @return
      */
-    @GetMapping(value = "/open/openGetCustomerCouponCodeByPhone",produces = MediaType.IMAGE_JPEG_VALUE )
+    @GetMapping(value = "/open/openGetCustomerCouponCodeByPhone", produces = MediaType.IMAGE_JPEG_VALUE)
     @ResponseBody
     public byte[] openGetCustomerCouponCodeByPhone(@RequestParam String phone, String code) {
         if (StringUtils.isBlank(code) || StringUtils.isBlank(phone)) {
             throw new StoreSaasMarketingException("参数验证失败");
         }
         byte[] codeStream = null;
-        try {
-            codeStream = imCouponService.openGetCustomerCouponCodeByPhone(phone, code);
-        } catch (Exception e) {
-            log.info("获取二维码异常 -> e ->", e);
-            throw new StoreSaasMarketingException("获取优惠券失败");
+        String cacheKey = cacheKeyPre + "openGetCustomerCouponCodeByPhone".concat(code);
+        codeStream =(byte []) redisTemplate.opsForValue().get(cacheKey);
+        if (codeStream == null || codeStream.length<0){
+            try {
+                codeStream = imCouponService.openGetCustomerCouponCodeByPhone(phone, code);
+                redisTemplate.opsForValue().set(cacheKey,codeStream);
+                redisTemplate.expire(cacheKey, 30, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                log.info("获取二维码异常 -> e ->", e);
+                throw new StoreSaasMarketingException("获取优惠券失败");
+            }
         }
         return codeStream;
     }
@@ -171,7 +183,6 @@ public class ClientCouponApi extends BaseApi {
         }
         return request.getRemoteAddr();
     }
-
 
 
 }
