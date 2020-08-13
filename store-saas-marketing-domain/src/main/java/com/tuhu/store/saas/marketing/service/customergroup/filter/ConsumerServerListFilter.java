@@ -49,15 +49,14 @@ public class ConsumerServerListFilter extends AbstractFactorFilter {
         ListCustomerInfoReq req = new ListCustomerInfoReq();
         req.setStoreId(storeId);
         req.setRecentDays(recentDay);
-
+        List<String> customerIdList = Lists.newArrayList();
         //根据goodCode查询goodId
         StoreProductClient storeProductClient = SpringApplicationContextUtil.getBean(StoreProductClient.class);
         List<ServiceGoodDTO> serviceGoodDTOList = storeProductClient.queryBatchGoods(serverCodeList, storeId, tenantId, null).getData();
         if(CollectionUtils.isNotEmpty(serviceGoodDTOList)){
             List<String> goodIdList = serviceGoodDTOList.stream().map(x -> x.getId()).distinct().collect(Collectors.toList());
             req.setGoodsList(goodIdList);
-            //有消费记录的客户
-            List<String> customerIdList = Lists.newArrayList();
+            //消费了指定服务的客户
             List<ListCustomerInfoResp> customers = serviceOrderClient.listCustomerInfoForGoods(req).getData();
             if(customers!=null){
                 for(ListCustomerInfoResp customerInfoResp : customers){
@@ -66,9 +65,8 @@ public class ConsumerServerListFilter extends AbstractFactorFilter {
                     }
                 }
             }
-            return customerIdList;
         }
-        return null;
+        return customerIdList;
 
     }
 }

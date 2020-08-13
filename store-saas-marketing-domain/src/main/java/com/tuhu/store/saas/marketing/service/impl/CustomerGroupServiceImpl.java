@@ -593,7 +593,11 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
                 record.setId(customerGroupDto.getId());
                 record.setTenantId(req.getTenantId());
-                record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                if(CollectionUtils.isNotEmpty(singleCustomerIdList)) {
+                    record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                }else{
+                    record.setCustomerCount(0L);
+                }
                 record.setCountTime(new Date());
                 storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
                 if(CollectionUtils.isEmpty(customerIdList)){
