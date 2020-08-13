@@ -10,27 +10,10 @@ import java.util.List;
 
 @Mapper
 public interface ActivityTemplateMapper extends BaseMapper<ActivityTemplate> {
-    int countByExample(ActivityTemplateExample example);
-
-    int deleteByExample(ActivityTemplateExample example);
-
-    int deleteByPrimaryKey(Long id);
-
-    Integer insertEntity(ActivityTemplate record);
-
-    int insertSelective(ActivityTemplate record);
-
-    List<ActivityTemplate> selectByExample(ActivityTemplateExample example);
 
     ActivityTemplate selectByPrimaryKey(Long id);
 
-    int updateByExampleSelective(@Param("record") ActivityTemplate record, @Param("example") ActivityTemplateExample example);
-
-    int updateByExample(@Param("record") ActivityTemplate record, @Param("example") ActivityTemplateExample example);
-
-    int updateByPrimaryKeySelective(ActivityTemplate record);
-
-    int updateByPrimaryKey(ActivityTemplate record);
+    int deleteByPrimaryKey(Long id);
 
     int referById(@Param("id") Long id);
 }

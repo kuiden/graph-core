@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.request;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -16,4 +17,7 @@ public class EndUserVistiedStoreRequest {
 
     @NotEmpty
     private String clientType;
+
+    @ApiModelProperty("客户端类型，0-C端小程序，1-C端H5")
+    private Integer sourceType = 0;
 }

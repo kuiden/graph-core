@@ -37,7 +37,7 @@ public interface IClientEventRecordService {
      */
     void updateClientEventRecordCountById(String id);
 
-    ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId);
+    ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId, Integer sourceType);
 
     Map<String, ClientEventRecordDTO> getClientEventRecordStatisticsByEvent(ClientEventRecordVO clientEventRecordVO);
 }

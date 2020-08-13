@@ -65,7 +65,8 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             throw new RuntimeException(validateResult);
         }
         String openId = clientEventRecordRequest.getOpenId();
-        if (StringUtils.isEmpty(openId)) {
+        Integer sourceType = clientEventRecordRequest.getSourceType();
+        if (StringUtils.isEmpty(openId) && sourceType == 0) {
             String clientType = clientEventRecordRequest.getClientType();
             if (StringUtils.isEmpty(clientType)) {
                 clientType = "end_user_client";
@@ -93,7 +94,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         if (StringUtils.isEmpty(contentValue)) {
             contentValue = clientEventRecordRequest.getContentValue();
         }
-        ClientEventRecordDAO oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId);
+        ClientEventRecordDAO oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType);
         //如果没有记录
         if (null == oldClientEventRecordEntity || StringUtils.isEmpty(oldClientEventRecordEntity.getId())) {
             ClientEventRecordDAO clientEventRecordEntity = new ClientEventRecordDAO();
@@ -112,7 +113,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             } catch (Exception e) {
                 log.error("C端客户行为新增记录失败,ClientEventRecordEntity={},error={}", JSONObject.toJSONString(clientEventRecordEntity), ExceptionUtils.getStackTrace(e));
                 //再次查询
-                oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId);
+                oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType);
                 this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId());
             }
         } else {
@@ -192,11 +193,12 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
     }
 
     @Override
-    public ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId) {
+    public ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId, Integer sourceType) {
         EntityWrapper<ClientEventRecordDAO> wrapper = new EntityWrapper<>();
         wrapper.eq("event_type", eventType)
                 .eq("content_type", contentType)
-                .eq("content_value", contentValue);
+                .eq("content_value", contentValue)
+                .eq("source_type", sourceType);
         if (StringUtils.isNotEmpty(openId)) {
             wrapper.eq("open_id", openId);
         }
