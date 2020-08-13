@@ -845,7 +845,7 @@ public class IMCouponServiceImpl implements IMCouponService {
             vo.setId(customerCoupon.getCustomerId());
             BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(vo);
             if (crmResult != null && crmResult.getData() != null && crmResult.getData().getPhoneNumber().equals(phone)) {
-                result = " {code: '"+customerCoupon.getCode().concat("', type:1 }");
+                result = " { \"code\": \""+customerCoupon.getCode().concat("\", \"type\":1 }");
             } else {
                 throw new StoreSaasMarketingException("用户数据校验失败");
             }
