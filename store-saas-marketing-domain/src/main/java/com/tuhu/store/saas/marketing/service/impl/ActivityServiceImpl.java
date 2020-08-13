@@ -14,8 +14,10 @@ import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerSearchVO;
+import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.dto.product.IssuedDTO;
 import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
@@ -977,10 +979,19 @@ public class ActivityServiceImpl implements IActivityService {
             activityCustomerExampleCriteria.andActivityCodeEqualTo(activity.getActivityCode());
             activityCustomerExampleCriteria.andCustomerIdEqualTo(customerId);
             activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
-            int count = activityCustomerMapper.countByExample(activityCustomerExample);
-            if (count > 0) {
-                return CommonResp.failed(4005, "您已参加过本活动");
+            List<ActivityCustomer> activityCustomerList=activityCustomerMapper.selectByExample(activityCustomerExample);
+            if(activityCustomerList.size()>0){
+                CommonResp<String> result=new CommonResp<>();
+                result.setData(activityCustomerList.get(0).getActivityOrderCode());
+                result.setCode(4005);
+                result.setMessage("您已参加过本活动");
+                result.setSuccess(false);
+                return result;
             }
+//            int count = activityCustomerMapper.countByExample(activityCustomerExample);
+//            if (count > 0) {
+//                return CommonResp.failed(4005, "您已参加过本活动");
+//            }
         }
         //3.报名
         CommonResp<String> result = genarateActivityCustomer(activity, activityApplyReq);
@@ -1215,17 +1226,26 @@ public class ActivityServiceImpl implements IActivityService {
             BeanUtils.copyProperties(resultData.getData(),storeInfo);
             activityResp.setStoreInfo(storeInfo);
         }
-        //计算已报名人数,排除不限人数
-        if(activityResp.getApplyNumber()>0){
-            List<String> activityCodeList=new ArrayList<>();
-            activityCodeList.add(activityCode);
-            List<Integer> useStatusList = new ArrayList<>();
-            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_NEVER_USE.getStatus());
-            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_CLOSE.getStatus());
-            useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus());
-            List<Map<String, Object>> numberList = activityCustomerMapper.countByActivityCodeAndUseStatus(activityCodeList,useStatusList);
-            Long applyCount = Long.valueOf(numberList.get(0).get("number").toString());
-            activityResp.setApplyCount(applyCount);
+        //获取此活动的报名情况
+        List<Byte> useStatusList = new ArrayList<>();
+        useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_NEVER_USE.getStatusOfByte());
+        useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_CLOSE.getStatusOfByte());
+        useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte());
+        ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
+        ActivityCustomerExample.Criteria acExampleCriterria = activityCustomerExample.createCriteria();
+        acExampleCriterria.andActivityCodeEqualTo(activityCode);
+        acExampleCriterria.andUseStatusIn(useStatusList);
+        List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
+        //当前已报名人数
+        activityResp.setApplyCount(new Long(activityCustomerList.size()));
+        //已核销人数
+        activityResp.setWriteOffCount(activityCustomerList.stream().
+                filter(x->x.getUseStatus().compareTo(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte())>0).count());
+        //报名状态
+        List<String> appliedPhoneList = activityCustomerList.stream().map(x->x.getTelephone()).collect(Collectors.toList());
+        //如果当前页面为用户登录访问
+        if(EndUserContextHolder.getUser()!=null){
+            activityResp.setApplyed(appliedPhoneList.contains(EndUserContextHolder.getUser().getPhone()));
         }
         return activityResp;
     }

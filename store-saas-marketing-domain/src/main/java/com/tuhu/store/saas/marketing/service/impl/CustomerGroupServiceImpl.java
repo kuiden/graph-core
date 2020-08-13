@@ -630,7 +630,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
 
     @Override
     public List<String> calculateCustomerCount(CalculateCustomerCountReq req){
-        List<String> customerIdList = new ArrayList<>();
+       /* List<String> customerIdList = new ArrayList<>();
         List<CustomerGroupDto> customerGroupDtoList = getCustomerGroupDto(req);
         if(CollectionUtils.isNotEmpty(customerGroupDtoList)){
             for(CustomerGroupDto customerGroupDto : customerGroupDtoList){
@@ -652,7 +652,44 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 }
             }
         }
-        return customerIdList;
+        return customerIdList;*/
+        return calculateCustomerCountMap(req).get("total");
+
+    }
+
+    @Override
+    public Map<String,List<String>> calculateCustomerCountMap(CalculateCustomerCountReq req){
+        Map<String,List<String>> amap = new HashMap<String,List<String>>();
+        List<String> customerIdList = new ArrayList<>();
+        List<CustomerGroupDto> customerGroupDtoList = getCustomerGroupDto(req);
+        if(CollectionUtils.isNotEmpty(customerGroupDtoList)){
+            for(CustomerGroupDto customerGroupDto : customerGroupDtoList){
+                List<String> singleCustomerIdList = CustomerGroupFilterFactory.createFilter(customerGroupDto).filterProcess();
+                StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
+                record.setId(customerGroupDto.getId());
+                record.setTenantId(req.getTenantId());
+                if(CollectionUtils.isNotEmpty(singleCustomerIdList)) {
+                    record.setCustomerCount(Long.valueOf(singleCustomerIdList.size()));
+                    amap.put(customerGroupDto.getId().toString(), singleCustomerIdList);
+                }else{
+                    record.setCustomerCount(0L);
+                    amap.put(customerGroupDto.getId().toString(), new ArrayList<String>());
+                }
+                record.setCountTime(new Date());
+                storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
+                if(CollectionUtils.isEmpty(customerIdList)){
+                    customerIdList.addAll(singleCustomerIdList);
+                }else{
+                    customerIdList.addAll(singleCustomerIdList.stream().filter(item -> !customerIdList.contains(item)).collect(toList()));
+                }
+            }
+        }
+        if(CollectionUtils.isNotEmpty(customerIdList)){
+            amap.put("total",customerIdList);
+        }else{
+            amap.put("total",new ArrayList<String>());
+        }
+        return amap;
 
     }
 
