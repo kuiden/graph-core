@@ -979,10 +979,19 @@ public class ActivityServiceImpl implements IActivityService {
             activityCustomerExampleCriteria.andActivityCodeEqualTo(activity.getActivityCode());
             activityCustomerExampleCriteria.andCustomerIdEqualTo(customerId);
             activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
-            int count = activityCustomerMapper.countByExample(activityCustomerExample);
-            if (count > 0) {
-                return CommonResp.failed(4005, "您已参加过本活动");
+            List<ActivityCustomer> activityCustomerList=activityCustomerMapper.selectByExample(activityCustomerExample);
+            if(activityCustomerList.size()>0){
+                CommonResp<String> result=new CommonResp<>();
+                result.setData(activityCustomerList.get(0).getActivityOrderCode());
+                result.setCode(4005);
+                result.setMessage("您已参加过本活动");
+                result.setSuccess(false);
+                return result;
             }
+//            int count = activityCustomerMapper.countByExample(activityCustomerExample);
+//            if (count > 0) {
+//                return CommonResp.failed(4005, "您已参加过本活动");
+//            }
         }
         //3.报名
         CommonResp<String> result = genarateActivityCustomer(activity, activityApplyReq);
