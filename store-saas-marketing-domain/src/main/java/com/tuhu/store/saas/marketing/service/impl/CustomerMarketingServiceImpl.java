@@ -488,7 +488,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //messageData
-        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId()));
+        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId(),addReq.getOrginUrl()));
         insert(customerMarketing);
 
         //写入记录表并将状态设为未发送
