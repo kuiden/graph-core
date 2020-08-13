@@ -558,7 +558,7 @@ public class CouponServiceImpl implements ICouponService {
     private Coupon convertToEditCoupon(CouponResp oldCoupon, EditCouponReq editCouponReq) {
         Coupon editCoupon = new Coupon();
         BeanUtils.copyProperties(oldCoupon, editCoupon);
-        Long sendNumber = oldCoupon.getSendNumber();
+        Long sendNumber = oldCoupon.getSendNumber() + oldCoupon.getOccupyNum();
         //券数量
         editCoupon.setGrantNumber(editCouponReq.getGrantNumber());
         //券状态
