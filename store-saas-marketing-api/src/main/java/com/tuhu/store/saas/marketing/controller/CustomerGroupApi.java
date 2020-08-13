@@ -23,6 +23,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.crypto.tls.MACAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +33,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/customer/group")
@@ -101,5 +104,16 @@ public class CustomerGroupApi extends BaseApi{
         return new BizBaseResponse(customerIdList.size());
     }
 
+    @RequestMapping(value = "/calculateCustomerCountMap", method = RequestMethod.POST)
+    public  BizBaseResponse calculateCustomerCountMap(@RequestBody CalculateCustomerCountReq req) {
+        req.setStoreId(this.getStoreId());
+        req.setTenantId(this.getTenantId());
+        Map<String, List<String>> groupHasCustomerMap = iCustomerGroupService.calculateCustomerCountMap(req);
+        Map<String,Integer> resultMap = new HashMap<String,Integer>();
+        for (Map.Entry<String, List<String>> amap : groupHasCustomerMap.entrySet()) {
+            resultMap.put(amap.getKey(),amap.getValue().size());
+        }
+       return new BizBaseResponse(resultMap);
+    }
 
 }

@@ -10,6 +10,7 @@ import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Map;
 
 public interface ICustomerGroupService {
 
@@ -22,4 +23,6 @@ public interface ICustomerGroupService {
     List<CustomerGroupDto> getCustomerGroupDto(CalculateCustomerCountReq calculateCustomerCountReq);
 
     List<String> calculateCustomerCount(CalculateCustomerCountReq req);
+
+    Map<String,List<String>> calculateCustomerCountMap(CalculateCustomerCountReq req);
 }
