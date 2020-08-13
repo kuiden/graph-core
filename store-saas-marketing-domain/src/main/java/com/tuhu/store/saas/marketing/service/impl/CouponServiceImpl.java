@@ -770,12 +770,12 @@ public class CouponServiceImpl implements ICouponService {
                     int customerReceiveCount = customerCouponMapper.countByExample(example);
                     long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
                     if (count < 0) {
-                        throw new StoreSaasMarketingException("优惠券" + x.getTitle() + " 余额不足");
+                        throw new StoreSaasMarketingException("优惠券[" + x.getTitle() + "] 余额不足");
                     }
                 } else {
                     //占用数-当前发放数不能小于0
                     if (x.getOccupyNum() - num < 0) {
-                        throw new StoreSaasMarketingException("优惠券" + x.getTitle() + " 余额不足");
+                        throw new StoreSaasMarketingException("优惠券[" + x.getTitle() + "] 余额不足");
                     }
                 }
             }

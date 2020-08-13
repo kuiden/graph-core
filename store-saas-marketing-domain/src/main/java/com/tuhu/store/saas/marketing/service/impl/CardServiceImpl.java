@@ -84,6 +84,7 @@ public class CardServiceImpl implements ICardService {
         } else {
             cardTemplate.setCreateUser(userId);
             cardTemplate.setCreateTime(new Date());
+            cardTemplate.setUpdateTime(new Date());
         }
         int count = isUpdate ? cardTemplateMapper.updateCardTemplate(cardTemplate) : cardTemplateMapper.insertCardTemplate(cardTemplate);
         if (count > 0) {

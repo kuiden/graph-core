@@ -15,4 +15,5 @@ import org.springframework.data.repository.query.Param;
 public interface EndUserVisitedCouponWriteMapper extends BaseWriteMapper<EndUserVisitedCouponEntity> {
 
     EndUserVisitedCouponEntity findFirstByOpenIdAndCouponCode(@Param("openId") String openId, @Param("couponCode") String couponCode);
+
 }

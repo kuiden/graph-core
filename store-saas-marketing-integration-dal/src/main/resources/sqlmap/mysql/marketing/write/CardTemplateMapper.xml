@@ -107,7 +107,7 @@
         <if test="query != null and query != ''">
             AND a.card_name like  CONCAT('%',#{query}, '%')
         </if>
-        order by create_time desc
+        order by update_time desc
     </select>
 
 </mapper>

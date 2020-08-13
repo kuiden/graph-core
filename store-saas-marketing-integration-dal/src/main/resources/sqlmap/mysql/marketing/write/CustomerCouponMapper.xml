@@ -360,6 +360,12 @@
     <if test="receiveType != null">
       and receive_type = #{receiveType,jdbcType=TINYINT}
     </if>
+    <if test="customerIdList != null ">
+      and  cp.customer_id IN
+      <foreach collection="customerIdList" item="id" open="(" close=")" separator=",">
+        #{id}
+      </foreach>
+    </if>
     order by cp.create_time desc
   </select>
 

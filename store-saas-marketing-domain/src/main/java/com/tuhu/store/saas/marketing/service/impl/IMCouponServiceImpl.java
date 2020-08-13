@@ -13,10 +13,7 @@ import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponScopeCategoryMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.po.CouponPO;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
@@ -94,8 +91,12 @@ public class IMCouponServiceImpl implements IMCouponService {
      * 优惠券个人领取限制缓存key
      */
     private static final String personalCouponGetNumberPrefix = "COUPON:PERSONAL:";
-
+    /**
+     * open接口防刷接口
+     */
     private static final String openCouponPrefix = "openCouponPrefix";
+    @Autowired
+    private EndUserVisitedCouponWriteMapper endUserVisitedCouponWriteMapper;
 
     @Autowired
     private MiniAppService miniAppService;
@@ -211,9 +212,21 @@ public class IMCouponServiceImpl implements IMCouponService {
         if (req.getReceiveType() != null) {
             record.setReceiveType(req.getReceiveType().byteValue());
         }
+
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
         List<CustomerCouponPO> recordList = null;
         try {
+            if (StringUtils.isNotBlank(req.getSearchKey())) {
+                CustomerVO vo = new CustomerVO();
+                vo.setStoreId(req.getStoreId());
+                vo.setTenantId(req.getTenantId());
+                vo.setQuery(req.getSearchKey());
+                BizBaseResponse<List<CustomerDTO>> crmResult = customerClient.getCustomerByQuery(vo);
+                if (crmResult != null && CollectionUtils.isNotEmpty(crmResult.getData())) {
+                    List<String> idList = crmResult.getData().stream().map(x -> x.getId()).distinct().collect(Collectors.toList());
+                    record.setCustomerIdList(idList);
+                }
+            }
             recordList = customerCouponMapper.selectRecordList(record);
             if (CollectionUtils.isNotEmpty(recordList)) {
                 CustomerVO vo = new CustomerVO();
@@ -227,6 +240,7 @@ public class IMCouponServiceImpl implements IMCouponService {
                     Map<String, CustomerDTO> map = crmResult.getData().stream().collect(Collectors.toMap(k -> k.getId(), v -> v));
                     for (CustomerCouponPO x : recordList) {
                         x.setCustomerName(map.get(x.getCustomerId()).getName());
+                        x.setCustomerTelephone(map.get(x.getCustomerId()).getPhoneNumber());
 
                     }
                 }
@@ -767,7 +781,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         if (CollectionUtils.isNotEmpty(customerCoupons)) {
             CustomerCoupon customerCoupon = customerCoupons.get(0);
             result = new CustomerCouponPO();
-            BeanUtils.copyProperties(customerCoupon,result);
+            BeanUtils.copyProperties(customerCoupon, result);
 
             CouponExample example = new CouponExample();
             CouponExample.Criteria criteria = example.createCriteria();
@@ -786,12 +800,12 @@ public class IMCouponServiceImpl implements IMCouponService {
                     baseIdReqVO.setStoreId(req.getStoreId());
                     baseIdReqVO.setTenantId(req.getTenantId());
                     BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(baseIdReqVO);
-                    result.setSendUserName(crmResult != null && crmResult.getData() != null ? crmResult.getData().getName() : null);
+                    result.setCustomerName(crmResult != null && crmResult.getData() != null ? crmResult.getData().getName() : null);
                 }
                 //获取发券人
                 if (StringUtils.isNotBlank(customerCoupon.getSendUser())) {
-                    BizBaseResponse<Map<String, UserDTO>>  crmResult = customerClient.getUserInfoMapByIdList(Lists.newArrayList(customerCoupon.getSendUser()));
-                    result.setCustomerName(crmResult != null
+                    BizBaseResponse<Map<String, UserDTO>> crmResult = customerClient.getUserInfoMapByIdList(Lists.newArrayList(customerCoupon.getSendUser()));
+                    result.setSendUserName(crmResult != null
                             && crmResult.getData() != null
                             && crmResult.getData().containsKey(customerCoupon.getSendUser())
                             ? crmResult.getData().get(customerCoupon.getSendUser()).getUsername() : null);

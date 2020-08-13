@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.request;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: pengqiujing
@@ -20,4 +22,6 @@ public class CustomerCouponSearch extends CustomerCoupon {
     private String searchKey;
 
     private Long storeId;
+
+    private List<String> customerIdList;
 }

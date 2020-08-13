@@ -6,6 +6,7 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,5 +57,5 @@ public class SendCouponReq implements Serializable {
     /**
      * 优惠券送出张数
      */
-    private Map<String,Integer> count;
+    private Map<String,Integer> count = new HashMap<>();
 }
