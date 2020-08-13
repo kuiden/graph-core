@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
  * Description:
  */
 @Data
-public class CouponItemResp extends Coupon {
+public class CouponItemResp extends Coupon implements Serializable {
     /**
      * 券剩余数量
      */
@@ -47,7 +48,7 @@ public class CouponItemResp extends Coupon {
     private String customerCouponCode;
 
     @Data
-    public static class StoreInfo {
+    public static class StoreInfo  implements Serializable {
         private String storeName;
         private String address;
         /**

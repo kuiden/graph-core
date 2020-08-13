@@ -1,6 +1,8 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
-public class CouponScopeCategory {
+import java.io.Serializable;
+
+public class CouponScopeCategory  implements Serializable {
     /**
      * 主键ID
      */
