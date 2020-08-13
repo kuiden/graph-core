@@ -621,7 +621,15 @@ public class CouponServiceImpl implements ICouponService {
         }
         if (number.compareTo(0L) > 0) {
             //已发放的券只允许编辑券数量，是否允许领券，券状态；
-            return null;
+            if (oldCoupon.getTitle().equals(editCouponReq.getTitle())
+                    && oldCoupon.getContentValue().compareTo(editCouponReq.getContentValue()) == 0
+                    && oldCoupon.getConditionLimit().compareTo(editCouponReq.getConditionLimit()) == 0
+                    && oldCoupon.getRelativeDaysNum().equals(editCouponReq.getRelativeDaysNum())
+                    && oldCoupon.getRemark().equals(editCouponReq.getRemark())){
+                return null;
+            } else {
+                return "优惠券已发放，请从券列表重新进入编辑";
+            }
         }
         //使用门槛
         BigDecimal conditionLimit = editCouponReq.getConditionLimit();
