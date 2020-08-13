@@ -39,9 +39,6 @@ public class ClientCouponApi extends BaseApi {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Autowired
-    private StoreRedisUtils redisUtils;
-
     @RequestMapping(value = "/getCoupon", method = RequestMethod.POST)
     @ApiOperation(value = "领券")
     public BizBaseResponse getCoupon(@Validated @RequestBody CouponRequest req) {
@@ -119,14 +116,14 @@ public class ClientCouponApi extends BaseApi {
         String key = cacheKey.concat("num");
         Long num = redisTemplate.opsForValue().increment(key,1L);
         if (num.equals(1L)){
-            redisUtils.setExpire(key,2,TimeUnit.SECONDS);
+            redisTemplate.expire(key,2,TimeUnit.SECONDS);
         }
         if (!redisTemplate.hasKey(cacheKey)){
             couponItemResp = imCouponService.openGetCouponInfo(code);
             redisTemplate.opsForValue().set(cacheKey,couponItemResp,2,TimeUnit.SECONDS);
         } else {
             if (num.equals(20L)){
-                redisUtils.setExpire(cacheKey,30,TimeUnit.SECONDS);
+                redisTemplate.expire(cacheKey,30,TimeUnit.SECONDS);
             }
             couponItemResp = (CouponItemResp)redisTemplate.opsForValue().get(cacheKey);
         }
