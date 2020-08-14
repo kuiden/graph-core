@@ -19,14 +19,12 @@ import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.response.CommonResp;
-import com.tuhu.store.saas.marketing.response.CouponItemResp;
-import com.tuhu.store.saas.marketing.response.CouponPageResp;
-import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
+import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
+import com.tuhu.store.saas.marketing.util.GsonTool;
 import com.tuhu.store.saas.marketing.util.QrCode;
 import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
@@ -792,6 +790,25 @@ public class IMCouponServiceImpl implements IMCouponService {
             }
         }
         return result;
+    }
+
+    @Override
+    public CouponResp openGetCouponDetail(String code) {
+        CouponExample couponExample = new CouponExample();
+        couponExample.createCriteria().andCodeEqualTo(code);
+        List<Coupon> couponList = couponMapper.selectByExample(couponExample);
+        CouponResp resp = new CouponResp();
+        if (null != couponList && !couponList.isEmpty()){
+            Coupon coupon = couponList.get(0);
+            BeanUtils.copyProperties(coupon, resp);
+            resp.setType(coupon.getType().intValue());
+            resp.setValidityType(coupon.getValidityType().intValue());
+            resp.setStatus(coupon.getStatus().intValue());
+            resp.setAllowGet(coupon.getAllowGet().intValue());
+            resp.setScopeType(coupon.getScopeType().intValue());
+        }
+        log.info("openGetCouponDetail -> response：{}", GsonTool.toJSONString(resp));
+        return resp;
     }
 
     @Override

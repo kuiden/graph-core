@@ -54,10 +54,4 @@ public class CouponApi extends BaseApi {
         return new ResultObject(customerCouponDTO);
     }
 
-    @GetMapping(value = "/client/detail")
-    @ApiOperation(value = "c端-优惠券模板详情")
-    public BizBaseResponse getCouponDetail(@RequestParam Long couponId) {
-        CouponResp couponResp = iCouponService.getCouponDetailById(couponId);
-        return new BizBaseResponse(couponResp);
-    }
 }
