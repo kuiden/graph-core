@@ -29,18 +29,24 @@ public class CardFeignApi {
     public BizBaseResponse updateCardPaymentStatus(@RequestParam String orderNo,
                                                    @RequestParam Long storeId,
                                                    @RequestParam Long tenantId,
-                                                   @RequestParam Long amount){
-        iCardOrderService.updateCardPaymentStatus(orderNo,storeId,tenantId,amount);
+                                                   @RequestParam Long amount) {
+        iCardOrderService.updateCardPaymentStatus(orderNo, storeId, tenantId, amount);
         return new BizBaseResponse();
     }
 
     @PostMapping("/updateCardQuantity")
     @ApiOperation("更新次卡次数")
-    public BizBaseResponse updateCardQuantity(@RequestBody UpdateCardVo updateCardVo){
+    public BizBaseResponse updateCardQuantity(@RequestBody UpdateCardVo updateCardVo) {
         return new BizBaseResponse(iCardService.updateCardQuantity(updateCardVo));
     }
 
 
+    @GetMapping("/hasCardByCustomerId")
+    @ApiOperation("客户是否绑定卡")
+    public BizBaseResponse hasCardByCustomerId(@RequestParam String customerId, @RequestParam Long storeId,
+                                               @RequestParam Long tenantId) {
+        return new BizBaseResponse(iCardService.hasCardByCustomerId(customerId, storeId, tenantId));
+    }
 
 
 }
