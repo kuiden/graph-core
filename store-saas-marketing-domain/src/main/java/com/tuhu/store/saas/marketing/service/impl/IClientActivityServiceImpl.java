@@ -11,7 +11,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
-import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
@@ -26,7 +25,6 @@ import com.tuhu.store.saas.marketing.po.*;
 import com.tuhu.store.saas.marketing.remote.auth.AuthClient;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
-import com.tuhu.store.saas.marketing.remote.reponse.EndUserMarketingBindResponse;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.remote.request.EndUserMarketingBindRequest;
@@ -49,9 +47,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -139,12 +135,19 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         endUserMarketingBindRequest.setPhone(applyReq.getTelephone());
         endUserMarketingBindRequest.setStoreId(applyReq.getStoreId());
         endUserMarketingBindRequest.setTenantId(applyReq.getTenantId());
-        Object bindUserResp = authClient.bindWechatEndUserByPhone(endUserMarketingBindRequest,null);
-        if(bindUserResp!=null) {
-            EndUserMarketingBindResponse endUserMarketingBindResponse = new EndUserMarketingBindResponse();
-            BeanUtils.copyProperties(bindUserResp, endUserMarketingBindResponse);
-            String token = endUserMarketingBindResponse.getToken_type()+endUserMarketingBindResponse.getAccess_token();
-            activityApplyResp.setUserLoggedToken(token);
+        Map<String,String> mapRequest = new HashMap<>();
+        mapRequest.put("phone",applyReq.getTelephone());
+        mapRequest.put("storeId",applyReq.getStoreId().toString());
+        mapRequest.put("tenantId",applyReq.getTenantId().toString());
+        mapRequest.put("userType",endUserMarketingBindRequest.getUserType());
+        mapRequest.put("clientType",endUserMarketingBindRequest.getClientType());
+        Map<String,Object> bindUserResp = authClient.bindWechatEndUserByPhone(endUserMarketingBindRequest,mapRequest).getData();
+        if(bindUserResp.size()>0) {
+            Map tokenMap = JSONObject.parseObject(JSONObject.toJSONString(bindUserResp.get("token")));
+            StringBuilder stringBuilderToken = new StringBuilder();
+            stringBuilderToken.append("bearer");
+            stringBuilderToken.append(tokenMap.get("access_token"));
+            activityApplyResp.setUserLoggedToken(stringBuilderToken.toString());
         }
         //报名
         log.info("报名请求："+JSONObject.toJSONString(applyReq));
@@ -171,9 +174,8 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
 
     @Override
     public ActivityResp getActivityDetailByEncryptedCode(String encryptedCode){
-        log.info("活动详情，入参:{}", JSONObject.toJSONString(encryptedCode));
-        ActivityResp resp = new ActivityResp();
-        if (org.apache.commons.lang3.StringUtils.isBlank(encryptedCode)) {
+        log.info("活动详情，入参:{}", encryptedCode);
+        if (StringUtils.isBlank(encryptedCode)) {
             throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_ENCRYPTED_CODE_NOT_INPUT.getDesc());
         }
         ActivityExample activityExample = new ActivityExample();
@@ -185,8 +187,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         }
         Activity activity = activityList.get(0);
         //1.根据活动编码查询活动详情
-        resp = this.getActivityByActivityCode(activity.getActivityCode());
-        return resp;
+        return getActivityByActivityCode(activity.getActivityCode());
     }
 
 

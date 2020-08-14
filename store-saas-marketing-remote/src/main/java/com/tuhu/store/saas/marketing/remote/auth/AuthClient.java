@@ -16,7 +16,7 @@ public interface AuthClient {
     BizBaseResponse<CustomerAuthDto> getUserByToken();
 
     @PostMapping("/bind/endUser/byPhone")
-    public BizBaseResponse bindWechatEndUserByPhone(EndUserMarketingBindRequest endUserMarketingBindRequest, @RequestParam
+    public BizBaseResponse<Map<String,Object>> bindWechatEndUserByPhone(EndUserMarketingBindRequest endUserMarketingBindRequest, @RequestParam
             Map<String, String> parameters);
 
 }
