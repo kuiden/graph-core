@@ -2263,25 +2263,6 @@ public class ActivityServiceImpl implements IActivityService {
         return 0;
     }
 
-    @Override
-    public ActivityResp getActivityDetailByEncryptedCode(String encryptedCode){
-        log.info("活动详情，入参:{}", JSONObject.toJSONString(encryptedCode));
-        ActivityResp resp = new ActivityResp();
-        if (StringUtils.isBlank(encryptedCode)) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_ENCRYPTED_CODE_NOT_INPUT.getDesc());
-        }
-        ActivityExample activityExample = new ActivityExample();
-        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
-        activityExampleCriteria.andEncryptedCodeEqualTo(encryptedCode);
-        List<Activity> activityList = activityMapper.selectByExample(activityExample);
-        if(activityList.size() < 1){
-            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
-        }
-        Activity activity = activityList.get(0);
-        //1.根据活动编码查询活动详情
-        resp = this.getActivityByActivityCode(activity.getActivityCode());
-        return resp;
-    }
 
     private Date getApplyedEndDate(Date activityStartDate, Date activityEndDate, Integer activeType, Integer activeDays, Date activeDate) {
         if (activeType == null) {

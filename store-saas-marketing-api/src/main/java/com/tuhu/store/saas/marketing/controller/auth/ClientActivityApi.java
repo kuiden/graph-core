@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.controller.auth;
 
 import com.alibaba.fastjson.JSONObject;
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.VerificationCodeUtils;
@@ -13,7 +14,6 @@ import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.GetValidCodeReq;
 import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
-import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IClientActivityService;
@@ -69,8 +69,10 @@ public class ClientActivityApi {
     @ApiOperation("C端H5营销活动详情")
     public BizBaseResponse detail(@RequestParam String encryptedCode,HttpServletRequest request) {
         ActivityResp resp = null;
+        checkLogined(request);
+        //不做用户信息强校验
         try {
-            resp = activityService.getActivityDetailByEncryptedCode(encryptedCode);
+            resp = iClientActivityService.getActivityDetailByEncryptedCode(encryptedCode);
 
             if(resp ==null) {
                return BizBaseResponse.operationFailed("查不到此活动，请检查编码！");
@@ -92,7 +94,7 @@ public class ClientActivityApi {
 
     @PostMapping("/activity/apply")
     @ApiOperation("C端H5营销活动报名")
-    public BizBaseResponse apply(@Validated @RequestBody ActivityApplyReq applyReq) {
+    public BizBaseResponse<ActivityApplyResp> apply(@Validated @RequestBody ActivityApplyReq applyReq) {
         if(applyReq == null){
             return BizBaseResponse.operationFailed("参数错误！");
         }
@@ -118,10 +120,38 @@ public class ClientActivityApi {
             return new BizBaseResponse(iClientActivityService.clientActivityApply(applyReq));
         } catch (MarketingException e){
             log.error("营销活动报名失败",e.getMessage());
-            return BizBaseResponse.operationFailed("报名失败，",e.getMessage());
+            return BizBaseResponse.operationFailed("报名失败，"+e.getMessage());
         } catch(Exception e) {
             log.error("营销活动报名服务异常，入参：{}", applyReq, e);
             return BizBaseResponse.operationFailed("服务异常");
+        }
+    }
+
+    @GetMapping("/activityOrderDetail")
+    @ApiOperation("C端H5获取活动订单详情")
+    public BizBaseResponse orderDetail(@RequestParam String  encryptedCode,HttpServletRequest request){
+        checkLogined(request);
+        if(EndUserContextHolder.getUser()==null){
+            return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递Authorization信息");
+        }
+
+        return null;
+    }
+
+    /**
+     * 根据token 获取当前登录信息
+     * @param request
+     */
+    private void checkLogined(HttpServletRequest request){
+        //放入登录信息
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization==null){
+            return ;
+        }
+        BizBaseResponse<EndUser> endUserResult = storeAuthClient.getUserByToken();
+        log.info("==storeAuthClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
+        if (null != endUserResult && endUserResult.isSuccess() && null != endUserResult.getData()) {
+            EndUserContextHolder.setUser(endUserResult.getData());
         }
     }
 

@@ -10,6 +10,7 @@ package com.tuhu.store.saas.marketing.service;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
 import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
+import com.tuhu.store.saas.marketing.response.ActivityResp;
 
 /**
  * C端活动service
@@ -20,11 +21,34 @@ import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 public interface IClientActivityService {
 
     /**
-     * C端，活动报名
+     * C端H5，活动报名
      *
      * @param applyReq
      * @return
      */
     ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq);
+
+    /**
+     * C端H5，活动详情
+     *
+     * @param encryptedCode
+     * @return
+     */
+    ActivityResp getActivityDetailByEncryptedCode(String encryptedCode);
+
+    /**
+     * 活动详情，通用
+     * @param activityCode
+     * @return
+     */
+    ActivityResp getActivityByActivityCode(String activityCode);
+
+    /**
+     * C端H5，查询活动客户详情
+     * @param encryptedCode
+     * @param customerId
+     * @return
+     */
+    ActivityCustomerResp getActivityCustomerDetail(String encryptedCode,String customerId);
 
 }

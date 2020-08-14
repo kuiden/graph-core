@@ -24,7 +24,7 @@ public class ActivityApplyResp implements Serializable {
 
     private static final long serialVersionUID = -8674700589576401770L;
 
-    private String ActivityCustomerOrderCode;
+    private String userLoggedToken;
 
     private Boolean appliedSuccess;
 }
