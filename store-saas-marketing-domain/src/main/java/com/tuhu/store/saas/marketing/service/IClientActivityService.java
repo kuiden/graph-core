@@ -46,9 +46,8 @@ public interface IClientActivityService {
     /**
      * C端H5，查询活动客户详情
      * @param encryptedCode
-     * @param customerId
      * @return
      */
-    ActivityCustomerResp getActivityCustomerDetail(String encryptedCode,String customerId);
+    ActivityCustomerResp getActivityCustomerDetail(String encryptedCode);
 
 }

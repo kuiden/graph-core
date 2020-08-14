@@ -8,6 +8,7 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
@@ -22,6 +23,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityCustomerM
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityItemMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityMapper;
 import com.tuhu.store.saas.marketing.po.*;
+import com.tuhu.store.saas.marketing.remote.auth.AuthClient;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
@@ -39,7 +41,6 @@ import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.scmc.arch.model.exception.BizException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -69,6 +70,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     private StoreUserClient storeUserClient;
 
     @Autowired
+    private AuthClient authClient;
+
+    @Autowired
     private ActivityMapper activityMapper;
 
     @Autowired
@@ -80,8 +84,8 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     @Autowired
     private ActivityCustomerMapper activityCustomerMapper;
 
-    @Override
     @Transactional
+    @Override
     public ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq){
         //获取当前的客户信息
         ActivityExample activityExample = new ActivityExample();
@@ -129,6 +133,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             applyReq.setCustomerName(customerReqList.get(0).getName());
         }
         //登录
+//        EndUserMarketingBindRequest endUserMarketingBindRequest= new EndUserMarketingBindRequest();
+//        endUserMarketingBindRequest.set
+//        Object bindUserResp = authClient.bindWechatEndUserByPhone()
         String token = "这是登录信息token";
         activityApplyResp.setUserLoggedToken(token);
         //报名
@@ -264,20 +271,17 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     }
 
     @Override
-    public ActivityCustomerResp getActivityCustomerDetail(String encryptedCode,String customerId){
+    public ActivityCustomerResp getActivityCustomerDetail(String encryptedCode){
         ActivityCustomerResp response = new ActivityCustomerResp();
-        log.info("客户活动详情，入参:{},{}",encryptedCode,customerId);
+        log.info("客户活动详情，入参:{},{}",encryptedCode);
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (org.apache.commons.lang3.StringUtils.isBlank(encryptedCode)) {
             throw new MarketingException("活动报名订单号不能为空");
         }
-        //1.根据活动报名订单号查询活动报名信息
-        ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
-        ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
-        activityCustomerExampleCriteria.andActivityOrderCodeEqualTo(encryptedCode);
-        List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
-        ActivityCustomer activityCustomer = activityCustomerList.get(0);
-
+        //1.根据活动编码和用户Id查询活动报名信息
+        log.info("匹配活动订单，入参:{},{}",encryptedCode,EndUserContextHolder.getCustomerId());
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,EndUserContextHolder.getCustomerId());
+        log.info("匹配活动订单,出参:{}",JSONObject.toJSONString(activityCustomer));
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
@@ -292,15 +296,15 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             totalPrice += item.getOriginalPrice() * item.getItemQuantity();
         }
         activityCustomerResp.setActivity(activityResp);
-        //3.根据客户id查询客户及车辆详情
-        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
-        baseIdReqVO.setId(activityCustomer.getCustomerId());
-
-        if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
-            activityCustomerResp.setUseStatus((byte) -1);
-        }
-
-        // todo 获取用户车辆详情
+        //3.根据客户id查询客户及车辆详情 活动不显示
+//        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+//        baseIdReqVO.setId(activityCustomer.getCustomerId());
+//
+//        if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
+//            activityCustomerResp.setUseStatus((byte) -1);
+//        }
+//
+//        // todo 获取用户车辆详情
 //            CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId, customer.getTenantId(), customer.getStoreId());
 //            activityCustomerResp.setCustomerDetail(customerDetailResp);
 //        }

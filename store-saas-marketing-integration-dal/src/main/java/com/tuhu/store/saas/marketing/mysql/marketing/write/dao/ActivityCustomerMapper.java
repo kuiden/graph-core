@@ -36,4 +36,6 @@ public interface ActivityCustomerMapper extends BaseMapper<ActivityCustomer> {
     int updateByPrimaryKey(ActivityCustomer record);
 
     List<Map<String, Object>> countByActivityCodeAndUseStatus(@Param("activityCodeList") List<String> activityCodeList, @Param("useStatusList") List<Integer> useStatusList);
+
+    ActivityCustomer selectByEncryptedCodeAndUser(@Param("encryptedCode") String encryptedCode,@Param("customerId") String customerId);
 }

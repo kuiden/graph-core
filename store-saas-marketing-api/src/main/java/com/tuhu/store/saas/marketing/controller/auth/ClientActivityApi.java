@@ -111,12 +111,13 @@ public class ClientActivityApi {
         //校验验证码
         String code = storeRedisUtils.redisGet(verificationCodeKey+applyReq.getTelephone());
         if(code == null){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码已过期");
+            return BizBaseResponse.operationFailed("验证码已过期");
         }
         if(!code.equals(applyReq.getVerificationCode())){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码错误");
+            return BizBaseResponse.operationFailed("验证码错误");
         }
         try {
+
             return new BizBaseResponse(iClientActivityService.clientActivityApply(applyReq));
         } catch (MarketingException e){
             log.error("营销活动报名失败",e.getMessage());
@@ -134,7 +135,10 @@ public class ClientActivityApi {
         if(EndUserContextHolder.getUser()==null){
             return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递Authorization信息");
         }
-
+        if(StringUtils.isBlank(encryptedCode)){
+            return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递活动信息");
+        }
+        iClientActivityService.getActivityCustomerDetail(encryptedCode);
         return null;
     }
 

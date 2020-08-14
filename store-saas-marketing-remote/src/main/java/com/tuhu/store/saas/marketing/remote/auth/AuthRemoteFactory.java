@@ -8,6 +8,10 @@ import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -20,7 +24,12 @@ public class AuthRemoteFactory implements FallbackFactory<AuthClient> {
                 log.error("getUserByToken error,request={},error={}", ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
-
+//            @Override
+//            public BizBaseResponse bindWechatEndUserByPhone(EndUserMarketingBindRequest endUserMarketingBindRequest, @RequestParam
+//                    Map<String, String> parameters){
+//                log.error("bindWechatEndUserByPhone error,request={},error={}", ExceptionUtils.getStackTrace(throwable));
+//                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+//            }
 
 
         };
