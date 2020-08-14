@@ -20,6 +20,7 @@ import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
+import com.tuhu.store.saas.marketing.enums.EventTypeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
@@ -71,7 +72,6 @@ import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.dto.StoreInfoDTO;
 import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
-import com.tuhu.store.saas.user.vo.EventTypeEnum;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.xiangyun.versionhelper.VersionHelper;
@@ -2254,13 +2254,12 @@ public class ActivityServiceImpl implements IActivityService {
      * @return
      */
     private int getCountOfActivityItemByCodeAndUseStatus(String activityCode, Byte useStatus) {
-//        ActivityCustomerExample customerExample = new ActivityCustomerExample();
-//        ActivityCustomerExample.Criteria customerExampleCriteria = customerExample.createCriteria();
-//        customerExampleCriteria.andActivityCodeEqualTo(activityCode);
-//        customerExampleCriteria.andUseStatusEqualTo(useStatus);
-//        int count = activityCustomerMapper.countByExample(customerExample);
-//        return count;
-        return 0;
+        ActivityCustomerExample customerExample = new ActivityCustomerExample();
+        ActivityCustomerExample.Criteria customerExampleCriteria = customerExample.createCriteria();
+        customerExampleCriteria.andActivityCodeEqualTo(activityCode);
+        customerExampleCriteria.andUseStatusEqualTo(useStatus);
+        int count = activityCustomerMapper.countByExample(customerExample);
+        return count;
     }
 
     @Override

@@ -12,11 +12,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 
 /**
@@ -46,18 +45,16 @@ public class WxUtil {
 //        System.out.println(urlString);
     }
 
-    public static InputStream getQrCode(String token, String scene, String path, Long width) {
-        InputStream qr = null;
+    public static byte[] getQrCode(String token, String scene, String path, Long width) {
+        byte[] qr = null;
 
         try {
             Map map = new HashMap();
             map.put("scene", scene);
             //todo 小程序正式发版后传path
-//            if (StringUtils.isEmpty(path)) {
-//                map.put("page", "pages/index/index");
-//            }else {
-//                map.put("page", path);
-//            }
+            if (StringUtils.isNotEmpty(path)) {
+                map.put("page", path);
+            }
             map.put("width", width);
             String data = JSONObject.toJSONString(map);// 转化成json
             String url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + token;
@@ -68,8 +65,8 @@ public class WxUtil {
         return qr;
     }
 
-    private static InputStream httpPostWithJSON(String url, String json) throws IOException {
-        InputStream result = null;
+    private static byte[] httpPostWithJSON(String url, String json) throws IOException {
+        byte[] result = null;
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         HttpPost httpPost = new HttpPost(url);
         httpPost.addHeader(HTTP.CONTENT_TYPE, "application/json");
@@ -81,8 +78,9 @@ public class WxUtil {
         HttpResponse response = httpClient.execute(httpPost);
         if (response != null) {
             HttpEntity resEntity = response.getEntity();
-            result = resEntity.getContent();
-          //  result = getBase64FromInputStream(instreams);
+            InputStream stream = resEntity.getContent();
+            result = PicUtil.readInputStream(stream);
+//            getBase64FromInputStream(resEntity.getContent());
 //            result = "data:image/png;base64," + result;
         }
         httpPost.abort();

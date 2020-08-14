@@ -78,12 +78,11 @@ public class MiniAppServiceImpl implements MiniAppService {
         /*
          * 2、调微信api,根据当前各参数生成二维码图片buffer,并转base64编码
          */
-        InputStream inputStream = WxUtil.getQrCode(token, scene, path, width);
+        byte[] result = WxUtil.getQrCode(token, scene, path, width);
         /*
          * 3、上传图片到图片服务器
          */
-        String fileName = UUID.randomUUID()  + ".jpeg";
-        String image = imageUtil.uploadFileToWx(inputStream,"/store/marketing/coupon/".concat(fileName));
+        String image = imageUtil.uploadFileToWx(result,"/store/marketing/coupon/");
 
         //String image = imageUploadService.uploadImageByBase64(qrBase64, width, width);
         //上传到腾讯云服务器

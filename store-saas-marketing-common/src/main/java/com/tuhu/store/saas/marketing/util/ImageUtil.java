@@ -125,9 +125,13 @@ public class ImageUtil {
      * @param
      * @return
      */
-    public String uploadFileToWx(InputStream inputStream, String indexName){
+    public String uploadFileToWx(byte[] img, String indexName){
         try {
-            String address = cosService.upload(inputStream, indexName);
+            String fileName = UUID.randomUUID()  + ".jpeg";
+            File file = new File(fileName);
+            FileOutputStream fis = new FileOutputStream(file);
+            fis.write(img);
+            String address = cosService.upload(file, indexName.concat(fileName));
             String imgPath = cosService.generateUrl(address, false);
             return URLDecoder.decode(imgPath, "UTF-8");
         } catch (FileNotFoundException e) {
