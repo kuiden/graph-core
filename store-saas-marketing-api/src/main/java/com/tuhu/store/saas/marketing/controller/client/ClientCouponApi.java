@@ -11,9 +11,9 @@ import com.tuhu.store.saas.marketing.request.CouponRequest;
 import com.tuhu.store.saas.marketing.request.CouponSearchRequest;
 import com.tuhu.store.saas.marketing.response.CouponItemResp;
 import com.tuhu.store.saas.marketing.response.CouponPageResp;
+import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
-import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -114,7 +114,7 @@ public class ClientCouponApi extends BaseApi {
         }
         CouponItemResp couponItemResp = null;
         String ip = getIpAddress(request);
-        String cacheKey = cacheKeyPre.concat(StringUtils.isNotBlank(ip) ? ip : "").concat(code);
+        String cacheKey = cacheKeyPre.concat("openGetCouponInfo:").concat(StringUtils.isNotBlank(ip) ? ip : "").concat(code);
         String key = cacheKey.concat("num");
         Long num = redisTemplate.opsForValue().increment(key, 1L);
         if (num.equals(1L)) {
@@ -136,6 +136,37 @@ public class ClientCouponApi extends BaseApi {
         }
         return new BizBaseResponse(couponItemResp);
     }
+
+    /*
+     * 获取优惠券模板详情
+     */
+    @GetMapping("/open/openGetCouponDetail")
+    public BizBaseResponse<CouponResp> openGetCouponDetail(@RequestParam String code, HttpServletRequest request){
+        log.info("open获取优惠券模板详情，请求参数：{}", code);
+        if (StringUtils.isBlank(code)){
+            log.info("参数验证失败");
+            return null;
+        }
+        String ip = getIpAddress(request);
+        String cacheKey = cacheKeyPre.concat("openGetCouponDetail:").concat(StringUtils.isNotBlank(ip) ? ip : "").concat(code);
+        String key = cacheKey.concat("num");
+        Long num = redisTemplate.opsForValue().increment(key, 1L);
+        if (num.equals(1L)) {
+            redisTemplate.expire(key, 2, TimeUnit.SECONDS);
+        }
+        CouponResp couponResp = null;
+        if (!redisTemplate.hasKey(cacheKey)) {
+            couponResp = imCouponService.openGetCouponDetail(code);
+            redisTemplate.opsForValue().set(cacheKey, couponResp, 6, TimeUnit.SECONDS);
+        } else {
+            if (num.equals(20L)) {
+                redisTemplate.expire(cacheKey, 30, TimeUnit.SECONDS);
+            }
+            couponResp = (CouponResp) redisTemplate.opsForValue().get(cacheKey);
+        }
+        return new BizBaseResponse(couponResp);
+    }
+
 
     /**
      * 对外 获取小程序核销二维码

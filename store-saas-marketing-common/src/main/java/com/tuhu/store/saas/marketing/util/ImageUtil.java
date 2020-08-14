@@ -125,16 +125,22 @@ public class ImageUtil {
      * @param
      * @return
      */
-    public String uploadFileToWx(InputStream inputStream, String indexName){
-        try {
-            String address = cosService.upload(inputStream, indexName);
-            String imgPath = cosService.generateUrl(address, false);
-            return URLDecoder.decode(imgPath, "UTF-8");
-        } catch (FileNotFoundException e) {
-            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
-        } catch (Exception e) {
-            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
-        }
-    }
+//    public String uploadFileToWx(byte[] img, String indexName){
+//        try {
+//            String fileName = UUID.randomUUID()  + ".jpeg";
+//            File file = new File(fileName);
+//            FileOutputStream fos = new FileOutputStream(file);
+//            fos.write(img);
+//            String address = cosService.upload(file, indexName);
+//            String imgPath = cosService.generateUrl(address, false);
+//            fos.close();
+//            file.delete();
+//            return URLDecoder.decode(imgPath, "UTF-8");
+//        } catch (FileNotFoundException e) {
+//            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
+//        } catch (Exception e) {
+//            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
+//        }
+//    }
 
 }

@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -260,10 +261,10 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 customerGroupResp.setConsumerAmountDay(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.RECENT_DAYS)));
             }
             if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.LEAST_AMOUNT))) {
-                customerGroupResp.setConsumerLeastAmount(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.LEAST_AMOUNT)));
+                customerGroupResp.setConsumerLeastAmount(new BigDecimal(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.LEAST_AMOUNT)));
             }
             if(StringUtils.isNotBlank(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.MAX_AMOUNT))) {
-                customerGroupResp.setConsumerMaxAmount(Long.valueOf(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.MAX_AMOUNT)));
+                customerGroupResp.setConsumerMaxAmount(new BigDecimal(amap.get(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR).get(CustomerGroupConstant.MAX_AMOUNT)));
             }
         }
         if(amap.get(CustomerGroupConstant.CONSUMER_SERVER_FACTOR)!=null){
@@ -391,16 +392,16 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 sb.append(req.getConsumerMaxTime()).append("次以下;");
             }
         }
-        if(req.getConsumerAmountDay()!=null && req.getConsumerAmountDay()>0 && ((req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount()>=0)|| (req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount()>0))){
+        if(req.getConsumerAmountDay()!=null && req.getConsumerAmountDay()>0 && ((req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount().compareTo(new BigDecimal(0))>=0)|| (req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount().compareTo(new BigDecimal(0))>=0))){
             CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.CONSUMER_AMOUNT_FACTOR,String.valueOf(req.getConsumerAmountDay()),CustomerGroupConstant.RECENT_DAYS,"=");
             sb.append(req.getConsumerAmountDay()+"天内消费金额");
             boolean hasLeast =false;
             boolean hasMax =false;
-            if(req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount()>=0){
+            if(req.getConsumerLeastAmount()!=null && req.getConsumerLeastAmount().compareTo(new BigDecimal(0))>=0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerLeastAmount()),CustomerGroupConstant.LEAST_AMOUNT,">=");
                 hasLeast = true;
             }
-            if(req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount()>=0){
+            if(req.getConsumerMaxAmount()!=null && req.getConsumerMaxAmount().compareTo(new BigDecimal(0))>=0){
                 customerGroupRuleAddRuleAttribute(customerGroupRuleDto, String.valueOf(req.getConsumerMaxAmount()),CustomerGroupConstant.MAX_AMOUNT,"<=");
                 hasMax = true;
             }
@@ -495,7 +496,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
                 }
                 customerGroupRuleReqList.add(customerGroupRuleDto);
             }else{
-                CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateStart()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
+                CustomerGroupRuleDto customerGroupRuleDto = pkgCustomerGroupRule(CustomerGroupConstant.MAINTENANCE_FACTOR,String.valueOf(req.getMaintenanceDateEnd()),CustomerGroupConstant.MAINTENANCE_MAX_DAY,"<=");
                 customerGroupRuleReqList.add(customerGroupRuleDto);
                 hasMax = true;
             }

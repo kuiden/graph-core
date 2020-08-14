@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -32,9 +33,9 @@ public class CustomerGroupReq implements Serializable {
     @ApiModelProperty("消费金额近几天")
     private  Long consumerAmountDay;
     @ApiModelProperty("近几天最小消费金额")
-    private Long consumerLeastAmount;
+    private BigDecimal consumerLeastAmount;
     @ApiModelProperty("近几天最大消费金额")
-    private Long consumerMaxAmount;
+    private BigDecimal consumerMaxAmount;
     @ApiModelProperty("消费服务近几天")
     private Long consumerServeDay;
     @ApiModelProperty("近几天消费服务列表")
