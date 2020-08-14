@@ -67,21 +67,9 @@ public class ClientActivityApi {
 
     @GetMapping("/activity/detail")
     @ApiOperation("C端H5营销活动详情")
-    public BizBaseResponse detail(@RequestParam String encryptedCode,@RequestParam(required=false, defaultValue="false") Boolean logged,HttpServletRequest request) {
+    public BizBaseResponse detail(@RequestParam String encryptedCode,HttpServletRequest request) {
         ActivityResp resp = null;
         try {
-            if(logged){
-                //放入登录信息
-                String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-                if (authorization==null){
-                    return BizBaseResponse.operationFailed("未输入token!!");
-                }
-                BizBaseResponse<EndUser> endUserResult = storeAuthClient.getUserByToken();
-                log.info("==storeAuthClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
-                if (null != endUserResult && endUserResult.isSuccess() && null != endUserResult.getData()) {
-                    EndUserContextHolder.setUser(endUserResult.getData());
-                }
-            }
             resp = activityService.getActivityDetailByEncryptedCode(encryptedCode);
 
             if(resp ==null) {
@@ -98,7 +86,7 @@ public class ClientActivityApi {
     @PostMapping("/getValidCode")
     @ApiOperation("营销服务获取验证码")
     public BizBaseResponse getValidCode(@RequestBody GetValidCodeReq req) {
-        String sendResult  = verificationCodeUtils.send(SMSTypeEnum.SAAS_MINI_ORDER_CREATE_CODE.templateCode(),req.getPhone(),expireTime,TimeUnit.MINUTES);
+        String sendResult  = verificationCodeUtils.send(SMSTypeEnum.SAAS_ACTIVITY_APPLY_CODE.templateCode(),req.getPhone(),expireTime,TimeUnit.MINUTES);
         return BizBaseResponse.success(sendResult);
     }
 
@@ -111,12 +99,6 @@ public class ClientActivityApi {
         String applyPhoneNumber=applyReq.getTelephone();
         if(StringUtils.isBlank(applyPhoneNumber)){
             return BizBaseResponse.operationFailed("请输入正确的手机号");
-        }
-        if(applyReq.getStoreId()==null){
-            return BizBaseResponse.operationFailed("请关联门店");
-        }
-        if(applyReq.getTenantId() == null){
-            return BizBaseResponse.operationFailed("请输入当前租户Id");
         }
         if(StringUtils.isBlank(applyReq.getEncryptedCode() )){
             return BizBaseResponse.operationFailed("请输入活动编码");

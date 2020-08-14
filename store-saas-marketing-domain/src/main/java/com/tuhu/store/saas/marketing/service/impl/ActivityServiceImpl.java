@@ -1241,12 +1241,6 @@ public class ActivityServiceImpl implements IActivityService {
         //已核销人数
         activityResp.setWriteOffCount(activityCustomerList.stream().
                 filter(x->x.getUseStatus().compareTo(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte())>0).count());
-        //报名状态
-        List<String> appliedPhoneList = activityCustomerList.stream().map(x->x.getTelephone()).collect(Collectors.toList());
-        //如果当前页面为用户登录访问
-        if(EndUserContextHolder.getUser()!=null){
-            activityResp.setApplyed(appliedPhoneList.contains(EndUserContextHolder.getUser().getPhone()));
-        }
         return activityResp;
     }
 
