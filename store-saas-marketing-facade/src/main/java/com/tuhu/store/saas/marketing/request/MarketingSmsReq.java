@@ -37,6 +37,6 @@ public class MarketingSmsReq implements Serializable {
      */
     private Long tenantId;
 
-    private String orginUrl;
+    private String originUrl;
 
 }

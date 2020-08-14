@@ -181,7 +181,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             template = messageTemplateLocal.getTemplateContent();
         }
 
-        String paramStr = getMessageData(req.getStoreId(), req.getMarketingMethod(), req.getCouponOrActiveId(),req.getOrginUrl());
+        String paramStr = getMessageData(req.getStoreId(), req.getMarketingMethod(), req.getCouponOrActiveId(),req.getOriginUrl());
 
         if(StringUtils.isEmpty(paramStr)) {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信参数生成失败");
@@ -236,6 +236,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
+            params.add("站位");
             params.add("价值" + coupon.getContentValue().intValue()+ "元" +coupon.getTitle());
             params.add(storeDTO.getMobilePhone());
             //TODO 替换短链
@@ -272,6 +273,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             }
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
+            params.add("站位");
             params.add(activityPrice.toString()+"抵"+srcPrice.toString());
             params.add(storeDTO.getMobilePhone());
             params.add(activityResp.getActivityTitle());
@@ -497,7 +499,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //messageData
-        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId(),addReq.getOrginUrl()));
+        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId(),addReq.getOriginUrl()));
         insert(customerMarketing);
 
         //写入记录表并将状态设为未发送
