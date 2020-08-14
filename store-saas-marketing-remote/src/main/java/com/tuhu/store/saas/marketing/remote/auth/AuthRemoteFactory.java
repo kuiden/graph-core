@@ -4,6 +4,7 @@ import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.remote.CustomerAuthDto;
+import com.tuhu.store.saas.marketing.remote.request.EndUserMarketingBindRequest;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -24,12 +25,12 @@ public class AuthRemoteFactory implements FallbackFactory<AuthClient> {
                 log.error("getUserByToken error,request={},error={}", ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
-//            @Override
-//            public BizBaseResponse bindWechatEndUserByPhone(EndUserMarketingBindRequest endUserMarketingBindRequest, @RequestParam
-//                    Map<String, String> parameters){
-//                log.error("bindWechatEndUserByPhone error,request={},error={}", ExceptionUtils.getStackTrace(throwable));
-//                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
-//            }
+            @Override
+            public BizBaseResponse bindWechatEndUserByPhone(EndUserMarketingBindRequest endUserMarketingBindRequest, @RequestParam
+                    Map<String, String> parameters){
+                log.error("bindWechatEndUserByPhone error,request={},error={}", ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
 
 
         };

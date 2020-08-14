@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.remote.auth;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.remote.CustomerAuthDto;
+import com.tuhu.store.saas.marketing.remote.request.EndUserMarketingBindRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,8 +15,8 @@ public interface AuthClient {
     @PostMapping("/feign/auth/login/getUserByToken")
     BizBaseResponse<CustomerAuthDto> getUserByToken();
 
-//    @PostMapping("/bind/endUser/byPhone")
-//    public BizBaseResponse bindWechatEndUserByPhone(EndUserMarketingBindRequest endUserMarketingBindRequest, @RequestParam
-//            Map<String, String> parameters);
+    @PostMapping("/bind/endUser/byPhone")
+    public BizBaseResponse bindWechatEndUserByPhone(EndUserMarketingBindRequest endUserMarketingBindRequest, @RequestParam
+            Map<String, String> parameters);
 
 }

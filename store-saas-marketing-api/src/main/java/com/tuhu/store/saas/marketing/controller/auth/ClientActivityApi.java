@@ -88,7 +88,7 @@ public class ClientActivityApi {
     @PostMapping("/getValidCode")
     @ApiOperation("营销服务获取验证码")
     public BizBaseResponse getValidCode(@RequestBody GetValidCodeReq req) {
-        String sendResult  = verificationCodeUtils.send(SMSTypeEnum.SAAS_ACTIVITY_APPLY_CODE.templateCode(),req.getPhone(),expireTime,TimeUnit.MINUTES);
+        String sendResult  = verificationCodeUtils.send(SMSTypeEnum.SAAS_MINI_ORDER_CREATE_CODE.templateCode(),req.getPhone(),expireTime,TimeUnit.MINUTES);
         return BizBaseResponse.success(sendResult);
     }
 

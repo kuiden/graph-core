@@ -26,8 +26,10 @@ import com.tuhu.store.saas.marketing.po.*;
 import com.tuhu.store.saas.marketing.remote.auth.AuthClient;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
+import com.tuhu.store.saas.marketing.remote.reponse.EndUserMarketingBindResponse;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
+import com.tuhu.store.saas.marketing.remote.request.EndUserMarketingBindRequest;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.ActivityContent;
@@ -133,11 +135,17 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             applyReq.setCustomerName(customerReqList.get(0).getName());
         }
         //登录
-//        EndUserMarketingBindRequest endUserMarketingBindRequest= new EndUserMarketingBindRequest();
-//        endUserMarketingBindRequest.set
-//        Object bindUserResp = authClient.bindWechatEndUserByPhone()
-        String token = "这是登录信息token";
-        activityApplyResp.setUserLoggedToken(token);
+        EndUserMarketingBindRequest endUserMarketingBindRequest= new EndUserMarketingBindRequest();
+        endUserMarketingBindRequest.setPhone(applyReq.getTelephone());
+        endUserMarketingBindRequest.setStoreId(applyReq.getStoreId());
+        endUserMarketingBindRequest.setTenantId(applyReq.getTenantId());
+        Object bindUserResp = authClient.bindWechatEndUserByPhone(endUserMarketingBindRequest,null);
+        if(bindUserResp!=null) {
+            EndUserMarketingBindResponse endUserMarketingBindResponse = new EndUserMarketingBindResponse();
+            BeanUtils.copyProperties(bindUserResp, endUserMarketingBindResponse);
+            String token = endUserMarketingBindResponse.getToken_type()+endUserMarketingBindResponse.getAccess_token();
+            activityApplyResp.setUserLoggedToken(token);
+        }
         //报名
         log.info("报名请求："+JSONObject.toJSONString(applyReq));
         CommonResp<String> stringCommonResp= iActivityService.applyActivity(applyReq);
