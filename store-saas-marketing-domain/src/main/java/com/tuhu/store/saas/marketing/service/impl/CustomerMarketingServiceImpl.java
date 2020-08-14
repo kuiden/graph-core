@@ -242,8 +242,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add(storeDTO.getMobilePhone());
             //TODO 替换短链
             if(StringUtils.isNotBlank(orginUrl)){
-                params.add(iUtilityService.getShortUrl(orginUrl));
-
+                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
             }
 
 
@@ -282,12 +281,16 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
             params.add( iUtilityService.getShortUrl(url.toString()));*/
             if(StringUtils.isNotBlank(orginUrl)){
-                params.add(iUtilityService.getShortUrl(orginUrl));
+                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
 
             }
         }
 
         return StringUtils.join(params,",");
+    }
+
+    private String setALabel(String shortUrl){
+        return "<a href=\"javascript:void(0);\" style=\"color:#1b88ee\">"+shortUrl+"</a>";
     }
 
     /**
