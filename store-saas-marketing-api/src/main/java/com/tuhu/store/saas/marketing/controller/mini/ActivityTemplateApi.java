@@ -4,15 +4,22 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.po.ActivityTemplate;
+import com.tuhu.store.saas.marketing.remote.UploadImgRes;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateAdd;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateRequest;
 import com.tuhu.store.saas.marketing.service.IActivityTemplateService;
+import com.tuhu.store.saas.marketing.service.ImageUploadService;
+import com.tuhu.store.saas.marketing.util.ImageUtil;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +35,9 @@ public class ActivityTemplateApi  extends BaseApi {
 
     @Autowired
     IActivityTemplateService activityTemplateService;
+
+    @Autowired
+    private ImageUtil imageUtil;
 
     @PostMapping(value = "/add")
     @ApiOperation(value = "新增活动模板")
@@ -81,5 +91,24 @@ public class ActivityTemplateApi  extends BaseApi {
         List<ActivityTemplate> list = activityTemplateService.queryList(req);
         result.setData(list);
         return result;
+    }
+
+    @PostMapping("/uploadImg")
+    @ApiOperation(value = "图片上传")
+    public BizBaseResponse uploadImg(@RequestParam(value = "file") MultipartFile file, HttpServletRequest request, Long width, Long height) {
+        if (file == null || file.isEmpty()) {
+            return BizBaseResponse.operationFailed("未上传文件");
+        }
+
+        String url = null;
+        try {
+            UploadImgRes imgRes = imageUtil.uploadFile(file, "/store/marketing/activityTemplate/");
+            url = imgRes.getImgUrl();
+        } catch (Exception e) {
+            log.info("图片上传接口异常", e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
+
+        return BizBaseResponse.success(url);
     }
 }
