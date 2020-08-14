@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service;
 import com.tuhu.store.saas.marketing.po.ActivityTemplate;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateAdd;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateRequest;
+import com.tuhu.store.saas.marketing.request.ChangeSortAcTemplateReq;
 
 import java.util.List;
 
@@ -21,5 +22,7 @@ public interface IActivityTemplateService {
     void delete(Long id);
 
     List<ActivityTemplate> queryList(ActivityTemplateRequest req);
+
+    void changeSort(ChangeSortAcTemplateReq req);
 
 }

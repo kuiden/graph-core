@@ -16,12 +16,13 @@
     <result column="active_type" jdbcType="TINYINT" property="activeType" />
     <result column="active_days" jdbcType="BIGINT" property="activeDays" />
     <result column="active_date" jdbcType="TIMESTAMP" property="activeDate" />
+    <result column="sort" jdbcType="BIGINT" property="sort" />
   </resultMap>
 
 
   <sql id="Base_Column_List">
     id , pic_url, activity_title, activity_introduce, apply_number, `status`,
-    refence_number , create_time, update_time, start_time, end_time, active_type, active_days, active_date
+    refence_number , create_time, update_time, start_time, end_time, active_type, active_days, active_date, sort
   </sql>
 
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -44,11 +45,11 @@
   
   <insert id="insertActivityTemplate" parameterType="com.tuhu.store.saas.marketing.po.ActivityTemplate" keyProperty="id" useGeneratedKeys="true">
     insert into activity_template
-    (pic_url, activity_title, activity_introduce, apply_number, `status`,
-    refence_number , create_time, update_time, start_time, end_time, active_type, active_days, active_date)
+    (pic_url, activity_title, activity_introduce, apply_number, `status`,refence_number ,
+    create_time, update_time, start_time, end_time, active_type, active_days, active_date, sort)
     values
     (#{picUrl},#{activityTitle},#{activityIntroduce},#{applyNumber},#{status},0,now(),now(),
-    #{startTime},#{endTime},#{activeType},#{activeDays},#{activeDate})
+    #{startTime},#{endTime},#{activeType},#{activeDays},#{activeDate},#{sort})
   </insert>
 
   <select id="queryList" resultMap="BaseResultMap">
@@ -64,8 +65,11 @@
     </if>
     <if test="forB == true">
       and status = true
+      order by create_time desc
     </if>
-    order by create_time desc
+    <if test="forB == false">
+      order by sort desc,create_time desc
+    </if>
   </select>
   
 </mapper>

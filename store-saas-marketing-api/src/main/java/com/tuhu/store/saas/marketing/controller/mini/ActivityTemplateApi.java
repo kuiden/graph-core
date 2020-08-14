@@ -7,6 +7,7 @@ import com.tuhu.store.saas.marketing.po.ActivityTemplate;
 import com.tuhu.store.saas.marketing.remote.UploadImgRes;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateAdd;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateRequest;
+import com.tuhu.store.saas.marketing.request.ChangeSortAcTemplateReq;
 import com.tuhu.store.saas.marketing.service.IActivityTemplateService;
 import com.tuhu.store.saas.marketing.service.ImageUploadService;
 import com.tuhu.store.saas.marketing.util.ImageUtil;
@@ -111,4 +112,14 @@ public class ActivityTemplateApi  extends BaseApi {
 
         return BizBaseResponse.success(url);
     }
+
+
+    @PostMapping(value = "/changeSort")
+    @ApiOperation(value = "手动排序")
+    public BizBaseResponse changeSort(@Validated @RequestBody ChangeSortAcTemplateReq req){
+        activityTemplateService.changeSort(req);
+        return new BizBaseResponse("修改成功");
+    }
+
+
 }

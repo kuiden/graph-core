@@ -111,4 +111,9 @@ public class ActivityTemplate implements Serializable {
      */
     private Date activeDate;
 
+    /**
+     * 手动排序字段
+     */
+    private Integer sort;
+
 }
