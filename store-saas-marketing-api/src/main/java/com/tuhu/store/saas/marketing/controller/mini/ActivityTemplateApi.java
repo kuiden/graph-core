@@ -88,6 +88,9 @@ public class ActivityTemplateApi  extends BaseApi {
     @PostMapping(value = "/queryList")
     @ApiOperation(value = "查活动模板列表")
     public BizBaseResponse queryList(@RequestBody ActivityTemplateRequest req) {
+        if(req.getForB() == null){
+            throw new StoreSaasMarketingException("查询来源forB不能为空");
+        }
         BizBaseResponse<List<ActivityTemplate>> result = BizBaseResponse.success();
         List<ActivityTemplate> list = activityTemplateService.queryList(req);
         result.setData(list);
