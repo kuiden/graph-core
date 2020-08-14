@@ -337,6 +337,8 @@ public class CardServiceImpl implements ICardService {
                         }
                         for (CardItemResp resp : cardItemRespList) {
                             resp.setInventory(result.getOrDefault(resp.getGoodsId(), BigDecimal.ZERO));
+                            resp.setWarehouseId(storeRelatedResponse.getStoreOutPurchaseWarehouseId());
+                            resp.setWarehouseName(storeRelatedResponse.getStoreOutPurchaseWarehouseName());
                         }
                     } else {
                         log.warn("根据门店商品ID和仓库ID未查询到库存信息,goodsIdList={},warehouseId={}",
