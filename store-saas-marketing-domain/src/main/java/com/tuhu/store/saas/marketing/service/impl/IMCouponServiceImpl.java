@@ -806,6 +806,22 @@ public class IMCouponServiceImpl implements IMCouponService {
             resp.setStatus(coupon.getStatus().intValue());
             resp.setAllowGet(coupon.getAllowGet().intValue());
             resp.setScopeType(coupon.getScopeType().intValue());
+            //补充门店信息
+            ClientStoreVO clientStoreVO = new ClientStoreVO();
+            clientStoreVO.setStoreId(coupon.getStoreId());
+            clientStoreVO.setTenantId(coupon.getTenantId());
+            BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(clientStoreVO);
+            if (resultData != null && resultData.getData() != null) {
+                CouponResp.StoreInfo storeInfo = new CouponResp.StoreInfo();
+                storeInfo.setAddress(resultData.getData().getAddress());
+                storeInfo.setStoreName(resultData.getData().getStoreName());
+                storeInfo.setLat(resultData.getData().getLat());
+                storeInfo.setLon(resultData.getData().getLon());
+                storeInfo.setOpeningEffectiveDate(resultData.getData().getOpeningEffectiveDate());
+                storeInfo.setOpeningExpiryDate(resultData.getData().getOpeningExpiryDate());
+                storeInfo.setMobilePhone(resultData.getData().getMobilePhone());
+                resp.setStoreInfo(storeInfo);
+            }
         }
         log.info("openGetCouponDetail -> response：{}", GsonTool.toJSONString(resp));
         return resp;
