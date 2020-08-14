@@ -200,8 +200,10 @@ public class CardServiceImpl implements ICardService {
         log.info("查询客户次卡，请求参数：{}", JSONObject.toJSON(req));
         CrdCardExample cardExample = new CrdCardExample();
         CrdCardExample.Criteria criteria = cardExample.createCriteria();
-        criteria.andCustomerIdEqualTo(req.getCustomerId())
-                .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        criteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        if (null != req.getCustomerId()) {
+            criteria.andCustomerIdEqualTo(req.getCustomerId());
+        }
         if (null != req.getCustomerPhoneNumber()) {
             criteria.andCustomerPhoneNumberEqualTo(req.getCustomerPhoneNumber());
         }
