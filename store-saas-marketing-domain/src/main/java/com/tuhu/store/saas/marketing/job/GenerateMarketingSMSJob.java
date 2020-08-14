@@ -7,6 +7,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketing
 import com.tuhu.store.saas.marketing.request.CalculateCustomerCountReq;
 import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.request.SendRemindReq;
+import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.DateUtils;
@@ -21,9 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +39,19 @@ public class GenerateMarketingSMSJob extends IJobHandler {
     @Value("${marketing.sendsmstask.minutesLater:5}")
     private int minutesLater;
 
+    /**
+     * 活动短信链接长链
+     */
+    @Value("${marketing.customer.message.activity.url:http://store-dev.yunquecloud.com/store-h5-marketing/activity/}")
+    private String activityUrl;
+
+    /**
+     * 优惠券短信链接长链
+     */
+    @Value("${marketing.customer.message.coupon.url:http://store-dev.yunquecloud.com/store-h5-marketing/coupon/}")
+    private String couponUrl;
+
+
     @Autowired
     private IRemindService remindService;
 
@@ -54,6 +66,12 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
     @Autowired
     private ICouponService iCouponService;
+
+    @Autowired
+    private IActivityService iActivityService;
+
+    @Autowired
+    private IUtilityService iUtilityService;
 
     @Override
     public ReturnT<String> execute(String param) throws Exception {
@@ -94,17 +112,24 @@ public class GenerateMarketingSMSJob extends IJobHandler {
      */
     private void doSendSMS4Activity(CustomerMarketing customerMarketing){
 
-        String datas = customerMarketing.getMessageDatas();
+        ActivityResp activity = iActivityService.getActivityDetailById(Long.valueOf(customerMarketing.getCouponId()), customerMarketing.getStoreId());
         List<Byte> sendTypes = Lists.newArrayList();
         sendTypes.add(Byte.valueOf("0"));
         List<MarketingSendRecord> marketingSendRecords = sendRecordService.listMarketingSendRecord(customerMarketing.getId()+"",sendTypes);
+        //生成统一的短链
+        String url = iUtilityService.getShortUrl(activityUrl + activity.getEncryptedCode());
+
         for(MarketingSendRecord marketingSendRecord : marketingSendRecords){
             //发送记录一条一条发送
             String sendState = "1";
             SendRemindReq sendRemindReq = new SendRemindReq();
             sendRemindReq.setMessageTemplateId(customerMarketing.getMessageTemplateId());
-            //todo 替换短链
-            sendRemindReq.setDatas(customerMarketing.getMessageDatas());
+
+            //替换短链
+            List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
+            sendDatas.set(sendDatas.size()-1, url);
+
+            sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
             sendRemindReq.setTenantId(customerMarketing.getTenantId());
             sendRemindReq.setSource(SMSTypeEnum.MARKETING_ACTIVITY.templateCode());
@@ -152,6 +177,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
         List<String> customerIds = marketingSendRecords.stream().map(x->x.getCustomerId()).collect(Collectors.toList());
         sendCouponReq.setCustomerIds(customerIds);
+        Map<String , String> customerIdCodeMap = new HashMap<>();
         try{
             List<CommonResp<CustomerCoupon>> customerCouponRespList = iCouponService.sendCoupon(sendCouponReq);
 
@@ -161,11 +187,13 @@ public class GenerateMarketingSMSJob extends IJobHandler {
                 log.error("定向营销{}创建优惠券{}失败！", customerMarketing.getId(),customerMarketing.getCouponCode());
                 return;
             }
+
+            customerIdCodeMap = customerCouponRespList.stream().collect(Collectors.toMap(x -> x.getData().getCustomerId(), x -> x.getData().getCode()));
+
         }catch (Exception e) {
             log.error("定向营销优惠券送券失败！", e);
             return;
         }
-
 
 
         for(MarketingSendRecord marketingSendRecord : marketingSendRecords){
@@ -173,8 +201,13 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             String sendState = "1";
             SendRemindReq sendRemindReq = new SendRemindReq();
             sendRemindReq.setMessageTemplateId(customerMarketing.getMessageTemplateId());
-            //todo 替换短链
-            sendRemindReq.setDatas(customerMarketing.getMessageDatas());
+
+            //替换短链
+            String url = iUtilityService.getShortUrl(couponUrl + customerIdCodeMap.get(marketingSendRecord.getCustomerId()));
+            List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
+            sendDatas.set(sendDatas.size()-1, url);
+
+            sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
             sendRemindReq.setTenantId(customerMarketing.getTenantId());
             sendRemindReq.setSource(SMSTypeEnum.MARKETING_COUPON.templateCode());

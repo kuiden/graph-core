@@ -53,6 +53,9 @@ public class MiniProgramNotifyReq implements Serializable {
      */
     private String emphasisKeyword;
 
+
+
+
     public String getClientType() {
         return clientType;
     }

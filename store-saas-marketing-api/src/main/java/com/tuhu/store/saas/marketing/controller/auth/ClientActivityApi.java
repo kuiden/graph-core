@@ -13,10 +13,12 @@ import com.tuhu.store.saas.marketing.remote.auth.StoreAuthClient;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.GetValidCodeReq;
+import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
 import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IClientActivityService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -29,6 +31,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,6 +67,10 @@ public class ClientActivityApi {
 
     @Value("${add.reservation.verificationCode.expireTime}")
     private Integer expireTime = 5;
+
+    @Autowired
+    MiniAppService miniAppService;
+
 
     @GetMapping("/activity/detail")
     @ApiOperation("C端H5营销活动详情")
@@ -157,6 +164,19 @@ public class ClientActivityApi {
         if (null != endUserResult && endUserResult.isSuccess() && null != endUserResult.getData()) {
             EndUserContextHolder.setUser(endUserResult.getData());
         }
+    }
+
+    /**
+     * 发送预约成功小程序通知
+     *
+     * @param miniProgramNotifyReq
+     * @return
+     */
+    @RequestMapping(value = "/user/mini/notify", method = {RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public BizBaseResponse miniProgramNotify(@RequestBody @NotNull @Validated MiniProgramNotifyReq miniProgramNotifyReq) {
+        Object result = miniAppService.miniProgramNotify(miniProgramNotifyReq);
+        return new BizBaseResponse(result);
     }
 
 }

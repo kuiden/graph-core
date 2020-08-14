@@ -167,12 +167,12 @@ public class WechatServiceImpl implements IWechatService {
         }
         param.put("template_id", templateId);
         param.put("page", miniProgramNotifyReq.getPage());
-        param.put("form_id", miniProgramNotifyReq.getFormId());
+        //param.put("form_id", miniProgramNotifyReq.getFormId());
         param.put("data", miniProgramNotifyReq.getData());
         param.put("emphasis_keyword", miniProgramNotifyReq.getEmphasisKeyword());
         try {
             log.info("发送小程序模板消息通知，request={}", JSONObject.toJSONString(param));
-            String result = gatewayClient.postForObject(sendUrl, param, this.getUUIDHeader(), String.class);
+            String result = restTemplate.postForObject(sendUrl, param, String.class);
             log.info("发送小程序模板消息通知，response={}", result);
             JSONObject jsonObject = (JSONObject) JSONObject.parse(result);
             return jsonObject;
