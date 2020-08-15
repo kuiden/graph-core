@@ -318,9 +318,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getTelephone());
         if(activityCustomer.getUseStatus().intValue() == 0){
             //未核销
-            Map<String,String> codeMap = new HashMap<>(2);
-            codeMap.put("type","2");
-            codeMap.put("activityCustomerCode",activityCustomer.getActivityOrderCode());
+            Map<String,Object> codeMap = new HashMap<>(2);
+            codeMap.put("type",2);
+            codeMap.put("code",activityCustomer.getActivityOrderCode());
             try {
                 //添加二维码字节流
                 return (QrCode.getQRCodeImage(JSONObject.toJSONString(codeMap),500,500));
