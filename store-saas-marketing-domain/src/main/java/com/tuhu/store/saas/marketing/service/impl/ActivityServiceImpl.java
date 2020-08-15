@@ -1144,10 +1144,12 @@ public class ActivityServiceImpl implements IActivityService {
             //门店用户登录
             if(!UserContextHolder.getStoreId().equals(activityCustomer.getStoreId())){
                 //门店不同不允许看
+                log.warn("活动详情过滤机制：门店用户storeId:{},source{}",UserContextHolder.getStoreId(),activityCustomer.getStoreId());
                 throw new MarketingException("无权限操作此活动！");
             }
             if(!UserContextHolder.getTenantId().equals(activityCustomer.getTenantId())){
                 //企业不同不允许看
+                log.warn("活动详情过滤机制：门店用户tenantId:{},source{}",UserContextHolder.getTenantId(),activityCustomer.getTenantId());
                 throw new MarketingException("无权限操作此活动！");
             }
         }
@@ -1164,10 +1166,12 @@ public class ActivityServiceImpl implements IActivityService {
             CustomerDTO customerDTO = customerDTOList.get(0);
             if(!customerDTO.getTenantId().equals(activityCustomer.getTenantId())){
                 //企业账号不同不允许看
+                log.warn("活动详情过滤机制：客户用户tenantId:{},source{}",customerDTO.getTenantId(),activityCustomer.getTenantId());
                 throw new MarketingException("无权限操作此活动！");
             }
             if (!customerDTO.getId().equals(activityCustomer.getCustomerId())){
                 //用户账号不同不允许看
+                log.warn("活动详情过滤机制：客户用户Id:{},source{}",customerDTO.getId(),activityCustomer.getCustomerId());
                 throw new MarketingException("没有报名记录，请先报名！");
             }
         }
