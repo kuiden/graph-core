@@ -291,9 +291,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if (org.apache.commons.lang3.StringUtils.isBlank(encryptedCode)) {
             throw new MarketingException("活动报名订单号不能为空");
         }
-        //1.根据活动编码和用户Id查询活动报名信息
-        log.info("匹配活动订单，入参:{},{}",encryptedCode,EndUserContextHolder.getCustomerId());
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,EndUserContextHolder.getCustomerId());
+        //1.根据活动编码和用户手机号查询活动报名信息
+        log.info("匹配活动订单，入参:{},{}",encryptedCode,EndUserContextHolder.getTelephone());
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,EndUserContextHolder.getTelephone());
         log.info("匹配活动订单,出参:{}",JSONObject.toJSONString(activityCustomer));
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());

@@ -429,7 +429,7 @@
     FROM activity_customer AS a,activity As b
     WHERE b.encrypted_code = #{encryptedCode}
       AND a.activity_code = b.activity_code
-      AND a.customer_id = #{customerId}
+      AND a.telephone = #{telephone}
 
   </select>
 </mapper>
