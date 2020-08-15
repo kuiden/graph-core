@@ -4,14 +4,17 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
 import com.mengfan.common.util.GatewayClient;
 import com.tuhu.store.saas.marketing.constant.AuthConstant;
+import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
 import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.exception.SaasAuthException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
+import com.tuhu.store.saas.marketing.service.IOauthClientDetailsService;
 import com.tuhu.store.saas.marketing.service.IWechatService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.order.dto.serviceorder.ResultDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
@@ -49,15 +52,20 @@ public class WechatServiceImpl implements IWechatService {
     @Autowired
     private SrvReservationOrderMapper reservationOrderMapper;
 
-
     @Autowired
     private StoreInfoClient storeInfoClient;
+
+    @Autowired
+    private IOauthClientDetailsService iOauthClientDetailsService;
 
     @Value("${wechat.miniprogram.message.template.send.url:https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token=}")
     private String templateMessageSendUrl;
 
     @Value("${wechat.miniprogram.message.template.id}")
     private String defaultTemplateId;
+
+    @Value("${wechat.access.token.address}")
+    private String accessTokenUrl;
 
     private String tokenUrl = "https://api.yunquecloud.com/auth/wechat/accessToken";
 
@@ -172,8 +180,8 @@ public class WechatServiceImpl implements IWechatService {
 
     @Override
     public Object miniProgramNotify(String openId, MiniProgramNotifyReq miniProgramNotifyReq) {
-        String accessToken = getClientAppToken(miniProgramNotifyReq.getClientType());
-        String sendUrl = templateMessageSendUrl.concat(accessToken);
+        ResultDTO<String> accessTokenData = this.getWechatAccessTokenByClientTypeNoCache(miniProgramNotifyReq.getClientType());
+        String sendUrl = templateMessageSendUrl.concat(accessTokenData.getData());
         Map<String, Object> param = new HashMap();
         param.put("touser", openId);
         String templateId = miniProgramNotifyReq.getTemplateId();
@@ -228,6 +236,39 @@ public class WechatServiceImpl implements IWechatService {
             log.error("miniProgramNotify error:", e);
         }
         return null;
+    }
+
+
+
+
+    private ResultDTO<String> getWechatAccessTokenByClientTypeNoCache(String clientType) {
+        ResultDTO<String> resultDTO = new ResultDTO<>();
+        if (StringUtils.isEmpty(clientType)) {
+            resultDTO.setCode(AuthConstant.validCode);
+            resultDTO.setMsg("clientType不能为空");
+            return resultDTO;
+        }
+        OauthClientDetailsDAO clientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
+        if (null == clientDetails) {
+            resultDTO.setCode(AuthConstant.validCode);
+            resultDTO.setMsg("clientType不存在");
+            return resultDTO;
+        }
+        String cachedToken = null;
+        try {
+            cachedToken = this.forceRefreshAccessToken(clientDetails.getWxAppid(), clientDetails.getWxSecret(), clientType, accessTokenUrl);
+        } catch (Exception e) {
+            log.error("刷新微信Access Token异常，", e);
+        }
+        if (StringUtils.isEmpty(cachedToken)) {
+            resultDTO.setCode(AuthConstant.exceptionCode);
+            resultDTO.setMsg("刷新获取微信Access Token失败");
+        } else {
+            JSONObject tokenJSON = JSONObject.parseObject(cachedToken);
+            resultDTO.setCode(AuthConstant.succesCode);
+            resultDTO.setData(tokenJSON.getString("access_token"));
+        }
+        return resultDTO;
     }
 
     /**

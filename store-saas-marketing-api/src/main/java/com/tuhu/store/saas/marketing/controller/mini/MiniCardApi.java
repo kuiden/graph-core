@@ -6,7 +6,7 @@ import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.response.card.CardResp;
-import com.tuhu.store.saas.marketing.response.card.QueryGoodsListResp;
+import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -49,8 +49,8 @@ public class MiniCardApi extends BaseApi {
     }
 
     @PostMapping("/queryCardItem")
-    @ApiOperation("查询次卡服务项目")
-    public BizBaseResponse<List<QueryGoodsListResp>> queryCardItem(@Validated @RequestBody QueryCardItemReq req) {
+    @ApiOperation("查询次卡商品/服务项目")
+    public BizBaseResponse<List<QueryCardItemResp>> queryCardItem(@Validated @RequestBody QueryCardItemReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(iCardService.queryCardItem(req));

@@ -1,15 +1,19 @@
 package com.tuhu.store.saas.marketing.remote.product;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.dto.product.GoodsData;
 import com.tuhu.store.saas.dto.product.IssuedDTO;
 import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerRemoteFactory;
+import com.tuhu.store.saas.request.product.GoodsForMarketReq;
+import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
 import com.tuhu.store.saas.vo.product.GoodsListVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,8 +37,11 @@ public interface StoreProductClient {
     BizBaseResponse<List<GoodsData>> queryServiceGoodListByCodesAndStoreId(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId);
 
     @PostMapping(value = "/feign/product/Goods/queryGoodsListV2")
-    public BizBaseResponse<List<QueryGoodsListDTO>> queryGoodsListV2(@RequestBody QueryGoodsListVO queryGoodsListVO);
+    BizBaseResponse<List<QueryGoodsListDTO>> queryGoodsListV2(@RequestBody QueryGoodsListVO queryGoodsListVO);
 
     @PostMapping("/feign/product/Goods/queryBatchGoods")
     BizBaseResponse<List<ServiceGoodDTO>> queryBatchGoods(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId, @RequestParam("tenantId") Long tenantId, @RequestParam("carPosition") String carPosition) ;
+
+    @PostMapping(value = "/feign/product/Goods/market/serviceGoodsForFeign")
+    BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsForFeign(@RequestBody @Validated GoodsForMarketReq goodsForMarketReq);
 }
