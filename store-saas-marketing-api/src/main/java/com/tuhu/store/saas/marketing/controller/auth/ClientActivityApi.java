@@ -193,4 +193,16 @@ public class ClientActivityApi {
         return new BizBaseResponse(result);
     }
 
+
+    @GetMapping("/activityOrder/getQrCode")
+    public byte[] getQrCode(@RequestParam String code,HttpServletRequest request){
+        checkLogged(request);
+        if(EndUserContextHolder.getUser()==null){
+            return null;
+        }
+        return iClientActivityService.getQrCodeOfActivityCustomer(code);
+    }
+
+
+
 }

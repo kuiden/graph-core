@@ -50,4 +50,11 @@ public interface IClientActivityService {
      */
     ActivityCustomerResp getActivityCustomerDetail(String encryptedCode);
 
+    /**
+     * 活动活动订单二维码
+     * @param activityCustomerOrderCode
+     * @return
+     */
+    byte[] getQrCodeOfActivityCustomer(String activityCustomerOrderCode);
+
 }

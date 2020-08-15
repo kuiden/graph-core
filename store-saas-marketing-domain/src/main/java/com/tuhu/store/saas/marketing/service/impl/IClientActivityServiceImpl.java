@@ -309,22 +309,31 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             totalPrice += item.getOriginalPrice() * item.getItemQuantity();
         }
         activityCustomerResp.setActivity(activityResp);
-        if(activityCustomerResp.getUseStatus().intValue() == 1){
+        log.info("客户活动详情，出参:{}", JSONObject.toJSONString(activityCustomerResp));
+        return activityCustomerResp;
+    }
+
+    @Override
+    public byte[] getQrCodeOfActivityCustomer(String activityCustomerOrderCode){
+        ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
+        ActivityCustomerExample.Criteria acExampleCriterria = activityCustomerExample.createCriteria();
+        acExampleCriterria.andActivityOrderCodeEqualTo(activityCustomerOrderCode);
+        acExampleCriterria.andTelephoneEqualTo(EndUserContextHolder.getUser().getPhone());
+        acExampleCriterria.andStoreIdEqualTo(Long.valueOf(EndUserContextHolder.getUser().getStoreId()));
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByExampleOne(activityCustomerExample);
+        if(activityCustomer.getUseStatus().intValue() == 0){
             //未核销
             Map<String,String> codeMap = new HashMap<>(2);
             codeMap.put("type","2");
-            codeMap.put("activityCustomerCode",activityCustomerResp.getActivityOrderCode());
+            codeMap.put("activityCustomerCode",activityCustomer.getActivityOrderCode());
             try {
                 //添加二维码字节流
-                activityCustomerResp.setQrCode(QrCode.getQRCodeImage(JSONObject.toJSONString(codeMap),500,500));
+                return (QrCode.getQRCodeImage(JSONObject.toJSONString(codeMap),500,500));
             }catch (WriterException e){
                 log.warn("活动订单详情，获取二维码失败：",e);
             }catch (IOException e){
                 log.warn("活动订单详情，获取二维码失败：",e);
             }
         }
-        log.info("客户活动详情，出参:{}", JSONObject.toJSONString(activityCustomerResp));
-        return activityCustomerResp;
     }
-
 }
