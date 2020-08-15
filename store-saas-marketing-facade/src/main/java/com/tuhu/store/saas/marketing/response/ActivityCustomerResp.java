@@ -75,4 +75,7 @@ public class ActivityCustomerResp implements Serializable {
 
     @ApiModelProperty("活动结束时间")
     private Date endTime;
+
+    @ApiModelProperty("订单二维码字节流")
+    private byte[] qrCode;
 }

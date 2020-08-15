@@ -76,7 +76,7 @@ public class ClientActivityApi {
     @ApiOperation("C端H5营销活动详情")
     public BizBaseResponse detail(@RequestParam String encryptedCode,HttpServletRequest request) {
         ActivityResp resp = null;
-        checkLogined(request);
+        checkLogged(request);
         //不做用户信息强校验
         try {
             resp = iClientActivityService.getActivityDetailByEncryptedCode(encryptedCode);
@@ -123,8 +123,9 @@ public class ClientActivityApi {
         if(!code.equals(applyReq.getVerificationCode())){
             return BizBaseResponse.operationFailed("验证码错误");
         }
+        //验证码需要重新获取
+        storeRedisUtils.redisDelete(verificationCodeKey+applyReq.getTelephone());
         try {
-
             return new BizBaseResponse(iClientActivityService.clientActivityApply(applyReq));
         } catch (MarketingException e){
             log.error("营销活动报名失败",e.getMessage());
@@ -138,31 +139,44 @@ public class ClientActivityApi {
     @GetMapping("/activityOrderDetail")
     @ApiOperation("C端H5获取活动订单详情")
     public BizBaseResponse orderDetail(@RequestParam String  encryptedCode,HttpServletRequest request){
-        checkLogined(request);
+        checkLogged(request);
         if(EndUserContextHolder.getUser()==null){
             return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递Authorization信息");
         }
         if(StringUtils.isBlank(encryptedCode)){
             return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递活动信息");
         }
-        iClientActivityService.getActivityCustomerDetail(encryptedCode);
-        return null;
+        try {
+            return new BizBaseResponse(iClientActivityService.getActivityCustomerDetail(encryptedCode));
+        }catch (MarketingException e){
+            log.error("营销活动报名失败",e.getMessage());
+            return BizBaseResponse.operationFailed("获取订单详情失败，"+e.getMessage());
+        } catch(Exception e) {
+            log.error("营销活动报名服务异常，入参：{}", e);
+            return BizBaseResponse.operationFailed("服务异常");
+        }
+
     }
 
     /**
      * 根据token 获取当前登录信息
      * @param request
      */
-    private void checkLogined(HttpServletRequest request){
+    private void checkLogged(HttpServletRequest request){
         //放入登录信息
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        log.info("登录信息请求：authorization:{}",authorization);
         if (authorization==null){
             return ;
         }
-        BizBaseResponse<EndUser> endUserResult = storeAuthClient.getUserByToken();
-        log.info("==storeAuthClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
-        if (null != endUserResult && endUserResult.isSuccess() && null != endUserResult.getData()) {
-            EndUserContextHolder.setUser(endUserResult.getData());
+        try {
+            BizBaseResponse<EndUser> endUserResult = storeAuthClient.getUserByToken();
+            log.info("==storeAuthClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
+            if (null != endUserResult && endUserResult.isSuccess() && null != endUserResult.getData()) {
+                    EndUserContextHolder.setUser(endUserResult.getData());
+            }
+        } catch (Exception e) {
+            log.error("获取登录用户信息异常", e);
         }
     }
 

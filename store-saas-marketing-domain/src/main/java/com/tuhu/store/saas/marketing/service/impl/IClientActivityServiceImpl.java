@@ -8,6 +8,7 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.zxing.WriterException;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
@@ -36,6 +37,7 @@ import com.tuhu.store.saas.marketing.request.vo.ClientStoreInfoVO;
 import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IClientActivityService;
+import com.tuhu.store.saas.marketing.util.QrCode;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -143,9 +146,10 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         mapRequest.put("clientType",endUserMarketingBindRequest.getClientType());
         Map<String,Object> bindUserResp = authClient.bindWechatEndUserByPhone(endUserMarketingBindRequest,mapRequest).getData();
         if(bindUserResp.size()>0) {
+            //拼接登录token
             Map tokenMap = JSONObject.parseObject(JSONObject.toJSONString(bindUserResp.get("token")));
             StringBuilder stringBuilderToken = new StringBuilder();
-            stringBuilderToken.append("bearer");
+            stringBuilderToken.append("Bearer");
             stringBuilderToken.append(tokenMap.get("access_token"));
             activityApplyResp.setUserLoggedToken(stringBuilderToken.toString());
         }
@@ -305,18 +309,20 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             totalPrice += item.getOriginalPrice() * item.getItemQuantity();
         }
         activityCustomerResp.setActivity(activityResp);
-        //3.根据客户id查询客户及车辆详情 活动不显示
-//        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
-//        baseIdReqVO.setId(activityCustomer.getCustomerId());
-//
-//        if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
-//            activityCustomerResp.setUseStatus((byte) -1);
-//        }
-//
-//        // todo 获取用户车辆详情
-//            CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId, customer.getTenantId(), customer.getStoreId());
-//            activityCustomerResp.setCustomerDetail(customerDetailResp);
-//        }
+        if(activityCustomerResp.getUseStatus().intValue() == 1){
+            //未核销
+            Map<String,String> codeMap = new HashMap<>(2);
+            codeMap.put("type","2");
+            codeMap.put("activityCustomerCode",activityCustomerResp.getActivityOrderCode());
+            try {
+                //添加二维码字节流
+                activityCustomerResp.setQrCode(QrCode.getQRCodeImage(JSONObject.toJSONString(codeMap),500,500));
+            }catch (WriterException e){
+                log.warn("活动订单详情，获取二维码失败：",e);
+            }catch (IOException e){
+                log.warn("活动订单详情，获取二维码失败：",e);
+            }
+        }
         log.info("客户活动详情，出参:{}", JSONObject.toJSONString(activityCustomerResp));
         return activityCustomerResp;
     }
