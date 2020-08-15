@@ -6,8 +6,14 @@ import com.mengfan.common.util.GatewayClient;
 import com.tuhu.store.saas.marketing.constant.AuthConstant;
 import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.exception.SaasAuthException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
+import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
 import com.tuhu.store.saas.marketing.service.IWechatService;
+import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +44,13 @@ public class WechatServiceImpl implements IWechatService {
 
     @Autowired
     private GatewayClient gatewayClient;
+
+    @Autowired
+    private SrvReservationOrderMapper reservationOrderMapper;
+
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
 
     @Value("${wechat.miniprogram.message.template.send.url:https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token=}")
     private String templateMessageSendUrl;
@@ -168,7 +182,40 @@ public class WechatServiceImpl implements IWechatService {
         param.put("template_id", templateId);
         param.put("page", miniProgramNotifyReq.getPage());
         //param.put("form_id", miniProgramNotifyReq.getFormId());
-        param.put("data", miniProgramNotifyReq.getData());
+        HashMap data = Maps.newHashMap();
+        SrvReservationOrder srvReservationOrder=reservationOrderMapper.selectById(miniProgramNotifyReq.getFormId());
+        if (Objects.nonNull(srvReservationOrder)) {
+            StoreInfoVO storeInfoVO = new StoreInfoVO();
+            storeInfoVO.setStoreId(srvReservationOrder.getStoreId());
+            storeInfoVO.setTanentId(srvReservationOrder.getTenantId());
+            try {
+                StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+                if (Objects.nonNull(storeInfoDTO)) {
+
+                    HashMap thing10Value = Maps.newHashMap();
+                    thing10Value.put("value",storeInfoDTO.getStoreName());
+                    data.put("thing10",thing10Value);
+
+                    HashMap date5 = Maps.newHashMap();
+                    date5.put("value", srvReservationOrder.getEstimatedArriveTime());
+                    data.put("date5",date5);
+
+                    HashMap phone_number12 = Maps.newHashMap();
+                    phone_number12.put("value",srvReservationOrder.getCustomerPhoneNumber());
+                    data.put("phone_number12",phone_number12);
+
+                    HashMap thing15 = Maps.newHashMap();
+                    thing15.put("value",srvReservationOrder.getDescription());
+                    data.put("thing15",thing15);
+                }
+            } catch (Exception e) {
+                log.error("查询门店信息RPC接口异常", e);
+                throw new SaasAuthException("查询门店信息RPC接口异常:" + miniProgramNotifyReq.getFormId());
+            }
+        }else{
+            throw new SaasAuthException("没有找到预约单详情:" + miniProgramNotifyReq.getFormId());
+        }
+        param.put("data", data);
         param.put("emphasis_keyword", miniProgramNotifyReq.getEmphasisKeyword());
         try {
             log.info("发送小程序模板消息通知，request={}", JSONObject.toJSONString(param));
