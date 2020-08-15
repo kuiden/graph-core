@@ -149,7 +149,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             //拼接登录token
             Map tokenMap = JSONObject.parseObject(JSONObject.toJSONString(bindUserResp.get("token")));
             StringBuilder stringBuilderToken = new StringBuilder();
-            stringBuilderToken.append("Bearer");
+            stringBuilderToken.append("Bearer ");
             stringBuilderToken.append(tokenMap.get("access_token"));
             activityApplyResp.setUserLoggedToken(stringBuilderToken.toString());
         }
