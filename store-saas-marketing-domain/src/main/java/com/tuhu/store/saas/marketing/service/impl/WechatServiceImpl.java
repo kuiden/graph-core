@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -191,13 +192,13 @@ public class WechatServiceImpl implements IWechatService {
             try {
                 StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
                 if (Objects.nonNull(storeInfoDTO)) {
-
                     HashMap thing10Value = Maps.newHashMap();
                     thing10Value.put("value",storeInfoDTO.getStoreName());
                     data.put("thing10",thing10Value);
 
                     HashMap date5 = Maps.newHashMap();
-                    date5.put("value", srvReservationOrder.getEstimatedArriveTime());
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    date5.put("value", dateFormat.format(srvReservationOrder.getEstimatedArriveTime()));
                     data.put("date5",date5);
 
                     HashMap phone_number12 = Maps.newHashMap();
@@ -205,7 +206,7 @@ public class WechatServiceImpl implements IWechatService {
                     data.put("phone_number12",phone_number12);
 
                     HashMap thing15 = Maps.newHashMap();
-                    thing15.put("value",srvReservationOrder.getDescription());
+                    thing15.put("value",StringUtils.isEmpty(srvReservationOrder.getDescription())?"进站请出示此页面！":srvReservationOrder.getDescription());
                     data.put("thing15",thing15);
                 }
             } catch (Exception e) {
