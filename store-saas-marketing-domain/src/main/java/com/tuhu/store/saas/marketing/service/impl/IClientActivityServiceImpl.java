@@ -335,5 +335,6 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
                 log.warn("活动订单详情，获取二维码失败：",e);
             }
         }
+        return null;
     }
 }
