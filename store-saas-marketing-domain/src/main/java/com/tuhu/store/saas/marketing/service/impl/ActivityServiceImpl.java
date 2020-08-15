@@ -1155,10 +1155,11 @@ public class ActivityServiceImpl implements IActivityService {
 //                response-set:客户全部信息
                 activityCustomerResp.setCustomerName(customer.getName());
             }
-
-        if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
-            activityCustomerResp.setUseStatus((byte) -1);
-        }
+         if(activityCustomerResp.getEndTime()!=null){
+             if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
+                 activityCustomerResp.setUseStatus((byte) -1);
+             }
+         }
 
             // todo 获取用户车辆详情
 //            CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId, customer.getTenantId(), customer.getStoreId());
