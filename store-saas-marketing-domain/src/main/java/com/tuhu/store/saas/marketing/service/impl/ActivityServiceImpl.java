@@ -18,6 +18,7 @@ import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.dto.product.IssuedDTO;
 import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
 import com.tuhu.store.saas.marketing.enums.EventTypeEnum;
@@ -66,10 +67,7 @@ import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
-import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
-import com.tuhu.store.saas.user.dto.ClientStoreDTO;
-import com.tuhu.store.saas.user.dto.StoreDTO;
-import com.tuhu.store.saas.user.dto.StoreInfoDTO;
+import com.tuhu.store.saas.user.dto.*;
 import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
@@ -1131,11 +1129,46 @@ public class ActivityServiceImpl implements IActivityService {
         ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
         activityCustomerExampleCriteria.andActivityOrderCodeEqualTo(activityOrderCode);
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
+        if(activityCustomerList.size()<1){
+            throw new MarketingException("活动编码错误");
+        }
         ActivityCustomer activityCustomer = activityCustomerList.get(0);
 
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
+        if(UserContextHolder.getUser()!=null){
+            //门店用户登录
+            if(!UserContextHolder.getStoreId().equals(activityCustomer.getStoreId())){
+                //门店不同不允许看
+                throw new MarketingException("无权限操作此活动！");
+            }
+            if(!UserContextHolder.getTenantId().equals(activityCustomer.getTenantId())){
+                //企业不同不允许看
+                throw new MarketingException("无权限操作此活动！");
+            }
+        }
+        if(EndUserContextHolder.getUser()!=null){
+            //车主用户登录
+            CustomerVO customerVO = new CustomerVO();
+            customerVO.setPhone(EndUserContextHolder.getTelephone());
+            customerVO.setStoreId(EndUserContextHolder.getStoreId());
+            customerVO.setTenantId(EndUserContextHolder.getTenantId());
+            List<CustomerDTO> customerDTOList = iCustomerService.getCustomer(customerVO).getData();
+            if(customerDTOList.size()<1){
+                throw new MarketingException("还没有您的注册记录！");
+            }
+            CustomerDTO customerDTO = customerDTOList.get(0);
+            if(!customerDTO.getTenantId().equals(activityCustomer.getTenantId())){
+                //企业账号不同不允许看
+                throw new MarketingException("无权限操作此活动！");
+            }
+            if (!customerDTO.getId().equals(activityCustomer.getCustomerId())){
+                //用户账号不同不允许看
+                throw new MarketingException("没有报名记录，请先报名！");
+            }
+        }
+
         //response-set:基本信息copy
         BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
         //2.根据活动编码查询活动详情
@@ -1273,10 +1306,11 @@ public class ActivityServiceImpl implements IActivityService {
         if(StringUtils.isNotEmpty(customerId)){
             activityExampleCriteria.andCustomerIdEqualTo(customerId);
         }
-        Long storeId = activityCustomerReq .getStoreId();
-        if(storeId != null){
-            activityExampleCriteria.andStoreIdEqualTo(storeId);
+        Long storeId = activityCustomerReq.getStoreId();
+        if(storeId == null){
+            throw new MarketingException("门店信息不存在");
         }
+        activityExampleCriteria.andStoreIdEqualTo(storeId);
 
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
         if(activityCustomerList.size() < 1){
