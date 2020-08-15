@@ -28,16 +28,16 @@ public class RecordApi {
     private IClientEventRecordService iClientEventRecordService;
 
     @GetMapping(value = "/user/{contentType}/record")
-    @ApiOperation(value = "门店saas营销用户足迹记录")
+    @ApiOperation(value = "门店saas营销记录用户足迹")
     public BizBaseResponse recordEndUserEvent(@PathVariable String contentType, @NotNull @Validated ClientEventRecordRequest clientEventRecordRequest) {
         clientEventRecordRequest.setContentType(contentType);
-//        clientEventRecordRequest.setEventType(EventTypeEnum.VISIT.getCode());
+//         clientEventRecordRequest.setEventType(EventTypeEnum.VISIT.getCode());
         iClientEventRecordService.recordEndUserEvent(clientEventRecordRequest);
         return BizBaseResponse.success();
     }
 
     @GetMapping(value = "/user/{contentType}/forward")
-    @ApiOperation(value = "门店saas营销用户转发记录")
+    @ApiOperation(value = "门店saas营销记录用户转发")
     public BizBaseResponse recordEndUserForwardEvent(@PathVariable String contentType, @NotNull @Validated ClientEventRecordRequest clientEventRecordRequest) {
         clientEventRecordRequest.setContentType(contentType);
         clientEventRecordRequest.setEventType(EventTypeEnum.WECHATFORWARD.getCode());
