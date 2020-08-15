@@ -507,6 +507,9 @@ public class ActivityServiceImpl implements IActivityService {
                 BeanUtils.copyProperties(activityItem, activityItemResp);
                 activityItemRespList.add(activityItemResp);
             }
+            activityResp.setOriginalTotalPrice(BigDecimal.valueOf(activityItemList.stream().mapToLong(r->{
+                return r.getOriginalPrice()*r.getItemQuantity();
+            }).sum()));
             activityResp.setItems(activityItemRespList);
         }
         return activityResp;
