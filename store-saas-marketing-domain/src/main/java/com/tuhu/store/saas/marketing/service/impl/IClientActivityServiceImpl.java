@@ -314,13 +314,8 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     }
 
     @Override
-    public byte[] getQrCodeOfActivityCustomer(String activityCustomerOrderCode){
-        ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
-        ActivityCustomerExample.Criteria acExampleCriterria = activityCustomerExample.createCriteria();
-        acExampleCriterria.andActivityOrderCodeEqualTo(activityCustomerOrderCode);
-        acExampleCriterria.andTelephoneEqualTo(EndUserContextHolder.getUser().getPhone());
-        acExampleCriterria.andStoreIdEqualTo(Long.valueOf(EndUserContextHolder.getUser().getStoreId()));
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByExampleOne(activityCustomerExample);
+    public byte[] getQrCodeOfActivityCustomer(String activityEncryptedCode){
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getTelephone());
         if(activityCustomer.getUseStatus().intValue() == 0){
             //未核销
             Map<String,String> codeMap = new HashMap<>(2);

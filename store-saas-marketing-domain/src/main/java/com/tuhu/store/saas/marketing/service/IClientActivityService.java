@@ -52,9 +52,9 @@ public interface IClientActivityService {
 
     /**
      * 活动活动订单二维码
-     * @param activityCustomerOrderCode
+     * @param activityEncryptedCode
      * @return
      */
-    byte[] getQrCodeOfActivityCustomer(String activityCustomerOrderCode);
+    byte[] getQrCodeOfActivityCustomer(String activityEncryptedCode);
 
 }
