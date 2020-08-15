@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -194,7 +195,8 @@ public class ClientActivityApi {
     }
 
 
-    @GetMapping("/activityOrder/getQrCode")
+    @GetMapping(value = "/activityOrder/getQrCode",produces = MediaType.IMAGE_JPEG_VALUE)
+    @ApiOperation("获取活动订单二维码")
     public byte[] getQrCode(@RequestParam String code,HttpServletRequest request){
         checkLogged(request);
         if(EndUserContextHolder.getUser()==null){
