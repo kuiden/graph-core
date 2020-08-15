@@ -426,7 +426,6 @@
   <select id="selectByEncryptedCodeAndUser" resultType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
     SELECT
     a.*
-    TOP 1
     FROM activity_customer AS a,activity As b
     WHERE b.encrypted_code = #{encryptedCode}
       AND a.activity_code = b.activity_code
