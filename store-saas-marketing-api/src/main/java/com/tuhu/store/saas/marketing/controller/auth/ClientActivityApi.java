@@ -15,6 +15,7 @@ import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.GetValidCodeReq;
 import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
 import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
+import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IClientActivityService;
@@ -81,7 +82,7 @@ public class ClientActivityApi {
         //不做用户信息强校验
         try {
             resp = iClientActivityService.getActivityDetailByEncryptedCode(encryptedCode);
-
+            EndUserContextHolder.remove();
             if(resp ==null) {
                return BizBaseResponse.operationFailed("查不到此活动，请检查编码！");
             }
@@ -148,7 +149,9 @@ public class ClientActivityApi {
             return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递活动信息");
         }
         try {
-            return new BizBaseResponse(iClientActivityService.getActivityCustomerDetail(encryptedCode));
+            ActivityCustomerResp activityCustomerResp =iClientActivityService.getActivityCustomerDetail(encryptedCode);
+            EndUserContextHolder.remove();
+            return new BizBaseResponse(activityCustomerResp);
         }catch (MarketingException e){
             log.error("营销活动报名失败",e.getMessage());
             return BizBaseResponse.operationFailed("获取订单详情失败，"+e.getMessage());
@@ -203,7 +206,9 @@ public class ClientActivityApi {
         if(EndUserContextHolder.getUser()==null){
             return null;
         }
-        return iClientActivityService.getQrCodeOfActivityCustomer(code);
+        byte[] codeStream =iClientActivityService.getQrCodeOfActivityCustomer(code);
+        EndUserContextHolder.remove();
+        return codeStream;
     }
 
 

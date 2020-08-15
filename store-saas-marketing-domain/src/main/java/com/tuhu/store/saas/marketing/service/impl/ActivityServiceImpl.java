@@ -1151,7 +1151,7 @@ public class ActivityServiceImpl implements IActivityService {
                 throw new MarketingException("无权限操作此活动！");
             }
         }
-        if(EndUserContextHolder.getUser()!=null){
+        else if(EndUserContextHolder.getUser()!=null){
             //车主用户登录
             CustomerVO customerVO = new CustomerVO();
             customerVO.setPhone(EndUserContextHolder.getTelephone());
