@@ -197,6 +197,7 @@ public class ClientActivityApi {
 
     @GetMapping(value = "/activityOrder/getQrCode",produces = MediaType.IMAGE_JPEG_VALUE)
     @ApiOperation("获取活动订单二维码")
+    @ResponseBody
     public byte[] getQrCode(@RequestParam String code,HttpServletRequest request){
         checkLogged(request);
         if(EndUserContextHolder.getUser()==null){
