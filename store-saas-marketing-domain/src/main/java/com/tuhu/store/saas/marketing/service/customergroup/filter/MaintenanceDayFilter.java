@@ -43,9 +43,12 @@ public class MaintenanceDayFilter extends AbstractFactorFilter {
         VehicleMaintenanceVo vehicleMaintenanceVo = new VehicleMaintenanceVo();
         vehicleMaintenanceVo.setTenantId(tenantId);
         vehicleMaintenanceVo.setStoreId(storeId);
-        if(dayStart!=null) {
-            vehicleMaintenanceVo.setNextMaintenanceDateStart(geStartDateAfterAdd(dayStart));
+        if(dayStart==null){
+            dayStart = 1;
         }
+       // if(dayStart!=null) {
+            vehicleMaintenanceVo.setNextMaintenanceDateStart(geStartDateAfterAdd(dayStart));
+       // }
         if(dayEnd!=null) {
             vehicleMaintenanceVo.setNextMaintenanceDateEnd(geEndDateAfterAdd(dayEnd));
         }
