@@ -130,7 +130,7 @@ public class ClientCouponApi extends BaseApi {
                  * 方案2 ： 在某个IP 在 设定直接内访问次数达到N次 加长缓存时间
                  * 方案3 ： 每个优惠券 在某个时间短内只能访问一次 加分布式计时锁
                  */
-                redisTemplate.expire(cacheKey, 30, TimeUnit.SECONDS);
+                redisTemplate.expire(cacheKey, 30, TimeUnit.MINUTES);
             }
             couponItemResp = (CouponItemResp) redisTemplate.opsForValue().get(cacheKey);
         }
@@ -160,7 +160,7 @@ public class ClientCouponApi extends BaseApi {
             redisTemplate.opsForValue().set(cacheKey, couponResp, 6, TimeUnit.SECONDS);
         } else {
             if (num.equals(20L)) {
-                redisTemplate.expire(cacheKey, 30, TimeUnit.SECONDS);
+                redisTemplate.expire(cacheKey, 30, TimeUnit.MINUTES);
             }
             couponResp = (CouponResp) redisTemplate.opsForValue().get(cacheKey);
         }
