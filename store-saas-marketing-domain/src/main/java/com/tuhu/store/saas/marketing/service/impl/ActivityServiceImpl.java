@@ -88,6 +88,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -2323,10 +2324,17 @@ public class ActivityServiceImpl implements IActivityService {
             if (appDate.before(activityEndDate)) {
                 return appDate;
             }else {
-                return activeDate;
+                return this.getLastSecondOfDate(activeDate);
             }
         }else {
-            return activeDate;
+            return this.getLastSecondOfDate(activeDate);
         }
+    }
+
+    private Date getLastSecondOfDate(Date activeDate) {
+        LocalDate localDate = activeDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime dateTime = localDate.atTime(23, 59, 59);
+        Date date = Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
+        return date;
     }
 }
