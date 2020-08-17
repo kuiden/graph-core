@@ -803,6 +803,15 @@ public class ActivityServiceImpl implements IActivityService {
         if (null != editActivityReq.getPicActivityTemplateId()) {
             editActivity.setPicActivityTemplateId(editActivityReq.getPicActivityTemplateId());
         }
+        if (null != editActivityReq.getActiveType()) {
+            editActivity.setActiveType(editActivityReq.getActiveType());
+        }
+        if (null != editActivityReq.getActiveDate()) {
+            editActivity.setActiveDate(editActivityReq.getActiveDate());
+        }
+        if (null != editActivityReq.getActiveDays()) {
+            editActivity.setActiveDays(editActivityReq.getActiveDays());
+        }
         editActivity.setUpdateTime(new Date());
         return editActivity;
     }
