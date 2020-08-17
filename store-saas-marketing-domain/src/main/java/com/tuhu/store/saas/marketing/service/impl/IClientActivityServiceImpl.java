@@ -167,8 +167,10 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         }
         ActivityCustomerReq activityCustomerReq = new ActivityCustomerReq();
         activityCustomerReq.setActivityOrderCode(stringCommonResp.getData());
-        ActivityCustomerResp resp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
-        if(resp==null || StringUtils.isBlank(resp.getActivityOrderCode())){
+
+        ActivityCustomerResp resp = this.getActivityCustomerDetail(applyReq.getEncryptedCode(),applyReq.getTelephone());
+
+        if(resp == null || StringUtils.isBlank(resp.getActivityOrderCode())){
             throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_APPLY_FAILED.getDesc());
         }
         activityApplyResp.setAppliedSuccess(true);
@@ -179,7 +181,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     public ActivityResp getActivityDetailByEncryptedCode(String encryptedCode){
         log.info("活动详情，入参:{}", encryptedCode);
         if (StringUtils.isBlank(encryptedCode)) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_ENCRYPTED_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_CODE_NOT_INPUT.getDesc());
         }
         ActivityExample activityExample = new ActivityExample();
         ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
@@ -283,16 +285,16 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     }
 
     @Override
-    public ActivityCustomerResp getActivityCustomerDetail(String encryptedCode){
+    public ActivityCustomerResp getActivityCustomerDetail(String encryptedCode,String telephone){
         ActivityCustomerResp response = new ActivityCustomerResp();
-        log.info("客户活动详情，入参:{},{}",encryptedCode);
+        log.info("客户活动详情，入参:encryptedCode={},telephone{}",encryptedCode,telephone);
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (org.apache.commons.lang3.StringUtils.isBlank(encryptedCode)) {
-            throw new MarketingException("活动报名订单号不能为空");
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
         //1.根据活动编码和用户手机号查询活动报名信息
-        log.info("匹配活动订单，入参:{},{}",encryptedCode,EndUserContextHolder.getTelephone());
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,EndUserContextHolder.getTelephone());
+        log.info("匹配活动订单，入参:{},{}",encryptedCode,telephone);
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,telephone);
         log.info("匹配活动订单,出参:{}",JSONObject.toJSONString(activityCustomer));
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
@@ -303,10 +305,6 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         String activityCode = activityCustomer.getActivityCode();
         ActivityResp activityResp = this.getActivityByActivityCode(activityCode);
         //response-set:活动详情
-        Long totalPrice = 0L;
-        for(ActivityItemResp item : activityResp.getItems()){
-            totalPrice += item.getOriginalPrice() * item.getItemQuantity();
-        }
         activityCustomerResp.setActivity(activityResp);
         log.info("客户活动详情，出参:{}", JSONObject.toJSONString(activityCustomerResp));
         return activityCustomerResp;

@@ -88,6 +88,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -1130,60 +1131,26 @@ public class ActivityServiceImpl implements IActivityService {
         log.info("客户活动详情，入参:{}", JSONObject.toJSONString(activityCustomerReq));
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (null == activityCustomerReq) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.PARAM_ERROR.getDesc());
         }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if (StringUtils.isBlank(activityOrderCode)) {
-            throw new MarketingException("活动报名订单号不能为空");
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
+        }
+        Long storeId = activityCustomerReq.getStoreId();
+        if(storeId==null){
+            throw new MarketingException("未获取到门店信息");
         }
         //1.根据活动报名订单号查询活动报名信息
         ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
         ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
         activityCustomerExampleCriteria.andActivityOrderCodeEqualTo(activityOrderCode);
+        activityCustomerExampleCriteria.andStoreIdEqualTo(storeId);
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
         if(activityCustomerList.size()<1){
-            throw new MarketingException("活动编码错误");
-        }
-        ActivityCustomer activityCustomer = activityCustomerList.get(0);
-
-        if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
-        if(UserContextHolder.getUser()!=null){
-            //门店用户登录
-            if(!UserContextHolder.getStoreId().equals(activityCustomer.getStoreId())){
-                //门店不同不允许看
-                log.warn("活动详情过滤机制：门店用户storeId:{},source{}",UserContextHolder.getStoreId(),activityCustomer.getStoreId());
-                throw new MarketingException("无权限操作此活动！");
-            }
-            if(!UserContextHolder.getTenantId().equals(activityCustomer.getTenantId())){
-                //企业不同不允许看
-                log.warn("活动详情过滤机制：门店用户tenantId:{},source{}",UserContextHolder.getTenantId(),activityCustomer.getTenantId());
-                throw new MarketingException("无权限操作此活动！");
-            }
-        }
-        else if(EndUserContextHolder.getUser()!=null){
-            //车主用户登录
-            CustomerVO customerVO = new CustomerVO();
-            customerVO.setPhone(EndUserContextHolder.getTelephone());
-            customerVO.setStoreId(EndUserContextHolder.getStoreId());
-            customerVO.setTenantId(EndUserContextHolder.getTenantId());
-            List<CustomerDTO> customerDTOList = iCustomerService.getCustomer(customerVO).getData();
-            if(customerDTOList.size()<1){
-                throw new MarketingException("还没有您的注册记录！");
-            }
-            CustomerDTO customerDTO = customerDTOList.get(0);
-            if(!customerDTO.getTenantId().equals(activityCustomer.getTenantId())){
-                //企业账号不同不允许看
-                log.warn("活动详情过滤机制：客户用户tenantId:{},source{}",customerDTO.getTenantId(),activityCustomer.getTenantId());
-                throw new MarketingException("无权限操作此活动！");
-            }
-            if (!customerDTO.getId().equals(activityCustomer.getCustomerId())){
-                //用户账号不同不允许看
-                log.warn("活动详情过滤机制：客户用户Id:{},source{}",customerDTO.getId(),activityCustomer.getCustomerId());
-                throw new MarketingException("没有报名记录，请先报名！");
-            }
-        }
+        ActivityCustomer activityCustomer = activityCustomerList.get(0);
 
         //response-set:基本信息copy
         BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
@@ -2323,10 +2290,17 @@ public class ActivityServiceImpl implements IActivityService {
             if (appDate.before(activityEndDate)) {
                 return appDate;
             }else {
-                return activeDate;
+                return this.getLastSecondOfDate(activeDate);
             }
         }else {
-            return activeDate;
+            return this.getLastSecondOfDate(activeDate);
         }
+    }
+
+    private Date getLastSecondOfDate(Date activeDate) {
+        LocalDate localDate = activeDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime dateTime = localDate.atTime(23, 59, 59);
+        Date date = Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
+        return date;
     }
 }

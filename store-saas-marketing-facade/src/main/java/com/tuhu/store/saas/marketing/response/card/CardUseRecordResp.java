@@ -26,4 +26,9 @@ public class CardUseRecordResp {
      */
     private String serviceOrderId;
 
+    /*
+     * 工单类型：GD、XMD、XSD
+     */
+    private String serviceOrderTypeCode;
+
 }

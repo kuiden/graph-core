@@ -287,6 +287,7 @@ public class CardServiceImpl implements ICardService {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             resp.setTime(dateFormat.format(dto.getUseTime()));
             resp.setServiceOrderId(dto.getServiceOrderId());
+            resp.setServiceOrderTypeCode(dto.getServiceOrderTypeCode());
             List<CardItemResp> item = new ArrayList<>();
             for (CardUseRecordDTO.ServiceOrderItem serviceOrderItem : dto.getServiceOrderItems()) {
                 CardItemResp itemResp = new CardItemResp();

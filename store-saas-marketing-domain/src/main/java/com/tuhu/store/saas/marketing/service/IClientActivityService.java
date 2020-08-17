@@ -48,7 +48,7 @@ public interface IClientActivityService {
      * @param encryptedCode
      * @return
      */
-    ActivityCustomerResp getActivityCustomerDetail(String encryptedCode);
+    ActivityCustomerResp getActivityCustomerDetail(String encryptedCode,String telephone);
 
     /**
      * 活动活动订单二维码
