@@ -1,12 +1,17 @@
 package com.tuhu.store.saas.marketing.remote.product;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.dto.product.GoodsData;
+import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.request.product.GoodsForMarketReq;
+import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
 import com.tuhu.store.saas.vo.product.GoodsListVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
+import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -47,8 +52,20 @@ public class StoreProductRemoteFactory implements FallbackFactory<StoreProductCl
             }
 
             @Override
+            public BizBaseResponse<List<QueryGoodsListDTO>> queryGoodsListV2(QueryGoodsListVO queryGoodsListVO) {
+                log.error("queryGoodsListV2 error,request={}", queryGoodsListVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
             public BizBaseResponse queryBatchGoods(List<String> codeList, Long storeId, Long tenantId, String carPosition) {
                 log.error("queryBatchGoods error,codeList={},storeId={},tenantId={},carPosition={},error={}", codeList,storeId,tenantId,carPosition, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsForFeign(GoodsForMarketReq goodsForMarketReq) {
+                log.error("serviceGoodsForFeign error,request={}", goodsForMarketReq, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
         };

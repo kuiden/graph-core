@@ -1,27 +1,20 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
-import com.github.pagehelper.PageInfo;
-import com.google.common.collect.Maps;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
-import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.response.card.CardResp;
-import com.tuhu.store.saas.marketing.service.IActivityService;
+import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
 import com.tuhu.store.saas.marketing.service.ICardService;
-import com.tuhu.store.saas.marketing.service.ICouponService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.cms.PasswordRecipientId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -56,8 +49,8 @@ public class MiniCardApi extends BaseApi {
     }
 
     @PostMapping("/queryCardItem")
-    @ApiOperation("查询次卡服务项目")
-    public BizBaseResponse queryCardItem(@Validated @RequestBody QueryCardItemReq req) {
+    @ApiOperation("查询次卡商品/服务项目")
+    public BizBaseResponse<List<QueryCardItemResp>> queryCardItem(@Validated @RequestBody QueryCardItemReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(iCardService.queryCardItem(req));

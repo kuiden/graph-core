@@ -111,6 +111,13 @@ public class CardItemResp {
      */
     private BigDecimal inventory;
 
+    /*
+     * 仓库id
+     */
+    private Long warehouseId;
+
+    private String warehouseName;
+
     /**
      * 描述
      */

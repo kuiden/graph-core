@@ -4,10 +4,19 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
 import com.mengfan.common.util.GatewayClient;
 import com.tuhu.store.saas.marketing.constant.AuthConstant;
+import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
 import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.exception.SaasAuthException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
+import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
+import com.tuhu.store.saas.marketing.service.IOauthClientDetailsService;
 import com.tuhu.store.saas.marketing.service.IWechatService;
+import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.order.dto.serviceorder.ResultDTO;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +29,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -38,11 +49,23 @@ public class WechatServiceImpl implements IWechatService {
     @Autowired
     private GatewayClient gatewayClient;
 
+    @Autowired
+    private SrvReservationOrderMapper reservationOrderMapper;
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+
+    @Autowired
+    private IOauthClientDetailsService iOauthClientDetailsService;
+
     @Value("${wechat.miniprogram.message.template.send.url:https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token=}")
     private String templateMessageSendUrl;
 
     @Value("${wechat.miniprogram.message.template.id}")
     private String defaultTemplateId;
+
+    @Value("${wechat.access.token.address}")
+    private String accessTokenUrl;
 
     private String tokenUrl = "https://api.yunquecloud.com/auth/wechat/accessToken";
 
@@ -157,8 +180,8 @@ public class WechatServiceImpl implements IWechatService {
 
     @Override
     public Object miniProgramNotify(String openId, MiniProgramNotifyReq miniProgramNotifyReq) {
-        String accessToken = getClientAppToken(miniProgramNotifyReq.getClientType());
-        String sendUrl = templateMessageSendUrl.concat(accessToken);
+        ResultDTO<String> accessTokenData = this.getWechatAccessTokenByClientTypeNoCache(miniProgramNotifyReq.getClientType());
+        String sendUrl = templateMessageSendUrl.concat(accessTokenData.getData());
         Map<String, Object> param = new HashMap();
         param.put("touser", openId);
         String templateId = miniProgramNotifyReq.getTemplateId();
@@ -167,12 +190,45 @@ public class WechatServiceImpl implements IWechatService {
         }
         param.put("template_id", templateId);
         param.put("page", miniProgramNotifyReq.getPage());
-        param.put("form_id", miniProgramNotifyReq.getFormId());
-        param.put("data", miniProgramNotifyReq.getData());
+        //param.put("form_id", miniProgramNotifyReq.getFormId());
+        HashMap data = Maps.newHashMap();
+        SrvReservationOrder srvReservationOrder=reservationOrderMapper.selectById(miniProgramNotifyReq.getFormId());
+        if (Objects.nonNull(srvReservationOrder)) {
+            StoreInfoVO storeInfoVO = new StoreInfoVO();
+            storeInfoVO.setStoreId(srvReservationOrder.getStoreId());
+            storeInfoVO.setTanentId(srvReservationOrder.getTenantId());
+            try {
+                StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+                if (Objects.nonNull(storeInfoDTO)) {
+                    HashMap thing10Value = Maps.newHashMap();
+                    thing10Value.put("value",storeInfoDTO.getStoreName());
+                    data.put("thing10",thing10Value);
+
+                    HashMap date5 = Maps.newHashMap();
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    date5.put("value", dateFormat.format(srvReservationOrder.getEstimatedArriveTime()));
+                    data.put("date5",date5);
+
+                    HashMap phone_number12 = Maps.newHashMap();
+                    phone_number12.put("value",srvReservationOrder.getCustomerPhoneNumber());
+                    data.put("phone_number12",phone_number12);
+
+                    HashMap thing15 = Maps.newHashMap();
+                    thing15.put("value",StringUtils.isEmpty(srvReservationOrder.getDescription())?"进站请出示此页面！":srvReservationOrder.getDescription());
+                    data.put("thing15",thing15);
+                }
+            } catch (Exception e) {
+                log.error("查询门店信息RPC接口异常", e);
+                throw new SaasAuthException("查询门店信息RPC接口异常:" + miniProgramNotifyReq.getFormId());
+            }
+        }else{
+            throw new SaasAuthException("没有找到预约单详情:" + miniProgramNotifyReq.getFormId());
+        }
+        param.put("data", data);
         param.put("emphasis_keyword", miniProgramNotifyReq.getEmphasisKeyword());
         try {
             log.info("发送小程序模板消息通知，request={}", JSONObject.toJSONString(param));
-            String result = gatewayClient.postForObject(sendUrl, param, this.getUUIDHeader(), String.class);
+            String result = restTemplate.postForObject(sendUrl, param, String.class);
             log.info("发送小程序模板消息通知，response={}", result);
             JSONObject jsonObject = (JSONObject) JSONObject.parse(result);
             return jsonObject;
@@ -180,6 +236,39 @@ public class WechatServiceImpl implements IWechatService {
             log.error("miniProgramNotify error:", e);
         }
         return null;
+    }
+
+
+
+
+    private ResultDTO<String> getWechatAccessTokenByClientTypeNoCache(String clientType) {
+        ResultDTO<String> resultDTO = new ResultDTO<>();
+        if (StringUtils.isEmpty(clientType)) {
+            resultDTO.setCode(AuthConstant.validCode);
+            resultDTO.setMsg("clientType不能为空");
+            return resultDTO;
+        }
+        OauthClientDetailsDAO clientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
+        if (null == clientDetails) {
+            resultDTO.setCode(AuthConstant.validCode);
+            resultDTO.setMsg("clientType不存在");
+            return resultDTO;
+        }
+        String cachedToken = null;
+        try {
+            cachedToken = this.forceRefreshAccessToken(clientDetails.getWxAppid(), clientDetails.getWxSecret(), clientType, accessTokenUrl);
+        } catch (Exception e) {
+            log.error("刷新微信Access Token异常，", e);
+        }
+        if (StringUtils.isEmpty(cachedToken)) {
+            resultDTO.setCode(AuthConstant.exceptionCode);
+            resultDTO.setMsg("刷新获取微信Access Token失败");
+        } else {
+            JSONObject tokenJSON = JSONObject.parseObject(cachedToken);
+            resultDTO.setCode(AuthConstant.succesCode);
+            resultDTO.setData(tokenJSON.getString("access_token"));
+        }
+        return resultDTO;
     }
 
     /**

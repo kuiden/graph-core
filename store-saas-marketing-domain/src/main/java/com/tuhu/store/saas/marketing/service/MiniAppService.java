@@ -1,5 +1,7 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
+
 /**
  * Created with IntelliJ IDEA.
  * User: pengqiujing
@@ -9,4 +11,7 @@ package com.tuhu.store.saas.marketing.service;
  */
 public interface MiniAppService {
    String getQrCodeUrl(String scene, String path, Long width);
+
+
+   Object miniProgramNotify(MiniProgramNotifyReq miniProgramNotifyReq);
 }

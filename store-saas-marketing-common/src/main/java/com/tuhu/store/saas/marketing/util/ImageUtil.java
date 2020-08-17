@@ -39,22 +39,22 @@ public class ImageUtil {
             String baseImgPath = uploadFileToWx(baseBytes, baseImgName, indexName);
             res.setImgUrl(baseImgPath);
 
-            try {
-                String suffix = imgFile.getOriginalFilename().substring(imgFile.getOriginalFilename().lastIndexOf(".") + 1);
-                //如果不是图片文件，或者是gif都不需要压缩
-                if(!Arrays.asList(IMG_SUFFIX).contains(suffix.toLowerCase()) || "gif".equals(suffix)){
-                    res.setThumImgUrl(URLDecoder.decode(baseImgPath, "UTF-8"));
-                    return res;
-                }
-                //上传压缩图片
-                byte[] thumBytes = PicUtil.compressPicForScale(baseBytes);
-                String thumImgName = UUID.randomUUID().toString() + "_thum_" + imgFile.getOriginalFilename();
-                String thumImgPath = uploadFileToWx(thumBytes, thumImgName, indexName);
-                res.setThumImgUrl(URLDecoder.decode(thumImgPath, "UTF-8"));
-            } catch (Exception ex) {
-                log.error("压缩图片发送异常", ex.getMessage());
-                res.setThumImgUrl(URLDecoder.decode(baseImgPath, "UTF-8"));
-            }
+//            try {
+//                String suffix = imgFile.getOriginalFilename().substring(imgFile.getOriginalFilename().lastIndexOf(".") + 1);
+//                //如果不是图片文件，或者是gif都不需要压缩
+//                if(!Arrays.asList(IMG_SUFFIX).contains(suffix.toLowerCase()) || "gif".equals(suffix)){
+//                    res.setThumImgUrl(URLDecoder.decode(baseImgPath, "UTF-8"));
+//                    return res;
+//                }
+//                //上传压缩图片
+//                byte[] thumBytes = PicUtil.compressPicForScale(baseBytes);
+//                String thumImgName = UUID.randomUUID().toString() + "_thum_" + imgFile.getOriginalFilename();
+//                String thumImgPath = uploadFileToWx(thumBytes, thumImgName, indexName);
+//                res.setThumImgUrl(URLDecoder.decode(thumImgPath, "UTF-8"));
+//            } catch (Exception ex) {
+//                log.error("压缩图片发送异常", ex.getMessage());
+//                res.setThumImgUrl(URLDecoder.decode(baseImgPath, "UTF-8"));
+//            }
             return res;
         } catch (Exception ex) {
             log.error("上传图片到微信服务器发生异常", ex.getMessage());
@@ -125,16 +125,22 @@ public class ImageUtil {
      * @param
      * @return
      */
-    public String uploadFileToWx(InputStream inputStream, String indexName){
-        try {
-            String address = cosService.upload(inputStream, indexName);
-            String imgPath = cosService.generateUrl(address, false);
-            return URLDecoder.decode(imgPath, "UTF-8");
-        } catch (FileNotFoundException e) {
-            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
-        } catch (Exception e) {
-            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
-        }
-    }
+//    public String uploadFileToWx(byte[] img, String indexName){
+//        try {
+//            String fileName = UUID.randomUUID()  + ".jpeg";
+//            File file = new File(fileName);
+//            FileOutputStream fos = new FileOutputStream(file);
+//            fos.write(img);
+//            String address = cosService.upload(file, indexName);
+//            String imgPath = cosService.generateUrl(address, false);
+//            fos.close();
+//            file.delete();
+//            return URLDecoder.decode(imgPath, "UTF-8");
+//        } catch (FileNotFoundException e) {
+//            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
+//        } catch (Exception e) {
+//            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
+//        }
+//    }
 
 }

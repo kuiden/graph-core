@@ -3,8 +3,11 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
 import com.mengfan.common.util.GatewayClient;
-import com.tuhu.store.saas.marketing.service.ImageUploadService;
-import com.tuhu.store.saas.marketing.service.MiniAppService;
+import com.tuhu.store.saas.marketing.dataobject.EndUser;
+import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
+import com.tuhu.store.saas.marketing.exception.OpenIdException;
+import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
+import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.ImageUtil;
 import com.tuhu.store.saas.marketing.util.WxUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.*;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,6 +56,15 @@ public class MiniAppServiceImpl implements MiniAppService {
     @Value("${weixin.appSecret}")
     private String appSecret;
 
+    @Autowired
+    private IOauthClientDetailsService iOauthClientDetailsService;
+
+    @Autowired
+    private IWechatService iWechatService;
+
+    @Autowired
+    private IEndUserService iEndUserService;
+
     /**
      * 获取小程序码图片
      *
@@ -78,12 +93,12 @@ public class MiniAppServiceImpl implements MiniAppService {
         /*
          * 2、调微信api,根据当前各参数生成二维码图片buffer,并转base64编码
          */
-        InputStream inputStream = WxUtil.getQrCode(token, scene, path, width);
+        byte[] result = WxUtil.getQrCode(token, scene, path, width);
         /*
          * 3、上传图片到图片服务器
          */
         String fileName = UUID.randomUUID()  + ".jpeg";
-        String image = imageUtil.uploadFileToWx(inputStream,"/store/marketing/coupon/".concat(fileName));
+        String image = imageUtil.uploadFileToWx(result, fileName, "/store/marketing/coupon/");
 
         //String image = imageUploadService.uploadImageByBase64(qrBase64, width, width);
         //上传到腾讯云服务器
@@ -122,4 +137,31 @@ public class MiniAppServiceImpl implements MiniAppService {
         httpHeaders.add("RequestID", UUID.randomUUID().toString());
         return httpHeaders;
     }
+
+    @Override
+    public Object miniProgramNotify(MiniProgramNotifyReq miniProgramNotifyReq) {
+        log.info("发送小程序模板消息，request={}", JSONObject.toJSONString(miniProgramNotifyReq));
+        if (StringUtils.isEmpty(miniProgramNotifyReq.getOpenId()) && StringUtils.isEmpty(miniProgramNotifyReq.getOpenIdCode()) && StringUtils.isEmpty(miniProgramNotifyReq.getCustomerId())) {
+            throw new OpenIdException("通知接收者不能为空");
+        }
+        String openId = miniProgramNotifyReq.getOpenId();
+        if (StringUtils.isEmpty(openId) && StringUtils.isEmpty(miniProgramNotifyReq.getCustomerId())) {
+            String clientType = miniProgramNotifyReq.getClientType();
+            OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
+            openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()
+                    , oauthClientDetails.getWxSecret()
+                    , miniProgramNotifyReq.getOpenIdCode(),
+                    oauthClientDetails.getWxOpenidUrl());
+        } else if (!StringUtils.isEmpty(miniProgramNotifyReq.getCustomerId())) {
+            List<EndUser> endUserList = iEndUserService.findByCustomerId(miniProgramNotifyReq.getCustomerId());
+            if (CollectionUtils.isEmpty(endUserList)) {
+                throw new OpenIdException("通知接收者未绑定小程序");
+            }
+            openId = endUserList.get(0).getOpenId();
+        }
+        miniProgramNotifyReq.setOpenId(openId);
+        Object result = iWechatService.miniProgramNotify(openId, miniProgramNotifyReq);
+        return result;
+    }
+
 }

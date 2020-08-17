@@ -210,10 +210,4 @@ public interface IActivityService {
     //营销活动编辑
 //    EditActivityRequest edit(EditActivityRequest editActivityReq);
 
-    /**
-     * 获取活动详情by加密code
-     * @param encrytedCode
-     * @return
-     */
-    ActivityResp getActivityDetailByEncryptedCode(String encrytedCode);
 }

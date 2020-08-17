@@ -70,6 +70,6 @@ public class MarketingAddReq {
     private String remark;
 
 
-    private String orginUrl;
+    private String originUrl;
 
 }

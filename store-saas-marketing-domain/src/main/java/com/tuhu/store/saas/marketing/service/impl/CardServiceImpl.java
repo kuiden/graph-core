@@ -9,6 +9,7 @@ import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
+import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
@@ -18,17 +19,19 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardMapper;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
+import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.remote.reponse.CardUseRecordDTO;
 import com.tuhu.store.saas.marketing.remote.wms.StoreWmsClient;
 import com.tuhu.store.saas.marketing.request.card.*;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
-import com.tuhu.store.saas.marketing.response.card.CardItemResp;
-import com.tuhu.store.saas.marketing.response.card.CardResp;
-import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
+import com.tuhu.store.saas.marketing.response.card.*;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.service.ICardTemplateItemService;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
+import com.tuhu.store.saas.request.product.GoodsForMarketReq;
+import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
+import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import lombok.extern.slf4j.Slf4j;
 import org.scmc.arch.model.facade.rsp.BizRsp;
 import org.scmc.store.stk.qty.dto.StkQtyDto;
@@ -69,6 +72,9 @@ public class CardServiceImpl implements ICardService {
 
     @Autowired
     private StoreWmsClient storeWmsClient;
+
+    @Autowired
+    private StoreProductClient productClient;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -200,14 +206,17 @@ public class CardServiceImpl implements ICardService {
         log.info("查询客户次卡，请求参数：{}", JSONObject.toJSON(req));
         CrdCardExample cardExample = new CrdCardExample();
         CrdCardExample.Criteria criteria = cardExample.createCriteria();
-        criteria.andCustomerIdEqualTo(req.getCustomerId())
-                .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        criteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        if (null != req.getCustomerId()) {
+            criteria.andCustomerIdEqualTo(req.getCustomerId());
+        }
         if (null != req.getCustomerPhoneNumber()) {
             criteria.andCustomerPhoneNumberEqualTo(req.getCustomerPhoneNumber());
         }
         if (null != req.getCardStatus()) {
             criteria.andStatusEqualTo(req.getCardStatus());
         }
+        cardExample.setOrderByClause("update_time desc");
         List<CrdCard> cardList = cardMapper.selectByExample(cardExample);
 
         List<CardResp> cardRespList = new ArrayList<>();
@@ -278,6 +287,7 @@ public class CardServiceImpl implements ICardService {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             resp.setTime(dateFormat.format(dto.getUseTime()));
             resp.setServiceOrderId(dto.getServiceOrderId());
+            resp.setServiceOrderTypeCode(dto.getServiceOrderTypeCode());
             List<CardItemResp> item = new ArrayList<>();
             for (CardUseRecordDTO.ServiceOrderItem serviceOrderItem : dto.getServiceOrderItems()) {
                 CardItemResp itemResp = new CardItemResp();
@@ -292,8 +302,9 @@ public class CardServiceImpl implements ICardService {
     }
 
     @Override
-    public List<CardItemResp> queryCardItem(QueryCardItemReq req) {
+    public List<QueryCardItemResp> queryCardItem(QueryCardItemReq req) {
         log.info("查询次卡服务项目/商品列表，请求参数：{}", JSONObject.toJSON(req));
+
         CrdCardItemExample example = new CrdCardItemExample();
         CrdCardItemExample.Criteria criteria = example.createCriteria();
         criteria.andCardIdEqualTo(req.getCardId())
@@ -304,51 +315,101 @@ public class CardServiceImpl implements ICardService {
             criteria.andCardNameLike("%" + req.getSearch() + "%");
         }
         List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
-        List<CardItemResp> cardItemRespList = new ArrayList<>();
+        List<QueryCardItemResp> queryCardItemResps = new ArrayList<>();
+        Map<String,QueryCardItemResp> respMap = new HashMap<>();
+        List<String> goodsIdList = new ArrayList<>();
         for (CrdCardItem item : cardItems) {
-            CardItemResp itemResp = new CardItemResp();
-            BeanUtils.copyProperties(item, itemResp);
-            itemResp.setRemainQuantity(itemResp.getMeasuredQuantity() - itemResp.getUsedQuantity());
-            cardItemRespList.add(itemResp);
+            QueryCardItemResp resp = new QueryCardItemResp();
+            BeanUtils.copyProperties(item,resp);
+            resp.setRemainQuantity(resp.getMeasuredQuantity()-resp.getUsedQuantity());
+            respMap.put(item.getGoodsId(),resp);
+            goodsIdList.add(item.getGoodsId());
         }
-        // 商品 - 查库存
-        if (req.getType() == 2) {
-            List<String> goodsIds = cardItemRespList.stream().map(x -> x.getGoodsId()).distinct().collect(Collectors.toList());
-            if (!goodsIds.isEmpty()) {
-                StoreInfoRelatedDTO storeRelatedResponse = storeInfoClient.getRelatedInfoByStoreId(req.getStoreId()).getData();
-                log.info("查询门店仓库信息返回：{}", JSON.toJSONString(storeRelatedResponse));
-                if (null == storeRelatedResponse) {
-                    throw new StoreSaasMarketingException("获取门店关联的信息异常");
-                }
-                log.info("获取门店WMS库存,ids={}", JSONObject.toJSONString(goodsIds));
-                StkQtyRequest request = new StkQtyRequest();
-                request.setWarehouseId(String.valueOf(storeRelatedResponse.getStoreOutPurchaseWarehouseId()));
-                request.setSkuIdList(goodsIds);
-                request.setDamaged(DamagedEnum.NORMAL.getType());
-                try {
-                    BizRsp<List<StkQtyDto>> stkQtyDtoListResp = storeWmsClient.listQty(request);
-                    log.info("查询门店库存信息返回：{}", JSON.toJSONString(stkQtyDtoListResp));
-                    if (null != stkQtyDtoListResp && 1 == stkQtyDtoListResp.getStatus() && stkQtyDtoListResp.getData() != null) {
-                        List<StkQtyDto> stkQtyDtoList = stkQtyDtoListResp.getData();
-                        LinkedHashMap<String, BigDecimal> result = new LinkedHashMap();
-                        for (StkQtyDto dto : stkQtyDtoList) {
-                            result.put(dto.getSkuId(), dto.getQty());
-                        }
-                        for (CardItemResp resp : cardItemRespList) {
-                            resp.setInventory(result.getOrDefault(resp.getGoodsId(), BigDecimal.ZERO));
-                        }
-                    } else {
-                        log.warn("根据门店商品ID和仓库ID未查询到库存信息,goodsIdList={},warehouseId={}",
-                                JSONObject.toJSONString(goodsIds), storeRelatedResponse.getStoreOutPurchaseWarehouseId());
+
+        //查商品
+        if (req.getType() == 2){
+            QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
+            queryGoodsListVO.setStoreId(req.getStoreId());
+            queryGoodsListVO.setTenantId(req.getTenantId());
+            queryGoodsListVO.setGoodsIdList(goodsIdList);
+            queryGoodsListVO.setGoodsSource("");
+            BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
+            if(productResult != null && CollectionUtils.isNotEmpty(productResult.getData())){
+                LinkedHashMap<String, BigDecimal> inventoryMap = new LinkedHashMap();
+                String warehouseId = null;
+                String warehouseName = null;
+                // 商品 - 查库存
+                if (!goodsIdList.isEmpty()) {
+                    StoreInfoRelatedDTO storeRelatedResponse = storeInfoClient.getRelatedInfoByStoreId(req.getStoreId()).getData();
+                    log.info("查询门店仓库信息返回：{}", JSON.toJSONString(storeRelatedResponse));
+                    if (null == storeRelatedResponse) {
                         throw new StoreSaasMarketingException("获取门店关联的信息异常");
                     }
-                } catch (Exception e) {
-                    log.error("根据门店商品ID和仓库ID查询库存信息异常", e);
-                    throw new StoreSaasMarketingException("根据门店商品ID和仓库ID查询库存信息异常");
+                    warehouseId = String.valueOf(storeRelatedResponse.getStoreOutPurchaseWarehouseId());
+                    warehouseName = storeRelatedResponse.getStoreOutPurchaseWarehouseName();
+                    log.info("获取门店WMS库存,ids={}", JSONObject.toJSONString(goodsIdList));
+                    StkQtyRequest request = new StkQtyRequest();
+                    request.setWarehouseId(warehouseId);
+                    request.setSkuIdList(goodsIdList);
+                    request.setDamaged(DamagedEnum.NORMAL.getType());
+                    try {
+                        BizRsp<List<StkQtyDto>> stkQtyDtoListResp = storeWmsClient.listQty(request);
+                        log.info("查询门店库存信息返回：{}", JSON.toJSONString(stkQtyDtoListResp));
+                        if (null != stkQtyDtoListResp && 1 == stkQtyDtoListResp.getStatus() && stkQtyDtoListResp.getData() != null) {
+                            List<StkQtyDto> stkQtyDtoList = stkQtyDtoListResp.getData();
+                            for (StkQtyDto dto : stkQtyDtoList) {
+                                inventoryMap.put(dto.getSkuId(), dto.getQty());
+                            }
+                        } else {
+                            log.warn("根据门店商品ID和仓库ID未查询到库存信息,goodsIdList={},warehouseId={}",
+                                    JSONObject.toJSONString(goodsIdList), warehouseId);
+                            throw new StoreSaasMarketingException("获取门店关联的信息异常");
+                        }
+                    } catch (Exception e) {
+                        log.error("根据门店商品ID和仓库ID查询库存信息异常", e);
+                        throw new StoreSaasMarketingException("根据门店商品ID和仓库ID查询库存信息异常");
+                    }
+                }
+                for (QueryGoodsListDTO dto : productResult.getData()){
+                    QueryCardItemResp.CardGoods resp = new QueryCardItemResp.CardGoods();
+                    BeanUtils.copyProperties(dto,resp);
+                    resp.setBusinessCategory(dto.getBusinessCategoryCode());
+                    if (null != dto.getProductId()) {
+                        resp.setProductId(String.valueOf(dto.getProductId()));
+                    }
+                    resp.setUsedNum(inventoryMap.getOrDefault(resp.getGoodsId(),BigDecimal.ZERO));
+                    resp.setWarehouseId(warehouseId);
+                    resp.setWarehouseName(warehouseName);
+                    if (respMap.containsKey(dto.getGoodsId())){
+                        QueryCardItemResp queryCardItemResp = respMap.get(dto.getGoodsId());
+                        queryCardItemResp.setGoods(resp);
+                        queryCardItemResps.add(queryCardItemResp);
+                    }
                 }
             }
         }
-        return cardItemRespList;
+        //查服务
+        if (req.getType() == 1){
+            GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
+            goodsForMarketReq.setGoodsName("");
+            goodsForMarketReq.setStoreId(req.getStoreId());
+            goodsForMarketReq.setTenantId(req.getTenantId());
+            goodsForMarketReq.setServiceIdList(goodsIdList);
+            goodsForMarketReq.setPageSize(500);
+            BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsList = productClient.serviceGoodsForFeign(goodsForMarketReq);
+            if (null != serviceGoodsList.getData()){
+                for (ServiceGoodsListForMarketResp x : serviceGoodsList.getData().getList()){
+                    QueryCardItemResp.CardService resp = new QueryCardItemResp.CardService();
+                    BeanUtils.copyProperties(x,resp);
+                    if (respMap.containsKey(x.getId())){
+                        QueryCardItemResp queryCardItemResp = respMap.get(x.getId());
+                        queryCardItemResp.setService(resp);
+                        queryCardItemResps.add(queryCardItemResp);
+                    }
+                }
+            }
+        }
+        return queryCardItemResps;
     }
 
     private CardTemplate convertorToCardTemplate(CardTemplateModel cardTemplateModelReq) {

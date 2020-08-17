@@ -18,8 +18,10 @@ import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.dto.product.IssuedDTO;
 import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
 import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
+import com.tuhu.store.saas.marketing.enums.EventTypeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
@@ -65,13 +67,9 @@ import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.marketing.util.Md5Util;
-import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
-import com.tuhu.store.saas.user.dto.ClientStoreDTO;
-import com.tuhu.store.saas.user.dto.StoreDTO;
-import com.tuhu.store.saas.user.dto.StoreInfoDTO;
+import com.tuhu.store.saas.user.dto.*;
 import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
-import com.tuhu.store.saas.user.vo.EventTypeEnum;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.xiangyun.versionhelper.VersionHelper;
@@ -90,6 +88,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -507,6 +506,9 @@ public class ActivityServiceImpl implements IActivityService {
                 BeanUtils.copyProperties(activityItem, activityItemResp);
                 activityItemRespList.add(activityItemResp);
             }
+            activityResp.setOriginalTotalPrice(BigDecimal.valueOf(activityItemList.stream().mapToLong(r->{
+                return r.getOriginalPrice()*r.getItemQuantity();
+            }).sum()));
             activityResp.setItems(activityItemRespList);
         }
         return activityResp;
@@ -801,6 +803,15 @@ public class ActivityServiceImpl implements IActivityService {
         }
         if (null != editActivityReq.getPicActivityTemplateId()) {
             editActivity.setPicActivityTemplateId(editActivityReq.getPicActivityTemplateId());
+        }
+        if (null != editActivityReq.getActiveType()) {
+            editActivity.setActiveType(editActivityReq.getActiveType());
+        }
+        if (null != editActivityReq.getActiveDate()) {
+            editActivity.setActiveDate(editActivityReq.getActiveDate());
+        }
+        if (null != editActivityReq.getActiveDays()) {
+            editActivity.setActiveDays(editActivityReq.getActiveDays());
         }
         editActivity.setUpdateTime(new Date());
         return editActivity;
@@ -1120,22 +1131,27 @@ public class ActivityServiceImpl implements IActivityService {
         log.info("客户活动详情，入参:{}", JSONObject.toJSONString(activityCustomerReq));
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (null == activityCustomerReq) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.PARAM_ERROR.getDesc());
         }
         String activityOrderCode = activityCustomerReq.getActivityOrderCode();
         if (StringUtils.isBlank(activityOrderCode)) {
-            throw new MarketingException("活动报名订单号不能为空");
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
+        }
+        Long storeId = activityCustomerReq.getStoreId();
+        if(storeId==null){
+            throw new MarketingException("未获取到门店信息");
         }
         //1.根据活动报名订单号查询活动报名信息
         ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
         ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
         activityCustomerExampleCriteria.andActivityOrderCodeEqualTo(activityOrderCode);
+        activityCustomerExampleCriteria.andStoreIdEqualTo(storeId);
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
-        ActivityCustomer activityCustomer = activityCustomerList.get(0);
-
-        if(activityCustomer == null){
+        if(activityCustomerList.size()<1){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
+        ActivityCustomer activityCustomer = activityCustomerList.get(0);
+
         //response-set:基本信息copy
         BeanUtils.copyProperties(activityCustomer, activityCustomerResp);
         //2.根据活动编码查询活动详情
@@ -1155,10 +1171,11 @@ public class ActivityServiceImpl implements IActivityService {
 //                response-set:客户全部信息
                 activityCustomerResp.setCustomerName(customer.getName());
             }
-
-        if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
-            activityCustomerResp.setUseStatus((byte) -1);
-        }
+         if(activityCustomerResp.getEndTime()!=null){
+             if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {//已过期
+                 activityCustomerResp.setUseStatus((byte) -1);
+             }
+         }
 
             // todo 获取用户车辆详情
 //            CustomerDetailResp customerDetailResp = iCustomerService.queryCustomer(customerId, customer.getTenantId(), customer.getStoreId());
@@ -1241,12 +1258,6 @@ public class ActivityServiceImpl implements IActivityService {
         //已核销人数
         activityResp.setWriteOffCount(activityCustomerList.stream().
                 filter(x->x.getUseStatus().compareTo(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte())>0).count());
-        //报名状态
-        List<String> appliedPhoneList = activityCustomerList.stream().map(x->x.getTelephone()).collect(Collectors.toList());
-        //如果当前页面为用户登录访问
-        if(EndUserContextHolder.getUser()!=null){
-            activityResp.setApplyed(appliedPhoneList.contains(EndUserContextHolder.getUser().getPhone()));
-        }
         return activityResp;
     }
 
@@ -1278,10 +1289,11 @@ public class ActivityServiceImpl implements IActivityService {
         if(StringUtils.isNotEmpty(customerId)){
             activityExampleCriteria.andCustomerIdEqualTo(customerId);
         }
-        Long storeId = activityCustomerReq .getStoreId();
-        if(storeId != null){
-            activityExampleCriteria.andStoreIdEqualTo(storeId);
+        Long storeId = activityCustomerReq.getStoreId();
+        if(storeId == null){
+            throw new MarketingException("门店信息不存在");
         }
+        activityExampleCriteria.andStoreIdEqualTo(storeId);
 
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
         if(activityCustomerList.size() < 1){
@@ -2260,34 +2272,14 @@ public class ActivityServiceImpl implements IActivityService {
      * @return
      */
     private int getCountOfActivityItemByCodeAndUseStatus(String activityCode, Byte useStatus) {
-//        ActivityCustomerExample customerExample = new ActivityCustomerExample();
-//        ActivityCustomerExample.Criteria customerExampleCriteria = customerExample.createCriteria();
-//        customerExampleCriteria.andActivityCodeEqualTo(activityCode);
-//        customerExampleCriteria.andUseStatusEqualTo(useStatus);
-//        int count = activityCustomerMapper.countByExample(customerExample);
-//        return count;
-        return 0;
+        ActivityCustomerExample customerExample = new ActivityCustomerExample();
+        ActivityCustomerExample.Criteria customerExampleCriteria = customerExample.createCriteria();
+        customerExampleCriteria.andActivityCodeEqualTo(activityCode);
+        customerExampleCriteria.andUseStatusEqualTo(useStatus);
+        int count = activityCustomerMapper.countByExample(customerExample);
+        return count;
     }
 
-    @Override
-    public ActivityResp getActivityDetailByEncryptedCode(String encryptedCode){
-        log.info("活动详情，入参:{}", JSONObject.toJSONString(encryptedCode));
-        ActivityResp resp = new ActivityResp();
-        if (StringUtils.isBlank(encryptedCode)) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_ENCRYPTED_CODE_NOT_INPUT.getDesc());
-        }
-        ActivityExample activityExample = new ActivityExample();
-        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
-        activityExampleCriteria.andEncryptedCodeEqualTo(encryptedCode);
-        List<Activity> activityList = activityMapper.selectByExample(activityExample);
-        if(activityList.size() < 1){
-            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
-        }
-        Activity activity = activityList.get(0);
-        //1.根据活动编码查询活动详情
-        resp = this.getActivityByActivityCode(activity.getActivityCode());
-        return resp;
-    }
 
     private Date getApplyedEndDate(Date activityStartDate, Date activityEndDate, Integer activeType, Integer activeDays, Date activeDate) {
         if (activeType == null) {
@@ -2298,10 +2290,17 @@ public class ActivityServiceImpl implements IActivityService {
             if (appDate.before(activityEndDate)) {
                 return appDate;
             }else {
-                return activeDate;
+                return this.getLastSecondOfDate(activeDate);
             }
         }else {
-            return activeDate;
+            return this.getLastSecondOfDate(activeDate);
         }
+    }
+
+    private Date getLastSecondOfDate(Date activeDate) {
+        LocalDate localDate = activeDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime dateTime = localDate.atTime(23, 59, 59);
+        Date date = Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
+        return date;
     }
 }

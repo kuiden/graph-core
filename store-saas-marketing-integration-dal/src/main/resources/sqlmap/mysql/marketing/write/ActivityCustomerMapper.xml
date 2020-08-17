@@ -80,7 +80,7 @@
   <sql id="Base_Column_List">
     id, activity_order_code, activity_code, customer_id, telephone, store_id, create_time, 
     use_time, use_status, message_status, service_order_id, service_order_time, start_time, 
-    end_time, customer_name
+    end_time, customer_name, tenant_id
   </sql>
   <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultMap="BaseResultMap">
     select
@@ -421,5 +421,15 @@
         </if>
     </where>
     GROUP BY activity_code
+  </select>
+
+  <select id="selectByEncryptedCodeAndUser" resultType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    SELECT
+    a.*
+    FROM activity_customer AS a,activity As b
+    WHERE b.encrypted_code = #{encryptedCode}
+      AND a.activity_code = b.activity_code
+      AND a.telephone = #{telephone}
+
   </select>
 </mapper>

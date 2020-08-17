@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -30,9 +31,9 @@ public class CustomerGroupResp implements Serializable {
     //近几天消费金额
     private  Long consumerAmountDay;
     //近几天最小消费金额
-    private Long consumerLeastAmount;
+    private BigDecimal consumerLeastAmount;
     //近几天最大消费金额
-    private Long consumerMaxAmount;
+    private BigDecimal consumerMaxAmount;
     //近几天消费服务
     private Long consumerServeDay;
     //近几天消费服务列表

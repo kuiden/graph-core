@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -164,7 +165,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
     @Override
     public String getSmsPreview(MarketingSmsReq req) {
-
+        log.info("getSmsPreview========>"+ JSON.toJSONString(req));
         String template = "";
         if(req.getMarketingMethod().equals(Byte.valueOf("0"))){
 
@@ -181,13 +182,14 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             template = messageTemplateLocal.getTemplateContent();
         }
 
-        String paramStr = getMessageData(req.getStoreId(), req.getMarketingMethod(), req.getCouponOrActiveId(),req.getOrginUrl());
+        String paramStr = getMessageData(req.getStoreId(), req.getMarketingMethod(), req.getCouponOrActiveId(),req.getOriginUrl());
 
         if(StringUtils.isEmpty(paramStr)) {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"短信参数生成失败");
         }
+        log.info("paramStr=========>"+paramStr);
         String[] params = StringUtils.splitByWholeSeparatorPreserveAllTokens(","+paramStr,",");
-
+        log.info("params=========>"+JSON.toJSONString(params));
         return MessageFormat.format(template,params);
     }
 
@@ -240,8 +242,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             params.add(storeDTO.getMobilePhone());
             //TODO 替换短链
             if(StringUtils.isNotBlank(orginUrl)){
-                params.add(iUtilityService.getShortUrl(orginUrl));
-
+                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
             }
 
 
@@ -280,12 +281,16 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
             params.add( iUtilityService.getShortUrl(url.toString()));*/
             if(StringUtils.isNotBlank(orginUrl)){
-                params.add(iUtilityService.getShortUrl(orginUrl));
+                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
 
             }
         }
 
         return StringUtils.join(params,",");
+    }
+
+    private String setALabel(String shortUrl){
+        return "<a href=\"javascript:void(0);\" style=\"color:#1b88ee\">"+shortUrl+"</a>";
     }
 
     /**
@@ -497,7 +502,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         }
 
         //messageData
-        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId(),addReq.getOrginUrl()));
+        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(),addReq.getMarketingMethod(),addReq.getCouponOrActiveId(),addReq.getOriginUrl()));
         insert(customerMarketing);
 
         //写入记录表并将状态设为未发送

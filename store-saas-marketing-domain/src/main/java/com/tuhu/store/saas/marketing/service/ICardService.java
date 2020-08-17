@@ -6,9 +6,7 @@ import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
-import com.tuhu.store.saas.marketing.response.card.CardItemResp;
-import com.tuhu.store.saas.marketing.response.card.CardResp;
-import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
+import com.tuhu.store.saas.marketing.response.card.*;
 
 import java.util.List;
 
@@ -62,7 +60,7 @@ public  interface ICardService {
     /*
      * 查询次卡服务项目
      */
-    List<CardItemResp> queryCardItem(QueryCardItemReq req);
+    List<QueryCardItemResp> queryCardItem(QueryCardItemReq req);
 
 
 }
