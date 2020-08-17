@@ -167,8 +167,10 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         }
         ActivityCustomerReq activityCustomerReq = new ActivityCustomerReq();
         activityCustomerReq.setActivityOrderCode(stringCommonResp.getData());
-        ActivityCustomerResp resp = iActivityService.getActivityCustomerDetail(activityCustomerReq);
-        if(resp==null || StringUtils.isBlank(resp.getActivityOrderCode())){
+
+        ActivityCustomerResp resp = this.getActivityCustomerDetail(applyReq.getEncryptedCode());
+
+        if(resp == null || StringUtils.isBlank(resp.getActivityOrderCode())){
             throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_APPLY_FAILED.getDesc());
         }
         activityApplyResp.setAppliedSuccess(true);
@@ -179,7 +181,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     public ActivityResp getActivityDetailByEncryptedCode(String encryptedCode){
         log.info("活动详情，入参:{}", encryptedCode);
         if (StringUtils.isBlank(encryptedCode)) {
-            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_ENCRYPTED_CODE_NOT_INPUT.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_CODE_NOT_INPUT.getDesc());
         }
         ActivityExample activityExample = new ActivityExample();
         ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
@@ -288,7 +290,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         log.info("客户活动详情，入参:{},{}",encryptedCode);
         ActivityCustomerResp activityCustomerResp = new ActivityCustomerResp();
         if (org.apache.commons.lang3.StringUtils.isBlank(encryptedCode)) {
-            throw new MarketingException("活动报名订单号不能为空");
+            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
         //1.根据活动编码和用户手机号查询活动报名信息
         log.info("匹配活动订单，入参:{},{}",encryptedCode,EndUserContextHolder.getTelephone());

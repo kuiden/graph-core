@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.controller.auth;
 import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.VerificationCodeUtils;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
@@ -10,6 +12,7 @@ import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.remote.auth.StoreAuthClient;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.GetValidCodeReq;
@@ -34,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -72,6 +76,9 @@ public class ClientActivityApi {
 
     @Autowired
     MiniAppService miniAppService;
+
+    @Autowired
+    private CustomerClient iCustomerService;
 
 
     @GetMapping("/activity/detail")
@@ -150,6 +157,22 @@ public class ClientActivityApi {
         }
         try {
             ActivityCustomerResp activityCustomerResp =iClientActivityService.getActivityCustomerDetail(encryptedCode);
+            //车主用户登录
+            CustomerVO customerVO = new CustomerVO();
+            customerVO.setPhone(EndUserContextHolder.getTelephone());
+            customerVO.setStoreId(EndUserContextHolder.getStoreId());
+            customerVO.setTenantId(EndUserContextHolder.getTenantId());
+            List<CustomerDTO> customerDTOList = iCustomerService.getCustomer(customerVO).getData();
+            if(customerDTOList.size()<1){
+                throw new MarketingException("还没有您的注册记录！");
+            }
+            CustomerDTO customerDTO = customerDTOList.get(0);
+            if (!customerDTO.getId().equals(activityCustomerResp.getCustomerId())){
+                //用户账号不同不允许看
+                log.warn("活动详情过滤机制：客户用户Id:{},source{}",customerDTO.getId(),activityCustomerResp.getCustomerId());
+                throw new MarketingException("没有报名记录，请先报名！");
+            }
+            //移除当前登录信息
             EndUserContextHolder.remove();
             return new BizBaseResponse(activityCustomerResp);
         }catch (MarketingException e){
