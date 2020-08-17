@@ -128,7 +128,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
                 endUserVisitedStoreEntity.setOpenId(openId);
                 endUserVisitedStoreEntity.setStoreId(storeId);
                 iEndUserVisitedStoreService.recordEndUserVistiedStore(endUserVisitedStoreEntity);
-            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())) {
+            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType()) && sourceType == 0) {
                 EndUserVisitedCouponEntity endUserVisitedCouponEntity = new EndUserVisitedCouponEntity();
                 endUserVisitedCouponEntity.setOpenId(openId);
                 endUserVisitedCouponEntity.setStoreId(storeId);
@@ -156,7 +156,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         if (StringUtils.isEmpty(clientEventRecordRequest.getStoreId())) {
             return "门店ID不能为空";
         }
-        if (StringUtils.isEmpty(clientEventRecordRequest.getOpenId()) && StringUtils.isEmpty(clientEventRecordRequest.getOpenIdCode())) {
+        if (StringUtils.isEmpty(clientEventRecordRequest.getOpenId()) && StringUtils.isEmpty(clientEventRecordRequest.getOpenIdCode()) && clientEventRecordRequest.getSourceType() == 0) {
             return "微信小程序code和openId不能同时为空";
         }
 //        if (StringUtils.isEmpty(clientEventRecordRequest.getClientType())) {
@@ -175,6 +175,10 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         } else if (!EventContentTypeEnum.STORE.getCode().equals(clientEventRecordRequest.getContentType())) {
             if (StringUtils.isEmpty(clientEventRecordRequest.getContentValue())) {
                 return "主题值不能为空";
+            }
+        } else if (EventContentTypeEnum.ACTIVITY.getCode().equals(clientEventRecordRequest.getContentType())) {
+            if (StringUtils.isEmpty(clientEventRecordRequest.getEncryptedCode()) && StringUtils.isEmpty(clientEventRecordRequest.getContentValue())) {
+                return "活动编码不能为空";
             }
         }
         return null;
