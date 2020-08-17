@@ -137,6 +137,44 @@ public class ClientCouponApi extends BaseApi {
         return new BizBaseResponse(couponItemResp);
     }
 
+
+    /**
+     * 获取优惠券信息
+     *
+     * @return
+     */
+    @GetMapping("/open/openGetCoupon")
+    public BizBaseResponse openGetCoupon(@RequestParam String code, HttpServletRequest request) {
+        log.info("open获取客户优惠券信息开始 -> {} ", code);
+        if (StringUtils.isBlank(code)) {
+            log.info("参数验证失败");
+            return null;
+        }
+        CouponItemResp couponItemResp = null;
+        String ip = getIpAddress(request);
+        String cacheKey = cacheKeyPre.concat(StringUtils.isNotBlank(ip) ? ip : "").concat(code);
+        String key = cacheKey.concat("num");
+        Long num = redisTemplate.opsForValue().increment(key, 1L);
+        if (num.equals(1L)) {
+            redisTemplate.expire(key, 2, TimeUnit.SECONDS);
+        }
+        if (!redisTemplate.hasKey(cacheKey)) {
+            couponItemResp = imCouponService.openGetCouponInfo(code);
+            redisTemplate.opsForValue().set(cacheKey, couponItemResp, 6, TimeUnit.SECONDS);
+        } else {
+            if (num.equals(20L)) {
+                /**
+                 * 方案1 ：  判定某个IP 在短时间内请求次数到达N次 直接返回Null (可能存在信号站发包  暂时放置)
+                 * 方案2 ： 在某个IP 在 设定直接内访问次数达到N次 加长缓存时间
+                 * 方案3 ： 每个优惠券 在某个时间短内只能访问一次 加分布式计时锁
+                 */
+                redisTemplate.expire(cacheKey, 30, TimeUnit.SECONDS);
+            }
+            couponItemResp = (CouponItemResp) redisTemplate.opsForValue().get(cacheKey);
+        }
+        return new BizBaseResponse(couponItemResp);
+    }
+
     /**
      * 对外 获取小程序核销二维码
      *
@@ -165,6 +203,7 @@ public class ClientCouponApi extends BaseApi {
         }
         return codeStream;
     }
+
 
     public String getIpAddress(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");

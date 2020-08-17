@@ -24,8 +24,6 @@ public class MiniWriteOffApi extends BaseApi {
 
     @Autowired
     private ICouponService couponService;
-    @Autowired
-    private IActivityService activityService;
 
     /**
      * 核销扫码

@@ -764,8 +764,7 @@ public class CouponServiceImpl implements ICouponService {
         CouponExample.Criteria couponCriteria = couponExample.createCriteria();
         couponCriteria.andCodeIn(codes);
         List<Coupon> couponList = couponMapper.selectByExample(couponExample);
-        //除定向营销之外 需要判断余额是否可以发送
-
+        // 需要判断余额是否可以发送
         for (Coupon x : couponList) {
             if (!x.getGrantNumber().equals(Long.valueOf(-1))) {
                 //改券总共发放数
