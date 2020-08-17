@@ -82,7 +82,7 @@
   <sql id="Base_Column_List" >
     id, store_id, activity_code, goods_id, goods_code, goods_name, goods_type, item_quantity,
     original_price, actual_price, update_user, create_user, create_time, update_time,
-    business_category, business_category_code, business_category_name
+    business_category, business_category_code, business_category_name,tenant_id
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.po.ActivityItemExample" >
     select

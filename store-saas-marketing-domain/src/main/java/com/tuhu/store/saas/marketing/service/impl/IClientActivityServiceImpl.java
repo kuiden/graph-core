@@ -106,8 +106,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if(customerReqList.size()<1){
             CustomerReq customerReq = new CustomerReq();
             customerReq.setPhoneNumber(applyReq.getTelephone());
-            customerReq.setName(applyReq.getTelephone());
-            customerReq.setGender("1");
+            customerReq.setGender("3");
             customerReq.setCustomerType(CustomTypeEnumVo.PERSON.getCode());
             customerReq.setCustomerSource(CustomerSourceEnumVo.QT.getCode());
             customerReq.setIsVip(false);
