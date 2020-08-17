@@ -155,6 +155,7 @@
 		</encoder>
 	</appender>
 
+
 	<springProfile name="dev,prd,test,uat">
 		<logger name="com.tuhu" level="INFO" additivity="false">
 			<appender-ref ref="ASYNC_INFO" />
