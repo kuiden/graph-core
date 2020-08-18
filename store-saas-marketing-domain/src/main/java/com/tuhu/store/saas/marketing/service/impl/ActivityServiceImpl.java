@@ -2287,11 +2287,11 @@ public class ActivityServiceImpl implements IActivityService {
         }else if (activeType == 0) {
             LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays);
             Date appDate = Date.from(appLocalDate.atZone(ZoneId.systemDefault()).toInstant());
-            if (appDate.before(activityEndDate)) {
+//            if (appDate.before(activityEndDate)) {
                 return appDate;
-            }else {
-                return activityEndDate;
-            }
+//            }else {
+//                return activityEndDate;
+//            }
         }else {
             return this.getLastSecondOfDate(activeDate);
         }
