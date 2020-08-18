@@ -586,7 +586,7 @@ public class ActivityServiceImpl implements IActivityService {
         if (activityListReq.getStatus() != null) {
             activityExampleCriteria.andStatusEqualTo(activityListReq.getStatus());
         }
-        activityExample.setOrderByClause("create_time desc");
+        activityExample.setOrderByClause("update_time desc");
         PageHelper.startPage(activityListReq.getPageNum() + 1, activityListReq.getPageSize());
         List<Activity> activityList = activityMapper.selectByExample(activityExample);
         PageInfo<Activity> activityPageInfo = new PageInfo<>(activityList);
@@ -2287,11 +2287,11 @@ public class ActivityServiceImpl implements IActivityService {
         }else if (activeType == 0) {
             LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays);
             Date appDate = Date.from(appLocalDate.atZone(ZoneId.systemDefault()).toInstant());
-            if (appDate.before(activityEndDate)) {
+//            if (appDate.before(activityEndDate)) {
                 return appDate;
-            }else {
-                return this.getLastSecondOfDate(activeDate);
-            }
+//            }else {
+//                return activityEndDate;
+//            }
         }else {
             return this.getLastSecondOfDate(activeDate);
         }

@@ -876,7 +876,7 @@ public class CouponServiceImpl implements ICouponService {
     public void setOccupyNum(Coupon x, int num) {
         log.info("couponListCheckLock-> req-> {} {}", x, num);
         String occupyNumKey = occupyNumKeyPrefix + "" + x.getStoreId() + x.getTenantId() + x.getCode();
-        RedisUtils redisUtils = new RedisUtils();
+        RedisUtils redisUtils = new RedisUtils(redisTemplate,"occupyNum");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
         if (value != null) {
@@ -1748,7 +1748,7 @@ public class CouponServiceImpl implements ICouponService {
 
         Coupon coupon = coupons.get(0);
 
-        if(coupon.getGrantNumber().equals(-1)) {//不限量直接返回
+        if(coupon.getGrantNumber().equals(-1L)) {//不限量直接返回
             return -1L;
         }
 

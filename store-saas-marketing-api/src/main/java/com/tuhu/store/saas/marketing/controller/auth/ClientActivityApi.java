@@ -156,7 +156,7 @@ public class ClientActivityApi {
             return new BizBaseResponse(BizErrorCodeEnum.PARAM_ERROR, "请传递活动信息");
         }
         try {
-            ActivityCustomerResp activityCustomerResp =iClientActivityService.getActivityCustomerDetail(encryptedCode);
+            ActivityCustomerResp activityCustomerResp =iClientActivityService.getActivityCustomerDetail(encryptedCode,EndUserContextHolder.getTelephone());
             //车主用户登录
             CustomerVO customerVO = new CustomerVO();
             customerVO.setPhone(EndUserContextHolder.getTelephone());

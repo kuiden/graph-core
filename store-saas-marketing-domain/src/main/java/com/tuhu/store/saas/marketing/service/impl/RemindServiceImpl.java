@@ -128,6 +128,8 @@ public class RemindServiceImpl implements IRemindService {
         remind.setTenantId(sendRemindReq.getTenantId());
         remind.setCreateTime(now);
         remind.setCreateUser(sendRemindReq.getUserId());
+        remind.setCustomerId(sendRemindReq.getCustomerId());
+        remind.setCustomerName(sendRemindReq.getCustomerName());
         //填装用户信息
         remind.setPhoneNumber(phone);
         //填装提醒信息
