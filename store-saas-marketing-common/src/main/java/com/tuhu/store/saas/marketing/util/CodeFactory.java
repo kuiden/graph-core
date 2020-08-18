@@ -63,7 +63,7 @@ public class CodeFactory {
         String key = prefix + storeId + dateStr;
         Long currentValue = redisTemplate.opsForValue().increment(key, 1L);
         String codeNumber = formatCodeWithZero(4, currentValue);
-        return codeNumber;
+        return  dateStr.concat(codeNumber);
     }
 
     /**
