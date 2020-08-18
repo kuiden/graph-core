@@ -239,7 +239,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
             params.add("价值" + coupon.getContentValue().intValue()+ "元" +coupon.getTitle());
-            params.add(storeDTO.getMobilePhone());
+            params.add(storeDTO.getClientAppointPhone());
             //TODO 替换短链
             if(StringUtils.isNotBlank(orginUrl)){
                 params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
@@ -255,26 +255,26 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             }
 
             //算出活动价和原价
-            BigDecimal activityPrice = activityResp.getActivityPrice();
+            BigDecimal activityPrice = activityResp.getActivityPrice().divide(BigDecimal.valueOf(100),2 ,RoundingMode.HALF_UP);
             BigDecimal srcPrice = new BigDecimal(0);
             List<ActivityItemResp> activityItemResps = activityResp.getItems();
             for(ActivityItemResp activityItemResp : activityItemResps){
-                if(activityItemResp.getGoodsType()){
+//                if(activityItemResp.getGoodsType()){
                     //服务(价格/100)*(时长/100)
-                    BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
-                    BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity()).divide(BigDecimal.valueOf(100),RoundingMode.HALF_UP);
+                    BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
+                    BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity());
                     srcPrice = srcPrice.add(itemSiglePrice.multiply(exeTime));
-
-                }else{
-                    //商品 (价格/100)*个数
-                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
-                    srcPrice = srcPrice.add(itemPrice);
-                }
+//
+//                }else{
+//                    //商品 (价格/100)*个数
+//                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
+//                    srcPrice = srcPrice.add(itemPrice);
+//                }
             }
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
             params.add(activityPrice.toString()+"抵"+srcPrice.toString());
-            params.add(storeDTO.getMobilePhone());
+            params.add(storeDTO.getClientAppointPhone());
             params.add(activityResp.getActivityTitle());
             //生成短连接
           /*  StringBuffer url = new StringBuffer();
