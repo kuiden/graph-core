@@ -440,7 +440,7 @@
   </select>
 
   <select id="countByEncryptedCodeAndUser" resultType="integer" >
-    SELECT COUNT (1)
+    SELECT COUNT(1)
     FROM activity_customer AS a,activity As b
     WHERE b.encrypted_code = #{encryptedCode,jdbcType=VARCHAR}
       AND a.activity_code = b.activity_code
