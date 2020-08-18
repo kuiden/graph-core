@@ -131,6 +131,8 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
             sendDatas.add(url);
 
+            sendRemindReq.setCustomerId(marketingSendRecord.getCustomerId());
+            sendRemindReq.setCustomerName(marketingSendRecord.getCustomerName());
             sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
             sendRemindReq.setTenantId(customerMarketing.getTenantId());
@@ -209,6 +211,8 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
             sendDatas.add(url);
 
+            sendRemindReq.setCustomerId(marketingSendRecord.getCustomerId());
+            sendRemindReq.setCustomerName(marketingSendRecord.getCustomerName());
             sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
             sendRemindReq.setTenantId(customerMarketing.getTenantId());

@@ -26,12 +26,6 @@ import java.util.List;
 @JobHandler("sendMarketingSMSJob")
 public class SendMarketingSMSJob extends IJobHandler {
 
-    /**
-     * 允许发送5分钟之后合法的任务
-     */
-    @Value("${marketing.sendsmstask.minutesLater:5}")
-    private int minutesLater;
-
     @Autowired
     private IMessageRemindService iMessageRemindService;
 
