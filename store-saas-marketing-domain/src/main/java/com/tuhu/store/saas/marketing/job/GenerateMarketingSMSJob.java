@@ -129,7 +129,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
             //替换短链
             List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
-            sendDatas.set(sendDatas.size()-1, url);
+            sendDatas.add(url);
 
             sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
@@ -207,7 +207,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             //替换短链
             String url = iUtilityService.getShortUrl(couponUrl + customerIdCodeMap.get(marketingSendRecord.getCustomerId()));
             List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
-            sendDatas.set(sendDatas.size()-1, url);
+            sendDatas.add(url);
 
             sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
