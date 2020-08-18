@@ -197,6 +197,7 @@ public class ClientCouponApi extends BaseApi {
         return codeStream;
     }
 
+
     public String getIpAddress(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
         if (StringUtils.isNotEmpty(ip) && !"unKnown".equalsIgnoreCase(ip)) {
