@@ -108,7 +108,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             customerReq.setPhoneNumber(applyReq.getTelephone());
             customerReq.setGender("3");
             customerReq.setCustomerType(CustomTypeEnumVo.PERSON.getCode());
-            customerReq.setCustomerSource(CustomerSourceEnumVo.QT.getCode());
+            customerReq.setCustomerSource(CustomerSourceEnumVo.WLYL.getCode());
             customerReq.setIsVip(false);
             AddVehicleReq addVehicleReq = new AddVehicleReq();
             addVehicleReq.setCustomerReq(customerReq);
