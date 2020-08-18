@@ -284,9 +284,18 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if (org.apache.commons.lang3.StringUtils.isBlank(encryptedCode)) {
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
+        //0.检查此用户在此次活动中的订单数，避开取消重新报名的问题
+        int appliedCount = activityCustomerMapper.countByEncryptedCodeAndUser(encryptedCode,telephone);
+        //订单查询限制条件，防止同用户多订单（不同状态）
+        List<Integer> useStatusLimit=new ArrayList<>();
+        if(appliedCount>1){
+            useStatusLimit.add(MarketingCustomerUseStatusEnum.AC_ORDER_NEVER_USE.getStatus());
+            useStatusLimit.add(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus());
+        }
+
         //1.根据活动编码和用户手机号查询活动报名信息
         log.info("匹配活动订单，入参:{},{}",encryptedCode,telephone);
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,telephone);
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,telephone,useStatusLimit);
         log.info("匹配活动订单,出参:{}",JSONObject.toJSONString(activityCustomer));
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
@@ -304,7 +313,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
 
     @Override
     public byte[] getQrCodeOfActivityCustomer(String activityEncryptedCode){
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getTelephone());
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getTelephone(),null);
         if(activityCustomer.getUseStatus().intValue() == 0){
             //未核销
             Map<String,Object> codeMap = new HashMap<>(2);
