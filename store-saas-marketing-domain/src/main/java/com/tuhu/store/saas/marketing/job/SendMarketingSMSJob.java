@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,6 +40,7 @@ public class SendMarketingSMSJob extends IJobHandler {
 
     @Override
     public ReturnT<String> execute(String param) throws Exception {
+        log.info("{} -> 时间: {}", "sendMarketingSMSJob定时任务", new Date());
         List<MessageRemind> messageReminds = iMessageRemindService.getAllNeedSendMarketingReminds();
 
         for(MessageRemind messageRemind : messageReminds) {

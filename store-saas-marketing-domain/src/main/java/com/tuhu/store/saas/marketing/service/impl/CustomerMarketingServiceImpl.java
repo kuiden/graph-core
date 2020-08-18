@@ -421,11 +421,15 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送对象不能为空");
         }
         //如果是优惠券定向营销，需要判断券额度
-        if(addReq.getMarketingMethod().equals(0)) {
+        if("0".equals(addReq.getMarketingMethod().toString())) {
             Long availableAccount = couponService.getCouponAvailableAccount(coupon.getId(), addReq.getStoreId());
 
             if(availableAccount >=0 && availableAccount < customerList.size()) {//如果是限量优惠券，需要判断剩余额度
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券数量不足");
+            }
+            //状态禁用的优惠券无法创建定向营销
+            if(coupon.getStatus().equals(0)) {
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券已被禁用");
             }
         }
 
