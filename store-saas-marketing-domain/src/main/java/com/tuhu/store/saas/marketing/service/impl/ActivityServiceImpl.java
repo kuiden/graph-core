@@ -2290,7 +2290,7 @@ public class ActivityServiceImpl implements IActivityService {
             if (appDate.before(activityEndDate)) {
                 return appDate;
             }else {
-                return this.getLastSecondOfDate(activeDate);
+                return activityEndDate;
             }
         }else {
             return this.getLastSecondOfDate(activeDate);
