@@ -524,7 +524,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
 
         //如果是优惠券定向营销，需要占用优惠券额度
-        if(addReq.getMarketingMethod().equals(0)){
+        if("0".equals(addReq.getMarketingMethod().toString())){
             Coupon couponEntity = new Coupon();
             BeanUtils.copyProperties(coupon, couponEntity);
             couponService.setOccupyNum(couponEntity, customerList.size());

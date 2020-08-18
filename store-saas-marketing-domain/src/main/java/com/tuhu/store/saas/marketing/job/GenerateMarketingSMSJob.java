@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 定时扫描营销任务，添加发送短信
+ * 定时扫描营销任务，添加代发短信记录
  */
 @Slf4j
 @Component
