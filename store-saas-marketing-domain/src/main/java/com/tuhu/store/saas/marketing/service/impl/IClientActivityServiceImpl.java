@@ -165,14 +165,6 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             activityApplyResp.setAppliedSuccess(false);
             return activityApplyResp;
         }
-        ActivityCustomerReq activityCustomerReq = new ActivityCustomerReq();
-        activityCustomerReq.setActivityOrderCode(stringCommonResp.getData());
-
-        ActivityCustomerResp resp = this.getActivityCustomerDetail(applyReq.getEncryptedCode(),applyReq.getTelephone());
-
-        if(resp == null || StringUtils.isBlank(resp.getActivityOrderCode())){
-            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_APPLY_FAILED.getDesc());
-        }
         activityApplyResp.setAppliedSuccess(true);
         return activityApplyResp;
     }
