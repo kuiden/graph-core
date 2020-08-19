@@ -892,7 +892,7 @@ public class CouponServiceImpl implements ICouponService {
                     criteria.andCouponCodeEqualTo(x.getCode());
                     int customerReceiveCount = customerCouponMapper.countByExample(example);
                     long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
-                    if (count > 0) {
+                    if (count >= 0) {
                         Coupon u = new Coupon();
                         u.setOccupyNum(x.getOccupyNum() + num);
                         u.setId(x.getId());

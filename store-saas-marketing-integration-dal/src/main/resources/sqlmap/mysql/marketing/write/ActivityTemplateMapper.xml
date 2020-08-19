@@ -65,11 +65,8 @@
     </if>
     <if test="forB == true">
       and status = true
-      order by create_time desc
     </if>
-    <if test="forB == false">
-      order by sort desc,create_time desc
-    </if>
+    order by sort desc,create_time desc
   </select>
   
 </mapper>

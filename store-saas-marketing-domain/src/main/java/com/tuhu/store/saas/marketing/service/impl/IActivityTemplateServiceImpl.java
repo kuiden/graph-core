@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Author: yanglanqing
@@ -39,6 +40,10 @@ public class IActivityTemplateServiceImpl implements IActivityTemplateService {
             template.setSort(1);
         }else {
             template.setSort(list.get(0).getSort() + 1);
+            if(CollectionUtils.isNotEmpty(list.stream().filter(x -> req.getActivityTitle().
+                    equals(x.getActivityTitle())).collect(Collectors.toList()))){
+                throw new StoreSaasMarketingException("已存在同名称模板");
+            }
         }
         BeanUtils.copyProperties(req,template);
         activityTemplateMapper.insertActivityTemplate(template);
