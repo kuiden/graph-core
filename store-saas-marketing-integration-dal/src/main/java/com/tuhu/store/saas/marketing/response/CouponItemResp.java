@@ -45,6 +45,9 @@ public class CouponItemResp extends Coupon implements Serializable {
      */
     private Byte customerCouponStatus;
 
+
+    private  Date useEndTime;
+
     private String customerCouponCode;
 
     @Data
