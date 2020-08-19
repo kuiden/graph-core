@@ -40,6 +40,14 @@ public class MiniCardApi extends BaseApi {
         return new BizBaseResponse(iCardService.queryCardRespList(req));
     }
 
+    @PostMapping("/client/queryCardItem")
+    @ApiOperation("C端-查询次卡详情")
+    public BizBaseResponse<CardResp> clientQueryCardItem(@Validated @RequestBody QueryCardItemReq req) {
+        req.setStoreId(EndUserContextHolder.getStoreId());
+        req.setTenantId(EndUserContextHolder.getTenantId());
+        return new BizBaseResponse(iCardService.clientQueryCardItem(req));
+    }
+
     @PostMapping("/query")
     @ApiOperation("B端-查询客户次卡")
     public BizBaseResponse<List<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req){
@@ -49,7 +57,7 @@ public class MiniCardApi extends BaseApi {
     }
 
     @PostMapping("/queryCardItem")
-    @ApiOperation("查询次卡商品/服务项目")
+    @ApiOperation("B端-查询次卡商品/服务项目")
     public BizBaseResponse<List<QueryCardItemResp>> queryCardItem(@Validated @RequestBody QueryCardItemReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());

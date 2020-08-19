@@ -29,10 +29,10 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
         //B端拦截器
         registry.addInterceptor(userInterceptor)
                 .addPathPatterns("/card/**", "/marketing/**", "/mini/**", "/finance/**", "/distribution/**", "/order/reservation/**", "/customer/group/**")
-                .excludePathPatterns("/feign/**", "/mini/c/coupon/**","/mini/card/client/query","/mini/card/consumptionHistory");
+                .excludePathPatterns("/feign/**", "/mini/c/coupon/**","/mini/card/client/*","/mini/card/consumptionHistory");
 
         registry.addInterceptor(endUserInterceptor)
-                .addPathPatterns("/client/**","/mini/c/coupon/**","/mini/card/client/query")
+                .addPathPatterns("/client/**","/mini/c/coupon/**","/mini/card/client/*")
                 .excludePathPatterns("/feign/endUser/**","/mini/c/coupon/open/**", "/client/h5/**");
     }
 
