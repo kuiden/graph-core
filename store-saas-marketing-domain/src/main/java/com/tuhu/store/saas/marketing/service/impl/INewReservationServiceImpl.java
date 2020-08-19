@@ -146,28 +146,31 @@ public class INewReservationServiceImpl implements INewReservationService {
 
         //发送短信
         StoreInfoDTO storeInfo = getStoreInfo(req.getStoreId());
-        if(type == 0 || type == 2){//发给客户：【门店名称】（【门店联系手机】），【预约月日时分】，【门店地址，只展示详细地址，不展示省市区】
-            List<String> list = new ArrayList<>();
-            if(storeInfo != null){
+        if(storeInfo != null){
+            if(type == 0 || type == 2){//发给客户：【门店名称】（【门店联系手机】），【预约月日时分】，【门店地址，只展示详细地址，不展示省市区】
+                List<String> list = new ArrayList<>();
                 list.add(storeInfo.getStoreName());
                 list.add(storeInfo.getMobilePhone());
                 list.add(dealMdDate(order.getEstimatedArriveTime()));
                 list.add(storeInfo.getAddress() == null?"":storeInfo.getAddress());
                 sendSms(req.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_STORE_ORDER_SUCCESS.templateCode(),list);
             }
-        }
-        if(type == 1){//发给门店：客户【客户手机】通过“车主小程序”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
-            List<String> list = new ArrayList<>();
-            list.add(order.getCustomerPhoneNumber());
-            list.add(dealMdDate(order.getEstimatedArriveTime()));
-            sendSms(req.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_MINI_ORDER_CREATE.templateCode(),list);
-        }
-        if(type == 2){//发给门店:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
-            List<String> list = new ArrayList<>();
-            list.add(order.getCustomerPhoneNumber());
-            list.add(req.getMarketingName());
-            list.add(dealMdDate(order.getEstimatedArriveTime()));
-            sendSms(storeInfo.getMobilePhone(),SMSTypeEnum.SAAS_MINI_ORDER_SUCCESS.templateCode(),list);
+            //门店预约电话不为空时才发送短信
+            if(StringUtils.isNotBlank(storeInfo.getClientAppointPhone())){
+                if(type == 1){//发给门店老板：客户【客户手机】通过“车主小程序”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
+                    List<String> list = new ArrayList<>();
+                    list.add(order.getCustomerPhoneNumber());
+                    list.add(dealMdDate(order.getEstimatedArriveTime()));
+                    sendSms(storeInfo.getClientAppointPhone(),SMSTypeEnum.SAAS_MINI_ORDER_CREATE.templateCode(),list);
+                }
+                if(type == 2){//发给门店老板:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
+                    List<String> list = new ArrayList<>();
+                    list.add(order.getCustomerPhoneNumber());
+                    list.add(req.getMarketingName());
+                    list.add(dealMdDate(order.getEstimatedArriveTime()));
+                    sendSms(storeInfo.getClientAppointPhone(),SMSTypeEnum.SAAS_MINI_ORDER_SUCCESS.templateCode(),list);
+                }
+            }
         }
 
         return id;
