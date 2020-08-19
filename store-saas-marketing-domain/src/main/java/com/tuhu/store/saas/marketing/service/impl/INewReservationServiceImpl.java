@@ -150,7 +150,7 @@ public class INewReservationServiceImpl implements INewReservationService {
             if(type == 0 || type == 2){//发给客户：【门店名称】（【门店联系手机】），【预约月日时分】，【门店地址，只展示详细地址，不展示省市区】
                 List<String> list = new ArrayList<>();
                 list.add(storeInfo.getStoreName());
-                list.add(storeInfo.getMobilePhone());
+                list.add(storeInfo.getClientAppointPhone() == null?"":storeInfo.getClientAppointPhone());
                 list.add(dealMdDate(order.getEstimatedArriveTime()));
                 list.add(storeInfo.getAddress() == null?"":storeInfo.getAddress());
                 sendSms(req.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_STORE_ORDER_SUCCESS.templateCode(),list);
@@ -323,7 +323,7 @@ public class INewReservationServiceImpl implements INewReservationService {
                 List<String> list = new ArrayList<>();
                 if(storeInfo != null){
                     list.add(storeInfo.getStoreName());
-                    list.add(storeInfo.getMobilePhone());
+                    list.add(storeInfo.getClientAppointPhone() == null?"":storeInfo.getClientAppointPhone());
                     list.add(dealMdDate(order.getEstimatedArriveTime()));
                     sendSms(order.getCustomerPhoneNumber(),SMSTypeEnum.SAAS_STORE_CANCEL_ORDER.templateCode(),list);
                 }
