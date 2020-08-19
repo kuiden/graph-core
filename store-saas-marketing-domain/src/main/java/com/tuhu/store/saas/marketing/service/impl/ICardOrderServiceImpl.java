@@ -3,8 +3,10 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardOrderStatusEnum;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
@@ -13,16 +15,21 @@ import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
+import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
 import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
+import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.util.CardOrderRedisCache;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
+import com.tuhu.store.saas.request.product.GoodsForMarketReq;
+import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
+import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author wangyuqing
@@ -63,6 +68,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
     @Autowired
     private CustomerClient customerClient;
+
+    @Autowired
+    private StoreProductClient productClient;
 
     @Autowired
     private CardOrderRedisCache cardOrderRedisCache;
@@ -256,6 +264,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         Integer result = 0;
         if (null != crdCardOrders && !crdCardOrders.isEmpty()){
             CrdCardOrder cardOrder = crdCardOrders.get(0);
+            CrdCard card = crdCardMapper.selectByPrimaryKey(cardOrder.getCardId());
+            if (null == card){
+                throw new StoreSaasMarketingException("获取不到卡信息，调用updateCardPaymentStatus失败");
+            }
+            card.setStatus(CardStatusEnum.ACTIVATED.getEnumCode());
+            result += crdCardMapper.updateByPrimaryKeySelective(card);
             Date date = new Date();
             cardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_OK.getEnumCode());
             cardOrder.setStatus(CardOrderStatusEnum.SETTLE_CARD.getEnumCode());
@@ -264,11 +278,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             cardOrder.setPayedAmount(new BigDecimal(amount).divide(new BigDecimal(100)));
             cardOrder.setUpdateTime(date);
             result += crdCardOrderMapper.updateByPrimaryKeySelective(cardOrder);
-            CrdCard card = crdCardMapper.selectByPrimaryKey(cardOrder.getCardId());
-            if (null != card){
-                card.setStatus(CardStatusEnum.ACTIVATED.getEnumCode());
-                result += crdCardMapper.updateByPrimaryKeySelective(card);
-            }
         } else{
             throw new StoreSaasMarketingException("源开卡单不存在，调用updateCardPaymentStatus失败");
         }
@@ -288,6 +297,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         CrdCard card = crdCardMapper.selectByPrimaryKey(cardOrder.getCardId());
         resp.setForever(card.getForever() == 1 ? true : false);
         resp.setCardTypeCode(card.getCardTypeCode());
+        resp.setCardStatusCode(CardStatusEnum.valueOf(card.getStatus()).getEnumCode());
+        resp.setCardStatus(CardStatusEnum.valueOf(card.getStatus()).getDescription());
         //如果卡不是永久有效，则判断卡是否过期
         if (!resp.getForever()){
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -319,15 +330,57 @@ public class ICardOrderServiceImpl implements ICardOrderService {
                 cardGoodsItem.add(itemResp);
             }
         }
+
+        //查询最新商品信息
+        List<String> goodsIdList = new ArrayList<>();
+        Map<String,CardItemResp> goodsMap = new HashMap<>();
+        for (CardItemResp item : cardGoodsItem){
+            goodsMap.put(item.getGoodsId(),item);
+            goodsIdList.add(item.getGoodsId());
+        }
+        QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
+        queryGoodsListVO.setStoreId(req.getStoreId());
+        queryGoodsListVO.setTenantId(req.getTenantId());
+        queryGoodsListVO.setGoodsIdList(goodsIdList);
+        queryGoodsListVO.setGoodsSource("");
+        BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
+        if (null != productResult.getData()){
+            productResult.getData().stream().forEach(x -> {
+                if (goodsMap.containsKey(x.getGoodsId())){
+                    CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
+                    goodsItem.setServiceItemName(x.getGoodsName());
+                }
+            });
+        }
+        //查询最新服务信息
+        List<String> serviceIdList = new ArrayList<>();
+        Map<String,CardItemResp> serviceMap = new HashMap<>();
+        for (CardItemResp item : cardServiceItem){
+            serviceMap.put(item.getGoodsId(),item);
+            serviceIdList.add(item.getGoodsId());
+        }
+        GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
+        goodsForMarketReq.setGoodsName("");
+        goodsForMarketReq.setStoreId(req.getStoreId());
+        goodsForMarketReq.setTenantId(req.getTenantId());
+        goodsForMarketReq.setServiceIdList(serviceIdList);
+        goodsForMarketReq.setPageSize(500);
+        BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
+        if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
+            List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
+            serviceGoodsList.stream().forEach(x -> {
+                if (serviceMap.containsKey(x.getId())){
+                    CardItemResp serviceItem = serviceMap.get(x.getId());
+                    serviceItem.setServiceItemName(x.getServiceName());
+                }
+            });
+        }
         resp.setCardServiceItem(cardServiceItem);
         resp.setCardGoodsItem(cardGoodsItem);
         if (remainQuantity.compareTo(0L) <= 0){
             resp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
             resp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
         }
-
-        //查询使用记录 -- 调用order
-//        resp.setUseRecord(iCardService.consumptionHistory(resp.getCardId()));
 
         return resp;
     }
