@@ -430,20 +430,6 @@
     WHERE b.encrypted_code = #{encryptedCode,jdbcType=VARCHAR}
       AND a.activity_code = b.activity_code
       AND a.telephone = #{telephone,jdbcType=VARCHAR}
-      <if test="useStatusLimit">
-        AND a.use_status IN
-        <foreach collection="useStatusLimit" item="useStatus" open="(" close=")" separator=",">
-          #{useStatus,jdbcType=TINYINT}
-        </foreach>
-      </if>
 
-  </select>
-
-  <select id="countByEncryptedCodeAndUser" resultType="integer" >
-    SELECT COUNT(1)
-    FROM activity_customer AS a,activity As b
-    WHERE b.encrypted_code = #{encryptedCode,jdbcType=VARCHAR}
-      AND a.activity_code = b.activity_code
-      AND a.telephone = #{telephone,jdbcType=VARCHAR}
   </select>
 </mapper>

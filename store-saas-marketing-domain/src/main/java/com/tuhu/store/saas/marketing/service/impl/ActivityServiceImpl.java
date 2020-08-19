@@ -87,6 +87,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.json.JsonObject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -993,7 +994,12 @@ public class ActivityServiceImpl implements IActivityService {
             List<ActivityCustomer> activityCustomerList=activityCustomerMapper.selectByExample(activityCustomerExample);
             if(activityCustomerList.size()>0){
                 CommonResp<String> result=new CommonResp<>();
-                result.setData(activityCustomerList.get(0).getActivityOrderCode());
+                ActivityCustomer activityCustomer = activityCustomerList.get(0);
+                result.setData(activityCustomer.getActivityOrderCode());
+                if(activityCustomer.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_CANCELED.getStatusOfByte())){
+                    //存在被取消的订单，重新报名
+                    return reApplyAfterCanceled(activity,activityCustomer);
+                }
                 result.setCode(4005);
                 result.setMessage("您已参加过本活动");
                 result.setSuccess(false);
@@ -1007,6 +1013,93 @@ public class ActivityServiceImpl implements IActivityService {
         //3.报名
         CommonResp<String> result = genarateActivityCustomer(activity, activityApplyReq);
         return result;
+    }
+
+    /**
+     * 取消后重新报名
+     *
+     * @param activityCustomer
+     * @return
+     */
+    public CommonResp<String> reApplyAfterCanceled(Activity activity,ActivityCustomer activityCustomer){
+        String activityCode = activity.getActivityCode();
+        Long applyNumber = activity.getApplyNumber();
+        //如果不是不限制报名人数
+        String key = activityApplyCountPrefix.concat(activityCode);
+        if (!applyNumber.equals(-1L)) {
+            String applyCountStr = redisTemplate.opsForValue().get(key);
+            if (StringUtils.isBlank(applyCountStr)) {//如果之前未存放报名人数
+                ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
+                ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
+                activityCustomerExampleCriteria.andActivityCodeEqualTo(activity.getActivityCode());
+                activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
+                int count = activityCustomerMapper.countByExample(activityCustomerExample);
+                if (Long.valueOf(count).compareTo(applyNumber) >= 0) {
+                    log.warn("营销活动[code={},name={}]已报名完毕.", activityCode, activity.getActivityTitle());
+                    redisTemplate.delete(key);
+                    return CommonResp.failed(4006, "报名人数已满");
+                } else if (StringUtils.isBlank(applyCountStr = redisTemplate.opsForValue().get(key))) {
+                    Long initCount = redisTemplate.opsForValue().increment(key, Long.valueOf(count));
+                    applyCountStr = String.valueOf(initCount);
+                    if (initCount.compareTo(Long.valueOf(count)) != 0) {//初始化值不相等,说明有别的请求进行了初始化
+                        applyCountStr = String.valueOf(redisTemplate.opsForValue().increment(key, Long.valueOf(0 - count)));
+                    }
+                }
+            }
+            Long applyCount = Long.valueOf(applyCountStr);
+            if (applyCount.compareTo(applyNumber) >= 0) {
+                log.warn("营销活动[code={},name={}]已报名完毕.", activityCode, activity.getActivityTitle());
+                redisTemplate.delete(key);
+                return CommonResp.failed(4006, "报名人数已满");
+            }
+        }
+        Long newApplyCount = redisTemplate.opsForValue().increment(key, 1L);//记录一次报名
+        if (newApplyCount.compareTo(applyNumber) > 0 && !applyNumber.equals(-1L)) {
+            log.warn("营销活动[code={},name={}]已报名完毕.", activityCode, activity.getActivityTitle());
+            redisTemplate.delete(key);
+            return CommonResp.failed(4006, "报名人数已满");
+        }
+        //再次检查活动是否可以报名
+        CommonResp<String> result = checkActivityForApply(activity);
+        if (null != result && !result.isSuccess()) {
+            redisTemplate.delete(key);
+            return result;
+        }
+        //更新Activity-customer
+        activityCustomer.setCreateTime(new Date());
+        activityCustomer.setStartTime(activity.getStartTime());
+        activityCustomer.setUseTime(null);
+        activityCustomer.setEndTime(this.getApplyedEndDate(activity.getStartTime(), activity.getEndTime(), activity.getActiveType(), activity.getActiveDays(), activity.getActiveDate()));
+        activityCustomer.setUseStatus((byte) 0);
+
+        //发送报名成功通知短信
+        SendRemindReq sendRemindReq = new SendRemindReq();
+        sendRemindReq.setStoreId(activityCustomer.getStoreId());
+        sendRemindReq.setTenantId(activityCustomer.getTenantId());
+        sendRemindReq.setUserId(activity.getCreateUser());
+        CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
+        customerAndVehicleReq.setCustomerId(activityCustomer.getCustomerId());
+        sendRemindReq.setCustomerList(Collections.singletonList(customerAndVehicleReq));
+        sendRemindReq.setMessageTemplateId(applyMessageTemplateId);
+        List<String> datas = new ArrayList<>();
+        datas.add(activity.getActivityTitle());
+        String datePattern = "yyyy年MM月dd日";
+        datas.add(DateFormatUtils.format(activity.getEndTime(), datePattern));
+        sendRemindReq.setDatas(JSONObject.toJSONString(datas));
+        StringBuilder messageStatus = new StringBuilder("000");
+        try {
+            iRemindService.send(sendRemindReq,false);
+            messageStatus.replace(0, 1, "1");
+        } catch (Exception e) {
+            log.error("报名成功发送短信失败，request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
+        }
+
+        activityCustomer.setMessageStatus(messageStatus.toString());
+        if(activityCustomerMapper.updateByPrimaryKey(activityCustomer)<1){
+            log.warn("更新活动订单失败，request:{}",JSONObject.toJSONString(activityCustomer));
+            return CommonResp.failed(4003,"报名失败");
+        }
+        return new CommonResp<>(activityCustomer.getActivityOrderCode());
     }
 
     /**
@@ -1297,13 +1390,9 @@ public class ActivityServiceImpl implements IActivityService {
 
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
         if(activityCustomerList.size() < 1){
-            throw new MarketingException("查询不到活动信息");
-        }
-        ActivityCustomer activityCustomer = activityCustomerList.get(0);
-        //查询结果
-        if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
+        ActivityCustomer activityCustomer = activityCustomerList.get(0);
         //状态检查
         if(activityCustomer.getUseStatus().intValue() == useStatus.intValue() ){
             if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
