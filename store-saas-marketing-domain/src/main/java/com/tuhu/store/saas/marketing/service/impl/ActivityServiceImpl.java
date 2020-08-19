@@ -990,16 +990,16 @@ public class ActivityServiceImpl implements IActivityService {
             ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
             activityCustomerExampleCriteria.andActivityCodeEqualTo(activity.getActivityCode());
             activityCustomerExampleCriteria.andCustomerIdEqualTo(customerId);
-            activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
+//            activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
             List<ActivityCustomer> activityCustomerList=activityCustomerMapper.selectByExample(activityCustomerExample);
             if(activityCustomerList.size()>0){
                 CommonResp<String> result=new CommonResp<>();
                 ActivityCustomer activityCustomer = activityCustomerList.get(0);
-                result.setData(activityCustomer.getActivityOrderCode());
                 if(activityCustomer.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_CANCELED.getStatusOfByte())){
                     //存在被取消的订单，重新报名
                     return reApplyAfterCanceled(activity,activityCustomer);
                 }
+                result.setData(activityCustomer.getActivityOrderCode());
                 result.setCode(4005);
                 result.setMessage("您已参加过本活动");
                 result.setSuccess(false);
