@@ -428,7 +428,7 @@ public class ActivityServiceImpl implements IActivityService {
         log.info("查询门店信息请求，storeId={},tanentId={},companyId={}", storeId, tanentId, companyId);
         StoreInfoVO storeInfoVO = new StoreInfoVO();
         storeInfoVO.setStoreId(storeId);
-        storeInfoVO.setCompanyId(companyId);
+//        storeInfoVO.setCompanyId(companyId);
         storeInfoVO.setTanentId(tanentId);
         try {
             StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
@@ -2372,7 +2372,7 @@ public class ActivityServiceImpl implements IActivityService {
 
     private Date getApplyedEndDate(Date activityStartDate, Date activityEndDate, Integer activeType, Integer activeDays, Date activeDate) {
         if (activeType == null) {
-            return activityEndDate;
+            return this.getLastSecondOfDate(activityEndDate);
         }else if (activeType == 0) {
             LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays);
             Date appDate = Date.from(appLocalDate.atZone(ZoneId.systemDefault()).toInstant());
