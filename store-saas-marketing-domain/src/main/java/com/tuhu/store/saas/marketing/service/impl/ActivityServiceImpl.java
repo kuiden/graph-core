@@ -1318,10 +1318,22 @@ public class ActivityServiceImpl implements IActivityService {
         if (CollectionUtils.isNotEmpty(activityItemList)) {
             List<ActivityItemResp> activityItemRespList = new ArrayList<>();
             for (ActivityItem activityItem : activityItemList) {
-                ActivityItemResp activityItemResp = new ActivityItemResp();
-                BeanUtils.copyProperties(activityItem, activityItemResp);
-                activityItemRespList.add(activityItemResp);
+                //优先显示服务
+                if(activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
             }
+            for (ActivityItem activityItem : activityItemList) {
+                //再显示商品
+                if(!activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
+            }
+
             activityResp.setItems(activityItemRespList);
         }
         //原价计算
@@ -1405,25 +1417,14 @@ public class ActivityServiceImpl implements IActivityService {
         }
 
         try {
-            //发送短信通知
-//            SendRemindReq sendRemindReq = new SendRemindReq();
-//            sendRemindReq.setStoreId(activityCustomerReq.getStoreId());
-//            sendRemindReq.setTenantId(activityCustomerReq.getTenantId());
-//            sendRemindReq.setUserId(activityCustomerReq.getUserId());
-//            CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
-//            customerAndVehicleReq.setCustomerId(activityCustomerReq.getCustomerId());
-//            sendRemindReq.setList(Collections.singletonList(customerAndVehicleReq));
-//            List<String> datas = Collections.singletonList(activityResp.getActivityTitle());
-//            sendRemindReq.setDatas(JSONObject.toJSONString(datas));
             StringBuilder messageStatus = new StringBuilder(activityCustomer.getMessageStatus());
             if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
                 //核销
-//                sendRemindReq.setMessageTemplateId(writeOffMessageTemplateId);
                 //状态二进制消息更新
                 messageStatus.replace(1, 2, "1");
+                redisTemplate.opsForHash().put("WRITEOFFMAP",activityOrderCode,true);
             }else{
                 //取消
-//                sendRemindReq.setMessageTemplateId(cancelMessageTemplateId);
                 messageStatus.replace(2, 3, "1");
                 String notCancelKey=activityApplyCountPrefix.concat(activityCustomer.getActivityCode());
                 redisTemplate.opsForValue().increment(notCancelKey,-1L);
@@ -1431,7 +1432,6 @@ public class ActivityServiceImpl implements IActivityService {
             activityCustomer.setUseTime(new Date());
             activityCustomer.setMessageStatus(messageStatus.toString());
             activityCustomer.setUseStatus(useStatus.byteValue());
-//            iRemindService.send(sendRemindReq);
         } catch (Exception e) {
 //            log.error("营销活动发送短信异常,request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
         }
