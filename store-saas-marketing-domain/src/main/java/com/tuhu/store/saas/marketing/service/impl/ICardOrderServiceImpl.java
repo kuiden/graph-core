@@ -144,6 +144,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCardOrder.setCardStatus(CardStatusEnum.INACTIVATED.getEnumCode());
         //生成开卡单号
         String code = cardOrderRedisCache.getCode(cardOrderRedisPrefix,req.getStoreId());
+        if (null == req.getStoreNo()){
+            req.setStoreNo("");
+        }
         crdCardOrder.setOrderNo(getCardOrderNumber(code, req.getStoreNo()));
         crdCardOrderMapper.insertSelective(crdCardOrder);
 
