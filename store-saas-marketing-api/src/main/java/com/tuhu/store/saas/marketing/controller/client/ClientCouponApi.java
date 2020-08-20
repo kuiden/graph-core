@@ -141,9 +141,9 @@ public class ClientCouponApi extends BaseApi {
      * 获取优惠券模板详情
      */
     @GetMapping("/open/openGetCouponDetail")
-    public BizBaseResponse<CouponResp> openGetCouponDetail(@RequestParam String code, HttpServletRequest request){
+    public BizBaseResponse<CouponResp> openGetCouponDetail(@RequestParam String code, HttpServletRequest request) {
         log.info("open获取优惠券模板详情，请求参数：{}", code);
-        if (StringUtils.isBlank(code)){
+        if (StringUtils.isBlank(code)) {
             log.info("参数验证失败");
             return null;
         }
@@ -183,11 +183,11 @@ public class ClientCouponApi extends BaseApi {
         }
         byte[] codeStream = null;
         String cacheKey = cacheKeyPre + "openGetCustomerCouponCodeByPhone".concat(code);
-        codeStream =(byte []) redisTemplate.opsForValue().get(cacheKey);
-        if (codeStream == null || codeStream.length<0){
+        codeStream = (byte[]) redisTemplate.opsForValue().get(cacheKey);
+        if (codeStream == null || codeStream.length < 0) {
             try {
                 codeStream = imCouponService.openGetCustomerCouponCodeByPhone(phone, code);
-                redisTemplate.opsForValue().set(cacheKey,codeStream);
+                redisTemplate.opsForValue().set(cacheKey, codeStream);
                 redisTemplate.expire(cacheKey, 30, TimeUnit.SECONDS);
             } catch (Exception e) {
                 log.info("获取二维码异常 -> e ->", e);

@@ -63,4 +63,7 @@ public  interface ICardService {
     List<QueryCardItemResp> queryCardItem(QueryCardItemReq req);
 
 
+    CardResp clientQueryCardItem(QueryCardItemReq req);
+
+
 }
