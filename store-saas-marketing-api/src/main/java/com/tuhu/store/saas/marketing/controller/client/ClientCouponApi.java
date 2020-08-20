@@ -205,7 +205,7 @@ public class ClientCouponApi extends BaseApi {
 
     @GetMapping(value = "/open/openGetUseStatusByCode")
     @ApiOperation("获取核销状态")
-    public BizBaseResponse<Boolean> openGetUseStatusByCode(@RequestParam String code) throws InterruptedException {
+    public BizBaseResponse<Integer> openGetUseStatusByCode(@RequestParam String code) throws InterruptedException {
         if (StringUtils.isBlank(code)){
             throw new StoreSaasMarketingException("参数验证失败");
         }
