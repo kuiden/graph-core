@@ -210,7 +210,7 @@ public class ClientCouponApi extends BaseApi {
             throw new StoreSaasMarketingException("参数验证失败");
         }
         String key =  REDIS_PREFIX_KEYS + "openGetUseStatusByCode_" + code;
-        Object obj = storeRedisUtils.getAtomLock(key, 10);
+        Object obj = storeRedisUtils.getAtomLock(key, 5);
         log.info("tryLock key = [{}]", key);
         if (obj != null) {
             log.info("tryLock success, key = [{}]", key);
