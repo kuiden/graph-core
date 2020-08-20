@@ -579,4 +579,11 @@
     where encrypted_code = #{encryptedCode,jdbcType=VARCHAR}
      and store_id = #{storeId,jdbcType=BIGINT}
   </select>
+
+  <select id="selectByEncryptedCode" parameterType="java.lang.String" resultMap="BaseResultMap">
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM activity
+    WHERE encrypted_code = #{encrypted}
+  </select>
 </mapper>

@@ -175,11 +175,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if (StringUtils.isBlank(encryptedCode)) {
             throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_CODE_NOT_INPUT.getDesc());
         }
-        ActivityExample activityExample = new ActivityExample();
-        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
-        activityExampleCriteria.andEncryptedCodeEqualTo(encryptedCode);
-        List<Activity> activityList = activityMapper.selectByExample(activityExample);
+        List<Activity> activityList = activityMapper.selectByEncryptedCode(encryptedCode);
         if(activityList.size() < 1){
+            log.error("查询活动详情错误：encrypted:{}",encryptedCode);
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
         Activity activity = activityList.get(0);
