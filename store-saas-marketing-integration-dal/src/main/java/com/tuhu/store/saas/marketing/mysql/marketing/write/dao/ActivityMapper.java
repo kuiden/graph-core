@@ -33,4 +33,6 @@ public interface ActivityMapper extends BaseMapper<Activity> {
     int updateByPrimaryKey(Activity record);
 
     Activity getActivityByEncryptedCodeAndStoreId(@Param("encryptedCode") String encryptedCode, @Param("storeId") Long storeId);
+
+    List<Activity> selectByEncryptedCode(@Param("encryptedCode") String encryptedCode);
 }

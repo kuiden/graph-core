@@ -39,14 +39,14 @@ public class MiniWriteOffApi extends BaseApi {
         //
         if (code.startsWith("YHQ")) {
             if (!code.startsWith("YHQ" + storeId)) {
-                throw new StoreSaasMarketingException("门店校验失败");
+                throw new StoreSaasMarketingException("非本门店优惠券");
             }
             //   couponService.writeOffCustomerCouponV2(code);
             result = "customerCoupon";
         } else if (code.startsWith("YXHD")) {
 
             if (!code.startsWith("YXHD" + storeId)) {
-                throw new StoreSaasMarketingException("门店校验失败");
+                throw new StoreSaasMarketingException("非本门店活动");
             }
             result = "activity";
         }
@@ -69,7 +69,7 @@ public class MiniWriteOffApi extends BaseApi {
         }
         long storeId = super.getStoreId();
         if (!code.startsWith("YHQ" + storeId)) {
-            throw new StoreSaasMarketingException("门店校验失败");
+            throw new StoreSaasMarketingException("非本门店优惠券");
         }
         //进入核销流程
         return new BizBaseResponse(couponService.writeOffCustomerCouponV2(code));

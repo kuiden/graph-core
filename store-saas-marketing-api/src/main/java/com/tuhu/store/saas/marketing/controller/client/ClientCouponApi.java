@@ -184,7 +184,7 @@ public class ClientCouponApi extends BaseApi {
             throw new StoreSaasMarketingException("参数验证失败");
         }
         byte[] codeStream = null;
-        String cacheKey = cacheKeyPre + "openGetCustomerCouponCodeByPhone".concat(code);
+        String cacheKey = cacheKeyPre + "openGetCustomerCouponCodeByPhone".concat(code).concat(phone);
         codeStream = (byte[]) redisTemplate.opsForValue().get(cacheKey);
         if (codeStream == null || codeStream.length < 0) {
             try {
