@@ -87,10 +87,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     @Transactional
     @Override
     public ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq){
-        ActivityExample activityExample = new ActivityExample();
-        ActivityExample.Criteria activityCriteria = activityExample.createCriteria();
-        activityCriteria.andEncryptedCodeEqualTo(applyReq.getEncryptedCode());
-        List<Activity> activities = activityMapper.selectByExample(activityExample);
+        List<Activity> activities = activityMapper.selectByEncryptedCode(applyReq.getEncryptedCode());
         if(activities.size()<1){
             throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_NOT_EXIST.getDesc());
         }

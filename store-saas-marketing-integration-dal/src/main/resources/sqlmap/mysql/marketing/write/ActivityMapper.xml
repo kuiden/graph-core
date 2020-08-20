@@ -584,6 +584,6 @@
     SELECT
     <include refid="Base_Column_List" />
     FROM activity
-    WHERE encrypted_code = #{encrypted}
+    WHERE encrypted_code = #{encryptedCode}
   </select>
 </mapper>
