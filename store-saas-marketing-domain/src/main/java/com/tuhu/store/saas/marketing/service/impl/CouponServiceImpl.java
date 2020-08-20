@@ -131,7 +131,7 @@ public class CouponServiceImpl implements ICouponService {
         QrCodeRequest qrCodeRequest = new QrCodeRequest();
         qrCodeRequest.setCouponId(couponId);
         qrCodeRequest.setWidth(250L);
-        qrCodeRequest.setPath("pages/home/home");
+        qrCodeRequest.setPath("pages/drawCoupon/drawCoupon");
         qrCodeRequest.setScene("encryptedCode=" + encryptedCode);
         return imCouponService.getQrCodeForCoupon(qrCodeRequest);
     }
@@ -892,7 +892,7 @@ public class CouponServiceImpl implements ICouponService {
                     criteria.andCouponCodeEqualTo(x.getCode());
                     int customerReceiveCount = customerCouponMapper.countByExample(example);
                     long count = x.getGrantNumber() - (x.getOccupyNum() + num) - customerReceiveCount;
-                    if (count > 0) {
+                    if (count >= 0) {
                         Coupon u = new Coupon();
                         u.setOccupyNum(x.getOccupyNum() + num);
                         u.setId(x.getId());
@@ -1521,6 +1521,7 @@ public class CouponServiceImpl implements ICouponService {
                     throw new StoreSaasMarketingException("指定的客户优惠券已被使用:" + code);
                 }
                 result = "核销成功";
+                redisTemplate.opsForHash().put("WRITEOFFMAP",code,true);
 
             } finally {
                 storeRedisUtils.releaseLock(cacheKey, value.toString());

@@ -98,7 +98,7 @@ public class MiniAppServiceImpl implements MiniAppService {
          * 3、上传图片到图片服务器
          */
         String fileName = UUID.randomUUID()  + ".jpeg";
-        String image = imageUtil.uploadFileToWx(result, fileName, "/store/marketing/coupon/");
+        String image = imageUtil.uploadFileToWx(result, fileName, "/store/marketing");
 
         //String image = imageUploadService.uploadImageByBase64(qrBase64, width, width);
         //上传到腾讯云服务器

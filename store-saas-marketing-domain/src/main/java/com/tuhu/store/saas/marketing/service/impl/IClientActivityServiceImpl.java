@@ -32,7 +32,6 @@ import com.tuhu.store.saas.marketing.remote.request.EndUserMarketingBindRequest;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.ActivityContent;
-import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
 import com.tuhu.store.saas.marketing.request.vo.ClientStoreInfoVO;
 import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.service.IActivityService;
@@ -88,22 +87,23 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     @Transactional
     @Override
     public ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq){
-        //获取当前的客户信息
         ActivityExample activityExample = new ActivityExample();
         ActivityExample.Criteria activityCriteria = activityExample.createCriteria();
         activityCriteria.andEncryptedCodeEqualTo(applyReq.getEncryptedCode());
         List<Activity> activities = activityMapper.selectByExample(activityExample);
         if(activities.size()<1){
-            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_NOT_EXIST.getDesc());
         }
         applyReq.setStoreId(activities.get(0).getStoreId());
         applyReq.setTenantId(activities.get(0).getTenantId());
         ActivityApplyResp activityApplyResp = new ActivityApplyResp();
+        //获取当前的客户信息
         CustomerVO customerVO = new CustomerVO();
         customerVO.setPhone(applyReq.getTelephone());
         customerVO.setStoreId(applyReq.getStoreId());
         List<CustomerDTO> customerReqList = customerClient.getCustomer(customerVO).getData();
         if(customerReqList.size()<1){
+            //该门店下不存在此客户，新增
             CustomerReq customerReq = new CustomerReq();
             customerReq.setPhoneNumber(applyReq.getTelephone());
             customerReq.setGender("3");
@@ -175,11 +175,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if (StringUtils.isBlank(encryptedCode)) {
             throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_CODE_NOT_INPUT.getDesc());
         }
-        ActivityExample activityExample = new ActivityExample();
-        ActivityExample.Criteria activityExampleCriteria = activityExample.createCriteria();
-        activityExampleCriteria.andEncryptedCodeEqualTo(encryptedCode);
-        List<Activity> activityList = activityMapper.selectByExample(activityExample);
+        List<Activity> activityList = activityMapper.selectByEncryptedCode(encryptedCode);
         if(activityList.size() < 1){
+            log.error("查询活动详情错误：encrypted:{}",encryptedCode);
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
         Activity activity = activityList.get(0);
@@ -284,18 +282,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if (org.apache.commons.lang3.StringUtils.isBlank(encryptedCode)) {
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
-        //0.检查此用户在此次活动中的订单数，避开取消重新报名的问题
-        int appliedCount = activityCustomerMapper.countByEncryptedCodeAndUser(encryptedCode,telephone);
-        //订单查询限制条件，防止同用户多订单（不同状态）
-        List<Integer> useStatusLimit=new ArrayList<>();
-        if(appliedCount>1){
-            useStatusLimit.add(MarketingCustomerUseStatusEnum.AC_ORDER_NEVER_USE.getStatus());
-            useStatusLimit.add(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus());
-        }
-
         //1.根据活动编码和用户手机号查询活动报名信息
-        log.info("匹配活动订单，入参:{},{}",encryptedCode,telephone);
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,telephone,useStatusLimit);
+        log.info("匹配活动订单，入参:encryptedCode={},telephone={}",encryptedCode,telephone);
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,telephone);
         log.info("匹配活动订单,出参:{}",JSONObject.toJSONString(activityCustomer));
         if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
@@ -313,7 +302,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
 
     @Override
     public byte[] getQrCodeOfActivityCustomer(String activityEncryptedCode){
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getTelephone(),null);
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getTelephone());
         if(activityCustomer.getUseStatus().intValue() == 0){
             //未核销
             Map<String,Object> codeMap = new HashMap<>(2);

@@ -1,18 +1,26 @@
 package com.tuhu.store.saas.marketing.config;
 
 
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.remote.ResultObject;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.order.base.FieldError;
 import com.xiangyun.versionhelper.VersionPersistenceException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.BeanPropertyBindingResult;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @ControllerAdvice(annotations = RestController.class)
 @Slf4j
@@ -23,10 +31,12 @@ public class ApiExceptionHandlerAdvice {
      */
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     @ResponseBody
-    public ResultObject methodArgumentNotValidException(MethodArgumentNotValidException exception) {
-        BeanPropertyBindingResult beanPropertyBindingResult = (BeanPropertyBindingResult) exception.getBindingResult();
-        ResultObject errorResult = new ResultObject( beanPropertyBindingResult.getAllErrors());
-        errorResult.setCode(6000);
+    public BizBaseResponse methodArgumentNotValidException(MethodArgumentNotValidException exception) {
+        List<FieldError> fieldErrors = extractError(exception.getBindingResult());
+        BizBaseResponse errorResult = new BizBaseResponse(fieldErrors);
+        errorResult.setCode(BizErrorCodeEnum.PARAM_ERROR.getCode());
+        List<String> messages = fieldErrors.stream().map(fieldError -> fieldError.getDefaultMessage()).collect(Collectors.toList());
+        errorResult.setMessage(StringUtils.join(messages,","));
         return errorResult;
     }
 
@@ -76,6 +86,21 @@ public class ApiExceptionHandlerAdvice {
         errorResult.setMessage(exception.getMessage());
         errorResult.setCode(4000);
         return errorResult;
+    }
+
+    /**
+     * 从绑定结果中提出错误字段
+     */
+    private List<FieldError> extractError(BindingResult bindingResult) {
+        List<FieldError> fieldErrors = new ArrayList<>();
+        bindingResult.getFieldErrors().forEach(fieldError -> {
+            FieldError error = new FieldError();
+            error.setField(fieldError.getField());
+            error.setRejectedValue(fieldError.getRejectedValue());
+            error.setDefaultMessage(fieldError.getDefaultMessage());
+            fieldErrors.add(error);
+        });
+        return fieldErrors;
     }
 
 }
