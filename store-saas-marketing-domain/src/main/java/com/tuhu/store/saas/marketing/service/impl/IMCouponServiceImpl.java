@@ -14,6 +14,8 @@ import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
+import com.tuhu.store.saas.marketing.po.ActivityCustomer;
+import com.tuhu.store.saas.marketing.po.ActivityCustomerExample;
 import com.tuhu.store.saas.marketing.po.CouponPO;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
@@ -67,6 +69,9 @@ public class IMCouponServiceImpl implements IMCouponService {
     private OrderCouponMapper orderCouponMapper;
     @Autowired
     private CouponScopeCategoryMapper couponScopeCategoryMapper;
+
+    @Autowired
+    private ActivityCustomerMapper activityCustomerMapper;
     //@Autowired
     //private IBussinessCategoryService bussinessCategoryService;
     //@Autowired
@@ -911,6 +916,39 @@ public class IMCouponServiceImpl implements IMCouponService {
             }
         }
         return QrCode.getQRCodeImage(result, 500, 500);
+    }
+
+    @Override
+    public Boolean openGetUseStatusByCode(String code) throws InterruptedException {
+        Boolean result = null;
+        for (int i = 0;null == result && i < 5;i++){
+            if (redisTemplate.opsForHash().hasKey("WRITEOFFMAP",code)) {
+                result = (Boolean) redisTemplate.opsForHash().get("WRITEOFFMAP", code);
+                redisTemplate.opsForHash().delete("WRITEOFFMAP", code);
+            }else {
+                Thread.sleep(1000);
+            }
+        }
+        if (null == result){
+            if (code.startsWith("YHQ")) {
+                CustomerCouponExample example = new CustomerCouponExample();
+                example.createCriteria().andCodeEqualTo(code);
+                List<CustomerCoupon> coupons = customerCouponMapper.selectByExample(example);
+                if (null != coupons && !coupons.isEmpty()){
+                    result = coupons.get(0).getUseStatus() == 1;
+                }
+            } else if (code.startsWith("YXHD")) {
+                ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
+                activityCustomerExample.createCriteria().andActivityOrderCodeEqualTo(code);
+                List<ActivityCustomer> activityCustomers = activityCustomerMapper.selectByExample(activityCustomerExample);
+                if (null != activityCustomers && !activityCustomers.isEmpty()){
+                    result = activityCustomers.get(0).getUseStatus() == 1;
+                }
+            } else {
+                throw new StoreSaasMarketingException("code不符合编码规范");
+            }
+        }
+        return result;
     }
 
     @Override
