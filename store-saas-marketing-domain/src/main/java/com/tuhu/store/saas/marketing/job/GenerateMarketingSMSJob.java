@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
-import com.tuhu.store.saas.marketing.request.CalculateCustomerCountReq;
 import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.request.SendRemindReq;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
@@ -17,16 +16,18 @@ import com.xxl.job.core.handler.IJobHandler;
 import com.xxl.job.core.handler.annotation.JobHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 定时扫描营销任务，添加发送短信
+ * 定时扫描营销任务，添加代发短信记录
  */
 @Slf4j
 @Component
@@ -75,6 +76,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
     @Override
     public ReturnT<String> execute(String param) throws Exception {
+        log.info("{} -> 时间: {}", "generateMarketingSMSJob定时任务", new Date());
         Date sendTime = DateUtils.getNextMinutes(DateUtils.now(),minutesLater);
         CustomerMarketingExample customerMarketingExample = new CustomerMarketingExample();
         CustomerMarketingExample.Criteria listCriterion = customerMarketingExample.createCriteria();
@@ -127,8 +129,10 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
             //替换短链
             List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
-            sendDatas.set(sendDatas.size()-1, url);
+            sendDatas.add(url);
 
+            sendRemindReq.setCustomerId(marketingSendRecord.getCustomerId());
+            sendRemindReq.setCustomerName(marketingSendRecord.getCustomerName());
             sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
             sendRemindReq.setTenantId(customerMarketing.getTenantId());
@@ -205,8 +209,10 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             //替换短链
             String url = iUtilityService.getShortUrl(couponUrl + customerIdCodeMap.get(marketingSendRecord.getCustomerId()));
             List<String> sendDatas = GsonTool.fromJsonList(customerMarketing.getMessageDatas(),String.class);
-            sendDatas.set(sendDatas.size()-1, url);
+            sendDatas.add(url);
 
+            sendRemindReq.setCustomerId(marketingSendRecord.getCustomerId());
+            sendRemindReq.setCustomerName(marketingSendRecord.getCustomerName());
             sendRemindReq.setDatas(GsonTool.toJSONString(sendDatas));
             sendRemindReq.setStoreId(customerMarketing.getStoreId());
             sendRemindReq.setTenantId(customerMarketing.getTenantId());

@@ -239,7 +239,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
             params.add("价值" + coupon.getContentValue().intValue()+ "元" +coupon.getTitle());
-            params.add(storeDTO.getMobilePhone());
+            params.add(storeDTO.getClientAppointPhone());
             //TODO 替换短链
             if(StringUtils.isNotBlank(orginUrl)){
                 params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
@@ -255,26 +255,26 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             }
 
             //算出活动价和原价
-            BigDecimal activityPrice = activityResp.getActivityPrice();
+            BigDecimal activityPrice = activityResp.getActivityPrice().divide(BigDecimal.valueOf(100),2 ,RoundingMode.HALF_UP);
             BigDecimal srcPrice = new BigDecimal(0);
             List<ActivityItemResp> activityItemResps = activityResp.getItems();
             for(ActivityItemResp activityItemResp : activityItemResps){
-                if(activityItemResp.getGoodsType()){
+//                if(activityItemResp.getGoodsType()){
                     //服务(价格/100)*(时长/100)
-                    BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
-                    BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity()).divide(BigDecimal.valueOf(100),RoundingMode.HALF_UP);
+                    BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
+                    BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity());
                     srcPrice = srcPrice.add(itemSiglePrice.multiply(exeTime));
-
-                }else{
-                    //商品 (价格/100)*个数
-                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
-                    srcPrice = srcPrice.add(itemPrice);
-                }
+//
+//                }else{
+//                    //商品 (价格/100)*个数
+//                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
+//                    srcPrice = srcPrice.add(itemPrice);
+//                }
             }
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
             params.add(activityPrice.toString()+"抵"+srcPrice.toString());
-            params.add(storeDTO.getMobilePhone());
+            params.add(storeDTO.getClientAppointPhone());
             params.add(activityResp.getActivityTitle());
             //生成短连接
           /*  StringBuffer url = new StringBuffer();
@@ -421,11 +421,15 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送对象不能为空");
         }
         //如果是优惠券定向营销，需要判断券额度
-        if(addReq.getMarketingMethod().equals(0)) {
+        if("0".equals(addReq.getMarketingMethod().toString())) {
             Long availableAccount = couponService.getCouponAvailableAccount(coupon.getId(), addReq.getStoreId());
 
             if(availableAccount >=0 && availableAccount < customerList.size()) {//如果是限量优惠券，需要判断剩余额度
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券数量不足");
+            }
+            //状态禁用的优惠券无法创建定向营销
+            if(coupon.getStatus().equals(0)) {
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券已被禁用");
             }
         }
 
@@ -524,7 +528,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         iMarketingSendRecordService.batchInsertMarketingSendRecord(records);
 
         //如果是优惠券定向营销，需要占用优惠券额度
-        if(addReq.getMarketingMethod().equals(0)){
+        if("0".equals(addReq.getMarketingMethod().toString())){
             Coupon couponEntity = new Coupon();
             BeanUtils.copyProperties(coupon, couponEntity);
             couponService.setOccupyNum(couponEntity, customerList.size());

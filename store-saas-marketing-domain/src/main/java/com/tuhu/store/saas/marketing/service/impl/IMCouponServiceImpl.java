@@ -652,7 +652,20 @@ public class IMCouponServiceImpl implements IMCouponService {
             }
         }
         couponItemResp.setLeftCouponNumber(leftNumber);//剩余可领数量
-        couponItemResp.setHasReceived(recievedCouponCount(couponItemResp, customerId) > 0 ? true : false);//是否已领取
+
+        couponItemResp.setHasReceived(false);//是否已领取
+        if (!StringUtils.isBlank(customerId)) {//为登录
+
+            CustomerCouponExample example = new CustomerCouponExample();
+            CustomerCouponExample.Criteria criteria = example.createCriteria();
+            criteria.andCouponCodeEqualTo(couponItemResp.getCode());
+            criteria.andCustomerIdEqualTo(customerId);
+            List<CustomerCoupon>  customerCoupons= customerCouponMapper.selectByExample(example);
+            if (CollectionUtils.isNotEmpty(customerCoupons)){
+                couponItemResp.setHasReceived(true);//是否已领取
+                couponItemResp.setUseEndTime(customerCoupons.get(0).getUseEndTime());
+            }
+        }
         couponItemResp.setCode(null);
         map.put("couponInfo", couponItemResp);
         return map;

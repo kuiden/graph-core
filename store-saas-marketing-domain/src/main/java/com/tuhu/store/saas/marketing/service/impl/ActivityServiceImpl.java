@@ -87,6 +87,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.json.JsonObject;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -427,7 +428,7 @@ public class ActivityServiceImpl implements IActivityService {
         log.info("查询门店信息请求，storeId={},tanentId={},companyId={}", storeId, tanentId, companyId);
         StoreInfoVO storeInfoVO = new StoreInfoVO();
         storeInfoVO.setStoreId(storeId);
-        storeInfoVO.setCompanyId(companyId);
+//        storeInfoVO.setCompanyId(companyId);
         storeInfoVO.setTanentId(tanentId);
         try {
             StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
@@ -586,7 +587,7 @@ public class ActivityServiceImpl implements IActivityService {
         if (activityListReq.getStatus() != null) {
             activityExampleCriteria.andStatusEqualTo(activityListReq.getStatus());
         }
-        activityExample.setOrderByClause("create_time desc");
+        activityExample.setOrderByClause("update_time desc");
         PageHelper.startPage(activityListReq.getPageNum() + 1, activityListReq.getPageSize());
         List<Activity> activityList = activityMapper.selectByExample(activityExample);
         PageInfo<Activity> activityPageInfo = new PageInfo<>(activityList);
@@ -989,11 +990,16 @@ public class ActivityServiceImpl implements IActivityService {
             ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
             activityCustomerExampleCriteria.andActivityCodeEqualTo(activity.getActivityCode());
             activityCustomerExampleCriteria.andCustomerIdEqualTo(customerId);
-            activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
+//            activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
             List<ActivityCustomer> activityCustomerList=activityCustomerMapper.selectByExample(activityCustomerExample);
             if(activityCustomerList.size()>0){
                 CommonResp<String> result=new CommonResp<>();
-                result.setData(activityCustomerList.get(0).getActivityOrderCode());
+                ActivityCustomer activityCustomer = activityCustomerList.get(0);
+                if(activityCustomer.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_CANCELED.getStatusOfByte())){
+                    //存在被取消的订单，重新报名
+                    return reApplyAfterCanceled(activity,activityCustomer);
+                }
+                result.setData(activityCustomer.getActivityOrderCode());
                 result.setCode(4005);
                 result.setMessage("您已参加过本活动");
                 result.setSuccess(false);
@@ -1007,6 +1013,93 @@ public class ActivityServiceImpl implements IActivityService {
         //3.报名
         CommonResp<String> result = genarateActivityCustomer(activity, activityApplyReq);
         return result;
+    }
+
+    /**
+     * 取消后重新报名
+     *
+     * @param activityCustomer
+     * @return
+     */
+    public CommonResp<String> reApplyAfterCanceled(Activity activity,ActivityCustomer activityCustomer){
+        String activityCode = activity.getActivityCode();
+        Long applyNumber = activity.getApplyNumber();
+        //如果不是不限制报名人数
+        String key = activityApplyCountPrefix.concat(activityCode);
+        if (!applyNumber.equals(-1L)) {
+            String applyCountStr = redisTemplate.opsForValue().get(key);
+            if (StringUtils.isBlank(applyCountStr)) {//如果之前未存放报名人数
+                ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
+                ActivityCustomerExample.Criteria activityCustomerExampleCriteria = activityCustomerExample.createCriteria();
+                activityCustomerExampleCriteria.andActivityCodeEqualTo(activity.getActivityCode());
+                activityCustomerExampleCriteria.andUseStatusNotEqualTo((byte) 2);
+                int count = activityCustomerMapper.countByExample(activityCustomerExample);
+                if (Long.valueOf(count).compareTo(applyNumber) >= 0) {
+                    log.warn("营销活动[code={},name={}]已报名完毕.", activityCode, activity.getActivityTitle());
+                    redisTemplate.delete(key);
+                    return CommonResp.failed(4006, "报名人数已满");
+                } else if (StringUtils.isBlank(applyCountStr = redisTemplate.opsForValue().get(key))) {
+                    Long initCount = redisTemplate.opsForValue().increment(key, Long.valueOf(count));
+                    applyCountStr = String.valueOf(initCount);
+                    if (initCount.compareTo(Long.valueOf(count)) != 0) {//初始化值不相等,说明有别的请求进行了初始化
+                        applyCountStr = String.valueOf(redisTemplate.opsForValue().increment(key, Long.valueOf(0 - count)));
+                    }
+                }
+            }
+            Long applyCount = Long.valueOf(applyCountStr);
+            if (applyCount.compareTo(applyNumber) >= 0) {
+                log.warn("营销活动[code={},name={}]已报名完毕.", activityCode, activity.getActivityTitle());
+                redisTemplate.delete(key);
+                return CommonResp.failed(4006, "报名人数已满");
+            }
+        }
+        Long newApplyCount = redisTemplate.opsForValue().increment(key, 1L);//记录一次报名
+        if (newApplyCount.compareTo(applyNumber) > 0 && !applyNumber.equals(-1L)) {
+            log.warn("营销活动[code={},name={}]已报名完毕.", activityCode, activity.getActivityTitle());
+            redisTemplate.delete(key);
+            return CommonResp.failed(4006, "报名人数已满");
+        }
+        //再次检查活动是否可以报名
+        CommonResp<String> result = checkActivityForApply(activity);
+        if (null != result && !result.isSuccess()) {
+            redisTemplate.delete(key);
+            return result;
+        }
+        //更新Activity-customer
+        activityCustomer.setCreateTime(new Date());
+        activityCustomer.setStartTime(activity.getStartTime());
+        activityCustomer.setUseTime(null);
+        activityCustomer.setEndTime(this.getApplyedEndDate(activity.getStartTime(), activity.getEndTime(), activity.getActiveType(), activity.getActiveDays(), activity.getActiveDate()));
+        activityCustomer.setUseStatus((byte) 0);
+
+        //发送报名成功通知短信
+        SendRemindReq sendRemindReq = new SendRemindReq();
+        sendRemindReq.setStoreId(activityCustomer.getStoreId());
+        sendRemindReq.setTenantId(activityCustomer.getTenantId());
+        sendRemindReq.setUserId(activity.getCreateUser());
+        CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
+        customerAndVehicleReq.setCustomerId(activityCustomer.getCustomerId());
+        sendRemindReq.setCustomerList(Collections.singletonList(customerAndVehicleReq));
+        sendRemindReq.setMessageTemplateId(applyMessageTemplateId);
+        List<String> datas = new ArrayList<>();
+        datas.add(activity.getActivityTitle());
+        String datePattern = "yyyy年MM月dd日";
+        datas.add(DateFormatUtils.format(activity.getEndTime(), datePattern));
+        sendRemindReq.setDatas(JSONObject.toJSONString(datas));
+        StringBuilder messageStatus = new StringBuilder("000");
+        try {
+            iRemindService.send(sendRemindReq,false);
+            messageStatus.replace(0, 1, "1");
+        } catch (Exception e) {
+            log.error("报名成功发送短信失败，request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
+        }
+
+        activityCustomer.setMessageStatus(messageStatus.toString());
+        if(activityCustomerMapper.updateByPrimaryKey(activityCustomer)<1){
+            log.warn("更新活动订单失败，request:{}",JSONObject.toJSONString(activityCustomer));
+            return CommonResp.failed(4003,"报名失败");
+        }
+        return new CommonResp<>(activityCustomer.getActivityOrderCode());
     }
 
     /**
@@ -1225,10 +1318,22 @@ public class ActivityServiceImpl implements IActivityService {
         if (CollectionUtils.isNotEmpty(activityItemList)) {
             List<ActivityItemResp> activityItemRespList = new ArrayList<>();
             for (ActivityItem activityItem : activityItemList) {
-                ActivityItemResp activityItemResp = new ActivityItemResp();
-                BeanUtils.copyProperties(activityItem, activityItemResp);
-                activityItemRespList.add(activityItemResp);
+                //优先显示服务
+                if(activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
             }
+            for (ActivityItem activityItem : activityItemList) {
+                //再显示商品
+                if(!activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
+            }
+
             activityResp.setItems(activityItemRespList);
         }
         //原价计算
@@ -1297,13 +1402,9 @@ public class ActivityServiceImpl implements IActivityService {
 
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
         if(activityCustomerList.size() < 1){
-            throw new MarketingException("查询不到活动信息");
-        }
-        ActivityCustomer activityCustomer = activityCustomerList.get(0);
-        //查询结果
-        if(activityCustomer == null){
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
         }
+        ActivityCustomer activityCustomer = activityCustomerList.get(0);
         //状态检查
         if(activityCustomer.getUseStatus().intValue() == useStatus.intValue() ){
             if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
@@ -1316,25 +1417,14 @@ public class ActivityServiceImpl implements IActivityService {
         }
 
         try {
-            //发送短信通知
-//            SendRemindReq sendRemindReq = new SendRemindReq();
-//            sendRemindReq.setStoreId(activityCustomerReq.getStoreId());
-//            sendRemindReq.setTenantId(activityCustomerReq.getTenantId());
-//            sendRemindReq.setUserId(activityCustomerReq.getUserId());
-//            CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
-//            customerAndVehicleReq.setCustomerId(activityCustomerReq.getCustomerId());
-//            sendRemindReq.setList(Collections.singletonList(customerAndVehicleReq));
-//            List<String> datas = Collections.singletonList(activityResp.getActivityTitle());
-//            sendRemindReq.setDatas(JSONObject.toJSONString(datas));
             StringBuilder messageStatus = new StringBuilder(activityCustomer.getMessageStatus());
             if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
                 //核销
-//                sendRemindReq.setMessageTemplateId(writeOffMessageTemplateId);
                 //状态二进制消息更新
                 messageStatus.replace(1, 2, "1");
+                redisTemplate.opsForHash().put("WRITEOFFMAP",activityOrderCode,true);
             }else{
                 //取消
-//                sendRemindReq.setMessageTemplateId(cancelMessageTemplateId);
                 messageStatus.replace(2, 3, "1");
                 String notCancelKey=activityApplyCountPrefix.concat(activityCustomer.getActivityCode());
                 redisTemplate.opsForValue().increment(notCancelKey,-1L);
@@ -1342,7 +1432,6 @@ public class ActivityServiceImpl implements IActivityService {
             activityCustomer.setUseTime(new Date());
             activityCustomer.setMessageStatus(messageStatus.toString());
             activityCustomer.setUseStatus(useStatus.byteValue());
-//            iRemindService.send(sendRemindReq);
         } catch (Exception e) {
 //            log.error("营销活动发送短信异常,request={},error={}", JSONObject.toJSONString(sendRemindReq), ExceptionUtils.getStackTrace(e));
         }
@@ -2283,15 +2372,15 @@ public class ActivityServiceImpl implements IActivityService {
 
     private Date getApplyedEndDate(Date activityStartDate, Date activityEndDate, Integer activeType, Integer activeDays, Date activeDate) {
         if (activeType == null) {
-            return activityEndDate;
+            return this.getLastSecondOfDate(activityEndDate);
         }else if (activeType == 0) {
             LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays);
             Date appDate = Date.from(appLocalDate.atZone(ZoneId.systemDefault()).toInstant());
-            if (appDate.before(activityEndDate)) {
+//            if (appDate.before(activityEndDate)) {
                 return appDate;
-            }else {
-                return activityEndDate;
-            }
+//            }else {
+//                return activityEndDate;
+//            }
         }else {
             return this.getLastSecondOfDate(activeDate);
         }

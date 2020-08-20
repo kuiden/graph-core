@@ -91,7 +91,7 @@ public class H5ReservationApi extends BaseApi {
         //校验验证码
         String code = storeRedisUtils.redisGet(verificationCodeKey+req.getCustomerPhoneNumber());
         if(code == null){
-            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码已过期");
+            return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码过期或无效");
         }
         if(!code.equals(req.getVerificationCode())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "验证码错误");
@@ -119,6 +119,7 @@ public class H5ReservationApi extends BaseApi {
         }
 
         result.setData(iNewReservationService.addReservation(req,2));
+        storeRedisUtils.redisDelete(verificationCodeKey+req.getCustomerPhoneNumber());
         return result;
     }
 

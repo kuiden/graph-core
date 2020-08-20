@@ -80,6 +80,7 @@ public class CardServiceImpl implements ICardService {
     private StringRedisTemplate redisTemplate;
 
     @Override
+    @Transactional
     public Long saveCardTemplate(CardTemplateModel req, String userId) {
         log.info("CardServiceImpl-> addCardTemplate req={}", req);
         if (cardTemplateMapper.checkCardTemplateName(req.getCardName().trim(), req.getId() == null ? 0 : req.getId(), req.getTenantId(), req.getStoreId()) > 0)

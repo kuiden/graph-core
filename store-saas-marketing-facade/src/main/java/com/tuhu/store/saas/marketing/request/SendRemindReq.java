@@ -33,6 +33,16 @@ public class SendRemindReq implements Serializable {
     @NotNull(message = "请选择消息模板!")
     private String messageTemplateId;
 
+    /**
+     * 客户id
+     */
+    private String customerId;
+
+    /**
+     * 客户名称
+     */
+    private String customerName;
+
     private Long storeId;
 
     private Long tenantId;

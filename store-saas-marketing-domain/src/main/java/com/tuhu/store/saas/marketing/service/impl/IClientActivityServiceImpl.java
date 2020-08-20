@@ -32,7 +32,6 @@ import com.tuhu.store.saas.marketing.remote.request.EndUserMarketingBindRequest;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
 import com.tuhu.store.saas.marketing.request.ActivityContent;
-import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
 import com.tuhu.store.saas.marketing.request.vo.ClientStoreInfoVO;
 import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.service.IActivityService;
@@ -88,27 +87,28 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
     @Transactional
     @Override
     public ActivityApplyResp clientActivityApply(ActivityApplyReq applyReq){
-        //获取当前的客户信息
         ActivityExample activityExample = new ActivityExample();
         ActivityExample.Criteria activityCriteria = activityExample.createCriteria();
         activityCriteria.andEncryptedCodeEqualTo(applyReq.getEncryptedCode());
         List<Activity> activities = activityMapper.selectByExample(activityExample);
         if(activities.size()<1){
-            throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_NOT_EXIST.getDesc());
+            throw new MarketingException(MarketingBizErrorCodeEnum.ACTIVITY_NOT_EXIST.getDesc());
         }
         applyReq.setStoreId(activities.get(0).getStoreId());
         applyReq.setTenantId(activities.get(0).getTenantId());
         ActivityApplyResp activityApplyResp = new ActivityApplyResp();
+        //获取当前的客户信息
         CustomerVO customerVO = new CustomerVO();
         customerVO.setPhone(applyReq.getTelephone());
         customerVO.setStoreId(applyReq.getStoreId());
         List<CustomerDTO> customerReqList = customerClient.getCustomer(customerVO).getData();
         if(customerReqList.size()<1){
+            //该门店下不存在此客户，新增
             CustomerReq customerReq = new CustomerReq();
             customerReq.setPhoneNumber(applyReq.getTelephone());
             customerReq.setGender("3");
             customerReq.setCustomerType(CustomTypeEnumVo.PERSON.getCode());
-            customerReq.setCustomerSource(CustomerSourceEnumVo.QT.getCode());
+            customerReq.setCustomerSource(CustomerSourceEnumVo.WLYL.getCode());
             customerReq.setIsVip(false);
             AddVehicleReq addVehicleReq = new AddVehicleReq();
             addVehicleReq.setCustomerReq(customerReq);
@@ -285,7 +285,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             throw new MarketingException(MarketingBizErrorCodeEnum.AC_ORDER_CODE_NOT_INPUT.getDesc());
         }
         //1.根据活动编码和用户手机号查询活动报名信息
-        log.info("匹配活动订单，入参:{},{}",encryptedCode,telephone);
+        log.info("匹配活动订单，入参:encryptedCode={},telephone={}",encryptedCode,telephone);
         ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(encryptedCode,telephone);
         log.info("匹配活动订单,出参:{}",JSONObject.toJSONString(activityCustomer));
         if(activityCustomer == null){
