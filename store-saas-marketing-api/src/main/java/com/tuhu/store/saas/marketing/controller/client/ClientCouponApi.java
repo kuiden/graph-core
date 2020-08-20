@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.controller.client;
 
 
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
@@ -14,6 +15,7 @@ import com.tuhu.store.saas.marketing.response.CouponPageResp;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
+import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -195,6 +197,37 @@ public class ClientCouponApi extends BaseApi {
             }
         }
         return codeStream;
+    }
+
+    @Autowired
+    private StoreRedisUtils storeRedisUtils;
+    public static final String REDIS_PREFIX_KEYS = "STORE_SAAS_MARKETING_";
+
+    @GetMapping(value = "/open/openGetUseStatusByCode")
+    @ApiOperation("获取核销状态")
+    public BizBaseResponse<Boolean> openGetUseStatusByCode(@RequestParam String code) throws InterruptedException {
+        if (StringUtils.isBlank(code)){
+            throw new StoreSaasMarketingException("参数验证失败");
+        }
+        String key =  REDIS_PREFIX_KEYS + "openGetUseStatusByCode_" + code;
+        Object obj = storeRedisUtils.getAtomLock(key, 5);
+        log.info("tryLock key = [{}]", key);
+        if (obj != null) {
+            log.info("tryLock success, key = [{}]", key);
+            // 获取锁成功
+            try {
+                return new BizBaseResponse(imCouponService.openGetUseStatusByCode(code));
+            } catch (Exception e) {
+                //如果发生异常后 放上释放锁
+                storeRedisUtils.releaseLock(key, obj.toString());
+                log.error("RepeatSubmit error key: {}", key, e);
+                throw new StoreSaasMarketingException(e.getMessage());
+            }
+        } else {
+            // 获取锁失败，认为是重复提交的请求
+            log.info("tryLock fail, key = [{}]", key);
+            return new BizBaseResponse<>(BizErrorCodeEnum.TOO_MANY_REQUEST);
+        }
     }
 
 
