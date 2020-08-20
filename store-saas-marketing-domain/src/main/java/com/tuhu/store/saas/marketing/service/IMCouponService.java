@@ -56,7 +56,7 @@ public interface IMCouponService extends Default {
 
     byte [] openGetCustomerCouponCodeByPhone(String phone, String code) throws Exception;
 
-    Boolean openGetUseStatusByCode(String code) throws InterruptedException;
+    Integer openGetUseStatusByCode(String code) throws InterruptedException;
 
     CustomerCouponPageResp getMyCouponList(CouponReceiveRecordRequest req, String customerId);
 

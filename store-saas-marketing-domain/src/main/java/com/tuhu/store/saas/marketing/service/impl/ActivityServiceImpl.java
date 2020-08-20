@@ -1409,6 +1409,7 @@ public class ActivityServiceImpl implements IActivityService {
         if(activityCustomer.getUseStatus().intValue() == useStatus.intValue() ){
             if(useStatus.equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatus())) {
                 //重复核销
+                redisTemplate.opsForHash().put("WRITEOFFMAP",activityOrderCode,"-1");
                 throw new MarketingException("已核销，请勿重复执行");
             }else{
                 //取消
@@ -1422,7 +1423,7 @@ public class ActivityServiceImpl implements IActivityService {
                 //核销
                 //状态二进制消息更新
                 messageStatus.replace(1, 2, "1");
-                redisTemplate.opsForHash().put("WRITEOFFMAP",activityOrderCode,true);
+                redisTemplate.opsForHash().put("WRITEOFFMAP",activityOrderCode,"1");
             }else{
                 //取消
                 messageStatus.replace(2, 3, "1");

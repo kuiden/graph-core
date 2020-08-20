@@ -932,11 +932,12 @@ public class IMCouponServiceImpl implements IMCouponService {
     }
 
     @Override
-    public Boolean openGetUseStatusByCode(String code) throws InterruptedException {
-        Boolean result = null;
+    public Integer openGetUseStatusByCode(String code) throws InterruptedException {
+        Integer result = null;
         for (int i = 0;null == result && i < 5;i++){
             if (redisTemplate.opsForHash().hasKey("WRITEOFFMAP",code)) {
-                result = (Boolean) redisTemplate.opsForHash().get("WRITEOFFMAP", code);
+                String status = (String)redisTemplate.opsForHash().get("WRITEOFFMAP", code);
+                result = Integer.parseInt(status);
                 redisTemplate.opsForHash().delete("WRITEOFFMAP", code);
             }else {
                 Thread.sleep(1000);
@@ -948,14 +949,14 @@ public class IMCouponServiceImpl implements IMCouponService {
                 example.createCriteria().andCodeEqualTo(code);
                 List<CustomerCoupon> coupons = customerCouponMapper.selectByExample(example);
                 if (null != coupons && !coupons.isEmpty()){
-                    result = coupons.get(0).getUseStatus() == 1;
+                    result = coupons.get(0).getUseStatus().intValue();
                 }
             } else if (code.startsWith("YXHD")) {
                 ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
                 activityCustomerExample.createCriteria().andActivityOrderCodeEqualTo(code);
                 List<ActivityCustomer> activityCustomers = activityCustomerMapper.selectByExample(activityCustomerExample);
                 if (null != activityCustomers && !activityCustomers.isEmpty()){
-                    result = activityCustomers.get(0).getUseStatus() == 1;
+                    result = activityCustomers.get(0).getUseStatus().intValue();
                 }
             } else {
                 throw new StoreSaasMarketingException("code不符合编码规范");
