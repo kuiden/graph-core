@@ -51,7 +51,7 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
     private StoreProductClient storeProductClient;
     @Override
     @Transactional
-    public void saveCustomerGroup(CustomerGroupReq req){
+    public Long saveCustomerGroup(CustomerGroupReq req){
         CustomerGroupDto customerGroupDto = transferCustomerGroupDto(req);
         if(CollectionUtils.isEmpty(customerGroupDto.getCustomerGroupRuleReqList())){
             throw new StoreSaasMarketingException("请填写特征信息");
@@ -110,6 +110,8 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         }
         //计算客群数量
         updateCustomerCountInfo(req.getStoreId(), id);
+
+        return id;
 
     }
 

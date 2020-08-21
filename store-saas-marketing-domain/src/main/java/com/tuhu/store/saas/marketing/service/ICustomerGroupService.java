@@ -14,7 +14,7 @@ import java.util.Map;
 
 public interface ICustomerGroupService {
 
-    void saveCustomerGroup(CustomerGroupReq req);
+    Long saveCustomerGroup(CustomerGroupReq req);
 
     CustomerGroupResp getCustomerGroupDetail(CustomerGroupReq req) throws ParseException;
 
