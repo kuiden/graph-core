@@ -503,9 +503,20 @@ public class ActivityServiceImpl implements IActivityService {
         if (CollectionUtils.isNotEmpty(activityItemList)) {
             List<ActivityItemResp> activityItemRespList = new ArrayList<>();
             for (ActivityItem activityItem : activityItemList) {
-                ActivityItemResp activityItemResp = new ActivityItemResp();
-                BeanUtils.copyProperties(activityItem, activityItemResp);
-                activityItemRespList.add(activityItemResp);
+                //优先显示服务
+                if(activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
+            }
+            for (ActivityItem activityItem : activityItemList) {
+                //再显示商品
+                if(!activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
             }
             activityResp.setOriginalTotalPrice(BigDecimal.valueOf(activityItemList.stream().mapToLong(r->{
                 return r.getOriginalPrice()*r.getItemQuantity();

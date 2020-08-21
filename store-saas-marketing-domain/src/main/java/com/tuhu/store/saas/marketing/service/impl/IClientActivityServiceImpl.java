@@ -215,9 +215,20 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if (CollectionUtils.isNotEmpty(activityItemList)) {
             List<ActivityItemResp> activityItemRespList = new ArrayList<>();
             for (ActivityItem activityItem : activityItemList) {
-                ActivityItemResp activityItemResp = new ActivityItemResp();
-                BeanUtils.copyProperties(activityItem, activityItemResp);
-                activityItemRespList.add(activityItemResp);
+                //优先显示服务
+                if(activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
+            }
+            for (ActivityItem activityItem : activityItemList) {
+                //再显示商品
+                if(!activityItem.getGoodsType()){
+                    ActivityItemResp activityItemResp = new ActivityItemResp();
+                    BeanUtils.copyProperties(activityItem, activityItemResp);
+                    activityItemRespList.add(activityItemResp);
+                }
             }
             activityResp.setItems(activityItemRespList);
         }
