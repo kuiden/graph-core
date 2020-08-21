@@ -101,7 +101,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             return pageInfo;
         }
         pageInfo.setTotal(total);
-        customerMarketingExample.setOrderByClause("send_time desc");
+        customerMarketingExample.setOrderByClause("send_time desc, create_time desc");
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
         List<CustomerMarketing> customerMarketingList = customerMarketingMapper.selectByExample(customerMarketingExample);
 

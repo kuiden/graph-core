@@ -7,7 +7,7 @@
  */
 package com.tuhu.store.saas.marketing.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
+import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.dataobject.MessageQuantityExample;
@@ -15,10 +15,11 @@ import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MessageQuantityMapper;
 import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
+import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,11 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
 
     @Autowired
     private IdKeyGen idKeyGen;
+
+    private static final String occupyMessageNumKeyPrefix = "occupyMessageNumKey";
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Override
     public MessageQuantity selectQuantityByTenantIdAndStoreId(MessageQuantity select) {
@@ -92,17 +98,29 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
 
     @Override
     public void setStoreOccupyQuantity(MessageQuantity select, Long occupyNum, String updateUser, boolean occupy) {
-        MessageQuantity messageQuantity = this.selectQuantityByTenantIdAndStoreId(select);
-        Long oldOccupyNum = messageQuantity.getOccupyQuantity();
 
-        if(occupy) {//占用
-            messageQuantity.setOccupyQuantity(oldOccupyNum + occupyNum);
-        }else {//释放
-            messageQuantity.setOccupyQuantity(oldOccupyNum - occupyNum);
+        log.info("setStoreOccupyQuantity-> req-> {} {} {}", select, occupyNum, occupy);
+        String occupyNumKey = occupyMessageNumKeyPrefix + "" + select.getStoreId() + select.getTenantId();
+        RedisUtils redisUtils = new RedisUtils(redisTemplate,"occupyMessageNum");
+        StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
+        Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
+        if (value != null) {
+            try {
+                MessageQuantity messageQuantity = this.selectQuantityByTenantIdAndStoreId(select);
+                Long oldOccupyNum = messageQuantity.getOccupyQuantity();
+
+                if(occupy) {//占用
+                    messageQuantity.setOccupyQuantity(oldOccupyNum + occupyNum);
+                }else {//释放
+                    messageQuantity.setOccupyQuantity(oldOccupyNum - occupyNum);
+                }
+                messageQuantity.setUpdateTime(new Date());
+                messageQuantity.setUpdateUser(updateUser);
+                quantityMapper.updateByPrimaryKey(messageQuantity);
+            } finally {
+                storeRedisUtils.releaseLock(occupyNumKey, value.toString());
+            }
         }
-        messageQuantity.setUpdateTime(new Date());
-        messageQuantity.setUpdateUser(updateUser);
-        quantityMapper.updateByPrimaryKey(messageQuantity);
     }
 
     @Override
