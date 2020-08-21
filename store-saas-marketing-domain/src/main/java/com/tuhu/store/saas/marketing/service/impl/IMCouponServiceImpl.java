@@ -950,6 +950,8 @@ public class IMCouponServiceImpl implements IMCouponService {
                 List<CustomerCoupon> coupons = customerCouponMapper.selectByExample(example);
                 if (null != coupons && !coupons.isEmpty()){
                     result = coupons.get(0).getUseStatus().intValue();
+                } else {
+                    throw new StoreSaasMarketingException("该优惠券不存在");
                 }
             } else if (code.startsWith("YXHD")) {
                 ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
@@ -957,6 +959,8 @@ public class IMCouponServiceImpl implements IMCouponService {
                 List<ActivityCustomer> activityCustomers = activityCustomerMapper.selectByExample(activityCustomerExample);
                 if (null != activityCustomers && !activityCustomers.isEmpty()){
                     result = activityCustomers.get(0).getUseStatus().intValue();
+                } else {
+                    throw new StoreSaasMarketingException("该营销活动不存在");
                 }
             } else {
                 throw new StoreSaasMarketingException("code不符合编码规范");

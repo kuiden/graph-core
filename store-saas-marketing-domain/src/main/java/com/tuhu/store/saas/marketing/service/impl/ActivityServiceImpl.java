@@ -696,11 +696,6 @@ public class ActivityServiceImpl implements IActivityService {
         if (oldActivity.getStartTime().compareTo(date) <= 0) {
             throw new MarketingException("活动过开始时间，不允许编辑");
         }
-        if (CollectionUtils.isNotEmpty(editActivityReq.getItems())) {
-            editActivityReq.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(r->{
-                return r.getItemQuantity()*r.getActualPrice();
-            }).sum()));
-        }
         //校验输入
         String validateResult = this.validateEditActivityReq(oldActivity, editActivityReq);
         if (null != validateResult) {
@@ -815,6 +810,11 @@ public class ActivityServiceImpl implements IActivityService {
         }
         if (null != editActivityReq.getPicActivityTemplateId()) {
             editActivity.setPicActivityTemplateId(editActivityReq.getPicActivityTemplateId());
+        }
+        if (CollectionUtils.isNotEmpty(editActivityReq.getItems())) {
+            editActivityReq.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(r->{
+                return r.getItemQuantity()*r.getActualPrice();
+            }).sum()));
         }
         if (null != editActivityReq.getActiveType()) {
             editActivity.setActiveType(editActivityReq.getActiveType());
