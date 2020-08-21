@@ -14,7 +14,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
-import com.tuhu.store.saas.marketing.context.CustomerContextHolder;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
@@ -263,8 +263,8 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         activityResp.setWriteOffCount(activityCustomerList.stream().
                 filter(x->x.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte())).count());
         //报名状态,如果当前页面为用户登录访问
-        if(CustomerContextHolder.getUser()!=null){
-            String loginPhone = CustomerContextHolder.getUser().getPhone();
+        if(EndUserContextHolder.getUser()!=null){
+            String loginPhone = EndUserContextHolder.getTelephone();
             if(loginPhone!=null){
                 activityCustomerList.stream().forEach(x->{
                     log.info("x.getTelephone()={},getPhone()={}", x.getTelephone(),loginPhone);
@@ -321,7 +321,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
 
     @Override
     public byte[] getQrCodeOfActivityCustomer(String activityEncryptedCode){
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,CustomerContextHolder.getUser().getPhone());
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getUser().getPhone());
         if(activityCustomer.getUseStatus().intValue() == 0){
             //未核销
             Map<String,Object> codeMap = new HashMap<>(2);

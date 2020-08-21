@@ -5,13 +5,13 @@ import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
-import com.tuhu.store.saas.marketing.context.CustomerContextHolder;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.VerificationCodeUtils;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.remote.CustomerAuthDto;
-import com.tuhu.store.saas.marketing.remote.auth.AuthClient;
+import com.tuhu.store.saas.marketing.remote.EndUser;
+import com.tuhu.store.saas.marketing.remote.auth.StoreAuthClient;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
@@ -63,7 +63,7 @@ public class ClientActivityApi {
     StoreUserClient storeUserClient;
 
     @Autowired
-    AuthClient  authClient;
+    StoreAuthClient storeAuthClient;
 
     @Autowired
     IClientActivityService iClientActivityService;
@@ -194,10 +194,10 @@ public class ClientActivityApi {
             return ;
         }
         try {
-            BizBaseResponse<CustomerAuthDto> endUserResult = authClient.getUserByToken();
-            log.info("==authClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
+            BizBaseResponse<EndUser> endUserResult = storeAuthClient.getUserByToken();
+            log.info("==storeAuthClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
             if (null != endUserResult && endUserResult.isSuccess() && null != endUserResult.getData()) {
-                CustomerContextHolder.setUser(endUserResult.getData());
+                EndUserContextHolder.setUser(endUserResult.getData());
             }
         } catch (Exception e) {
             log.error("获取登录用户信息异常", e);
