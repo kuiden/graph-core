@@ -14,7 +14,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
-import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
+import com.tuhu.store.saas.marketing.context.CustomerContextHolder;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
@@ -50,7 +50,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author xiesisi
@@ -253,25 +252,27 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             return activityResp;
         }
         //获取此活动的报名情况
-        List<Byte> useStatusList = new ArrayList<>();
-        useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_NEVER_USE.getStatusOfByte());
-        useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_CLOSE.getStatusOfByte());
-        useStatusList.add(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte());
         ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
         ActivityCustomerExample.Criteria acExampleCriterria = activityCustomerExample.createCriteria();
         acExampleCriterria.andActivityCodeEqualTo(activityCode);
-        acExampleCriterria.andUseStatusIn(useStatusList);
         List<ActivityCustomer> activityCustomerList = activityCustomerMapper.selectByExample(activityCustomerExample);
         //当前已报名人数
-        activityResp.setApplyCount(new Long(activityCustomerList.size()));
+        activityResp.setApplyCount(activityCustomerList.stream().
+                filter(x->!x.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_CANCELED.getStatusOfByte())).count());
         //已核销人数
         activityResp.setWriteOffCount(activityCustomerList.stream().
-                filter(x->x.getUseStatus().compareTo(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte())>0).count());
-        //报名状态
-        List<String> appliedPhoneList = activityCustomerList.stream().map(x->x.getTelephone()).collect(Collectors.toList());
-        //如果当前页面为用户登录访问
-        if(EndUserContextHolder.getUser()!=null){
-            activityResp.setApplyed(appliedPhoneList.contains(EndUserContextHolder.getUser().getPhone()));
+                filter(x->x.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte())).count());
+        //报名状态,如果当前页面为用户登录访问
+        String loginPhone = CustomerContextHolder.getUser().getPhone();
+        if(loginPhone!=null){
+            activityCustomerList.stream().forEach(x->{
+                log.info("x.getTelephone()={},getPhone()={}", x.getTelephone(),loginPhone);
+               if(x.getTelephone().equals(loginPhone)){
+                   activityResp.setApplyed(true);
+                   activityResp.setActivityOrderCode(x.getActivityOrderCode());
+               }
+            });
+
         }
         //活动状态
         //1.活动过期
@@ -316,7 +317,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
 
     @Override
     public byte[] getQrCodeOfActivityCustomer(String activityEncryptedCode){
-        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,EndUserContextHolder.getTelephone());
+        ActivityCustomer activityCustomer = activityCustomerMapper.selectByEncryptedCodeAndUser(activityEncryptedCode,CustomerContextHolder.getUser().getPhone());
         if(activityCustomer.getUseStatus().intValue() == 0){
             //未核销
             Map<String,Object> codeMap = new HashMap<>(2);

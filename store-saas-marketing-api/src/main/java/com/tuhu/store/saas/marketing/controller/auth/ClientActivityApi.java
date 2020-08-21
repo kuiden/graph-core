@@ -5,13 +5,13 @@ import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
+import com.tuhu.store.saas.marketing.context.CustomerContextHolder;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.VerificationCodeUtils;
-import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
-import com.tuhu.store.saas.marketing.remote.EndUser;
-import com.tuhu.store.saas.marketing.remote.auth.StoreAuthClient;
+import com.tuhu.store.saas.marketing.remote.CustomerAuthDto;
+import com.tuhu.store.saas.marketing.remote.auth.AuthClient;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
 import com.tuhu.store.saas.marketing.request.ActivityApplyReq;
@@ -20,7 +20,6 @@ import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
 import com.tuhu.store.saas.marketing.response.ActivityApplyResp;
 import com.tuhu.store.saas.marketing.response.ActivityCustomerResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
-import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IClientActivityService;
 import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
@@ -52,21 +51,19 @@ public class ClientActivityApi {
 
     private static final String verificationCodeKey = "STORE_SAAS_VERI_CODE";
 
-    @Autowired
-    private IActivityService activityService;
 
     @Autowired
     private VerificationCodeUtils verificationCodeUtils;
 
 
     @Autowired
-    private StoreAuthClient storeAuthClient;
-
-    @Autowired
     StoreRedisUtils storeRedisUtils;
 
     @Autowired
     StoreUserClient storeUserClient;
+
+    @Autowired
+    AuthClient  authClient;
 
     @Autowired
     IClientActivityService iClientActivityService;
@@ -197,10 +194,10 @@ public class ClientActivityApi {
             return ;
         }
         try {
-            BizBaseResponse<EndUser> endUserResult = storeAuthClient.getUserByToken();
-            log.info("==storeAuthClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
+            BizBaseResponse<CustomerAuthDto> endUserResult = authClient.getUserByToken();
+            log.info("==authClient.getUserByToken=={}", JSONObject.toJSONString(endUserResult));
             if (null != endUserResult && endUserResult.isSuccess() && null != endUserResult.getData()) {
-                    EndUserContextHolder.setUser(endUserResult.getData());
+                CustomerContextHolder.setUser(endUserResult.getData());
             }
         } catch (Exception e) {
             log.error("获取登录用户信息异常", e);
