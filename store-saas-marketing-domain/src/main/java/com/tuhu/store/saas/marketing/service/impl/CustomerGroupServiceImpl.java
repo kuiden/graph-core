@@ -519,7 +519,8 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
             sb.append("门店全部客户").append(";");
         }
         customerGroupDto.setCustomerGroupRuleReqList(customerGroupRuleReqList);
-        customerGroupDto.setGroupDesc(sb.toString());
+        String desc = sb.toString();
+        customerGroupDto.setGroupDesc(desc.substring(0,desc.length()));
         return customerGroupDto;
     }
 
