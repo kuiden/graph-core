@@ -56,8 +56,8 @@ public class CustomerGroupApi extends BaseApi{
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setCreateUser(this.getUserId());
-        iCustomerGroupService.saveCustomerGroup(req);
-        return new BizBaseResponse(1);
+        Long groupId = iCustomerGroupService.saveCustomerGroup(req);
+        return new BizBaseResponse(groupId);
     }
 
     @RequestMapping(value = "/getCustomerGroup", method = RequestMethod.POST)
