@@ -812,7 +812,7 @@ public class ActivityServiceImpl implements IActivityService {
             editActivity.setPicActivityTemplateId(editActivityReq.getPicActivityTemplateId());
         }
         if (CollectionUtils.isNotEmpty(editActivityReq.getItems())) {
-            editActivityReq.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(r->{
+            editActivity.setActivityPrice(BigDecimal.valueOf(editActivityReq.getItems().stream().mapToLong(r->{
                 return r.getItemQuantity()*r.getActualPrice();
             }).sum()));
         }
