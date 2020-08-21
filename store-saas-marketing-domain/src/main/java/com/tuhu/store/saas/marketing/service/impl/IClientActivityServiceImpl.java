@@ -263,16 +263,18 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         activityResp.setWriteOffCount(activityCustomerList.stream().
                 filter(x->x.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_USED.getStatusOfByte())).count());
         //报名状态,如果当前页面为用户登录访问
-        String loginPhone = CustomerContextHolder.getUser().getPhone();
-        if(loginPhone!=null){
-            activityCustomerList.stream().forEach(x->{
-                log.info("x.getTelephone()={},getPhone()={}", x.getTelephone(),loginPhone);
-               if(x.getTelephone().equals(loginPhone)){
-                   activityResp.setApplyed(true);
-                   activityResp.setActivityOrderCode(x.getActivityOrderCode());
-               }
-            });
+        if(CustomerContextHolder.getUser()!=null){
+            String loginPhone = CustomerContextHolder.getUser().getPhone();
+            if(loginPhone!=null){
+                activityCustomerList.stream().forEach(x->{
+                    log.info("x.getTelephone()={},getPhone()={}", x.getTelephone(),loginPhone);
+                    if(x.getTelephone().equals(loginPhone)){
+                        activityResp.setApplyed(true);
+                        activityResp.setActivityOrderCode(x.getActivityOrderCode());
+                    }
+                });
 
+            }
         }
         //活动状态
         //1.活动过期
