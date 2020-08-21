@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
 import com.mengfan.common.util.GatewayClient;
 import com.tuhu.store.saas.marketing.constant.AuthConstant;
+import com.tuhu.store.saas.marketing.constant.MiniNotifyConstant;
 import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
 import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.exception.SaasAuthException;
@@ -200,21 +201,39 @@ public class WechatServiceImpl implements IWechatService {
             try {
                 StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
                 if (Objects.nonNull(storeInfoDTO)) {
+                    //门店名
                     HashMap thing10Value = Maps.newHashMap();
-                    thing10Value.put("value",storeInfoDTO.getStoreName());
+                    String storeName= org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getStoreName())?storeInfoDTO.getStoreName().substring(0,20): MiniNotifyConstant.STORENAME;
+                    thing10Value.put("value",storeName);
                     data.put("thing10",thing10Value);
 
+                    //时间
                     HashMap date5 = Maps.newHashMap();
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    date5.put("value", dateFormat.format(srvReservationOrder.getEstimatedArriveTime()));
+                    if(Objects.nonNull(srvReservationOrder.getEstimatedArriveTime())){
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        date5.put("value", dateFormat.format(srvReservationOrder.getEstimatedArriveTime()));
+                    }else{
+                        date5.put("value", MiniNotifyConstant.ESTIMATEDARRIVETIME);
+                    }
                     data.put("date5",date5);
 
+                    //地址
+                    HashMap thing16 = Maps.newHashMap();
+                    String address= org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getAddress())?storeInfoDTO.getAddress(): MiniNotifyConstant.ADDRESS;
+                    thing16.put("value",address);
+                    data.put("thing16",thing16);
+
+
+                    //电话
                     HashMap phone_number12 = Maps.newHashMap();
-                    phone_number12.put("value",srvReservationOrder.getCustomerPhoneNumber());
+                    String phoneNumber= org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getCustomerPhoneNumber())?srvReservationOrder.getCustomerPhoneNumber(): MiniNotifyConstant.PHONENUMBER;
+                    phone_number12.put("value",phoneNumber);
                     data.put("phone_number12",phone_number12);
 
+                    //备注
                     HashMap thing15 = Maps.newHashMap();
-                    thing15.put("value",StringUtils.isEmpty(srvReservationOrder.getDescription())?"进站请出示此页面！":srvReservationOrder.getDescription());
+                    String description= org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getDescription())?srvReservationOrder.getDescription(): MiniNotifyConstant.DESCRIPTION;
+                    thing15.put("value",description);
                     data.put("thing15",thing15);
                 }
             } catch (Exception e) {
