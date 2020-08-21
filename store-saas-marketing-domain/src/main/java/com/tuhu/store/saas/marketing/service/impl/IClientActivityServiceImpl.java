@@ -269,7 +269,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
                 activityCustomerList.stream().forEach(x->{
                     log.info("x.getTelephone()={},getPhone()={}", x.getTelephone(),loginPhone);
                     if(x.getTelephone().equals(loginPhone)){
-                        activityResp.setApplyed(true);
+                        if(!x.getUseStatus().equals(MarketingCustomerUseStatusEnum.AC_ORDER_IS_CANCELED.getStatusOfByte())){
+                            activityResp.setApplyed(true);
+                        }
                         activityResp.setActivityOrderCode(x.getActivityOrderCode());
                     }
                 });
