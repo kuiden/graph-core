@@ -145,12 +145,12 @@ public class CustomerGroupServiceImpl implements ICustomerGroupService {
         List<Long> groupList = new ArrayList<>();
         groupList.add(id);
         calculateCustomerCountReq.setGroupList(groupList);
-        List<String> customerIdList = this.calculateCustomerCount(calculateCustomerCountReq);
-        StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
+        this.calculateCustomerCount(calculateCustomerCountReq);
+        /*StoreCustomerGroupRelation record = new StoreCustomerGroupRelation();
         record.setId(id);
         record.setCustomerCount(Long.valueOf(customerIdList.size()));
         record.setCountTime(new Date());
-        storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);
+        storeCustomerGroupRelationMapper.updateByPrimaryKeySelective(record);*/
     }
 
     private void addCustomerGroupRuleList(CustomerGroupDto customerGroupDto, Long relationId) {
