@@ -625,7 +625,7 @@ public class CouponServiceImpl implements ICouponService {
                     && oldCoupon.getContentValue().compareTo(editCouponReq.getContentValue()) == 0
                     && oldCoupon.getConditionLimit().compareTo(editCouponReq.getConditionLimit()) == 0
                     && oldCoupon.getRelativeDaysNum().equals(editCouponReq.getRelativeDaysNum())
-                    && oldCoupon.getRemark().equals(editCouponReq.getRemark())){
+                    && oldCoupon.getRemark().equals(editCouponReq.getRemark())) {
                 return null;
             } else {
                 return "优惠券已发放，请从券列表重新进入编辑";
@@ -876,17 +876,17 @@ public class CouponServiceImpl implements ICouponService {
     public void setOccupyNum(Coupon x, int num) {
         log.info("couponListCheckLock-> req-> {} {}", x, num);
         String occupyNumKey = occupyNumKeyPrefix + "" + x.getStoreId() + x.getTenantId() + x.getCode();
-        RedisUtils redisUtils = new RedisUtils(redisTemplate,"occupyNum");
+        RedisUtils redisUtils = new RedisUtils(redisTemplate, "occupyNum");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
         if (value != null) {
             try {
-                if(x.getGrantNumber() < 0) {//不限量，直接叠加预占数
+                if (x.getGrantNumber() < 0) {//不限量，直接叠加预占数
                     Coupon u = new Coupon();
                     u.setOccupyNum(x.getOccupyNum() + num);
                     u.setId(x.getId());
                     couponMapper.updateByPrimaryKeySelective(u);
-                }else {
+                } else {
                     CustomerCouponExample example = new CustomerCouponExample();
                     CustomerCouponExample.Criteria criteria = example.createCriteria();
                     criteria.andCouponCodeEqualTo(x.getCode());
@@ -929,8 +929,8 @@ public class CouponServiceImpl implements ICouponService {
         String code = coupon.getCode();
         //判断优惠券状态
         Byte status = coupon.getStatus();
-        //禁用状态的券，不允许领取和发放
-        if (status.equals((byte) 0)) {
+        //禁用状态的券，不允许领取和发放  如果是营销发券就不判断券是否禁用
+        if (status.equals((byte) 0) && !sendCouponReq.getReceiveType().equals(Integer.valueOf(2))) {
             result.setMessage(String.format("\"%s\"已被禁用", coupon.getTitle()));
             result.setCode(4001);
             return result;
@@ -1489,7 +1489,7 @@ public class CouponServiceImpl implements ICouponService {
         log.info("核销优惠券持久化开始,->{}", code);
         String result = null;
         String cacheKey = "writeOffCustomerCouponV2" + "" + code;
-        RedisUtils redisUtils = new RedisUtils(redisTemplate,"writeOffCustomer");
+        RedisUtils redisUtils = new RedisUtils(redisTemplate, "writeOffCustomer");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         Object value = storeRedisUtils.tryLock(cacheKey, 1000, 1000);
         if (value != null) {
@@ -1498,16 +1498,16 @@ public class CouponServiceImpl implements ICouponService {
                 customerCouponExample.createCriteria().andCodeEqualTo(code);
                 List<CustomerCoupon> customerCouponList = customerCouponMapper.selectByExample(customerCouponExample);
                 if (CollectionUtils.isEmpty(customerCouponList)) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP",code,"-1");
+                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("优惠券查询失败");
                 }
                 CustomerCoupon customerCoupon = customerCouponList.get(0);
                 if (customerCoupon.getUseStatus() == Byte.valueOf((byte) 1)) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP",code,"-1");
+                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("优惠券已经被使用");
                 }
                 if (customerCoupon.getUseEndTime().getTime() < System.currentTimeMillis()) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP",code,"-1");
+                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("优惠券已经过期");
                 }
                 Date now = new Date();
@@ -1521,11 +1521,11 @@ public class CouponServiceImpl implements ICouponService {
                 customerCouponExampleCriteria.andUseStatusEqualTo((byte) 0);
                 int updateCount = customerCouponMapper.updateByExampleSelective(customerCoupon, customerCouponExample);
                 if (updateCount == 0) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP",code,"-1");
+                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("指定的客户优惠券已被使用:" + code);
                 }
                 result = "核销成功";
-                redisTemplate.opsForHash().put("WRITEOFFMAP",code,"1");
+                redisTemplate.opsForHash().put("WRITEOFFMAP", code, "1");
             } finally {
                 storeRedisUtils.releaseLock(cacheKey, value.toString());
             }
@@ -1752,7 +1752,7 @@ public class CouponServiceImpl implements ICouponService {
 
         Coupon coupon = coupons.get(0);
 
-        if(coupon.getGrantNumber().equals(-1L)) {//不限量直接返回
+        if (coupon.getGrantNumber().equals(-1L)) {//不限量直接返回
             return -1L;
         }
 

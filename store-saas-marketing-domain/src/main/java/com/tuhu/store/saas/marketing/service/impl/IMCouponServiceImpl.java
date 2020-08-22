@@ -377,7 +377,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         if (StringUtils.isNotBlank(req.getSearchKey())) {
             criteria.andTitleLike("%" + req.getSearchKey() + "%");
         }
-        example.setOrderByClause("create_time desc");
+        example.setOrderByClause("update_time desc");
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
 
         List<Coupon> couponRecordList = couponMapper.selectByExample(example);
