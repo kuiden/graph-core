@@ -65,6 +65,8 @@ public class SendMarketingSMSJob extends IJobHandler {
                 String lastMessage = messageRemind.getStatusMessage()==null?"":messageRemind.getStatusMessage();
                 messageRemind.setStatusMessage(lastMessage+newMessage);
             }
+            messageRemind.setUpdateTime(new Date());
+            messageRemind.setUpdateUser("job");
             iMessageRemindService.updateMessageRemindById(messageRemind);
         }
 
