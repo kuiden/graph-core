@@ -228,8 +228,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             cardOrderResp.setCardTypeCode(crdCard.getCardTypeCode());
             //如果卡不是永久有效，则判断卡是否过期
             if (!cardOrderResp.getForever()){
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
-                cardOrderResp.setExpiryDate(dateFormat.format(crdCard.getExpiryDate()));
+                cardOrderResp.setExpiryDate(crdCard.getExpiryDate());
                 Date date = new Date();
                 Date expiryDate = DataTimeUtil.getDateZeroTime(crdCard.getExpiryDate());
                 if (date.compareTo(expiryDate) > 0){

@@ -113,7 +113,7 @@ public class CardOrderResp {
     /**
      * 有效期
      */
-    private String expiryDate;
+    private Date expiryDate;
     /**
      * 卡面值
      */
