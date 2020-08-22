@@ -28,5 +28,15 @@ public class MiniNotifyConstant {
     public static final String DESCRIPTION = "进站请出示此页面！";
 
 
+    /**
+     * 门店开始营业时间
+     */
+    public static final String OPENINGEFFECTIVEDATE = "1970-01-01 10:00:00";
+
+    /**
+     * 门店结束营业时间
+     */
+    public static final String OPENINGEXPIRYDATE = "1970-01-01 18:00:00";
+
 
 }
