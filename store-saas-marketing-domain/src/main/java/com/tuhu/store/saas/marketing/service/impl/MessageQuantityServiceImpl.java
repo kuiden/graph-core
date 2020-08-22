@@ -43,11 +43,6 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
     @Autowired
     private IdKeyGen idKeyGen;
 
-    private static final String occupyMessageNumKeyPrefix = "occupyMessageNumKey";
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-
     @Override
     public MessageQuantity selectQuantityByTenantIdAndStoreId(MessageQuantity select) {
         Date now = new Date();
@@ -100,34 +95,22 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
     @Transactional
     public void setStoreOccupyQuantity(MessageQuantity select, Long occupyNum, String updateUser, boolean occupy) {
 
-        log.info("setStoreOccupyQuantity-> req-> {} {} {}", select, occupyNum, occupy);
-        String occupyNumKey = occupyMessageNumKeyPrefix + "" + select.getStoreId() + select.getTenantId();
-        RedisUtils redisUtils = new RedisUtils(redisTemplate,"occupyMessageNum");
-        StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
-        Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
-        if (value != null) {
-            try {
-                MessageQuantity messageQuantity = this.selectQuantityByTenantIdAndStoreId(select);
-                Long oldOccupyNum = messageQuantity.getOccupyQuantity();
+        MessageQuantity messageQuantity = this.selectQuantityByTenantIdAndStoreId(select);
+        Long oldOccupyNum = messageQuantity.getOccupyQuantity();
 
-                if(oldOccupyNum + occupyNum > messageQuantity.getRemainderQuantity()) {
-                    throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
-                }
-
-                if(occupy) {//占用
-                    messageQuantity.setOccupyQuantity(oldOccupyNum + occupyNum);
-                }else {//释放
-                    messageQuantity.setOccupyQuantity(oldOccupyNum - occupyNum);
-                }
-                messageQuantity.setUpdateTime(new Date());
-                messageQuantity.setUpdateUser(updateUser);
-                quantityMapper.updateByPrimaryKey(messageQuantity);
-            } catch(StoreSaasMarketingException e) {
-                throw new StoreSaasMarketingException(e.getMessage());
-            }finally {
-                storeRedisUtils.releaseLock(occupyNumKey, value.toString());
-            }
+        if(oldOccupyNum + occupyNum > messageQuantity.getRemainderQuantity()) {
+            throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
         }
+
+        if(occupy) {//占用
+            messageQuantity.setOccupyQuantity(oldOccupyNum + occupyNum);
+        }else {//释放
+            messageQuantity.setOccupyQuantity(oldOccupyNum - occupyNum);
+        }
+        messageQuantity.setUpdateTime(new Date());
+        messageQuantity.setUpdateUser(updateUser);
+        quantityMapper.updateByPrimaryKey(messageQuantity);
+
     }
 
     @Override

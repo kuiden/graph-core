@@ -19,6 +19,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -75,6 +76,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
     private IUtilityService iUtilityService;
 
     @Override
+    @Transactional
     public ReturnT<String> execute(String param) throws Exception {
         log.info("{} -> 时间: {}", "generateMarketingSMSJob定时任务", new Date());
         Date sendTime = DateUtils.getNextMinutes(DateUtils.now(),minutesLater);
