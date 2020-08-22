@@ -266,8 +266,11 @@ public class IMCouponServiceImpl implements IMCouponService {
                 if (crmResult != null && CollectionUtils.isNotEmpty(crmResult.getData())) {
                     Map<String, CustomerDTO> map = crmResult.getData().stream().collect(Collectors.toMap(k -> k.getId(), v -> v));
                     for (CustomerCouponPO x : recordList) {
-                        x.setCustomerName(map.get(x.getCustomerId()).getName());
-                        x.setCustomerTelephone(map.get(x.getCustomerId()).getPhoneNumber());
+                        if (map.containsKey(x.getCustomerId())) {
+                            CustomerDTO customerDTO = map.get(x.getCustomerId());
+                            x.setCustomerName(customerDTO.getName());
+                            x.setCustomerTelephone(customerDTO.getPhoneNumber());
+                        }
 
                     }
                 }
@@ -660,8 +663,8 @@ public class IMCouponServiceImpl implements IMCouponService {
             CustomerCouponExample.Criteria criteria = example.createCriteria();
             criteria.andCouponCodeEqualTo(couponItemResp.getCode());
             criteria.andCustomerIdEqualTo(customerId);
-            List<CustomerCoupon>  customerCoupons= customerCouponMapper.selectByExample(example);
-            if (CollectionUtils.isNotEmpty(customerCoupons)){
+            List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(example);
+            if (CollectionUtils.isNotEmpty(customerCoupons)) {
                 couponItemResp.setHasReceived(true);//是否已领取
                 couponItemResp.setUseEndTime(customerCoupons.get(0).getUseEndTime());
             }
@@ -816,7 +819,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         couponExample.createCriteria().andCodeEqualTo(code);
         List<Coupon> couponList = couponMapper.selectByExample(couponExample);
         CouponResp resp = new CouponResp();
-        if (null != couponList && !couponList.isEmpty()){
+        if (null != couponList && !couponList.isEmpty()) {
             Coupon coupon = couponList.get(0);
             BeanUtils.copyProperties(coupon, resp);
             resp.setType(coupon.getType().intValue());
@@ -934,21 +937,21 @@ public class IMCouponServiceImpl implements IMCouponService {
     @Override
     public Integer openGetUseStatusByCode(String code) throws InterruptedException {
         Integer result = null;
-        for (int i = 0;null == result && i < 5;i++){
-            if (redisTemplate.opsForHash().hasKey("WRITEOFFMAP",code)) {
-                String status = (String)redisTemplate.opsForHash().get("WRITEOFFMAP", code);
+        for (int i = 0; null == result && i < 5; i++) {
+            if (redisTemplate.opsForHash().hasKey("WRITEOFFMAP", code)) {
+                String status = (String) redisTemplate.opsForHash().get("WRITEOFFMAP", code);
                 result = Integer.parseInt(status);
                 redisTemplate.opsForHash().delete("WRITEOFFMAP", code);
-            }else {
+            } else {
                 Thread.sleep(1000);
             }
         }
-        if (null == result){
+        if (null == result) {
             if (code.startsWith("YHQ")) {
                 CustomerCouponExample example = new CustomerCouponExample();
                 example.createCriteria().andCodeEqualTo(code);
                 List<CustomerCoupon> coupons = customerCouponMapper.selectByExample(example);
-                if (null != coupons && !coupons.isEmpty()){
+                if (null != coupons && !coupons.isEmpty()) {
                     result = coupons.get(0).getUseStatus().intValue();
                 } else {
                     throw new StoreSaasMarketingException("该优惠券不存在");
@@ -957,7 +960,7 @@ public class IMCouponServiceImpl implements IMCouponService {
                 ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
                 activityCustomerExample.createCriteria().andActivityOrderCodeEqualTo(code);
                 List<ActivityCustomer> activityCustomers = activityCustomerMapper.selectByExample(activityCustomerExample);
-                if (null != activityCustomers && !activityCustomers.isEmpty()){
+                if (null != activityCustomers && !activityCustomers.isEmpty()) {
                     result = activityCustomers.get(0).getUseStatus().intValue();
                 } else {
                     throw new StoreSaasMarketingException("该营销活动不存在");
