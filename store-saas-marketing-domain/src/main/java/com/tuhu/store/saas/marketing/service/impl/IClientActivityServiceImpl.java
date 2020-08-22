@@ -315,6 +315,12 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         ActivityResp activityResp = this.getActivityByActivityCode(activityCode);
         //response-set:活动详情
         activityCustomerResp.setActivity(activityResp);
+        if(activityCustomerResp.getEndTime()!=null){
+            if (activityCustomerResp.getUseStatus() == 0 && activityCustomerResp.getEndTime().before(new Date())) {
+                //已过期
+                activityCustomerResp.setUseStatus((byte) -1);
+            }
+        }
         log.info("客户活动详情，出参:{}", JSONObject.toJSONString(activityCustomerResp));
         return activityCustomerResp;
     }

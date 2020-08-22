@@ -218,6 +218,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             sendRemindReq.setTenantId(customerMarketing.getTenantId());
             sendRemindReq.setSource(SMSTypeEnum.MARKETING_COUPON.templateCode());
             sendRemindReq.setSourceId(String.valueOf(customerMarketing.getId()));
+            sendRemindReq.setUserId("job");
             try{
                 boolean result = remindService.sendWithPhone(sendRemindReq,marketingSendRecord.getPhoneNumber(),true);
                 if(!result){
