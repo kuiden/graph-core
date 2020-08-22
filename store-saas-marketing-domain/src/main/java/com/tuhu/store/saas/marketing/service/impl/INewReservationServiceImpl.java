@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.java.common.utils.DateUtil;
+import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
@@ -445,8 +446,9 @@ public class INewReservationServiceImpl implements INewReservationService {
             customerReq.setPhoneNumber(req.getCustomerPhoneNumber());
             customerReq.setGender("3");
             customerReq.setCustomerType(CustomTypeEnumVo.PERSON.getCode());
-            customerReq.setCustomerSource("ZRJD");
+            customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
             customerReq.setIsVip(false);
+            customerReq.setName("空");
             addVehicleReq.setCustomerReq(customerReq);
             log.info("新增客户请求参数为:{}", JSONObject.toJSONString(addVehicleReq));
             BizBaseResponse<AddVehicleReq> addObject = storeUserClient.addCustomerForReservation(addVehicleReq);
