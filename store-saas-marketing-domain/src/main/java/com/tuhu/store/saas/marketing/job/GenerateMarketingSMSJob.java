@@ -191,6 +191,10 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
             if(successNum < customerIds.size()) {
                 log.error("定向营销{}创建优惠券{}失败！", customerMarketing.getId(),customerMarketing.getCouponCode());
+
+                //发送失败，更新记录
+                customerMarketing.setTaskType(Byte.valueOf("3"));
+                customerMarketingMapper.updateByPrimaryKey(customerMarketing);
                 return;
             }
 
@@ -233,7 +237,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             }
             sendRecordService.updateMarketingSendRecord(marketingSendRecord.getCustomerId(),customerMarketing.getId()+"",sendState);
         }
-        //已发送，发送失败更新记录
+        //已发送，更新记录
         customerMarketing.setTaskType(Byte.valueOf("1"));
         customerMarketingMapper.updateByPrimaryKey(customerMarketing);
 
