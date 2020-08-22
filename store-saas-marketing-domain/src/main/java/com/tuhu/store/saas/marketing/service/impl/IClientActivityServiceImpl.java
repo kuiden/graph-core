@@ -105,6 +105,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
             //该门店下不存在此客户，新增
             CustomerReq customerReq = new CustomerReq();
             customerReq.setPhoneNumber(applyReq.getTelephone());
+            customerReq.setName("空");
             customerReq.setGender("3");
             customerReq.setCustomerType(CustomTypeEnumVo.PERSON.getCode());
             customerReq.setCustomerSource(CustomerSourceEnumVo.WLYL.getCode());
