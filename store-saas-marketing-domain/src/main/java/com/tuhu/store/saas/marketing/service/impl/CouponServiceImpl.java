@@ -335,6 +335,7 @@ public class CouponServiceImpl implements ICouponService {
             criteria.andCouponCodeEqualTo(coupon.getCode());
             int sendCount = customerCouponMapper.countByExample(customerCouponExample);
             resp.setSendNumber(Long.valueOf(sendCount + ""));
+            resp.setIsMarketingCoupon(customerMarketingService.customerMarketingContainsCoupon(resp.getId(), resp.getTenantId(), resp.getStoreId()));
 //            //未获取到分享二维码，则同步生成
 //            if (null == coupon.getWeixinQrUrl()){
 //                String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
@@ -358,7 +359,6 @@ public class CouponServiceImpl implements ICouponService {
 //                resp.setCategories(scopeCategoryRespList);
 //            }
 //        }
-        resp.setIsMarketingCoupon(customerMarketingService.customerMarketingContainsCoupon(resp.getId(), resp.getTenantId(), resp.getStoreId()));
         log.info("查询优惠券详情响应response：{}", GsonTool.toJSONString(resp));
         return resp;
     }

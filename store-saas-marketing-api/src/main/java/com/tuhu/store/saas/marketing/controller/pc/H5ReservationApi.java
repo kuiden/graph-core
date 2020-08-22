@@ -102,20 +102,22 @@ public class H5ReservationApi extends BaseApi {
             log.info("根据优惠券id查详情返回", JSONObject.toJSONString(couponResp));
             if(couponResp == null){
                 return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券不存在");
-            }else if(couponResp.getStoreId() != null && couponResp.getTenantId() != null){
-                req.setStoreId(couponResp.getStoreId());
-                req.setTenantId(couponResp.getTenantId());
-                req.setMarketingName(couponResp.getTitle());
+            }else if(couponResp.getStoreId() == null || couponResp.getTenantId() == null){
+                return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券不存在");
             }
+            req.setStoreId(couponResp.getStoreId());
+            req.setTenantId(couponResp.getTenantId());
+            req.setMarketingName(couponResp.getTitle());
         }else if(SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())){
             ActivityResp activityResp = iActivityService.getActivityDetailById(Long.parseLong(req.getMarketingId()));
             if(activityResp == null){
                 return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "活动不存在");
-            }else if(activityResp.getStoreId() != null && activityResp.getTenantId() != null){
-                req.setStoreId(activityResp.getStoreId());
-                req.setTenantId(activityResp.getTenantId());
-                req.setMarketingName(activityResp.getActivityTitle());
+            }else if(activityResp.getStoreId() == null || activityResp.getTenantId() == null){
+                return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "活动不存在");
             }
+            req.setStoreId(activityResp.getStoreId());
+            req.setTenantId(activityResp.getTenantId());
+            req.setMarketingName(activityResp.getActivityTitle());
         }
 
         result.setData(iNewReservationService.addReservation(req,2));
