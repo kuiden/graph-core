@@ -97,6 +97,7 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
     }
 
     @Override
+    @Transactional
     public void setStoreOccupyQuantity(MessageQuantity select, Long occupyNum, String updateUser, boolean occupy) {
 
         log.info("setStoreOccupyQuantity-> req-> {} {} {}", select, occupyNum, occupy);
@@ -109,6 +110,10 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
                 MessageQuantity messageQuantity = this.selectQuantityByTenantIdAndStoreId(select);
                 Long oldOccupyNum = messageQuantity.getOccupyQuantity();
 
+                if(oldOccupyNum + occupyNum > messageQuantity.getRemainderQuantity()) {
+                    throw new StoreSaasMarketingException("用户剩余提醒数量不足!");
+                }
+
                 if(occupy) {//占用
                     messageQuantity.setOccupyQuantity(oldOccupyNum + occupyNum);
                 }else {//释放
@@ -117,7 +122,9 @@ public class MessageQuantityServiceImpl implements IMessageQuantityService {
                 messageQuantity.setUpdateTime(new Date());
                 messageQuantity.setUpdateUser(updateUser);
                 quantityMapper.updateByPrimaryKey(messageQuantity);
-            } finally {
+            } catch(StoreSaasMarketingException e) {
+                throw new StoreSaasMarketingException(e.getMessage());
+            }finally {
                 storeRedisUtils.releaseLock(occupyNumKey, value.toString());
             }
         }
