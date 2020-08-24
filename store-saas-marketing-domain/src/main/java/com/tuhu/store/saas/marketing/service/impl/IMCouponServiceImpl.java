@@ -496,6 +496,8 @@ public class IMCouponServiceImpl implements IMCouponService {
             SendCouponReq sendCouponReq = new SendCouponReq();
             sendCouponReq.setReceiveType(receiveType);
             sendCouponReq.setUserId(sendUser);
+            sendCouponReq.setStoreId(coupon.getStoreId());
+            sendCouponReq.setTenantId(coupon.getTenantId());
             CommonResp<CustomerCoupon> customerCouponResp = iCouponService.generateCustomerCoupon(coupon, customer, sendCouponReq);
             if (!customerCouponResp.isSuccess()) {
                 log.error("sendCouponSingle error,message={}", customerCouponResp.getMessage());
