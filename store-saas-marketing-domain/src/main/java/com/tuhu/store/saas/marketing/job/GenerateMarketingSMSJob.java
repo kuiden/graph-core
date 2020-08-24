@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.job;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
@@ -21,6 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,7 +84,6 @@ public class GenerateMarketingSMSJob extends IJobHandler {
     private IMessageQuantityService messageQuantityService;
 
     @Override
-    @Transactional
     public ReturnT<String> execute(String param) throws Exception {
         log.info("{} -> 时间: {}", "generateMarketingSMSJob定时任务", new Date());
         Date sendTime = DateUtils.getNextMinutes(DateUtils.now(),minutesLater);
@@ -95,23 +96,28 @@ public class GenerateMarketingSMSJob extends IJobHandler {
         List<CustomerMarketing> customerMarketings = customerMarketingMapper.selectByExample(customerMarketingExample);
 //        customerMarketings = Lists.newArrayList(customerMarketings.get(customerMarketings.size()-1));
         for(CustomerMarketing customerMarketing : customerMarketings){
-            MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId());
-            if(messageTemplateLocal==null){
-                //发送失败，模板不存在
-                log.warn("创建{}定向营销任务短信列表失败，短信模板id{}不存在",customerMarketing.getId(),customerMarketing.getMessageTemplateId());
-                customerMarketing.setTaskType(Byte.valueOf("2"));
-                customerMarketingMapper.updateByPrimaryKey(customerMarketing);
-                break;
+            try{
+                MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId());
+                if(messageTemplateLocal==null){
+                    //发送失败，模板不存在
+                    log.warn("创建{}定向营销任务短信列表失败，短信模板id{}不存在",customerMarketing.getId(),customerMarketing.getMessageTemplateId());
+                    customerMarketing.setTaskType(Byte.valueOf("2"));
+                    customerMarketingMapper.updateByPrimaryKey(customerMarketing);
+                    break;
+                }
+                if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("0"))){
+                    //发送优惠卷
+                    //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
+                    //TODO .发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
+                    doSendSMS4Coupon(customerMarketing);
+                }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
+                    //活动营销，只是根据模板发送短信，更新发送记录和任务状态，发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
+                    doSendSMS4Activity(customerMarketing);
+                }
+            }catch (Exception e) {
+                log.error("定向营销{}短信列表生成失败", JSON.toJSONString(customerMarketing));
             }
-            if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("0"))){
-                //发送优惠卷
-                //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
-                //TODO .发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
-                doSendSMS4Coupon(customerMarketing);
-            }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
-                //活动营销，只是根据模板发送短信，更新发送记录和任务状态，发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
-                doSendSMS4Activity(customerMarketing);
-            }
+
         }
         return ReturnT.SUCCESS;
     }
