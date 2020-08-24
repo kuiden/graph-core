@@ -427,10 +427,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             if(availableAccount >=0 && availableAccount < customerList.size()) {//如果是限量优惠券，需要判断剩余额度
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券数量不足");
             }
-            //状态禁用的优惠券无法创建定向营销
-            if(coupon.getStatus().equals(0)) {
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券已被禁用");
-            }
+//            //状态禁用的优惠券无法创建定向营销
+//            if(coupon.getStatus().equals(0)) {
+//                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"优惠券已被禁用");
+//            }
         }
 
 

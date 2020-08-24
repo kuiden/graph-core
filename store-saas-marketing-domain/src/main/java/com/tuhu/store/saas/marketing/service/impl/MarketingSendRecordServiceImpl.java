@@ -59,6 +59,22 @@ public class MarketingSendRecordServiceImpl implements IMarketingSendRecordServi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMarketingSendRecordStatusByMarketingId(String marketingId,String sendType) {
+        String funName = "更新定向营销发送记录状态";
+        log.info("{} -> 请求参数: {}", funName, marketingId);
+
+        MarketingSendRecordExample marketingSendRecordExample = new MarketingSendRecordExample();
+        MarketingSendRecordExample.Criteria marketingSendRecordExampleCriteria = marketingSendRecordExample.createCriteria();
+        marketingSendRecordExampleCriteria.andMarketingIdEqualTo(marketingId);
+
+        MarketingSendRecord marketingSendRecord = new MarketingSendRecord();
+        marketingSendRecord.setSendType(Byte.valueOf(sendType));
+        marketingSendRecordMapper.updateByExampleSelective(marketingSendRecord, marketingSendRecordExample);
+        log.info("更新定向营销发送记录状态完成");
+    }
+
+    @Override
     public List<MarketingSendRecord> listMarketingSendRecord(String marketingId, List<Byte> sendTypes) {
         log.info("根据营销id{}和发送状态{}查询发送记录",marketingId,sendTypes);
         MarketingSendRecordExample example = new MarketingSendRecordExample();
