@@ -1,8 +1,10 @@
 package com.tuhu.store.saas.marketing.job;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.request.SendRemindReq;
@@ -20,6 +22,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,7 +84,6 @@ public class GenerateMarketingSMSJob extends IJobHandler {
     private IMessageQuantityService messageQuantityService;
 
     @Override
-    @Transactional
     public ReturnT<String> execute(String param) throws Exception {
         log.info("{} -> 时间: {}", "generateMarketingSMSJob定时任务", new Date());
         Date sendTime = DateUtils.getNextMinutes(DateUtils.now(),minutesLater);
@@ -94,23 +96,28 @@ public class GenerateMarketingSMSJob extends IJobHandler {
         List<CustomerMarketing> customerMarketings = customerMarketingMapper.selectByExample(customerMarketingExample);
 //        customerMarketings = Lists.newArrayList(customerMarketings.get(customerMarketings.size()-1));
         for(CustomerMarketing customerMarketing : customerMarketings){
-            MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId());
-            if(messageTemplateLocal==null){
-                //发送失败，模板不存在
-                log.warn("创建{}定向营销任务短信列表失败，短信模板id{}不存在",customerMarketing.getId(),customerMarketing.getMessageTemplateId());
-                customerMarketing.setTaskType(Byte.valueOf("2"));
-                customerMarketingMapper.updateByPrimaryKey(customerMarketing);
-                break;
+            try{
+                MessageTemplateLocal messageTemplateLocal = templateLocalService.getTemplateLocalById(customerMarketing.getMessageTemplateId());
+                if(messageTemplateLocal==null){
+                    //发送失败，模板不存在
+                    log.warn("创建{}定向营销任务短信列表失败，短信模板id{}不存在",customerMarketing.getId(),customerMarketing.getMessageTemplateId());
+                    customerMarketing.setTaskType(Byte.valueOf("2"));
+                    customerMarketingMapper.updateByPrimaryKey(customerMarketing);
+                    break;
+                }
+                if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("0"))){
+                    //发送优惠卷
+                    //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
+                    //TODO .发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
+                    doSendSMS4Coupon(customerMarketing);
+                }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
+                    //活动营销，只是根据模板发送短信，更新发送记录和任务状态，发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
+                    doSendSMS4Activity(customerMarketing);
+                }
+            }catch (Exception e) {
+                log.error("定向营销{}短信列表生成失败", JSON.toJSONString(customerMarketing));
             }
-            if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("0"))){
-                //发送优惠卷
-                //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
-                //TODO .发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
-                doSendSMS4Coupon(customerMarketing);
-            }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
-                //活动营销，只是根据模板发送短信，更新发送记录和任务状态，发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
-                doSendSMS4Activity(customerMarketing);
-            }
+
         }
         return ReturnT.SUCCESS;
     }
@@ -197,29 +204,30 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
             if(successNum < customerIds.size()) {
                 log.error("定向营销{}创建优惠券{}失败！", customerMarketing.getId(),customerMarketing.getCouponCode());
-
-                //发送失败，更新记录状态
-                customerMarketing.setTaskType(Byte.valueOf("3"));
-                customerMarketingMapper.updateByPrimaryKey(customerMarketing);
-                sendRecordService.updateMarketingSendRecordStatusByMarketingId(customerMarketing.getId()+"","2");
-                //优惠券预占释放
-                CouponResp coupon = iCouponService.getCouponDetailById(Long.valueOf(customerMarketing.getCouponId()));
-                Coupon couponEntity = new Coupon();
-                BeanUtils.copyProperties(coupon, couponEntity);
-                iCouponService.setOccupyNum(couponEntity, 0-customerIds.size());
-
-                //释放短信额度
-                MessageQuantity select = new MessageQuantity();
-                select.setTenantId(customerMarketing.getTenantId());
-                select.setStoreId(customerMarketing.getStoreId());
-                messageQuantityService.setStoreOccupyQuantity(select, Long.valueOf(customerIds.size()), "job", false);
-                return;
+                throw new StoreSaasMarketingException("定向营销优惠券送券失败！");
             }
 
             customerIdCodeMap = customerCouponRespList.stream().collect(Collectors.toMap(x -> x.getData().getCustomerId(), x -> x.getData().getCode()));
 
         }catch (Exception e) {
             log.error("定向营销优惠券送券失败！", e);
+
+            //发送失败，更新记录状态
+            customerMarketing.setTaskType(Byte.valueOf("3"));
+            customerMarketingMapper.updateByPrimaryKey(customerMarketing);
+            sendRecordService.updateMarketingSendRecordStatusByMarketingId(customerMarketing.getId()+"","2");
+            //优惠券预占释放
+            CouponResp coupon = iCouponService.getCouponDetailById(Long.valueOf(customerMarketing.getCouponId()));
+            Coupon couponEntity = new Coupon();
+            BeanUtils.copyProperties(coupon, couponEntity);
+            iCouponService.setOccupyNum(couponEntity, 0-customerIds.size());
+
+            //释放短信额度
+            MessageQuantity select = new MessageQuantity();
+            select.setTenantId(customerMarketing.getTenantId());
+            select.setStoreId(customerMarketing.getStoreId());
+            messageQuantityService.setStoreOccupyQuantity(select, Long.valueOf(customerIds.size()), "job", false);
+
             return;
         }
 

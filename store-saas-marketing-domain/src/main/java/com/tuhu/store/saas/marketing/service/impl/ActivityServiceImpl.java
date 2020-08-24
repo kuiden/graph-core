@@ -1670,7 +1670,7 @@ public class ActivityServiceImpl implements IActivityService {
         activityExampleCriteria.andStoreIdEqualTo(storeId);
         activityExampleCriteria.andStatusEqualTo(true);
         activityExampleCriteria.andEndTimeGreaterThan(new Date());
-        activityExample.setOrderByClause("end_time asc");
+        activityExample.setOrderByClause("start_time asc");
         List<Activity> activityList = activityMapper.selectByExample(activityExample);
         return activityList;
     }

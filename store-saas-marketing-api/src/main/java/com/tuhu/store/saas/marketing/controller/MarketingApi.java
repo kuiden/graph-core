@@ -91,7 +91,7 @@ public class MarketingApi extends BaseApi {
             try {
                 success = iCustomerMarketingService.addMarketingCustomer(addReq);
             } catch(StoreSaasMarketingException e) {
-                throw new StoreSaasMarketingException(e.getMessage());
+                throw e;
             }finally {
                 storeRedisUtils.releaseLock(addMarketingKey, value.toString());
             }
