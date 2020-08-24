@@ -177,7 +177,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
         //执行批量送券
         SendCouponReq sendCouponReq = new SendCouponReq();
-        sendCouponReq.setUserId("system");
+        sendCouponReq.setUserId(customerMarketing.getCreateUser());
         sendCouponReq.setStoreId(customerMarketing.getStoreId());
         sendCouponReq.setTenantId(customerMarketing.getTenantId());
         if (sendCouponReq.getReceiveType() == null) {
