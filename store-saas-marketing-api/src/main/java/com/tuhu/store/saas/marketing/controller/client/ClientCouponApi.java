@@ -46,6 +46,8 @@ public class ClientCouponApi extends BaseApi {
     @ApiOperation(value = "领券")
     public BizBaseResponse getCoupon(@Validated @RequestBody CouponRequest req) {
         EndUser dto = EndUserContextHolder.getUser();
+        req.setStoreId(EndUserContextHolder.getStoreId());
+        req.setTenantId(EndUserContextHolder.getTenantId());
         Map map = imCouponService.getCoupon(req, dto.getUserId());
         //  Map map = imCouponService.getCoupon(req, "159006368380700017990" );
         return new BizBaseResponse(map);
@@ -206,10 +208,10 @@ public class ClientCouponApi extends BaseApi {
     @GetMapping(value = "/open/openGetUseStatusByCode")
     @ApiOperation("获取核销状态")
     public BizBaseResponse<Integer> openGetUseStatusByCode(@RequestParam String code) throws InterruptedException {
-        if (StringUtils.isBlank(code)){
+        if (StringUtils.isBlank(code)) {
             throw new StoreSaasMarketingException("参数验证失败");
         }
-        String key =  REDIS_PREFIX_KEYS + "openGetUseStatusByCode_" + code;
+        String key = REDIS_PREFIX_KEYS + "openGetUseStatusByCode_" + code;
         Object obj = storeRedisUtils.getAtomLock(key, 5);
         log.info("tryLock key = [{}]", key);
         if (obj != null) {
