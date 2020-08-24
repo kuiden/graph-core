@@ -756,7 +756,7 @@ public class CouponServiceImpl implements ICouponService {
         }
         //查询需要发券的客户
         List<CustomerDTO> customerList = crmResult.getData();
-        if (customerList.size() > customerIds.size()) {
+        if (customerIds.size() > customerList.size()) {
             throw new StoreSaasMarketingException("要发券的部分客户不存在");
         }
         //查询优惠券列表
