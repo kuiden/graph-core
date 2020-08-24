@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.request.SendRemindReq;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.CommonResp;
+import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.service.*;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.GsonTool;
@@ -16,6 +17,7 @@ import com.xxl.job.core.handler.IJobHandler;
 import com.xxl.job.core.handler.annotation.JobHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -74,6 +76,9 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
     @Autowired
     private IUtilityService iUtilityService;
+
+    @Autowired
+    private IMessageQuantityService messageQuantityService;
 
     @Override
     @Transactional
@@ -179,6 +184,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             log.info("定向营销{}未包含待发送的优惠券送券任务！", customerMarketing.getId());
             customerMarketing.setTaskType(Byte.valueOf("1"));
             customerMarketingMapper.updateByPrimaryKey(customerMarketing);
+            return;
         }
 
         List<String> customerIds = marketingSendRecords.stream().map(x->x.getCustomerId()).collect(Collectors.toList());
@@ -192,9 +198,21 @@ public class GenerateMarketingSMSJob extends IJobHandler {
             if(successNum < customerIds.size()) {
                 log.error("定向营销{}创建优惠券{}失败！", customerMarketing.getId(),customerMarketing.getCouponCode());
 
-                //发送失败，更新记录
+                //发送失败，更新记录状态
                 customerMarketing.setTaskType(Byte.valueOf("3"));
                 customerMarketingMapper.updateByPrimaryKey(customerMarketing);
+                sendRecordService.updateMarketingSendRecordStatusByMarketingId(customerMarketing.getId()+"","2");
+                //优惠券预占释放
+                CouponResp coupon = iCouponService.getCouponDetailById(Long.valueOf(customerMarketing.getCouponId()));
+                Coupon couponEntity = new Coupon();
+                BeanUtils.copyProperties(coupon, couponEntity);
+                iCouponService.setOccupyNum(couponEntity, 0-customerIds.size());
+
+                //释放短信额度
+                MessageQuantity select = new MessageQuantity();
+                select.setTenantId(customerMarketing.getTenantId());
+                select.setStoreId(customerMarketing.getStoreId());
+                messageQuantityService.setStoreOccupyQuantity(select, Long.valueOf(customerIds.size()), "job", false);
                 return;
             }
 
