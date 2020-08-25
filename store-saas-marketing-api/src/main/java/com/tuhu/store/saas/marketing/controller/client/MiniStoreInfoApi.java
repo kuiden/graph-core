@@ -54,7 +54,7 @@ public class MiniStoreInfoApi extends BaseEndUserApi {
                     clientStoreDTO.setOpeningEffectiveDate(DateUtils.parseDate(MiniNotifyConstant.OPENINGEFFECTIVEDATE));
                 }
                 if(Objects.isNull(clientStoreDTO.getOpeningExpiryDate())){
-                    clientStoreDTO.setOpeningEffectiveDate(DateUtils.parseDate(MiniNotifyConstant.OPENINGEXPIRYDATE));
+                    clientStoreDTO.setOpeningExpiryDate(DateUtils.parseDate(MiniNotifyConstant.OPENINGEXPIRYDATE));
                 }
                 if(Objects.isNull(clientStoreDTO.getImagePath())){
                     clientStoreDTO.setImagePath(defaultStoreImagePath);
