@@ -105,17 +105,10 @@ public class CouponServiceImpl implements ICouponService {
         String encryptedCode = Md5Util.md5(code, CodeFactory.codeSalt);
         coupon.setEncryptedCode(encryptedCode);
         couponMapper.insertSelective(coupon);
-//        threadPoolTaskExecutor.submit(() -> {
-//            //生成分享二维码
-//            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
-//        });
-//        //如果优惠券适用范围做了限定
-//        CouponScopeTypeEnum scopeTypeEnum = CouponScopeTypeEnum.getEnumByCode(addCouponReq.getScopeType());
-//        if (CouponScopeTypeEnum.Category.equals(scopeTypeEnum)) {
-//            List<CouponScopeCategoryReq> categories = addCouponReq.getCategories();
-//            List<CouponScopeCategory> scopeCategoryList = convertToCouponScopeCategory(code, categories, addCouponReq);
-//            couponScopeCategoryMapper.insertBatch(scopeCategoryList);
-//        }
+        threadPoolTaskExecutor.submit(() -> {
+            //生成分享二维码
+            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
+        });
         //如果不是不限数量，则缓存券发放数量
         if (coupon.getGrantNumber().compareTo(0L) > 0) {
             String key = couponSendNumberPrefix.concat(code);
@@ -336,29 +329,12 @@ public class CouponServiceImpl implements ICouponService {
             int sendCount = customerCouponMapper.countByExample(customerCouponExample);
             resp.setSendNumber(Long.valueOf(sendCount + ""));
             resp.setIsMarketingCoupon(customerMarketingService.customerMarketingContainsCoupon(resp.getId(), resp.getTenantId(), resp.getStoreId()));
-//            //未获取到分享二维码，则同步生成
-//            if (null == coupon.getWeixinQrUrl()){
-//                String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
-//                resp.setWeixinQrUrl(url);
-//            }
+            //未获取到分享二维码，则同步生成
+            if (null == coupon.getWeixinQrUrl()){
+                String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
+                resp.setWeixinQrUrl(url);
+            }
         }
-//        Byte scopeType = coupon.getScopeType();
-//        if (CouponScopeTypeEnum.Category.value().equals(scopeType)) {
-//            //查询限定的分类
-//            CouponScopeCategoryExample couponScopeCategoryExample = new CouponScopeCategoryExample();
-//            CouponScopeCategoryExample.Criteria scopeCategoryCriteria = couponScopeCategoryExample.createCriteria();
-//            scopeCategoryCriteria.andCouponCodeEqualTo(coupon.getCode());
-//            List<CouponScopeCategory> scopeCategoryList = couponScopeCategoryMapper.selectByExample(couponScopeCategoryExample);
-//            if (CollectionUtils.isNotEmpty(scopeCategoryList)) {
-//                List<CouponScopeCategoryResp> scopeCategoryRespList = new ArrayList<>();
-//                scopeCategoryList.forEach(scopeCategory -> {
-//                    CouponScopeCategoryResp scopeCategoryResp = new CouponScopeCategoryResp();
-//                    BeanUtils.copyProperties(scopeCategory, scopeCategoryResp);
-//                    scopeCategoryRespList.add(scopeCategoryResp);
-//                });
-//                resp.setCategories(scopeCategoryRespList);
-//            }
-//        }
         log.info("查询优惠券详情响应response：{}", GsonTool.toJSONString(resp));
         return resp;
     }
