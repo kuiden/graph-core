@@ -203,7 +203,7 @@ public class WechatServiceImpl implements IWechatService {
                 if (Objects.nonNull(storeInfoDTO)) {
                     //门店名
                     HashMap thing10Value = Maps.newHashMap();
-                    String storeName= org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getStoreName())?storeInfoDTO.getStoreName().substring(0,20): MiniNotifyConstant.STORENAME;
+                    String storeName= org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getStoreName())?storeInfoDTO.getStoreName(): MiniNotifyConstant.STORENAME;
                     thing10Value.put("value",storeName);
                     data.put("thing10",thing10Value);
 
