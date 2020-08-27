@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
+import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.CReservationListReq;
 import com.tuhu.store.saas.marketing.request.CancelReservationReq;
@@ -73,7 +74,12 @@ public class MiniReservationApi extends EndUserApi {
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "预约渠道不能为空");
         }
         req.setTeminal(2);
-        result.setData(iNewReservationService.addReservation(req,1));
+        Integer teminalType = 1;
+        if(SrvReservationChannelEnum.COUPON.getEnumCode().equals(req.getSourceChannel()) ||
+                SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())){
+            teminalType = 3;
+        }
+        result.setData(iNewReservationService.addReservation(req,teminalType));
         return result;
     }
 
