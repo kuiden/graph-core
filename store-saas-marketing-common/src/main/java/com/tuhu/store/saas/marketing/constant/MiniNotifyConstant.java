@@ -5,7 +5,7 @@ public class MiniNotifyConstant {
     /**
      * 预约的服务门店
      */
-    public static final String STORENAME = "预约的服务门店";
+    public static final String STORENAME = "无";
     /**
      * 预约到店时间
      */
@@ -14,7 +14,7 @@ public class MiniNotifyConstant {
     /**
      * 预约到店时间
      */
-    public static final String ADDRESS = "请到预约门店地址";
+    public static final String ADDRESS = "无";
 
 
     /**
@@ -25,7 +25,7 @@ public class MiniNotifyConstant {
     /**
      * 预约备注
      */
-    public static final String DESCRIPTION = "进站请出示此页面！";
+    public static final String DESCRIPTION = "无";
 
 
     /**
