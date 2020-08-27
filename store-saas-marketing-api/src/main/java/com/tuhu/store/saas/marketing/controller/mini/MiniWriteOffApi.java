@@ -68,7 +68,7 @@ public class MiniWriteOffApi extends BaseApi {
             throw new StoreSaasMarketingException("优惠券校验失败");
         }
         long storeId = super.getStoreId();
-        if (!code.startsWith("YHQ" + storeId)) {
+        if (!code.startsWith("YHQ" + String.format(new StringBuilder("%0").append(4).append("d").toString(), storeId))) {
             throw new StoreSaasMarketingException("非本门店优惠券");
         }
         //进入核销流程
