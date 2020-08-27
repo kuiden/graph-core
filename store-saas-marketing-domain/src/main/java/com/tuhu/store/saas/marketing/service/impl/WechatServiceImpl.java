@@ -203,15 +203,15 @@ public class WechatServiceImpl implements IWechatService {
                 if (Objects.nonNull(storeInfoDTO)) {
                     //门店名
                     HashMap thing10Value = Maps.newHashMap();
-                    String storeName =null;
+                    String storeName = null;
                     if (org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getStoreName())) {
                         storeName = storeInfoDTO.getStoreName();
                         if (storeName.length() > 20) {
-                            storeName=storeName.substring(0, 17);
-                            storeName.concat("...");
+                            storeName = storeName.substring(0, 17);
+                            storeName = storeName + "...";
                         }
-                    }else{
-                        storeName=MiniNotifyConstant.STORENAME;
+                    } else {
+                        storeName = MiniNotifyConstant.STORENAME;
                     }
                     thing10Value.put("value", storeName);
                     data.put("thing10", thing10Value);
@@ -228,15 +228,15 @@ public class WechatServiceImpl implements IWechatService {
 
                     //地址
                     HashMap thing16 = Maps.newHashMap();
-                    String address =null;
+                    String address = null;
                     if (org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getAddress())) {
                         address = storeInfoDTO.getAddress();
                         if (address.length() > 20) {
-                            address=address.substring(0, 17);
-                            address.concat("...");
+                            address = address.substring(0, 17);
+                            address = address + "...";
                         }
-                    }else{
-                        address=MiniNotifyConstant.ADDRESS;
+                    } else {
+                        address = MiniNotifyConstant.ADDRESS;
                     }
                     thing16.put("value", address);
                     data.put("thing16", thing16);
@@ -250,15 +250,15 @@ public class WechatServiceImpl implements IWechatService {
 
                     //备注
                     HashMap thing15 = Maps.newHashMap();
-                    String description =null;
+                    String description = null;
                     if (org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getDescription())) {
                         description = srvReservationOrder.getDescription();
                         if (description.length() > 20) {
-                            description=description.substring(0, 17);
-                            description.concat("...");
+                            description = description.substring(0, 17);
+                            description = description + "...";
                         }
-                    }else{
-                        description=MiniNotifyConstant.DESCRIPTION;
+                    } else {
+                        description = MiniNotifyConstant.DESCRIPTION;
                     }
                     thing15.put("value", description);
                     data.put("thing15", thing15);

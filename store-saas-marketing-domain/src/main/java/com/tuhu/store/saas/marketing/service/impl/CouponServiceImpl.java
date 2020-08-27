@@ -943,7 +943,7 @@ public class CouponServiceImpl implements ICouponService {
                 customerCouponCriteria.andCouponCodeEqualTo(code);
                 int count = customerCouponMapper.countByExample(customerCouponExample);
                 log.info("count ->{}", count);
-                if (Long.valueOf(count + "").compareTo(grantNumber) >= 0) {
+                if (Long.valueOf(count).compareTo(grantNumber) >= 0) {
                     log.warn("优惠券[code={}],已发放完毕", code);
                     redisTemplate.delete(key);
                     result.setMessage(String.format("\"%s\"数量不足", coupon.getTitle()));
