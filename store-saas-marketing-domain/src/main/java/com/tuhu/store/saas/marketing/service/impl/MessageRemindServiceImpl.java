@@ -42,8 +42,8 @@ public class MessageRemindServiceImpl implements IMessageRemindService {
         MessageRemindExample.Criteria statusUnsend = remindExample.createCriteria();
         MessageRemindExample.Criteria statusSendFailed = remindExample.createCriteria();
 
-        statusUnsend.andStatusEqualTo(MessageStatusEnum.MESSAGE_WAIT.getCode()).andIsDeleteEqualTo(Boolean.FALSE).andSourceIn(Lists.newArrayList(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(), SMSTypeEnum.MARKETING_COUPON.templateCode()));
-        statusSendFailed.andStatusEqualTo(MessageStatusEnum.MESSAGE_FAIL.getCode()).andTryTimeGreaterThan(0).andIsDeleteEqualTo(Boolean.FALSE).andSourceIn(Lists.newArrayList(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(), SMSTypeEnum.MARKETING_COUPON.templateCode()));
+        statusUnsend.andStatusEqualTo(MessageStatusEnum.MESSAGE_WAIT.getCode()).andIsDeleteEqualTo(Boolean.FALSE).andSourceIn(Lists.newArrayList(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(), SMSTypeEnum.MARKETING_COUPON.templateCode(), SMSTypeEnum.SAAS_STORE_ACTIVITY_APPLY.templateCode()));
+        statusSendFailed.andStatusEqualTo(MessageStatusEnum.MESSAGE_FAIL.getCode()).andTryTimeGreaterThan(0).andIsDeleteEqualTo(Boolean.FALSE).andSourceIn(Lists.newArrayList(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(), SMSTypeEnum.MARKETING_COUPON.templateCode(), SMSTypeEnum.SAAS_STORE_ACTIVITY_APPLY.templateCode()));
 
 //        remindExample.or(statusUnsend);
         remindExample.or(statusSendFailed);
