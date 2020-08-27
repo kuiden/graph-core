@@ -294,10 +294,12 @@ public class IMCouponServiceImpl implements IMCouponService {
                 //* 查询发券人姓名
                 UserDTO dto = userInfoMap.get(recordItem.getSendUser());
                 recordItem.setSendUser(dto != null ? dto.getUsername() : "");
-                //* 判断券是否已失效
-                Date date = new Date();
-                if (recordItem.getUseEndTime() != null && date.after(recordItem.getUseEndTime())) {
-                    recordItem.setUseStatus((byte) -1);
+                //* 判断券是否已失效 如果是已使用 优先显示已使用
+                if (recordItem.getUseStatus() != ((byte) 1)) {
+                    Date date = new Date();
+                    if (recordItem.getUseEndTime() != null && date.after(recordItem.getUseEndTime())) {
+                        recordItem.setUseStatus((byte) -1);
+                    }
                 }
             });
         }
