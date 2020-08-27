@@ -652,7 +652,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         Long leftNumber = -1L; //默认-1,表示剩余数量不限
         if (couponItemResp.getGrantNumber() >= 0) {
             Long sendNumber = (Long) sendNumberMap.get(couponItemResp.getCode()) == null ? 0 : (Long) sendNumberMap.get(couponItemResp.getCode());
-            leftNumber = couponItemResp.getGrantNumber() - sendNumber;
+            leftNumber = couponItemResp.getGrantNumber() - sendNumber - couponItemResp.getOccupyNum();
             if (leftNumber < 0) {
                 leftNumber = 0L;
             }

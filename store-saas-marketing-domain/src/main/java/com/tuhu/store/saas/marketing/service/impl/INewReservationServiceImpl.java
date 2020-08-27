@@ -94,6 +94,7 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public List<ReservationPeriodResp> getReservationPeroidList(ReservePeriodReq req) {
+        log.info("getReservationPeroidList入参：", JSONObject.toJSONString(req));
         List<ReservationPeriodResp> result = new ArrayList<>();
         //查门店营业时间
         Map<String,Date> storeMap = getStoreWorkingTime(req.getStoreId());
@@ -116,6 +117,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         //过滤出客户已预约过的
         if(StringUtils.isNotBlank(req.getCustomerId())){
             HashSet set = reservationOrderService.getReservedPeriodListForCustomer(req.getDate(), req.getCustomerId(), req.getStoreId());
+            log.info("getReservationPeroidList已预约的时间段：", JSONObject.toJSONString(set));
             result.forEach(reservationPeriodResp -> {
                 if (set.contains(reservationPeriodResp.getReserveStartTimeString())) {
                     reservationPeriodResp.setReserved(true);
@@ -190,6 +192,7 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public PageInfo<ReservationDTO> getCReservationList(CReservationListReq req) {
+        log.info("getCReservationList入参：", JSONObject.toJSONString(req));
         PageInfo<ReservationDTO> result = new PageInfo<>();
         List<ReservationDTO> list = new ArrayList<>();
         List<SrvReservationOrder> daoList = reservationOrderMapper.getCReservationList(req.getStoreId(),req.getCustomerId(),req.getPageNum(),req.getPageSize());
@@ -269,6 +272,7 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public ReservationDTO getCReservationDetail(CReservationListReq req) {
+        log.info("getCReservationDetail入参：", JSONObject.toJSONString(req));
         ReservationDTO result = new ReservationDTO();
         SrvReservationOrder order = getReservationById(req.getId(),req.getStoreId());
         if(order != null){
