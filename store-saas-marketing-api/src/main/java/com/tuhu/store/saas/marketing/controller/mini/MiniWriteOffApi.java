@@ -38,14 +38,14 @@ public class MiniWriteOffApi extends BaseApi {
         //code门店校验
         //
         if (code.startsWith("YHQ")) {
-            if (!code.startsWith("YHQ" + storeId)) {
+            if (!code.startsWith("YHQ" + String.format(new StringBuilder("%0").append(4).append("d").toString(), storeId))) {
                 throw new StoreSaasMarketingException("非本门店优惠券");
             }
             //   couponService.writeOffCustomerCouponV2(code);
             result = "customerCoupon";
         } else if (code.startsWith("YXHD")) {
 
-            if (!code.startsWith("YXHD" + storeId)) {
+            if (!code.startsWith("YXHD" + String.format(new StringBuilder("%0").append(4).append("d").toString(), storeId))) {
                 throw new StoreSaasMarketingException("非本门店活动");
             }
             result = "activity";
