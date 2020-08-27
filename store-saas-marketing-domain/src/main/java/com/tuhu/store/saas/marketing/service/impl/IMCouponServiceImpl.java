@@ -48,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -405,12 +406,12 @@ public class IMCouponServiceImpl implements IMCouponService {
                 /*
                   获取优惠券剩余数量
                   grantNumber==-1: 领取张数不限
-                  grantNumber>=0 :  grantNumber - 已发送张数
+                  grantNumber>=0 :  grantNumber - 已发送张数 -占用数
                  */
                 Long leftNumber = -1L; //默认-1,表示剩余数量不限
                 if (couponRecord.getGrantNumber() >= 0) {
                     Long sendNumber = (Long) sendNumberMap.get(couponRecord.getCode()) == null ? 0 : (Long) sendNumberMap.get(couponRecord.getCode());
-                    leftNumber = couponRecord.getGrantNumber() - sendNumber;
+                    leftNumber = couponRecord.getGrantNumber() - sendNumber - couponRecord.getOccupyNum();
                     if (leftNumber < 0) {
                         leftNumber = 0L;
                     }
@@ -737,6 +738,7 @@ public class IMCouponServiceImpl implements IMCouponService {
             return map;
         }
 
+
         /*
            防止用户并发性发出重复请求
         */
@@ -749,7 +751,17 @@ public class IMCouponServiceImpl implements IMCouponService {
             redisTemplate.opsForValue().increment(lockKey, -1L);
             return map;
         }
-
+        //如果之前未存放发放数量
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponCriteria = customerCouponExample.createCriteria();
+        customerCouponCriteria.andCouponCodeEqualTo(couponInfo.getCode());
+        int count = customerCouponMapper.countByExample(customerCouponExample);
+        if (count + couponInfo.getOccupyNum().intValue() + 1 > couponInfo.getGrantNumber()) {
+            map.put("success", false);
+            map.put("resultType", 4004);// 券数量不够
+            map.put("message", "券已经被抢完啦！");
+            return map;
+        }
         /*
         领券
          */
