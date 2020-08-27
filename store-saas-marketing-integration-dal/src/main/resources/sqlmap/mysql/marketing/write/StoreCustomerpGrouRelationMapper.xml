@@ -13,6 +13,7 @@
     <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="count_time" jdbcType="TIMESTAMP" property="countTime" />
   </resultMap>
 
 
@@ -75,7 +76,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List" >
-    id, group_name, store_id,tenant_id, group_desc,customer_count, create_user,update_user, create_time, update_time
+    id, group_name, store_id,tenant_id, group_desc,customer_count, create_user,update_user, create_time, update_time,count_time
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerGroupRuleExample" >
     select
