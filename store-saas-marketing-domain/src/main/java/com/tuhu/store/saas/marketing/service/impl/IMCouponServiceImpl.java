@@ -907,10 +907,12 @@ public class IMCouponServiceImpl implements IMCouponService {
                             && crmResult.getData().containsKey(customerCoupon.getSendUser())
                             ? crmResult.getData().get(customerCoupon.getSendUser()).getUsername() : null);
                 }
-                //获取过期状态
-                Date date = new Date();
-                if (customerCoupon.getUseEndTime() != null && date.after(customerCoupon.getUseEndTime())) {
-                    result.setUseStatus((byte) -1);
+                //获取过期状态  优先显示已使用状态
+                if (customerCoupon.getUseStatus() != ((byte) 1)) {
+                    Date date = new Date();
+                    if (customerCoupon.getUseEndTime() != null && date.after(customerCoupon.getUseEndTime())) {
+                        result.setUseStatus((byte) -1);
+                    }
                 }
 
             } else {
