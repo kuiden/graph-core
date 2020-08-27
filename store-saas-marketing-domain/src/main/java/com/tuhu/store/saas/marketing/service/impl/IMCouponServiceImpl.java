@@ -737,6 +737,7 @@ public class IMCouponServiceImpl implements IMCouponService {
             map.put("success", false);
             map.put("resultType", 4003);//领取过该券
             map.put("message", "你已领取过该券");
+           // redisTemplate.delete(lockKey);
             return map;
         }
 
@@ -745,7 +746,7 @@ public class IMCouponServiceImpl implements IMCouponService {
            防止用户并发性发出重复请求
         */
         Long cacheCount = redisTemplate.opsForValue().increment(lockKey, 1L);
-        redisTemplate.expire(lockKey, 3, TimeUnit.DAYS);
+        redisTemplate.expire(lockKey, 1, TimeUnit.HOURS);
         if (cacheCount > 1) {
             map.put("success", false);
             map.put("resultType", 4003);//已领取过，重复操作，同时发送多次领取请求
@@ -753,17 +754,22 @@ public class IMCouponServiceImpl implements IMCouponService {
             redisTemplate.opsForValue().increment(lockKey, -1L);
             return map;
         }
-        //如果之前未存放发放数量
-        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
-        CustomerCouponExample.Criteria customerCouponCriteria = customerCouponExample.createCriteria();
-        customerCouponCriteria.andCouponCodeEqualTo(couponInfo.getCode());
-        int count = customerCouponMapper.countByExample(customerCouponExample);
-        if (count + couponInfo.getOccupyNum().intValue() + 1 > couponInfo.getGrantNumber()) {
-            map.put("success", false);
-            map.put("resultType", 4004);// 券数量不够
-            map.put("message", "券已经被抢完啦！");
-            return map;
+
+        if (couponInfo.getGrantNumber() != -1){
+            CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+            CustomerCouponExample.Criteria customerCouponCriteria = customerCouponExample.createCriteria();
+            customerCouponCriteria.andCouponCodeEqualTo(couponInfo.getCode());
+            int count = customerCouponMapper.countByExample(customerCouponExample);
+            //如果之前未存放发放数量
+            if (count + couponInfo.getOccupyNum().intValue() + 1 > couponInfo.getGrantNumber()) {
+                map.put("success", false);
+                map.put("resultType", 4004);// 券数量不够
+                map.put("message", "券已经被抢完啦！");
+                redisTemplate.opsForValue().increment(lockKey, -1L);
+                return map;
+            }
         }
+
         /*
         领券
          */
