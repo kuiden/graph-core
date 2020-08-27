@@ -46,7 +46,12 @@ public enum SMSTypeEnum {
      * 公共模板
      * 【云雀智修】预约您的手机验证码是：{1}，5分钟内有效，请勿泄露，如非本人操作，请删除本短信。
      */
-    SAAS_MINI_ORDER_CREATE_CODE("SAAS_MINI_ORDER_CREATE_CODE","H5新建预约发验证码")
+    SAAS_MINI_ORDER_CREATE_CODE("SAAS_MINI_ORDER_CREATE_CODE","H5新建预约发验证码"),
+
+    /**
+     *【云雀智修】活动报名成功！请于活动截止日前到店消费～您参与的活动：{1}，活动截止日：{2}。
+     */
+    SAAS_STORE_ACTIVITY_APPLY("SAAS_STORE_ACTIVITY_APPLY", "营销活动报名成功")
 
     ;
     private String templateCode;

@@ -156,7 +156,7 @@
 	</appender>
 
 
-	<springProfile name="dev,prd,test,uat">
+	<springProfile name="dev,prd,prod,test,uat">
 		<logger name="com.tuhu" level="INFO" additivity="false">
 			<appender-ref ref="ASYNC_INFO" />
 			<appender-ref ref="ERROR" />
