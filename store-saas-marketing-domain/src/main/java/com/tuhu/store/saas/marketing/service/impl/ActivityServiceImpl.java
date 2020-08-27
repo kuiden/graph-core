@@ -20,10 +20,7 @@ import com.tuhu.store.saas.dto.product.ServiceGoodDTO;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
-import com.tuhu.store.saas.marketing.enums.CrmReturnCodeEnum;
-import com.tuhu.store.saas.marketing.enums.EventTypeEnum;
-import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
-import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
+import com.tuhu.store.saas.marketing.enums.*;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityCustomerMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityItemMapper;
@@ -1091,6 +1088,7 @@ public class ActivityServiceImpl implements IActivityService {
         CustomerAndVehicleReq customerAndVehicleReq = new CustomerAndVehicleReq();
         customerAndVehicleReq.setCustomerId(activityCustomer.getCustomerId());
         sendRemindReq.setCustomerList(Collections.singletonList(customerAndVehicleReq));
+        sendRemindReq.setSource(SMSTypeEnum.SAAS_STORE_ACTIVITY_APPLY.templateCode());
         sendRemindReq.setMessageTemplateId(applyMessageTemplateId);
         List<String> datas = new ArrayList<>();
         datas.add(activity.getActivityTitle());
@@ -1191,6 +1189,7 @@ public class ActivityServiceImpl implements IActivityService {
         customerAndVehicleReq.setCustomerId(activityApplyReq.getCustomerId());
         sendRemindReq.setCustomerList(Collections.singletonList(customerAndVehicleReq));
         sendRemindReq.setMessageTemplateId(applyMessageTemplateId);
+        sendRemindReq.setSource(SMSTypeEnum.SAAS_STORE_ACTIVITY_APPLY.templateCode());
         List<String> datas = new ArrayList<>();
         datas.add(activity.getActivityTitle());
         String datePattern = "yyyy年MM月dd日";
@@ -2386,7 +2385,7 @@ public class ActivityServiceImpl implements IActivityService {
         if (activeType == null) {
             return this.getLastSecondOfDate(activityEndDate);
         }else if (activeType == 0) {
-            LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays);
+            LocalDateTime appLocalDate = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).plusDays(activeDays-1);
             Date appDate = Date.from(appLocalDate.atZone(ZoneId.systemDefault()).toInstant());
 //            if (appDate.before(activityEndDate)) {
                 return appDate;
