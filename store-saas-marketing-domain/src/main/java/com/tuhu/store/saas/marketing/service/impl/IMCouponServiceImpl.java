@@ -763,7 +763,7 @@ public class IMCouponServiceImpl implements IMCouponService {
             //如果之前未存放发放数量
             if (count + couponInfo.getOccupyNum().intValue() + 1 > couponInfo.getGrantNumber()) {
                 map.put("success", false);
-                map.put("resultType", 4004);// 券数量不够
+                map.put("resultType", 4002);// 券数量不够
                 map.put("message", "券已经被抢完啦！");
                 redisTemplate.opsForValue().increment(lockKey, -1L);
                 return map;
