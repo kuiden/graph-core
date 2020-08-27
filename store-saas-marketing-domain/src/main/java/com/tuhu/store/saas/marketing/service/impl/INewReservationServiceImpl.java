@@ -125,7 +125,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         return result;
     }
 
-    //teminalType 门店：0,小程序：1,H5:2
+    //teminalType 门店：0,小程序首页入口：1, H5:2, 小程序优惠券或者活动入口：3
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
         log.info("C端新增预约单addReservation入参：", JSONObject.toJSONString(req));
@@ -164,7 +164,7 @@ public class INewReservationServiceImpl implements INewReservationService {
                     list.add(dealMdDate(order.getEstimatedArriveTime()));
                     sendSms(storeInfo.getClientAppointPhone(),SMSTypeEnum.SAAS_MINI_ORDER_CREATE.templateCode(),list);
                 }
-                if(type == 2){//发给门店老板:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
+                if(type == 2 || type == 3){//发给门店老板:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
                     List<String> list = new ArrayList<>();
                     list.add(order.getCustomerPhoneNumber());
                     list.add(req.getMarketingName());
