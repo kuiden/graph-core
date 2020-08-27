@@ -145,7 +145,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         //生成开卡单号
         String code = cardOrderRedisCache.getCode(cardOrderRedisPrefix,req.getStoreId());
         if (null == req.getStoreNo()){
-            req.setStoreNo("");
+            req.setStoreNo(req.getStoreId().toString());
         }
         crdCardOrder.setOrderNo(getCardOrderNumber(code, req.getStoreNo()));
         crdCardOrderMapper.insertSelective(crdCardOrder);
