@@ -206,10 +206,12 @@ public class WechatServiceImpl implements IWechatService {
                     String storeName =null;
                     if (org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getStoreName())) {
                         storeName = storeInfoDTO.getStoreName();
-                        if (storeName.length() > 10) {
-                            storeName=storeName.substring(0, 10);
+                        if (storeName.length() > 20) {
+                            storeName=storeName.substring(0, 17);
                             storeName.concat("...");
                         }
+                    }else{
+                        storeName=MiniNotifyConstant.STORENAME;
                     }
                     thing10Value.put("value", storeName);
                     data.put("thing10", thing10Value);
@@ -229,10 +231,12 @@ public class WechatServiceImpl implements IWechatService {
                     String address =null;
                     if (org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getAddress())) {
                         address = storeInfoDTO.getAddress();
-                        if (address.length() > 16) {
-                            address=address.substring(0, 16);
+                        if (address.length() > 20) {
+                            address=address.substring(0, 17);
                             address.concat("...");
                         }
+                    }else{
+                        address=MiniNotifyConstant.ADDRESS;
                     }
                     thing16.put("value", address);
                     data.put("thing16", thing16);
@@ -249,10 +253,12 @@ public class WechatServiceImpl implements IWechatService {
                     String description =null;
                     if (org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getDescription())) {
                         description = srvReservationOrder.getDescription();
-                        if (description.length() > 15) {
-                            description=description.substring(0, 15);
+                        if (description.length() > 20) {
+                            description=description.substring(0, 17);
                             description.concat("...");
                         }
+                    }else{
+                        description=MiniNotifyConstant.DESCRIPTION;
                     }
                     thing15.put("value", description);
                     data.put("thing15", thing15);
