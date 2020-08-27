@@ -193,7 +193,7 @@ public class WechatServiceImpl implements IWechatService {
         param.put("page", miniProgramNotifyReq.getPage());
         //param.put("form_id", miniProgramNotifyReq.getFormId());
         HashMap data = Maps.newHashMap();
-        SrvReservationOrder srvReservationOrder=reservationOrderMapper.selectById(miniProgramNotifyReq.getFormId());
+        SrvReservationOrder srvReservationOrder = reservationOrderMapper.selectById(miniProgramNotifyReq.getFormId());
         if (Objects.nonNull(srvReservationOrder)) {
             StoreInfoVO storeInfoVO = new StoreInfoVO();
             storeInfoVO.setStoreId(srvReservationOrder.getStoreId());
@@ -203,44 +203,71 @@ public class WechatServiceImpl implements IWechatService {
                 if (Objects.nonNull(storeInfoDTO)) {
                     //门店名
                     HashMap thing10Value = Maps.newHashMap();
-                    String storeName= org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getStoreName())?storeInfoDTO.getStoreName(): MiniNotifyConstant.STORENAME;
-                    thing10Value.put("value",storeName);
-                    data.put("thing10",thing10Value);
+                    String storeName = null;
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getStoreName())) {
+                        storeName = storeInfoDTO.getStoreName();
+                        if (storeName.length() > 20) {
+                            storeName = storeName.substring(0, 17);
+                            storeName = storeName + "...";
+                        }
+                    } else {
+                        storeName = MiniNotifyConstant.STORENAME;
+                    }
+                    thing10Value.put("value", storeName);
+                    data.put("thing10", thing10Value);
 
                     //时间
                     HashMap date5 = Maps.newHashMap();
-                    if(Objects.nonNull(srvReservationOrder.getEstimatedArriveTime())){
+                    if (Objects.nonNull(srvReservationOrder.getEstimatedArriveTime())) {
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                         date5.put("value", dateFormat.format(srvReservationOrder.getEstimatedArriveTime()));
-                    }else{
-                        date5.put("value", MiniNotifyConstant.ESTIMATEDARRIVETIME);
+                    } else {
+                        date5.put("value", null);
                     }
-                    data.put("date5",date5);
+                    data.put("date5", date5);
 
                     //地址
                     HashMap thing16 = Maps.newHashMap();
-                    String address= org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getAddress())?storeInfoDTO.getAddress(): MiniNotifyConstant.ADDRESS;
-                    thing16.put("value",address);
-                    data.put("thing16",thing16);
+                    String address = null;
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(storeInfoDTO.getAddress())) {
+                        address = storeInfoDTO.getAddress();
+                        if (address.length() > 20) {
+                            address = address.substring(0, 17);
+                            address = address + "...";
+                        }
+                    } else {
+                        address = MiniNotifyConstant.ADDRESS;
+                    }
+                    thing16.put("value", address);
+                    data.put("thing16", thing16);
 
 
                     //电话
                     HashMap phone_number12 = Maps.newHashMap();
-                    String phoneNumber= org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getCustomerPhoneNumber())?srvReservationOrder.getCustomerPhoneNumber(): MiniNotifyConstant.PHONENUMBER;
-                    phone_number12.put("value",phoneNumber);
-                    data.put("phone_number12",phone_number12);
+                    String phoneNumber = org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getCustomerPhoneNumber()) ? srvReservationOrder.getCustomerPhoneNumber() : MiniNotifyConstant.PHONENUMBER;
+                    phone_number12.put("value", phoneNumber);
+                    data.put("phone_number12", phone_number12);
 
                     //备注
                     HashMap thing15 = Maps.newHashMap();
-                    String description= org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getDescription())?srvReservationOrder.getDescription(): MiniNotifyConstant.DESCRIPTION;
-                    thing15.put("value",description);
-                    data.put("thing15",thing15);
+                    String description = null;
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(srvReservationOrder.getDescription())) {
+                        description = srvReservationOrder.getDescription();
+                        if (description.length() > 20) {
+                            description = description.substring(0, 17);
+                            description = description + "...";
+                        }
+                    } else {
+                        description = MiniNotifyConstant.DESCRIPTION;
+                    }
+                    thing15.put("value", description);
+                    data.put("thing15", thing15);
                 }
             } catch (Exception e) {
                 log.error("查询门店信息RPC接口异常", e);
                 throw new SaasAuthException("查询门店信息RPC接口异常:" + miniProgramNotifyReq.getFormId());
             }
-        }else{
+        } else {
             throw new SaasAuthException("没有找到预约单详情:" + miniProgramNotifyReq.getFormId());
         }
         param.put("data", data);
@@ -256,8 +283,6 @@ public class WechatServiceImpl implements IWechatService {
         }
         return null;
     }
-
-
 
 
     private ResultDTO<String> getWechatAccessTokenByClientTypeNoCache(String clientType) {
