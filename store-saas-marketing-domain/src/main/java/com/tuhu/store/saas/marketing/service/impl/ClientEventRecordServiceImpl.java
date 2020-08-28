@@ -137,7 +137,8 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
                 iEndUserVisitedCouponService.recordEndUserVistiedCoupon(endUserVisitedCouponEntity);
             }
         } else if (EventTypeEnum.LOGIN.getCode().equals(clientEventRecordRequest.getEventType()) || EventTypeEnum.REGISTERED.getCode().equals(clientEventRecordRequest.getEventType())) {
-            if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())) {
+            if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())
+                    && StringUtils.isNotBlank(clientEventRecordRequest.getCustomerId()) && StringUtils.isNotBlank(storeId)) {
                 EndUserVistiedCouponRequest endUserVistiedCouponRequest = new EndUserVistiedCouponRequest();
                 endUserVistiedCouponRequest.setEncryptedCode(contentValue);
                 endUserVistiedCouponRequest.setOpenId(openId);
