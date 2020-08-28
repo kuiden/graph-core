@@ -1,7 +1,10 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.response.CouponItemResp;
 import com.tuhu.store.saas.marketing.response.CouponPageResp;
+import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
 
 import javax.validation.groups.Default;
@@ -51,5 +54,15 @@ public interface IMCouponService extends Default {
 
     Map getCoupon(CouponRequest req, String customerId);
 
+    byte [] openGetCustomerCouponCodeByPhone(String phone, String code) throws Exception;
+
+    Integer openGetUseStatusByCode(String code) throws InterruptedException;
+
     CustomerCouponPageResp getMyCouponList(CouponReceiveRecordRequest req, String customerId);
+
+    CouponItemResp openGetCouponInfo(String code);
+
+    CouponResp openGetCouponDetail(String code);
+
+    CustomerCouponPO getCouponDetailv2(CouponRequest req);
 }

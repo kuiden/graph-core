@@ -1,5 +1,7 @@
 package com.tuhu.store.saas.marketing.request;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.ToString;
 
@@ -12,32 +14,26 @@ import java.io.Serializable;
  */
 @Data
 @ToString
+@ApiModel("营销活动列表查询请求")
 public class ActivityListReq implements Serializable {
-    private static final long serialVersionUID = -9118912344718089822L;
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * 活动名称，模糊查找
-     */
+    @ApiModelProperty("活动名称，模糊查找")
     private String title;
 
-    /**
-     * 活动状态,全部，未开始:0,进行中:1,已结束:2
-     */
+    @ApiModelProperty("活动状态,全部：null，未开始:0,进行中:1,已结束:2,未结束:3")
     private Integer dateStatus;
 
-    /**
-     * 用户ID
-     */
+    @ApiModelProperty("活动上下架，全部：null，0：下架，1：上架")
+    private Boolean status;
+
+    @ApiModelProperty("用户ID")
     private String userId;
 
-    /**
-     * 门店ID
-     */
+    @ApiModelProperty("门店ID")
     private Long storeId;
 
-    /**
-     * 租户ID
-     */
+    @ApiModelProperty("租户ID")
     private Long tenantId;
 
     @NotNull(message = "pageNum不能为空")

@@ -6,7 +6,9 @@ import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 送券请求
@@ -35,7 +37,7 @@ public class SendCouponReq implements Serializable {
      * 领取类型：
      * 0：主动在线领取
      * 1：手动发券
-     * 2：营销发券
+     * 2：定向营销发券
      */
     private Integer receiveType;
 
@@ -50,4 +52,10 @@ public class SendCouponReq implements Serializable {
      */
     @NotNull(message = "客户ID不能为空")
     private List<String> customerIds;
+
+
+    /**
+     * 优惠券送出张数
+     */
+    private Map<String,Integer> count = new HashMap<>();
 }

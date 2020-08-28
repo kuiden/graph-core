@@ -2,8 +2,12 @@ package com.tuhu.store.saas.marketing.controller.mini;
 
 
 import com.github.pagehelper.PageInfo;
+import com.google.common.collect.Lists;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.remote.ResultObject;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
@@ -14,6 +18,7 @@ import com.tuhu.store.saas.marketing.response.dto.ServiceOrderCouponDTO;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,62 +41,70 @@ public class MiniCouponApi extends BaseApi {
 
     @RequestMapping(value = "/add", method = RequestMethod.POST)
     @ApiOperation(value = "优惠券活动新增")
-    public ResultObject add(@Validated @RequestBody AddCouponReq addCouponReq) {
+    public BizBaseResponse add(@Validated @RequestBody AddCouponReq addCouponReq) {
         addCouponReq.setUserId(this.getUserId());
         addCouponReq.setTenantId(super.getTenantId());
         addCouponReq.setStoreId(super.getStoreId());
         addCouponReq = iCouponService.addNewCoupon(addCouponReq);
-        return new ResultObject(addCouponReq);
+        return new BizBaseResponse(addCouponReq);
     }
 
     @RequestMapping(value = "/detail", method = {RequestMethod.GET, RequestMethod.POST})
     @ApiOperation(value = "优惠券活动详情")
-    public ResultObject detail(Long couponId) {
-        CouponResp couponResp = iCouponService.getCouponDetailById(couponId, this.getStoreId());
-        return new ResultObject(couponResp);
+    public BizBaseResponse detail(Long couponId) {
+        CouponResp couponResp = iCouponService.getCouponDetailById(couponId);
+        return new BizBaseResponse(couponResp);
     }
 
     @RequestMapping(value = "/list", method = {RequestMethod.GET, RequestMethod.POST})
     @ApiOperation(value = "优惠券活动查询")
-    public ResultObject list(@Validated @RequestBody CouponListReq couponListReq) {
+    public BizBaseResponse list(@Validated @RequestBody CouponListReq couponListReq) {
         couponListReq.setUserId(this.getUserId());
         couponListReq.setStoreId(this.getStoreId());
         couponListReq.setTenantId(this.getTenantId());
         PageInfo<CouponResp> couponRespPage = iCouponService.listCoupon(couponListReq);
-        return new ResultObject(couponRespPage);
+        return new BizBaseResponse(couponRespPage);
     }
 
     @RequestMapping(value = "/edit", method = RequestMethod.POST)
     @ApiOperation(value = "优惠券活动编辑")
-    public ResultObject edit(@Validated @RequestBody EditCouponReq editCouponReq) {
+    public BizBaseResponse edit(@Validated @RequestBody EditCouponReq editCouponReq) {
         editCouponReq.setUserId(this.getUserId());
         editCouponReq.setStoreId(this.getStoreId());
         editCouponReq.setTenantId(this.getTenantId());
         editCouponReq = iCouponService.editCoupon(editCouponReq);
-        return new ResultObject(editCouponReq);
+        return new BizBaseResponse(editCouponReq);
     }
 
     @RequestMapping(value = "/send", method = RequestMethod.POST)
     @ApiOperation(value = "优惠券活动送券")
-    public ResultObject send(@Validated @RequestBody SendCouponReq sendCouponReq) {
+    public BizBaseResponse<List<CommonResp<CustomerCoupon>>> send(@Validated @RequestBody SendCouponReq sendCouponReq) {
         sendCouponReq.setUserId(this.getUserId());
         sendCouponReq.setStoreId(this.getStoreId());
         sendCouponReq.setTenantId(this.getTenantId());
-        sendCouponReq.setReceiveType(Integer.valueOf(1));//手动发券
+        if (sendCouponReq.getReceiveType() == null) {
+            sendCouponReq.setReceiveType(Integer.valueOf(1));//手动发券
+        }
         List<CommonResp<CustomerCoupon>> customerCouponRespList = iCouponService.sendCoupon(sendCouponReq);
         boolean hasFailed = false;
+        CommonResp<CustomerCoupon> fail = new CommonResp<CustomerCoupon>();
         for (CommonResp<CustomerCoupon> customerCouponResp : customerCouponRespList) {
             if (!customerCouponResp.isSuccess()) {
                 hasFailed = true;
+                fail = customerCouponResp;
                 break;
             }
         }
-        ResultObject resultObject = new ResultObject(customerCouponRespList);
+        BizBaseResponse<List<CommonResp<CustomerCoupon>>> resultObject = new BizBaseResponse<List<CommonResp<CustomerCoupon>>>();
         if (hasFailed) {
+            resultObject.setData(Lists.newArrayList(fail));
             resultObject.setCode(4000);
+        } else {
+            resultObject.setData(customerCouponRespList);
         }
         return resultObject;
     }
+
 
     @RequestMapping(value = "/getCouponsForServiceOrder", method = RequestMethod.POST)
     @ApiOperation(value = "根据工单查询可用优惠券")
@@ -141,9 +154,11 @@ public class MiniCouponApi extends BaseApi {
      * @return
      */
     @GetMapping("/getOveralEffect")
-    public ResultObject getCouponOveral(CouponRequest req) {
+    public BizBaseResponse getCouponOveral(CouponRequest req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
         Map result = imCouponService.getOveralEffect(req);
-        return new ResultObject(result);
+        return new BizBaseResponse(result);
     }
 
     /**
@@ -164,9 +179,11 @@ public class MiniCouponApi extends BaseApi {
      * @return
      */
     @GetMapping("/couponReceiveList")
-    public ResultObject getCouponReceiveList(CouponReceiveRecordRequest req) {
+    public BizBaseResponse getCouponReceiveList(CouponReceiveRecordRequest req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
         CustomerCouponPageResp result = imCouponService.getCouponReceiveList(req);
-        return new ResultObject(result);
+        return new BizBaseResponse(result);
     }
 
     /**
@@ -190,85 +207,24 @@ public class MiniCouponApi extends BaseApi {
      * @return
      */
     @GetMapping("/getCouponDetail")
-    public ResultObject getCouponDetail(CouponRequest req) {
+    public BizBaseResponse getCouponDetail(CouponRequest req) {
         Map result = imCouponService.getCouponDetail(req);
-        return new ResultObject(result);
+        return new BizBaseResponse(result);
     }
 
-    /**
-     * 优惠券列表
-     *
-     * @param req
-     * @return
-     */
-    @GetMapping("/client/getCouponList")
-    public ResultObject getCouponList(CouponSearchRequest req) {
-        if (req.getStoreId() == null) {
-            req.setStoreId(this.getStoreId());
+
+    @GetMapping("/getCouponDetailV2")
+    public BizBaseResponse getCouponDetailv2(CouponRequest req) {
+        if (StringUtils.isBlank(req.getCustomerCouponCode())){
+            throw  new StoreSaasMarketingException("参数验证失败");
         }
-        //TODO 需要登录获取客户id
-        //CouponPageResp result = imCouponService.getCouponList(req, this.getCustomerId());
-        String customerId="";
-        CouponPageResp result = imCouponService.getCouponList(req, customerId);
-        return new ResultObject(result);
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        CustomerCouponPO result = imCouponService.getCouponDetailv2(req);
+        return new BizBaseResponse(result);
     }
 
-    /**
-     * c端抵用券详情
-     *
-     * @param req
-     * @return
-     */
-    @GetMapping("/client/couponDetail")
-    public ResultObject getCouponDetailForClient(CouponRequest req) {
-        //TODO 需要登录获取客户id
-/*        if (StringUtils.isBlank(this.getCustomerId())) {
-            return new ResultObject(401, "未登录");
-        }*/
-        //TODO 需要登录获取客户id
-        //Map result = imCouponService.getCouponDetailForClient(req, this.getCustomerId());
-        String customerId="";
-        Map result = imCouponService.getCouponDetailForClient(req, customerId);
-        return new ResultObject(result);
-    }
 
-    /**
-     * 领券
-     *
-     * @param req
-     * @return
-     */
-    @PostMapping("/client/getCoupon")
-    public ResultObject getCoupon(@RequestBody CouponRequest req) {
-        //TODO 需要登录获取客户id
-/*        if (StringUtils.isBlank(this.getCustomerId())) {
-            return new ResultObject(401, "未登录");
-        }*/
-        //TODO 需要登录获取客户id
-        //Map map = imCouponService.getCoupon(req, this.getCustomerId());
-        String customerId="";
-        Map map = imCouponService.getCoupon(req, customerId);
-        return new ResultObject(map);
-    }
-
-    /**
-     * 我的优惠券列表
-     *
-     * @param req
-     * @return
-     */
-    @GetMapping("/client/myCouponList")
-    public ResultObject getMyCouponList(CouponReceiveRecordRequest req) {
-        //TODO 需要登录获取客户id
-/*        if (StringUtils.isBlank(this.getCustomerId())) {
-            return new ResultObject(401, "未登录");
-        }*/
-        //TODO 需要登录获取客户id
-        //CustomerCouponPageResp map = imCouponService.getMyCouponList(req, this.getCustomerId());
-        String customerId="";
-        CustomerCouponPageResp map = imCouponService.getMyCouponList(req, customerId);
-        return new ResultObject(map);
-    }
 
     /**
      * 营销发券统计数据
@@ -280,4 +236,5 @@ public class MiniCouponApi extends BaseApi {
         CouponStatisticsForCustomerMarketResp couponStatisticsForCustomerMarketResp = iCouponService.getCouponStatisticsForCustomerMarket(couponStatisticsForCustomerMarketReq.getCouponCode(), couponStatisticsForCustomerMarketReq.getCustomerIds());
         return new ResultObject(couponStatisticsForCustomerMarketResp);
     }
+
 }

@@ -3,8 +3,13 @@ package com.tuhu.store.saas.marketing.response;
 
 import com.tuhu.store.saas.marketing.dataobject.Coupon;
 import com.tuhu.store.saas.marketing.dataobject.CouponScopeCategory;
+import com.tuhu.store.saas.marketing.dataobject.Customer;
+import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
+import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import lombok.Data;
 
+import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -15,7 +20,7 @@ import java.util.List;
  * Description:
  */
 @Data
-public class CouponItemResp extends Coupon {
+public class CouponItemResp extends Coupon implements Serializable {
     /**
      * 券剩余数量
      */
@@ -31,4 +36,45 @@ public class CouponItemResp extends Coupon {
      * 限定分类信息
      */
     private List<CouponScopeCategory> couponScopeCategories;
+
+    private CouponItemResp.StoreInfo storeInfo;
+
+
+    /**
+     * * 使用状态 0:未使用 1：已使用
+     */
+    private Byte customerCouponStatus;
+
+
+    private  Date useEndTime;
+
+    private String customerCouponCode;
+
+    @Data
+    public static class StoreInfo  implements Serializable {
+        private String storeName;
+        private String address;
+        /**
+         * 营业时间起
+         */
+        private Date openingEffectiveDate;
+        /**
+         * 营业时间止
+         */
+        private Date openingExpiryDate;
+
+        /**
+         * 经度
+         */
+        private Double lon;
+
+        /**
+         * 纬度
+         */
+        private Double lat;
+        /**
+         * 手机号码
+         */
+        private String mobilePhone;
+    }
 }

@@ -2,8 +2,10 @@ package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
+import com.tuhu.store.saas.marketing.dataobject.MessageQuantity;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.request.MarketingReq;
+import com.tuhu.store.saas.marketing.request.MarketingSmsReq;
 import com.tuhu.store.saas.marketing.request.MarketingUpdateReq;
 
 import javax.validation.groups.Default;
@@ -30,12 +32,31 @@ public interface ICustomerMarketingService extends Default {
      * @param addReq
      * @return
      */
-    public MarketingAddReq addMarketingCustomer(MarketingAddReq addReq);
+    public Boolean addMarketingCustomer(MarketingAddReq addReq);
 
     /**
      * 更新定向营销任务状态
      * @param addReq
      */
     public void updateMarketingCustomerByTaskType(MarketingUpdateReq addReq);
+
+    /**
+     * 新增定向营销
+     * @param customerMarketing
+     */
+    public void insert(CustomerMarketing customerMarketing);
+
+    /**
+     * 根据条件获取短信预览
+     * @param req
+     * @return
+     */
+    String getSmsPreview(MarketingSmsReq req);
+
+    /**
+     * 优惠券是否建立过定向营销
+     * @return
+     */
+    Boolean customerMarketingContainsCoupon(Long couponId, Long tenantId, Long storeId);
 
 }

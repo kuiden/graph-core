@@ -147,7 +147,47 @@ public class CouponResp implements Serializable {
     private Long usedNumber;
 
     /**
+     * 占用数量
+     */
+    private Long occupyNum;
+
+    /**
      * 限定的分类
      */
     private List<CouponScopeCategoryResp> categories;
+
+    /**
+     * 是否创建营销活动
+     */
+    private  Boolean isMarketingCoupon;
+
+    private CouponResp.StoreInfo storeInfo;
+
+    @Data
+    public static class StoreInfo  implements Serializable {
+        private String storeName;
+        private String address;
+        /**
+         * 营业时间起
+         */
+        private Date openingEffectiveDate;
+        /**
+         * 营业时间止
+         */
+        private Date openingExpiryDate;
+
+        /**
+         * 经度
+         */
+        private Double lon;
+
+        /**
+         * 纬度
+         */
+        private Double lat;
+        /**
+         * 手机号码
+         */
+        private String mobilePhone;
+    }
 }

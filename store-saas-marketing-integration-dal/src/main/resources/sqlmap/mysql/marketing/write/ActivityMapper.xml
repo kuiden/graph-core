@@ -6,6 +6,7 @@
     <result column="activity_code" jdbcType="VARCHAR" property="activityCode" />
     <result column="encrypted_code" jdbcType="VARCHAR" property="encryptedCode" />
     <result column="store_id" jdbcType="BIGINT" property="storeId" />
+    <result column="tenant_id" jdbcType="BIGINT" property="tenantId" />
     <result column="type" jdbcType="TINYINT" property="type" />
     <result column="pic_url" jdbcType="VARCHAR" property="picUrl" />
     <result column="activity_title" jdbcType="VARCHAR" property="activityTitle" />
@@ -26,6 +27,9 @@
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="activity_content" jdbcType="VARCHAR" property="activityContent" />
     <result column="activity_price" jdbcType="DECIMAL" property="activityPrice" />
+    <result column="active_type" jdbcType="TINYINT" property="activeType"/>
+    <result column="active_days" jdbcType="BIGINT" property="activeDays"/>
+    <result column="active_date" jdbcType="DATE" property="activeDate"/>
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -86,10 +90,10 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, activity_code, encrypted_code, store_id, `type`, pic_url, activity_title, activity_introduce, 
+    id, activity_code, encrypted_code, store_id, tenant_id, `type`, pic_url, activity_title, activity_introduce,
     apply_number, `status`, hotline, pay_type, start_time, end_time, weixin_qr_url, tagString, 
     activity_template_id, pic_activity_template_id, update_user, create_user, create_time, 
-    update_time, activity_content, activity_price
+    update_time, activity_content, activity_price, active_type, active_days, active_date
   </sql>
   <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityExample" resultMap="BaseResultMap">
     select
@@ -129,7 +133,7 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.po.Activity">
+  <insert id="insertEntity" parameterType="com.tuhu.store.saas.marketing.po.Activity">
     insert into activity (id, activity_code, encrypted_code, 
       store_id, `type`, pic_url, 
       activity_title, activity_introduce, apply_number, 
@@ -137,7 +141,7 @@
       end_time, weixin_qr_url, tagString, 
       activity_template_id, pic_activity_template_id, 
       update_user, create_user, create_time, 
-      update_time, activity_content, activity_price
+      update_time, activity_content, activity_price, active_type, active_days, active_date
       )
     values (#{id,jdbcType=BIGINT}, #{activityCode,jdbcType=VARCHAR}, #{encryptedCode,jdbcType=VARCHAR}, 
       #{storeId,jdbcType=BIGINT}, #{type,jdbcType=TINYINT}, #{picUrl,jdbcType=VARCHAR}, 
@@ -146,7 +150,8 @@
       #{endTime,jdbcType=TIMESTAMP}, #{weixinQrUrl,jdbcType=VARCHAR}, #{tagstring,jdbcType=VARCHAR}, 
       #{activityTemplateId,jdbcType=BIGINT}, #{picActivityTemplateId,jdbcType=BIGINT}, 
       #{updateUser,jdbcType=VARCHAR}, #{createUser,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
-      #{updateTime,jdbcType=TIMESTAMP}, #{activityContent,jdbcType=VARCHAR}, #{activityPrice,jdbcType=DECIMAL}
+      #{updateTime,jdbcType=TIMESTAMP}, #{activityContent,jdbcType=VARCHAR}, #{activityPrice,jdbcType=DECIMAL},
+      #{activeType, jdbcType=TINYINT}, #{activeDays, jdbcType=BIGINT}, #{activeDate, jdbcType=DATE}
       )
   </insert>
   <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.po.Activity">
@@ -163,6 +168,9 @@
       </if>
       <if test="storeId != null">
         store_id,
+      </if>
+      <if test="tenantId != null">
+        tenant_id,
       </if>
       <if test="type != null">
         `type`,
@@ -224,6 +232,15 @@
       <if test="activityPrice != null">
         activity_price,
       </if>
+      <if test="activeType != null">
+        active_type,
+      </if>
+      <if test="activeDays != null">
+        active_days,
+      </if>
+      <if test="activeDate != null">
+        active_date,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -237,6 +254,9 @@
       </if>
       <if test="storeId != null">
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null">
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="type != null">
         #{type,jdbcType=TINYINT},
@@ -297,6 +317,15 @@
       </if>
       <if test="activityPrice != null">
         #{activityPrice,jdbcType=DECIMAL},
+      </if>
+      <if test="activeType != null">
+        #{activeType,jdbcType=TINYINT},
+      </if>
+      <if test="activeDays != null">
+        #{activeDays, jdbcType=BIGINT},
+      </if>
+      <if test="activeDate != null">
+        #{activeDate, jdbcType=DATE},
       </if>
     </trim>
   </insert>
@@ -381,6 +410,15 @@
       <if test="record.activityPrice != null">
         activity_price = #{record.activityPrice,jdbcType=DECIMAL},
       </if>
+      <if test="record.activeType != null">
+        active_type = #{record.activeType,jdbcType=TINYINT},
+      </if>
+      <if test="record.activeDays != null">
+        active_days = #{record.activeDays,jdbcType=BIGINT},
+      </if>
+      <if test="record.activeDate != null">
+        active_date = #{record.activeDate,jdbcType=DATE},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -411,7 +449,10 @@
       create_time = #{record.createTime,jdbcType=TIMESTAMP},
       update_time = #{record.updateTime,jdbcType=TIMESTAMP},
       activity_content = #{record.activityContent,jdbcType=VARCHAR},
-      activity_price = #{record.activityPrice,jdbcType=DECIMAL}
+    active_type = #{record.activeType,jdbcType=TINYINT},
+    active_days = #{record.activeDays,jdbcType=BIGINT},
+    active_date = #{record.activeDate,jdbcType=DATE},
+    activity_price = #{record.activityPrice,jdbcType=DECIMAL}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -488,6 +529,15 @@
       <if test="activityPrice != null">
         activity_price = #{activityPrice,jdbcType=DECIMAL},
       </if>
+      <if test="activeType != null">
+        active_type = #{activeType,jdbcType=TINYINT},
+      </if>
+      <if test="activeDays != null">
+        active_days = #{activeDays,jdbcType=BIGINT},
+      </if>
+      <if test="activeDate != null">
+        active_date = #{activeDate,jdbcType=DATE},
+      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
@@ -515,6 +565,9 @@
       create_time = #{createTime,jdbcType=TIMESTAMP},
       update_time = #{updateTime,jdbcType=TIMESTAMP},
       activity_content = #{activityContent,jdbcType=VARCHAR},
+      active_type = #{activeType,jdbcType=TINYINT},
+      active_days = #{activeDays,jdbcType=BIGINT},
+      active_date = #{activeDate,jdbcType=DATE},
       activity_price = #{activityPrice,jdbcType=DECIMAL}
     where id = #{id,jdbcType=BIGINT}
   </update>

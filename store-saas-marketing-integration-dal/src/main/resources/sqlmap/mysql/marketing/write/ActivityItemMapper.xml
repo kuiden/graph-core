@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.po.ActivityItem" >
     <id column="id" property="id" jdbcType="BIGINT" />
     <result column="store_id" property="storeId" jdbcType="BIGINT" />
+    <result column="tenant_id" property="tenantId" jdbcType="BIGINT" />
     <result column="activity_code" property="activityCode" jdbcType="VARCHAR" />
     <result column="goods_id" property="goodsId" jdbcType="VARCHAR" />
     <result column="goods_code" property="goodsCode" jdbcType="VARCHAR" />
@@ -81,7 +82,7 @@
   <sql id="Base_Column_List" >
     id, store_id, activity_code, goods_id, goods_code, goods_name, goods_type, item_quantity,
     original_price, actual_price, update_user, create_user, create_time, update_time,
-    business_category, business_category_code, business_category_name
+    business_category, business_category_code, business_category_name,tenant_id
   </sql>
   <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.po.ActivityItemExample" >
     select
@@ -121,15 +122,15 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
-    insert into activity_item (id, store_id, activity_code,
+  <insert id="insertEntity" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
+    insert into activity_item (id, store_id, tenant_id, activity_code,
       goods_id, goods_code, goods_name,
       goods_type, item_quantity, original_price,
       actual_price, update_user, create_user,
       create_time, update_time, business_category,
       business_category_code, business_category_name
       )
-    values (#{id,jdbcType=BIGINT}, #{storeId,jdbcType=BIGINT}, #{activityCode,jdbcType=VARCHAR},
+    values (#{id,jdbcType=BIGINT}, #{storeId,jdbcType=BIGINT}, #{tenantId,jdbcType=BIGINT}, #{activityCode,jdbcType=VARCHAR},
       #{goodsId,jdbcType=VARCHAR}, #{goodsCode,jdbcType=VARCHAR}, #{goodsName,jdbcType=VARCHAR},
       #{goodsType,jdbcType=BIT}, #{itemQuantity,jdbcType=INTEGER}, #{originalPrice,jdbcType=BIGINT},
       #{actualPrice,jdbcType=BIGINT}, #{updateUser,jdbcType=VARCHAR}, #{createUser,jdbcType=VARCHAR},
@@ -145,6 +146,9 @@
       </if>
       <if test="storeId != null" >
         store_id,
+      </if>
+      <if test="tenantId != null" >
+        tenant_id,
       </if>
       <if test="activityCode != null" >
         activity_code,
@@ -198,6 +202,9 @@
       </if>
       <if test="storeId != null" >
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null" >
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="activityCode != null" >
         #{activityCode,jdbcType=VARCHAR},
@@ -409,14 +416,14 @@
     where id = #{id,jdbcType=BIGINT}
   </update>
   <insert id="insertBatch" parameterType="com.tuhu.store.saas.marketing.po.ActivityItem" >
-    insert into activity_item (store_id, activity_code,
+    insert into activity_item (store_id, tenant_id, activity_code,
       goods_id, goods_code, goods_name,
       goods_type, item_quantity, original_price,
       actual_price, update_user, create_user,
       create_time, update_time,business_category,business_category_code,business_category_name)
     values
     <foreach collection="list" item="item" index="index" separator=",">
-        (#{item.storeId,jdbcType=BIGINT}, #{item.activityCode,jdbcType=VARCHAR},
+        (#{item.storeId,jdbcType=BIGINT}, #{item.tenantId,jdbcType=BIGINT}, #{item.activityCode,jdbcType=VARCHAR},
       #{item.goodsId,jdbcType=VARCHAR}, #{item.goodsCode,jdbcType=VARCHAR}, #{item.goodsName,jdbcType=VARCHAR},
       #{item.goodsType,jdbcType=BIT}, #{item.itemQuantity,jdbcType=INTEGER}, #{item.originalPrice,jdbcType=BIGINT},
       #{item.actualPrice,jdbcType=BIGINT}, #{item.updateUser,jdbcType=VARCHAR}, #{item.createUser,jdbcType=VARCHAR},

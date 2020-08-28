@@ -39,4 +39,9 @@ public class ActivityApplyReq implements Serializable {
      * 车主姓名
      */
     private String customerName;
+
+    /**
+     * 验证码
+     */
+    private String verificationCode;
 }

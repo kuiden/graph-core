@@ -1,5 +1,7 @@
 package com.tuhu.store.saas.marketing.config;
 
+import com.tuhu.store.saas.marketing.interceptor.CustomerInterceptor;
+import com.tuhu.store.saas.marketing.interceptor.EndUserInterceptor;
 import com.tuhu.store.saas.marketing.interceptor.UserInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -15,8 +17,23 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
     @Autowired
     private UserInterceptor userInterceptor;
 
+    @Autowired
+    private EndUserInterceptor endUserInterceptor;
+
+   // @Autowired
+  //  private CustomerInterceptor customerInterceptor;
+
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(userInterceptor).addPathPatterns("/marketing/**", "/mini/**", "/finance/**","/distribution/**").excludePathPatterns("/feign/**");
+        //车主端拦截器
+     //   registry.addInterceptor(customerInterceptor).addPathPatterns("/mini/c/**");
+        //B端拦截器
+        registry.addInterceptor(userInterceptor)
+                .addPathPatterns("/card/**", "/marketing/**", "/mini/**", "/finance/**", "/distribution/**", "/order/reservation/**", "/customer/group/**")
+                .excludePathPatterns("/feign/**", "/mini/c/coupon/**","/mini/card/client/*","/mini/card/consumptionHistory");
+
+        registry.addInterceptor(endUserInterceptor)
+                .addPathPatterns("/client/**","/mini/c/coupon/**","/mini/card/client/*")
+                .excludePathPatterns("/feign/endUser/**","/mini/c/coupon/open/**", "/client/h5/**");
     }
 
 }

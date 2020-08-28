@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityTemplateMapper">
+  <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.po.ActivityTemplate">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="pic_url" jdbcType="VARCHAR" property="picUrl" />
+    <result column="activity_title" jdbcType="VARCHAR" property="activityTitle" />
+    <result column="activity_introduce" jdbcType="VARCHAR" property="activityIntroduce" />
+    <result column="apply_number" jdbcType="BIGINT" property="applyNumber" />
+    <result column="status" jdbcType="BIT" property="status" />
+    <result column="refence_number" jdbcType="BIGINT" property="refenceNumber" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="active_type" jdbcType="TINYINT" property="activeType" />
+    <result column="active_days" jdbcType="BIGINT" property="activeDays" />
+    <result column="active_date" jdbcType="TIMESTAMP" property="activeDate" />
+    <result column="sort" jdbcType="BIGINT" property="sort" />
+  </resultMap>
+
+
+  <sql id="Base_Column_List">
+    id , pic_url, activity_title, activity_introduce, apply_number, `status`,
+    refence_number , create_time, update_time, start_time, end_time, active_type, active_days, active_date, sort
+  </sql>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from activity_template
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from activity_template
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <update id="referById" parameterType="long">
+    update activity_template
+    set refence_number = refence_number + 1
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  
+  <insert id="insertActivityTemplate" parameterType="com.tuhu.store.saas.marketing.po.ActivityTemplate" keyProperty="id" useGeneratedKeys="true">
+    insert into activity_template
+    (pic_url, activity_title, activity_introduce, apply_number, `status`,refence_number ,
+    create_time, update_time, start_time, end_time, active_type, active_days, active_date, sort)
+    values
+    (#{picUrl},#{activityTitle},#{activityIntroduce},#{applyNumber},#{status},0,now(),now(),
+    #{startTime},#{endTime},#{activeType},#{activeDays},#{activeDate},#{sort})
+  </insert>
+
+  <select id="queryList" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from activity_template
+    where 1=1
+    <if test="title != null">
+      and activity_title like CONCAT('%',#{title}, '%')
+    </if>
+    <if test="status != null">
+      and status = #{status}
+    </if>
+    <if test="forB == true">
+      and status = true
+    </if>
+    order by sort desc,create_time desc
+  </select>
+  
+</mapper>

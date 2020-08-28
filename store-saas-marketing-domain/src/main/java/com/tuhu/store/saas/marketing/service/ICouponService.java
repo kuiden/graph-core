@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.marketing.dataobject.Coupon;
 import com.tuhu.store.saas.marketing.dataobject.CouponScopeCategory;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
@@ -16,6 +17,7 @@ import com.tuhu.store.saas.marketing.request.CouponListReq;
 import com.tuhu.store.saas.marketing.request.EditCouponReq;
 import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.response.CouponResp;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +25,8 @@ import java.util.List;
  * 优惠券相关接口
  */
 public interface ICouponService {
+
+
     /**
      * 新建优惠券活动
      *
@@ -35,10 +39,9 @@ public interface ICouponService {
      * 根据优惠券id，获取优惠券活动详情
      *
      * @param couponId
-     * @param storeId
      * @return
      */
-    CouponResp getCouponDetailById(Long couponId, Long storeId);
+    CouponResp getCouponDetailById(Long couponId);
 
     /**
      * 根据优惠券编码，获取优惠券活动详情
@@ -73,6 +76,9 @@ public interface ICouponService {
      */
     List<CommonResp<CustomerCoupon>> sendCoupon(SendCouponReq sendCouponReq);
 
+    @Transactional
+    void setOccupyNum(Coupon x, int num);
+
     /**
      * 通用生成客户优惠券-不保存数据库
      *
@@ -82,6 +88,9 @@ public interface ICouponService {
      * @return
      */
     CommonResp<CustomerCoupon> generateCustomerCoupon(Coupon coupon, Customer customer, SendCouponReq sendCouponReq);
+
+    CommonResp<CustomerCoupon> generateCustomerCoupon(Coupon coupon, CustomerDTO customer, SendCouponReq sendCouponReq);
+
 
     /**
      * 查询指定用户所有未使用的优惠券信息
@@ -132,6 +141,15 @@ public interface ICouponService {
      */
     void writeOffCustomerCoupon(CustomerCoupon customerCoupon, ServiceOrderCouponUseVO serviceOrderCouponUseVO);
 
+
+    /**
+     * 核销客户优惠券
+     * @param code
+     * @return
+     */
+    @Transactional
+    String  writeOffCustomerCouponV2(String code);
+
     /**
      * 根据工单取消核销客户优惠券
      *
@@ -173,4 +191,12 @@ public interface ICouponService {
      * @return
      */
     CouponStatisticsForCustomerMarketResp getCouponStatisticsForCustomerMarket(String couponCode, List<String> customerIds);
+
+    /**
+     * 根据优惠券id获取优惠券的可用额度
+     * @param id
+     * @param storeId
+     * @return
+     */
+    Long getCouponAvailableAccount(Long id, Long storeId);
 }

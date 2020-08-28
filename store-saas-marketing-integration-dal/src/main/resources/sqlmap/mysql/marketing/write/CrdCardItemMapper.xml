@@ -1,0 +1,543 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper">
+  <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.CrdCardItem">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="card_id" jdbcType="BIGINT" property="cardId" />
+    <result column="card_name" jdbcType="VARCHAR" property="cardName" />
+    <result column="goods_id" jdbcType="VARCHAR" property="goodsId" />
+    <result column="PID" jdbcType="VARCHAR" property="pid" />
+    <result column="service_item_code" jdbcType="VARCHAR" property="serviceItemCode" />
+    <result column="service_item_name" jdbcType="VARCHAR" property="serviceItemName" />
+    <result column="business_category" jdbcType="VARCHAR" property="businessCategory" />
+    <result column="business_category_code" jdbcType="VARCHAR" property="businessCategoryCode" />
+    <result column="business_category_name" jdbcType="VARCHAR" property="businessCategoryName" />
+    <result column="labor_hour" jdbcType="INTEGER" property="laborHour" />
+    <result column="measured_quantity" jdbcType="INTEGER" property="measuredQuantity" />
+    <result column="used_quantity" jdbcType="INTEGER" property="usedQuantity" />
+    <result column="price" jdbcType="DECIMAL" property="price" />
+    <result column="amount" jdbcType="DECIMAL" property="amount" />
+    <result column="discount_amount" jdbcType="DECIMAL" property="discountAmount" />
+    <result column="actual_amount" jdbcType="DECIMAL" property="actualAmount" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="store_id" jdbcType="BIGINT" property="storeId" />
+    <result column="tenant_id" jdbcType="BIGINT" property="tenantId" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="is_delete" jdbcType="TINYINT" property="isDelete" />
+    <result column="type" jdbcType="TINYINT" property="type" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, card_id, card_name, goods_id, PID, service_item_code, service_item_name, business_category, 
+    business_category_code, business_category_name, labor_hour, measured_quantity, used_quantity, 
+    price, amount, discount_amount, actual_amount, description, store_id, tenant_id, 
+    create_user, update_user, create_time, update_time, is_delete, `type`
+  </sql>
+  <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItemExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from crd_card_item
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from crd_card_item
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from crd_card_item
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItemExample">
+    delete from crd_card_item
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItem">
+    insert into crd_card_item (id, card_id, card_name, 
+      goods_id, PID, service_item_code, 
+      service_item_name, business_category, business_category_code, 
+      business_category_name, labor_hour, measured_quantity, 
+      used_quantity, price, amount, 
+      discount_amount, actual_amount, description, 
+      store_id, tenant_id, create_user, 
+      update_user, create_time, update_time, 
+      is_delete, `type`)
+    values (#{id,jdbcType=BIGINT}, #{cardId,jdbcType=BIGINT}, #{cardName,jdbcType=VARCHAR}, 
+      #{goodsId,jdbcType=VARCHAR}, #{pid,jdbcType=VARCHAR}, #{serviceItemCode,jdbcType=VARCHAR}, 
+      #{serviceItemName,jdbcType=VARCHAR}, #{businessCategory,jdbcType=VARCHAR}, #{businessCategoryCode,jdbcType=VARCHAR}, 
+      #{businessCategoryName,jdbcType=VARCHAR}, #{laborHour,jdbcType=INTEGER}, #{measuredQuantity,jdbcType=INTEGER}, 
+      #{usedQuantity,jdbcType=INTEGER}, #{price,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL}, 
+      #{discountAmount,jdbcType=DECIMAL}, #{actualAmount,jdbcType=DECIMAL}, #{description,jdbcType=VARCHAR}, 
+      #{storeId,jdbcType=BIGINT}, #{tenantId,jdbcType=BIGINT}, #{createUser,jdbcType=VARCHAR}, 
+      #{updateUser,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{isDelete,jdbcType=TINYINT}, #{type,jdbcType=TINYINT})
+  </insert>
+  <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItem">
+    insert into crd_card_item
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="cardId != null">
+        card_id,
+      </if>
+      <if test="cardName != null">
+        card_name,
+      </if>
+      <if test="goodsId != null">
+        goods_id,
+      </if>
+      <if test="pid != null">
+        PID,
+      </if>
+      <if test="serviceItemCode != null">
+        service_item_code,
+      </if>
+      <if test="serviceItemName != null">
+        service_item_name,
+      </if>
+      <if test="businessCategory != null">
+        business_category,
+      </if>
+      <if test="businessCategoryCode != null">
+        business_category_code,
+      </if>
+      <if test="businessCategoryName != null">
+        business_category_name,
+      </if>
+      <if test="laborHour != null">
+        labor_hour,
+      </if>
+      <if test="measuredQuantity != null">
+        measured_quantity,
+      </if>
+      <if test="usedQuantity != null">
+        used_quantity,
+      </if>
+      <if test="price != null">
+        price,
+      </if>
+      <if test="amount != null">
+        amount,
+      </if>
+      <if test="discountAmount != null">
+        discount_amount,
+      </if>
+      <if test="actualAmount != null">
+        actual_amount,
+      </if>
+      <if test="description != null">
+        description,
+      </if>
+      <if test="storeId != null">
+        store_id,
+      </if>
+      <if test="tenantId != null">
+        tenant_id,
+      </if>
+      <if test="createUser != null">
+        create_user,
+      </if>
+      <if test="updateUser != null">
+        update_user,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="isDelete != null">
+        is_delete,
+      </if>
+      <if test="type != null">
+        `type`,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="cardId != null">
+        #{cardId,jdbcType=BIGINT},
+      </if>
+      <if test="cardName != null">
+        #{cardName,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsId != null">
+        #{goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="pid != null">
+        #{pid,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceItemCode != null">
+        #{serviceItemCode,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceItemName != null">
+        #{serviceItemName,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategory != null">
+        #{businessCategory,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategoryCode != null">
+        #{businessCategoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategoryName != null">
+        #{businessCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="laborHour != null">
+        #{laborHour,jdbcType=INTEGER},
+      </if>
+      <if test="measuredQuantity != null">
+        #{measuredQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="usedQuantity != null">
+        #{usedQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="price != null">
+        #{price,jdbcType=DECIMAL},
+      </if>
+      <if test="amount != null">
+        #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="discountAmount != null">
+        #{discountAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="actualAmount != null">
+        #{actualAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="description != null">
+        #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="storeId != null">
+        #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null">
+        #{tenantId,jdbcType=BIGINT},
+      </if>
+      <if test="createUser != null">
+        #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateUser != null">
+        #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="isDelete != null">
+        #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="type != null">
+        #{type,jdbcType=TINYINT},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItemExample" resultType="java.lang.Long">
+    select count(*) from crd_card_item
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update crd_card_item
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=BIGINT},
+      </if>
+      <if test="record.cardId != null">
+        card_id = #{record.cardId,jdbcType=BIGINT},
+      </if>
+      <if test="record.cardName != null">
+        card_name = #{record.cardName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsId != null">
+        goods_id = #{record.goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pid != null">
+        PID = #{record.pid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.serviceItemCode != null">
+        service_item_code = #{record.serviceItemCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.serviceItemName != null">
+        service_item_name = #{record.serviceItemName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.businessCategory != null">
+        business_category = #{record.businessCategory,jdbcType=VARCHAR},
+      </if>
+      <if test="record.businessCategoryCode != null">
+        business_category_code = #{record.businessCategoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.businessCategoryName != null">
+        business_category_name = #{record.businessCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.laborHour != null">
+        labor_hour = #{record.laborHour,jdbcType=INTEGER},
+      </if>
+      <if test="record.measuredQuantity != null">
+        measured_quantity = #{record.measuredQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="record.usedQuantity != null">
+        used_quantity = #{record.usedQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="record.price != null">
+        price = #{record.price,jdbcType=DECIMAL},
+      </if>
+      <if test="record.amount != null">
+        amount = #{record.amount,jdbcType=DECIMAL},
+      </if>
+      <if test="record.discountAmount != null">
+        discount_amount = #{record.discountAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="record.actualAmount != null">
+        actual_amount = #{record.actualAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="record.description != null">
+        description = #{record.description,jdbcType=VARCHAR},
+      </if>
+      <if test="record.storeId != null">
+        store_id = #{record.storeId,jdbcType=BIGINT},
+      </if>
+      <if test="record.tenantId != null">
+        tenant_id = #{record.tenantId,jdbcType=BIGINT},
+      </if>
+      <if test="record.createUser != null">
+        create_user = #{record.createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateUser != null">
+        update_user = #{record.updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null">
+        create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.updateTime != null">
+        update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.isDelete != null">
+        is_delete = #{record.isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="record.type != null">
+        `type` = #{record.type,jdbcType=TINYINT},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update crd_card_item
+    set id = #{record.id,jdbcType=BIGINT},
+      card_id = #{record.cardId,jdbcType=BIGINT},
+      card_name = #{record.cardName,jdbcType=VARCHAR},
+      goods_id = #{record.goodsId,jdbcType=VARCHAR},
+      PID = #{record.pid,jdbcType=VARCHAR},
+      service_item_code = #{record.serviceItemCode,jdbcType=VARCHAR},
+      service_item_name = #{record.serviceItemName,jdbcType=VARCHAR},
+      business_category = #{record.businessCategory,jdbcType=VARCHAR},
+      business_category_code = #{record.businessCategoryCode,jdbcType=VARCHAR},
+      business_category_name = #{record.businessCategoryName,jdbcType=VARCHAR},
+      labor_hour = #{record.laborHour,jdbcType=INTEGER},
+      measured_quantity = #{record.measuredQuantity,jdbcType=INTEGER},
+      used_quantity = #{record.usedQuantity,jdbcType=INTEGER},
+      price = #{record.price,jdbcType=DECIMAL},
+      amount = #{record.amount,jdbcType=DECIMAL},
+      discount_amount = #{record.discountAmount,jdbcType=DECIMAL},
+      actual_amount = #{record.actualAmount,jdbcType=DECIMAL},
+      description = #{record.description,jdbcType=VARCHAR},
+      store_id = #{record.storeId,jdbcType=BIGINT},
+      tenant_id = #{record.tenantId,jdbcType=BIGINT},
+      create_user = #{record.createUser,jdbcType=VARCHAR},
+      update_user = #{record.updateUser,jdbcType=VARCHAR},
+      create_time = #{record.createTime,jdbcType=TIMESTAMP},
+      update_time = #{record.updateTime,jdbcType=TIMESTAMP},
+      is_delete = #{record.isDelete,jdbcType=TINYINT},
+      `type` = #{record.type,jdbcType=TINYINT}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItem">
+    update crd_card_item
+    <set>
+      <if test="cardId != null">
+        card_id = #{cardId,jdbcType=BIGINT},
+      </if>
+      <if test="cardName != null">
+        card_name = #{cardName,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsId != null">
+        goods_id = #{goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="pid != null">
+        PID = #{pid,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceItemCode != null">
+        service_item_code = #{serviceItemCode,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceItemName != null">
+        service_item_name = #{serviceItemName,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategory != null">
+        business_category = #{businessCategory,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategoryCode != null">
+        business_category_code = #{businessCategoryCode,jdbcType=VARCHAR},
+      </if>
+      <if test="businessCategoryName != null">
+        business_category_name = #{businessCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="laborHour != null">
+        labor_hour = #{laborHour,jdbcType=INTEGER},
+      </if>
+      <if test="measuredQuantity != null">
+        measured_quantity = #{measuredQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="usedQuantity != null">
+        used_quantity = #{usedQuantity,jdbcType=INTEGER},
+      </if>
+      <if test="price != null">
+        price = #{price,jdbcType=DECIMAL},
+      </if>
+      <if test="amount != null">
+        amount = #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="discountAmount != null">
+        discount_amount = #{discountAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="actualAmount != null">
+        actual_amount = #{actualAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="description != null">
+        description = #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="storeId != null">
+        store_id = #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null">
+        tenant_id = #{tenantId,jdbcType=BIGINT},
+      </if>
+      <if test="createUser != null">
+        create_user = #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateUser != null">
+        update_user = #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="isDelete != null">
+        is_delete = #{isDelete,jdbcType=TINYINT},
+      </if>
+      <if test="type != null">
+        `type` = #{type,jdbcType=TINYINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardItem">
+    update crd_card_item
+    set card_id = #{cardId,jdbcType=BIGINT},
+      card_name = #{cardName,jdbcType=VARCHAR},
+      goods_id = #{goodsId,jdbcType=VARCHAR},
+      PID = #{pid,jdbcType=VARCHAR},
+      service_item_code = #{serviceItemCode,jdbcType=VARCHAR},
+      service_item_name = #{serviceItemName,jdbcType=VARCHAR},
+      business_category = #{businessCategory,jdbcType=VARCHAR},
+      business_category_code = #{businessCategoryCode,jdbcType=VARCHAR},
+      business_category_name = #{businessCategoryName,jdbcType=VARCHAR},
+      labor_hour = #{laborHour,jdbcType=INTEGER},
+      measured_quantity = #{measuredQuantity,jdbcType=INTEGER},
+      used_quantity = #{usedQuantity,jdbcType=INTEGER},
+      price = #{price,jdbcType=DECIMAL},
+      amount = #{amount,jdbcType=DECIMAL},
+      discount_amount = #{discountAmount,jdbcType=DECIMAL},
+      actual_amount = #{actualAmount,jdbcType=DECIMAL},
+      description = #{description,jdbcType=VARCHAR},
+      store_id = #{storeId,jdbcType=BIGINT},
+      tenant_id = #{tenantId,jdbcType=BIGINT},
+      create_user = #{createUser,jdbcType=VARCHAR},
+      update_user = #{updateUser,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      is_delete = #{isDelete,jdbcType=TINYINT},
+      `type` = #{type,jdbcType=TINYINT}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>

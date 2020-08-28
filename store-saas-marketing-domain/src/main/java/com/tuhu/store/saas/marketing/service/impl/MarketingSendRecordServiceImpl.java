@@ -4,19 +4,19 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecord;
 import com.tuhu.store.saas.marketing.dataobject.MarketingSendRecordExample;
-import com.tuhu.store.saas.marketing.dataobject.MessageRemind;
-import com.tuhu.store.saas.marketing.dataobject.MessageRemindExample;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MarketingSendRecordMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.MessageRemindMapper;
 import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -26,54 +26,6 @@ public class MarketingSendRecordServiceImpl implements IMarketingSendRecordServi
 
     @Autowired
     private MessageRemindMapper remindMapper;
-
-    @Override
-    public List<MarketingSendRecord> getMarketingSendRecord(String marketingId, String phone, String marketingMethod) {
-        List<MarketingSendRecord> result;
-        try {
-            MarketingSendRecordExample example = new MarketingSendRecordExample();
-            MarketingSendRecordExample.Criteria criteria = example.createCriteria();
-            if (StringUtils.isNotEmpty(marketingId)) {
-                criteria.andMarketingIdEqualTo(marketingId);
-            }
-            if (StringUtils.isNotEmpty(phone)) {
-                criteria.andPhoneNumberLike("%".concat(phone).concat("%"));
-            }
-            result = marketingSendRecordMapper.selectByExample(example);
-
-            //根据营销ID和客户ID查询短信是否发送成功
-            if(("1").equals(marketingMethod)){
-                List<MarketingSendRecord> msrList = new ArrayList();
-                for (MarketingSendRecord record : result){
-                    MessageRemindExample remindExample = new MessageRemindExample();
-                    MessageRemindExample.Criteria remindCriteria = remindExample.createCriteria();
-                    remindCriteria.andSourceIdEqualTo(marketingId);
-                    remindCriteria.andCustomerIdEqualTo(record.getCustomerId());
-                    byte sendType = record.getSendType();
-                    List<MessageRemind> remindList = remindMapper.selectByExample(remindExample);
-                    if (remindList.size()>0){
-                        MessageRemind messageRemind = remindList.get(0);
-                        String status = messageRemind.getStatus();
-                        if(status.equals("message_success")){
-                            sendType = 1;
-                        }else if(status.equals("message_wait")&&messageRemind.getTryTime().equals(3)){
-                            sendType = 2;
-                        }
-                        this.updateMarketingSendRecord(record.getCustomerId(),marketingId,sendType+"");
-                    }
-
-                    record.setSendType(sendType);
-                    msrList.add(record);
-                }
-                result = msrList;
-            }
-
-        } catch (Exception ex) {
-            log.error("getMarketingSendRecord=>error=>", ex);
-            throw ex;
-        }
-        return result;
-    }
 
     @Override
     public List<Integer> batchInsertMarketingSendRecord(List<MarketingSendRecord> records) {
@@ -106,6 +58,57 @@ public class MarketingSendRecordServiceImpl implements IMarketingSendRecordServi
         log.info("更新定向营销发送记录状态完成");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMarketingSendRecordStatusByMarketingId(String marketingId,String sendType) {
+        String funName = "更新定向营销发送记录状态";
+        log.info("{} -> 请求参数: {}", funName, marketingId);
+
+        MarketingSendRecordExample marketingSendRecordExample = new MarketingSendRecordExample();
+        MarketingSendRecordExample.Criteria marketingSendRecordExampleCriteria = marketingSendRecordExample.createCriteria();
+        marketingSendRecordExampleCriteria.andMarketingIdEqualTo(marketingId);
+
+        MarketingSendRecord marketingSendRecord = new MarketingSendRecord();
+        marketingSendRecord.setSendType(Byte.valueOf(sendType));
+        marketingSendRecordMapper.updateByExampleSelective(marketingSendRecord, marketingSendRecordExample);
+        log.info("更新定向营销发送记录状态完成");
+    }
+
+    @Override
+    public List<MarketingSendRecord> listMarketingSendRecord(String marketingId, List<Byte> sendTypes) {
+        log.info("根据营销id{}和发送状态{}查询发送记录",marketingId,sendTypes);
+        MarketingSendRecordExample example = new MarketingSendRecordExample();
+        MarketingSendRecordExample.Criteria criteria = example.createCriteria();
+        criteria.andMarketingIdEqualTo(marketingId)
+                .andSendTypeIn(sendTypes);
+        return marketingSendRecordMapper.selectByExample(example);
+    }
+
+    @Override
+    public Map<String, Long> getMarketingSendRecordCount(List<String> marketingIds) {
+
+        log.info("根据营销ids{}查询发送记录", JSON.toJSONString(marketingIds));
+        MarketingSendRecordExample example = new MarketingSendRecordExample();
+        MarketingSendRecordExample.Criteria criteria = example.createCriteria();
+        criteria.andMarketingIdIn(marketingIds);
+        List<MarketingSendRecord> list = marketingSendRecordMapper.selectByExample(example);
+
+        Map<String, Long> map = new HashMap<>();
+
+        if(CollectionUtils.isEmpty(list)) {
+            return map;
+        }
+
+        for(MarketingSendRecord marketingSendRecord : list) {
+            if(map.get(marketingSendRecord.getMarketingId()) == null) {
+                map.put(marketingSendRecord.getMarketingId() , 0L);
+            }
+            Long num = map.get(marketingSendRecord.getMarketingId());
+            map.put(marketingSendRecord.getMarketingId(), num + 1);
+        }
+
+        return map;
+    }
 
     /**
      * 根据客户ID和营销任务ID查询对应的发送记录信息

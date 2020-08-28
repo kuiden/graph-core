@@ -32,6 +32,8 @@ public class CouponReceiveRecordRequest implements Serializable {
 
 
     private Long storeId;
+
+    private Long tenantId;
     /**
      * 使用状态 0:未使用 1：已使用
      */

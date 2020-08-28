@@ -1,17 +1,18 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper" >
-  <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon" >
-    <id column="id" property="id" jdbcType="BIGINT" />
-    <result column="coupon_code" property="couponCode" jdbcType="VARCHAR" />
-    <result column="customer_id" property="customerId" jdbcType="VARCHAR" />
-    <result column="receive_type" property="receiveType" jdbcType="TINYINT" />
-    <result column="send_user" property="sendUser" jdbcType="VARCHAR" />
-    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
-    <result column="use_start_time" property="useStartTime" jdbcType="TIMESTAMP" />
-    <result column="use_end_time" property="useEndTime" jdbcType="TIMESTAMP" />
-    <result column="use_time" property="useTime" jdbcType="TIMESTAMP" />
-    <result column="use_status" property="useStatus" jdbcType="TINYINT" />
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper">
+  <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="coupon_code" jdbcType="VARCHAR" property="couponCode" />
+    <result column="customer_id" jdbcType="VARCHAR" property="customerId" />
+    <result column="receive_type" jdbcType="TINYINT" property="receiveType" />
+    <result column="send_user" jdbcType="VARCHAR" property="sendUser" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="use_start_time" jdbcType="TIMESTAMP" property="useStartTime" />
+    <result column="use_end_time" jdbcType="TIMESTAMP" property="useEndTime" />
+    <result column="use_time" jdbcType="TIMESTAMP" property="useTime" />
+    <result column="use_status" jdbcType="TINYINT" property="useStatus" />
+    <result column="code" jdbcType="VARCHAR" property="code" />
   </resultMap>
 
   <resultMap id="RecordListResultMap" type="com.tuhu.store.saas.marketing.po.CustomerCouponPO" >
@@ -29,28 +30,29 @@
     <result column="phone_number" property="customerTelephone" jdbcType="VARCHAR" />
     <result column="store_id" property="storeId" jdbcType="BIGINT" />
     <result column="encrypted_code" property="encryptedCode" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
 
   </resultMap>
 
-  <sql id="Example_Where_Clause" >
-    <where >
-      <foreach collection="oredCriteria" item="criteria" separator="or" >
-        <if test="criteria.valid" >
-          <trim prefix="(" suffix=")" prefixOverrides="and" >
-            <foreach collection="criteria.criteria" item="criterion" >
-              <choose >
-                <when test="criterion.noValue" >
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
                   and ${criterion.condition}
                 </when>
-                <when test="criterion.singleValue" >
+                <when test="criterion.singleValue">
                   and ${criterion.condition} #{criterion.value}
                 </when>
-                <when test="criterion.betweenValue" >
+                <when test="criterion.betweenValue">
                   and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
                 </when>
-                <when test="criterion.listValue" >
+                <when test="criterion.listValue">
                   and ${criterion.condition}
-                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
                     #{listItem}
                   </foreach>
                 </when>
@@ -61,25 +63,25 @@
       </foreach>
     </where>
   </sql>
-  <sql id="Update_By_Example_Where_Clause" >
-    <where >
-      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
-        <if test="criteria.valid" >
-          <trim prefix="(" suffix=")" prefixOverrides="and" >
-            <foreach collection="criteria.criteria" item="criterion" >
-              <choose >
-                <when test="criterion.noValue" >
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
                   and ${criterion.condition}
                 </when>
-                <when test="criterion.singleValue" >
+                <when test="criterion.singleValue">
                   and ${criterion.condition} #{criterion.value}
                 </when>
-                <when test="criterion.betweenValue" >
+                <when test="criterion.betweenValue">
                   and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
                 </when>
-                <when test="criterion.listValue" >
+                <when test="criterion.listValue">
                   and ${criterion.condition}
-                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
                     #{listItem}
                   </foreach>
                 </when>
@@ -90,180 +92,180 @@
       </foreach>
     </where>
   </sql>
-  <sql id="Base_Column_List" >
+  <sql id="Base_Column_List">
     id, coupon_code, customer_id, receive_type, send_user, create_time, use_start_time,
-    use_end_time, use_time, use_status
+    use_end_time, use_time, use_status, code
   </sql>
-  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCouponExample" >
+  <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCouponExample" resultMap="BaseResultMap">
     select
-    <if test="distinct" >
+    <if test="distinct">
       distinct
     </if>
     <include refid="Base_Column_List" />
     from customer_coupon
-    <if test="_parameter != null" >
+    <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
-    <if test="orderByClause != null" >
+    <if test="orderByClause != null">
       order by ${orderByClause}
     </if>
-    <if test="limit != null" >
-      <if test="offset != null" >
+    <if test="limit != null">
+      <if test="offset != null">
         limit ${offset}, ${limit}
       </if>
-      <if test="offset == null" >
+      <if test="offset == null">
         limit ${limit}
       </if>
     </if>
   </select>
-  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
     from customer_coupon
     where id = #{id,jdbcType=BIGINT}
   </select>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from customer_coupon
     where id = #{id,jdbcType=BIGINT}
   </delete>
-  <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCouponExample" >
+  <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCouponExample">
     delete from customer_coupon
-    <if test="_parameter != null" >
+    <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon" >
+  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon">
     insert into customer_coupon (id, coupon_code, customer_id,
       receive_type, send_user, create_time,
       use_start_time, use_end_time, use_time,
-      use_status)
+      use_status, code)
     values (#{id,jdbcType=BIGINT}, #{couponCode,jdbcType=VARCHAR}, #{customerId,jdbcType=VARCHAR},
       #{receiveType,jdbcType=TINYINT}, #{sendUser,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP},
       #{useStartTime,jdbcType=TIMESTAMP}, #{useEndTime,jdbcType=TIMESTAMP}, #{useTime,jdbcType=TIMESTAMP},
-      #{useStatus,jdbcType=TINYINT})
+      #{useStatus,jdbcType=TINYINT}, #{code,jdbcType=VARCHAR})
   </insert>
-  <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon" >
+  <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon">
     insert into customer_coupon
-    <trim prefix="(" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
         id,
       </if>
-      <if test="couponCode != null" >
+      <if test="couponCode != null">
         coupon_code,
       </if>
-      <if test="customerId != null" >
+      <if test="customerId != null">
         customer_id,
       </if>
-      <if test="receiveType != null" >
+      <if test="receiveType != null">
         receive_type,
       </if>
-      <if test="sendUser != null" >
+      <if test="sendUser != null">
         send_user,
       </if>
-      <if test="createTime != null" >
+      <if test="createTime != null">
         create_time,
       </if>
-      <if test="useStartTime != null" >
+      <if test="useStartTime != null">
         use_start_time,
       </if>
-      <if test="useEndTime != null" >
+      <if test="useEndTime != null">
         use_end_time,
       </if>
-      <if test="useTime != null" >
+      <if test="useTime != null">
         use_time,
       </if>
-      <if test="useStatus != null" >
+      <if test="useStatus != null">
         use_status,
       </if>
+      <if test="code != null">
+        code,
+      </if>
     </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
         #{id,jdbcType=BIGINT},
       </if>
-      <if test="couponCode != null" >
+      <if test="couponCode != null">
         #{couponCode,jdbcType=VARCHAR},
       </if>
-      <if test="customerId != null" >
+      <if test="customerId != null">
         #{customerId,jdbcType=VARCHAR},
       </if>
-      <if test="receiveType != null" >
+      <if test="receiveType != null">
         #{receiveType,jdbcType=TINYINT},
       </if>
-      <if test="sendUser != null" >
+      <if test="sendUser != null">
         #{sendUser,jdbcType=VARCHAR},
       </if>
-      <if test="createTime != null" >
+      <if test="createTime != null">
         #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useStartTime != null" >
+      <if test="useStartTime != null">
         #{useStartTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useEndTime != null" >
+      <if test="useEndTime != null">
         #{useEndTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useTime != null" >
+      <if test="useTime != null">
         #{useTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useStatus != null" >
+      <if test="useStatus != null">
         #{useStatus,jdbcType=TINYINT},
+      </if>
+      <if test="code != null">
+        #{code,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
 
-
-  <insert id="insertBySendCoupon" parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch" >
-    insert into
-    customer_coupon (coupon_code,customer_id,receive_type,send_user,create_time,use_start_time,use_end_time,use_status)
-    SELECT
-    #{couponCode,jdbcType=VARCHAR},#{customerId,jdbcType=VARCHAR},#{receiveType,jdbcType=TINYINT},#{sendUser,jdbcType=VARCHAR},#{createTime,jdbcType=TIMESTAMP},#{useStartTime,jdbcType=TIMESTAMP},#{useEndTime,jdbcType=TIMESTAMP},#{useStatus,jdbcType=TINYINT}
-    WHERE  EXISTS
-    <![CDATA[ (select 1 where (select COUNT(1) from customer_coupon where coupon_code= #{couponCode,jdbcType=VARCHAR}) < #{grantNumber,jdbcType=BIGINT} || -1= #{grantNumber,jdbcType=BIGINT}) ]]>
- </insert>
-  <select id="countByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCouponExample" resultType="java.lang.Integer" >
+  <select id="countByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCouponExample" resultType="java.lang.Integer">
     select count(*) from customer_coupon
-    <if test="_parameter != null" >
+    <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </select>
-  <update id="updateByExampleSelective" parameterType="map" >
+  <update id="updateByExampleSelective" parameterType="map">
     update customer_coupon
-    <set >
-      <if test="record.id != null" >
+    <set>
+      <if test="record.id != null">
         id = #{record.id,jdbcType=BIGINT},
       </if>
-      <if test="record.couponCode != null" >
+      <if test="record.couponCode != null">
         coupon_code = #{record.couponCode,jdbcType=VARCHAR},
       </if>
-      <if test="record.customerId != null" >
+      <if test="record.customerId != null">
         customer_id = #{record.customerId,jdbcType=VARCHAR},
       </if>
-      <if test="record.receiveType != null" >
+      <if test="record.receiveType != null">
         receive_type = #{record.receiveType,jdbcType=TINYINT},
       </if>
-      <if test="record.sendUser != null" >
+      <if test="record.sendUser != null">
         send_user = #{record.sendUser,jdbcType=VARCHAR},
       </if>
-      <if test="record.createTime != null" >
+      <if test="record.createTime != null">
         create_time = #{record.createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="record.useStartTime != null" >
+      <if test="record.useStartTime != null">
         use_start_time = #{record.useStartTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="record.useEndTime != null" >
+      <if test="record.useEndTime != null">
         use_end_time = #{record.useEndTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="record.useTime != null" >
+      <if test="record.useTime != null">
         use_time = #{record.useTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="record.useStatus != null" >
+      <if test="record.useStatus != null">
         use_status = #{record.useStatus,jdbcType=TINYINT},
       </if>
+      <if test="record.code != null">
+        code = #{record.code,jdbcType=VARCHAR},
+      </if>
     </set>
-    <if test="_parameter != null" >
+    <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
   </update>
-  <update id="updateByExample" parameterType="map" >
+  <update id="updateByExample" parameterType="map">
     update customer_coupon
     set id = #{record.id,jdbcType=BIGINT},
     coupon_code = #{record.couponCode,jdbcType=VARCHAR},
@@ -274,45 +276,49 @@
     use_start_time = #{record.useStartTime,jdbcType=TIMESTAMP},
     use_end_time = #{record.useEndTime,jdbcType=TIMESTAMP},
     use_time = #{record.useTime,jdbcType=TIMESTAMP},
-    use_status = #{record.useStatus,jdbcType=TINYINT}
-    <if test="_parameter != null" >
+    use_status = #{record.useStatus,jdbcType=TINYINT},
+    code = #{record.code,jdbcType=VARCHAR}
+    <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
   </update>
-  <update id="updateByPrimaryKeySelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon" >
+  <update id="updateByPrimaryKeySelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon">
     update customer_coupon
-    <set >
-      <if test="couponCode != null" >
+    <set>
+      <if test="couponCode != null">
         coupon_code = #{couponCode,jdbcType=VARCHAR},
       </if>
-      <if test="customerId != null" >
+      <if test="customerId != null">
         customer_id = #{customerId,jdbcType=VARCHAR},
       </if>
-      <if test="receiveType != null" >
+      <if test="receiveType != null">
         receive_type = #{receiveType,jdbcType=TINYINT},
       </if>
-      <if test="sendUser != null" >
+      <if test="sendUser != null">
         send_user = #{sendUser,jdbcType=VARCHAR},
       </if>
-      <if test="createTime != null" >
+      <if test="createTime != null">
         create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useStartTime != null" >
+      <if test="useStartTime != null">
         use_start_time = #{useStartTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useEndTime != null" >
+      <if test="useEndTime != null">
         use_end_time = #{useEndTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useTime != null" >
+      <if test="useTime != null">
         use_time = #{useTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="useStatus != null" >
+      <if test="useStatus != null">
         use_status = #{useStatus,jdbcType=TINYINT},
+      </if>
+      <if test="code != null">
+        code = #{code,jdbcType=VARCHAR},
       </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon" >
+  <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon">
     update customer_coupon
     set coupon_code = #{couponCode,jdbcType=VARCHAR},
       customer_id = #{customerId,jdbcType=VARCHAR},
@@ -322,7 +328,8 @@
       use_start_time = #{useStartTime,jdbcType=TIMESTAMP},
       use_end_time = #{useEndTime,jdbcType=TIMESTAMP},
       use_time = #{useTime,jdbcType=TIMESTAMP},
-      use_status = #{useStatus,jdbcType=TINYINT}
+      use_status = #{useStatus,jdbcType=TINYINT},
+      code = #{code,jdbcType=VARCHAR}
     where id = #{id,jdbcType=BIGINT}
   </update>
   <select id="countGrantNumberByCouponCodeList" resultType="map">
@@ -347,22 +354,17 @@
 
   <select id="selectRecordList" resultMap="RecordListResultMap" parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch" >
     select  cp.id, cp.coupon_code, cp.customer_id, cp.receive_type, cp.send_user, cp.create_time, cp.use_start_time,
-    cp.use_end_time, cp.use_time, cp.use_status,cus.name,cus.phone_number
-    from
-    (select
-     <include refid="Base_Column_List" />
-    from customer_coupon
+    cp.use_end_time, cp.use_time, cp.use_status, cp.code
+    from customer_coupon as cp
     where   coupon_code = #{couponCode,jdbcType=VARCHAR}
     <if test="receiveType != null">
       and receive_type = #{receiveType,jdbcType=TINYINT}
-    </if>) cp
-    left join
-    (select id ,name,phone_number
-    from customer
-    ) cus
-    on cp.customer_id=cus.id
-    <if test="searchKey != null">
-      where cus.name like CONCAT('%',#{searchKey},'%') or cus.phone_number like CONCAT('%',#{searchKey},'%')
+    </if>
+    <if test="customerIdList != null ">
+      and  cp.customer_id IN
+      <foreach collection="customerIdList" item="id" open="(" close=")" separator=",">
+        #{id}
+      </foreach>
     </if>
     order by cp.create_time desc
   </select>
@@ -371,7 +373,7 @@
   <select id="selectMyRecordList" resultMap="RecordListResultMap"
           parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch">
     select cp.id, cp.coupon_code, cp.customer_id, cp.receive_type, cp.send_user, cp.create_time, cp.use_start_time,
-    cp.use_end_time, cp.use_time, cp.use_status,c.store_id,c.encrypted_code
+    cp.use_end_time, cp.use_time, cp.use_status,c.store_id,c.encrypted_code,cp.code
     from
     (
       select
@@ -427,12 +429,16 @@
   <insert id="insertBatch" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerCoupon" >
     insert into customer_coupon ( coupon_code, customer_id,
       receive_type, send_user, create_time,
-      use_start_time, use_end_time, use_status)
+      use_start_time, use_end_time, use_status
+      , code
+      )
     values
     <foreach collection="list" item="item" index="index" separator=",">
       (#{item.couponCode,jdbcType=VARCHAR}, #{item.customerId,jdbcType=VARCHAR},
         #{item.receiveType,jdbcType=TINYINT}, #{item.sendUser,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP},
-        #{item.useStartTime,jdbcType=TIMESTAMP}, #{item.useEndTime,jdbcType=TIMESTAMP}, #{item.useStatus,jdbcType=TINYINT})
+        #{item.useStartTime,jdbcType=TIMESTAMP}, #{item.useEndTime,jdbcType=TIMESTAMP}, #{item.useStatus,jdbcType=TINYINT},
+      #{item.code,jdbcType=VARCHAR}
+        )
     </foreach>
   </insert>
   <select id="selectByServiceOrderId" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -447,4 +453,17 @@
       order_coupon
       WHERE service_order_id = #{serviceOrderId,jdbcType=VARCHAR})
   </select>
+
+  <update id="updateoccupyNumByCode">
+    update   coupon set  occupy_num = occupy_num- #{occupyNum} where code = #{code} and  occupy_num- #{occupyNum}>=0
+  </update>
+
+  <insert id="insertBySendCoupon" parameterType="com.tuhu.store.saas.marketing.request.CustomerCouponSearch" >
+    insert into
+    customer_coupon (coupon_code,customer_id,receive_type,send_user,create_time,use_start_time,use_end_time,use_status)
+    SELECT
+    #{couponCode,jdbcType=VARCHAR},#{customerId,jdbcType=VARCHAR},#{receiveType,jdbcType=TINYINT},#{sendUser,jdbcType=VARCHAR},#{createTime,jdbcType=TIMESTAMP},#{useStartTime,jdbcType=TIMESTAMP},#{useEndTime,jdbcType=TIMESTAMP},#{useStatus,jdbcType=TINYINT}
+    WHERE  EXISTS
+    <![CDATA[ (select 1 where (select COUNT(1) from customer_coupon where coupon_code= #{couponCode,jdbcType=VARCHAR}) < #{grantNumber,jdbcType=BIGINT} || -1= #{grantNumber,jdbcType=BIGINT}) ]]>
+  </insert>
 </mapper>

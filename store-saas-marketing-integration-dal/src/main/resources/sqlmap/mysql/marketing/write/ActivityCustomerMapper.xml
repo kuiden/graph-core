@@ -8,6 +8,7 @@
     <result column="customer_id" jdbcType="VARCHAR" property="customerId" />
     <result column="telephone" jdbcType="VARCHAR" property="telephone" />
     <result column="store_id" jdbcType="BIGINT" property="storeId" />
+    <result column="tenant_id" jdbcType="BIGINT" property="tenantId" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="use_time" jdbcType="TIMESTAMP" property="useTime" />
     <result column="use_status" jdbcType="TINYINT" property="useStatus" />
@@ -79,7 +80,7 @@
   <sql id="Base_Column_List">
     id, activity_order_code, activity_code, customer_id, telephone, store_id, create_time, 
     use_time, use_status, message_status, service_order_id, service_order_time, start_time, 
-    end_time, customer_name
+    end_time, customer_name, tenant_id
   </sql>
   <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultMap="BaseResultMap">
     select
@@ -103,6 +104,23 @@
       </if>
     </if>
   </select>
+
+  <select id="selectByExampleOne" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    top 1
+    <include refid="Base_Column_List" />
+    from activity_customer
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+  </select>
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
@@ -119,7 +137,7 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+  <insert id="insertEntity" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
     insert into activity_customer (id, activity_order_code, activity_code, 
       customer_id, telephone, store_id, 
       create_time, use_time, use_status, 
@@ -153,6 +171,9 @@
       </if>
       <if test="storeId != null">
         store_id,
+      </if>
+      <if test="tenantId != null">
+        tenant_id,
       </if>
       <if test="createTime != null">
         create_time,
@@ -200,6 +221,9 @@
       </if>
       <if test="storeId != null">
         #{storeId,jdbcType=BIGINT},
+      </if>
+      <if test="tenantId != null">
+        #{tenantId,jdbcType=BIGINT},
       </if>
       <if test="createTime != null">
         #{createTime,jdbcType=TIMESTAMP},
@@ -397,5 +421,15 @@
         </if>
     </where>
     GROUP BY activity_code
+  </select>
+
+  <select id="selectByEncryptedCodeAndUser" resultType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
+    SELECT
+    a.*
+    FROM activity_customer AS a,activity As b
+    WHERE b.encrypted_code = #{encryptedCode,jdbcType=VARCHAR}
+      AND a.activity_code = b.activity_code
+      AND a.telephone = #{telephone,jdbcType=VARCHAR}
+
   </select>
 </mapper>

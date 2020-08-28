@@ -39,7 +39,7 @@ public class CustomerMarketing {
     /**
     * 优惠券发送短信标记 0、否 1、是
     */
-    private Byte couponMessageFlag;
+    private Boolean couponMessageFlag;
 
     /**
     * 短信模板表ID
@@ -115,5 +115,10 @@ public class CustomerMarketing {
     * 客户ID，多个用逗号分隔
     */
     private String customerId;
+
+    /**
+     * 客户人数
+     */
+    private Long customerNum;
 
 }

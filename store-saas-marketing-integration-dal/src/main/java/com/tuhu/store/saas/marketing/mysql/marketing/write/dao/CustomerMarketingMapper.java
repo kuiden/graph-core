@@ -37,4 +37,6 @@ public interface CustomerMarketingMapper {
     int updateByPrimaryKeyWithBLOBs(CustomerMarketing record);
 
     int updateByPrimaryKey(CustomerMarketing record);
+
+    List<Long> listMatchedStoreIds(CustomerMarketingExample example);
 }

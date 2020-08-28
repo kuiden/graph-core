@@ -313,6 +313,16 @@
       <include refid="Example_Where_Clause" />
     </if>
   </select>
+
+  <select id="listMatchedStoreIds" parameterType="com.tuhu.store.saas.marketing.dataobject.CustomerMarketingExample" resultType="java.lang.Long">
+    select
+        distinct store_id
+    from customer_marketing
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+
   <update id="updateByExampleSelective" parameterType="map">
     update customer_marketing
     <set>

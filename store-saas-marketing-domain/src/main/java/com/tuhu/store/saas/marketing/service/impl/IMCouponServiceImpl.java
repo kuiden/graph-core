@@ -7,21 +7,36 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mengfan.common.util.GatewayClient;
+import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CouponScopeCategoryMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
+import com.tuhu.store.saas.marketing.po.ActivityCustomer;
+import com.tuhu.store.saas.marketing.po.ActivityCustomerExample;
 import com.tuhu.store.saas.marketing.po.CouponPO;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.response.CommonResp;
-import com.tuhu.store.saas.marketing.response.CouponItemResp;
-import com.tuhu.store.saas.marketing.response.CouponPageResp;
-import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
+import com.tuhu.store.saas.marketing.response.*;
+import com.tuhu.store.saas.marketing.service.IClientEventRecordService;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
+import com.tuhu.store.saas.marketing.util.GsonTool;
+import com.tuhu.store.saas.marketing.util.QrCode;
+import com.tuhu.store.saas.user.dto.ClientEventRecordDTO;
+import com.tuhu.store.saas.user.dto.ClientStoreDTO;
+import com.tuhu.store.saas.user.dto.UserDTO;
+import com.tuhu.store.saas.user.vo.ClientEventRecordVO;
+import com.tuhu.store.saas.user.vo.ClientStoreVO;
+import com.tuhu.store.saas.user.vo.EventTypeEnum;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -33,6 +48,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,6 +70,9 @@ public class IMCouponServiceImpl implements IMCouponService {
     private OrderCouponMapper orderCouponMapper;
     @Autowired
     private CouponScopeCategoryMapper couponScopeCategoryMapper;
+
+    @Autowired
+    private ActivityCustomerMapper activityCustomerMapper;
     //@Autowired
     //private IBussinessCategoryService bussinessCategoryService;
     //@Autowired
@@ -80,34 +100,35 @@ public class IMCouponServiceImpl implements IMCouponService {
      * 优惠券个人领取限制缓存key
      */
     private static final String personalCouponGetNumberPrefix = "COUPON:PERSONAL:";
+    /**
+     * open接口防刷接口
+     */
+    private static final String openCouponPrefix = "openCouponPrefix";
+    @Autowired
+    private EndUserVisitedCouponWriteMapper endUserVisitedCouponWriteMapper;
 
-    //@Autowired
-    //private MiniAppService miniAppService;
+    @Autowired
+    private MiniAppService miniAppService;
 
-    private static  final String BUSSINESS_CATEGORY_DTOS_PREFIX="bussiness_categories_dtos_";
+    private static final String BUSSINESS_CATEGORY_DTOS_PREFIX = "bussiness_categories_dtos_";
+
+    @Autowired
+    private IClientEventRecordService iClientEventRecordService;
+
     @Override
     public String getQrCodeForCoupon(QrCodeRequest req) {
 
-        /*
-        数据库查询当前抵用券是否已经保存了二维码图片
-         */
-        Coupon couponInfo = couponMapper.selectByCouponCode(req.getCouponCode());
-        if (StringUtils.isNotBlank(couponInfo.getWeixinQrUrl())) {
-            return couponInfo.getWeixinQrUrl();
-        }
         /* 1、调微信api,根据当前storeId生成二维码图片buffer,base64编码
          */
 
          /*
           2、上传图片到图片服务器，
         */
-        //todo
-        //String qrUrl=miniAppService.getQrCodeUrl("end_user_client",req.getScene(),req.getPath(),req.getWidth());
-        String qrUrl="";
+        String qrUrl = miniAppService.getQrCodeUrl(req.getScene(), req.getPath(), req.getWidth());
         /*
           3、保存url到coupon表
         */
-        saveQrUrlToDatabase(couponInfo.getId(), qrUrl);
+        saveQrUrlToDatabase(req.getCouponId(), qrUrl);
 
         return qrUrl;
     }
@@ -123,18 +144,47 @@ public class IMCouponServiceImpl implements IMCouponService {
     public Map getOveralEffect(CouponRequest req) {
         Map resultMap = Maps.newHashMap();
         Coupon couponInfo = couponMapper.selectByCouponCode(req.getCouponCode());
-        if (couponInfo == null) {
-            return resultMap;
+        if (couponInfo != null) {
+            resultMap.put("couponInfo", couponInfo);
+            CustomerCoupon record = new CustomerCoupon(req.getCouponCode());
+            Map overViewDataMap = customerCouponMapper.queryCountForOverViewData(record);
+            resultMap.putAll(overViewDataMap);
+
+            //查询访问用户数和新增客户数
+            ClientEventRecordVO clientEventRecordVO = new ClientEventRecordVO();
+            clientEventRecordVO.setStoreId(String.valueOf(req.getStoreId()));
+            clientEventRecordVO.setContentType("coupon");
+            clientEventRecordVO.setContentValue(couponInfo.getEncryptedCode());
+            List<String> eventTypes = Arrays.stream(EventTypeEnum.values()).map(EventTypeEnum::getCode).collect(Collectors.toList());
+            clientEventRecordVO.setEventTypes(eventTypes);
+            Map<String, ClientEventRecordDTO> clientEventRecordDTOMap = iClientEventRecordService.getClientEventRecordStatisticsByEvent(clientEventRecordVO);
+            if (MapUtils.isNotEmpty(clientEventRecordDTOMap)) {
+                ClientEventRecordDTO visitRecord = clientEventRecordDTOMap.get(EventTypeEnum.VISIT.getCode());
+                if (null != visitRecord) {
+                    resultMap.put("visitUserCount", visitRecord.getUserCount());//访问用户数
+                } else {
+                    resultMap.put("visitUserCount", 0L);//访问用户数
+                }
+                //通过登录新增的客户数
+                ClientEventRecordDTO loginRecord = clientEventRecordDTOMap.get(EventTypeEnum.LOGIN.getCode());
+                Long loginUserCount = 0L;
+                if (null != loginRecord) {
+                    loginUserCount = loginRecord.getUserCount();
+                }
+                //通过注册新增的客户数
+                Long registeredUserCount = 0L;
+                ClientEventRecordDTO registeredRecord = clientEventRecordDTOMap.get(EventTypeEnum.REGISTERED.getCode());
+                if (null != registeredRecord) {
+                    registeredUserCount = registeredRecord.getUserCount();
+                }
+                resultMap.put("newUserCount", loginUserCount + registeredUserCount);//新增客户数
+            } else {
+                resultMap.put("visitUserCount", 0L);
+                resultMap.put("newUserCount", 0L);
+            }
         }
-        resultMap.put("couponInfo", couponInfo);
 
-        //todo
- /*       CustomerCoupon record = new CustomerCoupon(req.getCouponCode());
-        Map overViewDataMap = customerCouponMapper.queryCountForOverViewData(record);
-        Map endUserDataMap = storeInfoRpcService.getStoreCouponUserData(couponInfo.getEncryptedCode());
-        resultMap.putAll(overViewDataMap);
-        resultMap.putAll(endUserDataMap);
-
+/*
         //限定范围
         if (couponInfo.getScopeType() == 2) {//限定分类
             CouponScopeCategoryExample example = new CouponScopeCategoryExample();
@@ -159,7 +209,6 @@ public class IMCouponServiceImpl implements IMCouponService {
 
             resultMap.put("couponScopeCategories", couponScopeCategories);
         }*/
-
         return resultMap;
     }
 
@@ -175,56 +224,85 @@ public class IMCouponServiceImpl implements IMCouponService {
         return null;
     }
 
+    @Autowired
+    private CustomerClient customerClient;
 
     @Override
     public CustomerCouponPageResp getCouponReceiveList(CouponReceiveRecordRequest req) {
         CustomerCouponPageResp customerCouponPageResp = new CustomerCouponPageResp();
         Page<CustomerCouponPO> customerCouponPosPage = new Page<>();
         customerCouponPageResp.setCustomerCouponPOS(customerCouponPosPage);
-
         CustomerCouponSearch record = new CustomerCouponSearch();
         record.setCouponCode(req.getCouponCode());
         record.setSearchKey(req.getSearchKey());
-        if (req.getReceiveType()!=null){
+        if (req.getReceiveType() != null) {
             record.setReceiveType(req.getReceiveType().byteValue());
         }
 
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
-
         List<CustomerCouponPO> recordList = null;
         try {
+            if (StringUtils.isNotBlank(req.getSearchKey())) {
+                CustomerVO vo = new CustomerVO();
+                vo.setStoreId(req.getStoreId());
+                vo.setTenantId(req.getTenantId());
+                vo.setQuery(req.getSearchKey());
+                BizBaseResponse<List<CustomerDTO>> crmResult = customerClient.getCustomerByQuery(vo);
+                if (crmResult != null && CollectionUtils.isNotEmpty(crmResult.getData())) {
+                    List<String> idList = crmResult.getData().stream().map(x -> x.getId()).distinct().collect(Collectors.toList());
+                    record.setCustomerIdList(idList);
+                } else {
+                    return customerCouponPageResp;
+                }
+            }
             recordList = customerCouponMapper.selectRecordList(record);
+            if (CollectionUtils.isNotEmpty(recordList)) {
+                CustomerVO vo = new CustomerVO();
+                vo.setStoreId(req.getStoreId());
+                vo.setTenantId(req.getTenantId());
+                List<String> idList = recordList.stream().map(x -> x.getCustomerId()).distinct().collect(Collectors.toList());
+                vo.setCustomerList(idList);
+                vo.setQuery(req.getSearchKey());
+                BizBaseResponse<List<CustomerDTO>> crmResult = customerClient.getCustomerByQuery(vo);
+                if (crmResult != null && CollectionUtils.isNotEmpty(crmResult.getData())) {
+                    Map<String, CustomerDTO> map = crmResult.getData().stream().collect(Collectors.toMap(k -> k.getId(), v -> v));
+                    for (CustomerCouponPO x : recordList) {
+                        if (map.containsKey(x.getCustomerId())) {
+                            CustomerDTO customerDTO = map.get(x.getCustomerId());
+                            x.setCustomerName(customerDTO.getName());
+                            x.setCustomerTelephone(customerDTO.getPhoneNumber());
+                        }
+
+                    }
+                }
+            }
+
         } catch (Exception e) {
             log.error("getCouponReceiveList error", e);
         }
-
-
-        //todo
-/*        if (CollectionUtils.isNotEmpty(recordList)) {
+        if (CollectionUtils.isNotEmpty(recordList)) {
             List<String> sendUserIdList = Lists.newArrayList();
             recordList.forEach(recordItem -> {
-                sendUserIdList.add(recordItem.getSendUser());
-            });
-            Map<String, UserDTO> userInfoMap = iUserRpcService.getUserInfoMapByIdList(sendUserIdList);
+                if (StringUtils.isNotBlank(recordItem.getSendUser())) {
 
+                    sendUserIdList.add(recordItem.getSendUser());
+                }
+            });
+            BizBaseResponse<Map<String, UserDTO>> crmResult = customerClient.getUserInfoMapByIdList(sendUserIdList);
+            Map<String, UserDTO> userInfoMap = crmResult != null && crmResult.getData() != null ? crmResult.getData() : new HashMap<>();
             recordList.forEach(recordItem -> {
-                *//*
-                 * 查询发券人姓名
-                 *//*
-                if (MapUtils.isNotEmpty(userInfoMap)) {
-                    UserDTO dto = userInfoMap.get(recordItem.getSendUser());
-                    recordItem.setSendUser(dto != null ? dto.getUsername() : "");
-                }
-                    *//*
-                      判断券是否已失效
-                     *//*
-                Date date = new Date();
-                if (recordItem.getUseEndTime() != null && date.after(recordItem.getUseEndTime())) {
-                    recordItem.setUseStatus((byte) -1);
+                //* 查询发券人姓名
+                UserDTO dto = userInfoMap.get(recordItem.getSendUser());
+                recordItem.setSendUser(dto != null ? dto.getUsername() : "");
+                //* 判断券是否已失效 如果是已使用 优先显示已使用
+                if (recordItem.getUseStatus() != ((byte) 1)) {
+                    Date date = new Date();
+                    if (recordItem.getUseEndTime() != null && date.after(recordItem.getUseEndTime())) {
+                        recordItem.setUseStatus((byte) -1);
+                    }
                 }
             });
-        }*/
-
+        }
         customerCouponPosPage.addAll(recordList);
         PageInfo<CustomerCouponPO> customerCouponPOPageInfo = new PageInfo<>(recordList);
         CustomerCouponPageResp.PageInfo pageInfo = new CustomerCouponPageResp.PageInfo();
@@ -302,7 +380,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         if (StringUtils.isNotBlank(req.getSearchKey())) {
             criteria.andTitleLike("%" + req.getSearchKey() + "%");
         }
-        example.setOrderByClause("create_time desc");
+        example.setOrderByClause("update_time desc");
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
 
         List<Coupon> couponRecordList = couponMapper.selectByExample(example);
@@ -311,7 +389,7 @@ public class IMCouponServiceImpl implements IMCouponService {
             List<String> limitCategoryCouponCodeList = Lists.newArrayList();
             couponRecordList.forEach(couponRecord -> {
                 couponCodeList.add(couponRecord.getCode());
-                if (couponRecord.getScopeType()==2){//限制分类
+                if (couponRecord.getScopeType() == 2) {//限制分类
                     limitCategoryCouponCodeList.add(couponRecord.getCode());
                 }
             });
@@ -330,12 +408,12 @@ public class IMCouponServiceImpl implements IMCouponService {
                 /*
                   获取优惠券剩余数量
                   grantNumber==-1: 领取张数不限
-                  grantNumber>=0 :  grantNumber - 已发送张数
+                  grantNumber>=0 :  grantNumber - 已发送张数 -占用数
                  */
                 Long leftNumber = -1L; //默认-1,表示剩余数量不限
                 if (couponRecord.getGrantNumber() >= 0) {
                     Long sendNumber = (Long) sendNumberMap.get(couponRecord.getCode()) == null ? 0 : (Long) sendNumberMap.get(couponRecord.getCode());
-                    leftNumber = couponRecord.getGrantNumber() - sendNumber;
+                    leftNumber = couponRecord.getGrantNumber() - sendNumber - couponRecord.getOccupyNum();
                     if (leftNumber < 0) {
                         leftNumber = 0L;
                     }
@@ -421,6 +499,8 @@ public class IMCouponServiceImpl implements IMCouponService {
             SendCouponReq sendCouponReq = new SendCouponReq();
             sendCouponReq.setReceiveType(receiveType);
             sendCouponReq.setUserId(sendUser);
+            sendCouponReq.setStoreId(coupon.getStoreId());
+            sendCouponReq.setTenantId(coupon.getTenantId());
             CommonResp<CustomerCoupon> customerCouponResp = iCouponService.generateCustomerCoupon(coupon, customer, sendCouponReq);
             if (!customerCouponResp.isSuccess()) {
                 log.error("sendCouponSingle error,message={}", customerCouponResp.getMessage());
@@ -536,6 +616,7 @@ public class IMCouponServiceImpl implements IMCouponService {
         return map;
     }
 
+
     /**
      * c端抵用券详情
      * 1、抵用券信息   2、 门店信息
@@ -565,7 +646,6 @@ public class IMCouponServiceImpl implements IMCouponService {
         List<String> couponCodeList = Lists.newArrayList();
         couponCodeList.add(couponItemResp.getCode());
         Map sendNumberMap = getUsedCouponNumberMap(couponCodeList);
-
          /*
                   获取优惠券剩余数量
                   grantNumber==-1: 领取张数不限
@@ -574,13 +654,26 @@ public class IMCouponServiceImpl implements IMCouponService {
         Long leftNumber = -1L; //默认-1,表示剩余数量不限
         if (couponItemResp.getGrantNumber() >= 0) {
             Long sendNumber = (Long) sendNumberMap.get(couponItemResp.getCode()) == null ? 0 : (Long) sendNumberMap.get(couponItemResp.getCode());
-            leftNumber = couponItemResp.getGrantNumber() - sendNumber;
+            leftNumber = couponItemResp.getGrantNumber() - sendNumber - couponItemResp.getOccupyNum();
             if (leftNumber < 0) {
                 leftNumber = 0L;
             }
         }
         couponItemResp.setLeftCouponNumber(leftNumber);//剩余可领数量
-        couponItemResp.setHasReceived(recievedCouponCount(couponItemResp, customerId) > 0 ? true : false);//是否已领取
+
+        couponItemResp.setHasReceived(false);//是否已领取
+        if (!StringUtils.isBlank(customerId)) {//为登录
+
+            CustomerCouponExample example = new CustomerCouponExample();
+            CustomerCouponExample.Criteria criteria = example.createCriteria();
+            criteria.andCouponCodeEqualTo(couponItemResp.getCode());
+            criteria.andCustomerIdEqualTo(customerId);
+            List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(example);
+            if (CollectionUtils.isNotEmpty(customerCoupons)) {
+                couponItemResp.setHasReceived(true);//是否已领取
+                couponItemResp.setUseEndTime(customerCoupons.get(0).getUseEndTime());
+            }
+        }
         couponItemResp.setCode(null);
         map.put("couponInfo", couponItemResp);
         return map;
@@ -644,20 +737,37 @@ public class IMCouponServiceImpl implements IMCouponService {
             map.put("success", false);
             map.put("resultType", 4003);//领取过该券
             map.put("message", "你已领取过该券");
+           // redisTemplate.delete(lockKey);
             return map;
         }
+
 
         /*
            防止用户并发性发出重复请求
         */
         Long cacheCount = redisTemplate.opsForValue().increment(lockKey, 1L);
-        redisTemplate.expire(lockKey, 3, TimeUnit.DAYS);
+        redisTemplate.expire(lockKey, 1, TimeUnit.HOURS);
         if (cacheCount > 1) {
             map.put("success", false);
             map.put("resultType", 4003);//已领取过，重复操作，同时发送多次领取请求
             map.put("message", "请稍后再试");
             redisTemplate.opsForValue().increment(lockKey, -1L);
             return map;
+        }
+
+        if (couponInfo.getGrantNumber() != -1){
+            CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+            CustomerCouponExample.Criteria customerCouponCriteria = customerCouponExample.createCriteria();
+            customerCouponCriteria.andCouponCodeEqualTo(couponInfo.getCode());
+            int count = customerCouponMapper.countByExample(customerCouponExample);
+            //如果之前未存放发放数量
+            if (count + couponInfo.getOccupyNum().intValue() + 1 > couponInfo.getGrantNumber()) {
+                map.put("success", false);
+                map.put("resultType", 4002);// 券数量不够
+                map.put("message", "券已经被抢完啦！");
+                redisTemplate.opsForValue().increment(lockKey, -1L);
+                return map;
+            }
         }
 
         /*
@@ -669,6 +779,221 @@ public class IMCouponServiceImpl implements IMCouponService {
             redisTemplate.opsForValue().increment(lockKey, -1L);
         }
         return singleResult;
+    }
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+
+    /**
+     * 对外开放获取优惠券信息
+     *
+     * @param code
+     * @return
+     */
+    @Override
+    public CouponItemResp openGetCouponInfo(String code) {
+        log.info("openGetCouponInfo-> req  {}", code);
+        CouponItemResp result = null;
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+        customerCouponExampleCriteria.andCodeEqualTo(code);
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(customerCouponExample);
+        if (CollectionUtils.isNotEmpty(customerCoupons)) {
+            CustomerCoupon customerCoupon = customerCoupons.get(0);
+            CouponExample example = new CouponExample();
+            CouponExample.Criteria criteria = example.createCriteria();
+            criteria.andCodeEqualTo(customerCoupon.getCouponCode());
+            List<Coupon> coupons = couponMapper.selectByExample(example);
+            if (CollectionUtils.isNotEmpty(coupons)) {
+                result = new CouponItemResp();
+                Coupon coupon = coupons.get(0);
+                BeanUtils.copyProperties(coupon, result);
+                result.setCustomerCouponStatus(customerCoupon.getUseStatus());
+                if (customerCoupon.getUseStatus() != Byte.valueOf((byte) 1) && customerCoupon.getUseEndTime().getTime() < System.currentTimeMillis()) {
+                    result.setCustomerCouponStatus(Byte.valueOf((byte) -1));
+                }
+                result.setUseStartTime(customerCoupon.getUseStartTime());
+                result.setUseEndTime(customerCoupon.getUseEndTime());
+                //补充门店信息
+                ClientStoreVO clientStoreVO = new ClientStoreVO();
+                clientStoreVO.setStoreId(coupon.getStoreId());
+                clientStoreVO.setTenantId(coupon.getTenantId());
+                BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(clientStoreVO);
+                if (resultData != null && resultData.getData() != null) {
+                    CouponItemResp.StoreInfo storeInfo = new CouponItemResp.StoreInfo();
+                    storeInfo.setAddress(resultData.getData().getAddress());
+                    storeInfo.setStoreName(resultData.getData().getStoreName());
+                    storeInfo.setLat(resultData.getData().getLat());
+                    storeInfo.setLon(resultData.getData().getLon());
+                    storeInfo.setOpeningEffectiveDate(resultData.getData().getOpeningEffectiveDate());
+                    storeInfo.setOpeningExpiryDate(resultData.getData().getOpeningExpiryDate());
+                    storeInfo.setMobilePhone(resultData.getData().getMobilePhone());
+                    result.setStoreInfo(storeInfo);
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public CouponResp openGetCouponDetail(String code) {
+        CouponExample couponExample = new CouponExample();
+        couponExample.createCriteria().andCodeEqualTo(code);
+        List<Coupon> couponList = couponMapper.selectByExample(couponExample);
+        CouponResp resp = new CouponResp();
+        if (null != couponList && !couponList.isEmpty()) {
+            Coupon coupon = couponList.get(0);
+            BeanUtils.copyProperties(coupon, resp);
+            resp.setType(coupon.getType().intValue());
+            resp.setValidityType(coupon.getValidityType().intValue());
+            resp.setStatus(coupon.getStatus().intValue());
+            resp.setAllowGet(coupon.getAllowGet().intValue());
+            resp.setScopeType(coupon.getScopeType().intValue());
+            //补充门店信息
+            ClientStoreVO clientStoreVO = new ClientStoreVO();
+            clientStoreVO.setStoreId(coupon.getStoreId());
+            clientStoreVO.setTenantId(coupon.getTenantId());
+            BizBaseResponse<ClientStoreDTO> resultData = storeInfoClient.getStoreInfoForClient(clientStoreVO);
+            if (resultData != null && resultData.getData() != null) {
+                CouponResp.StoreInfo storeInfo = new CouponResp.StoreInfo();
+                storeInfo.setAddress(resultData.getData().getAddress());
+                storeInfo.setStoreName(resultData.getData().getStoreName());
+                storeInfo.setLat(resultData.getData().getLat());
+                storeInfo.setLon(resultData.getData().getLon());
+                storeInfo.setOpeningEffectiveDate(resultData.getData().getOpeningEffectiveDate());
+                storeInfo.setOpeningExpiryDate(resultData.getData().getOpeningExpiryDate());
+                storeInfo.setMobilePhone(resultData.getData().getMobilePhone());
+                resp.setStoreInfo(storeInfo);
+            }
+        }
+        log.info("openGetCouponDetail -> response：{}", GsonTool.toJSONString(resp));
+        return resp;
+    }
+
+    @Override
+    public CustomerCouponPO getCouponDetailv2(CouponRequest req) {
+        log.info("getCouponDetailv2-> {} ", req);
+        CustomerCouponPO result = null;
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+        customerCouponExampleCriteria.andCodeEqualTo(req.getCustomerCouponCode());
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(customerCouponExample);
+        if (CollectionUtils.isNotEmpty(customerCoupons)) {
+            CustomerCoupon customerCoupon = customerCoupons.get(0);
+            result = new CustomerCouponPO();
+            BeanUtils.copyProperties(customerCoupon, result);
+
+            CouponExample example = new CouponExample();
+            CouponExample.Criteria criteria = example.createCriteria();
+            criteria.andCodeEqualTo(customerCoupon.getCouponCode()).andStoreIdEqualTo(req.getStoreId())
+                    .andTenantIdEqualTo(req.getTenantId());
+            List<Coupon> coupons = couponMapper.selectByExample(example);
+            if (CollectionUtils.isNotEmpty(coupons)) {
+                Coupon coupon = coupons.get(0);
+                CouponPO po = new CouponPO();
+                BeanUtils.copyProperties(coupon, po);
+                result.setCouponInfo(po);
+                //获取客户信息
+                if (StringUtils.isNotBlank(customerCoupon.getCustomerId())) {
+                    BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+                    baseIdReqVO.setId(customerCoupon.getCustomerId());
+                    baseIdReqVO.setStoreId(req.getStoreId());
+                    baseIdReqVO.setTenantId(req.getTenantId());
+                    BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(baseIdReqVO);
+                    if (crmResult != null && crmResult.getData() != null) {
+                        result.setCustomerName(crmResult.getData().getName());
+                        result.setCustomerTelephone(crmResult.getData().getPhoneNumber());
+                    }
+                }
+                //获取发券人
+                if (StringUtils.isNotBlank(customerCoupon.getSendUser())) {
+                    BizBaseResponse<Map<String, UserDTO>> crmResult = customerClient.getUserInfoMapByIdList(Lists.newArrayList(customerCoupon.getSendUser()));
+                    result.setSendUserName(crmResult != null
+                            && crmResult.getData() != null
+                            && crmResult.getData().containsKey(customerCoupon.getSendUser())
+                            ? crmResult.getData().get(customerCoupon.getSendUser()).getUsername() : null);
+                }
+                //获取过期状态  优先显示已使用状态
+                if (customerCoupon.getUseStatus() != ((byte) 1)) {
+                    Date date = new Date();
+                    if (customerCoupon.getUseEndTime() != null && date.after(customerCoupon.getUseEndTime())) {
+                        result.setUseStatus((byte) -1);
+                    }
+                }
+
+            } else {
+                throw new StoreSaasMarketingException("查询不到该优惠券信息");
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 对外获取优惠券CODE
+     *
+     * @param phone
+     * @param
+     * @return
+     */
+
+    @Override
+    public byte[] openGetCustomerCouponCodeByPhone(String phone, String code) throws Exception {
+        log.info("openGetCustomerCouponCodeByPhone -> {}", phone, code);
+        String result = null;
+        CustomerCouponExample customerCouponExample = new CustomerCouponExample();
+        CustomerCouponExample.Criteria customerCouponExampleCriteria = customerCouponExample.createCriteria();
+        customerCouponExampleCriteria.andCodeEqualTo(code);
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByExample(customerCouponExample);
+        if (CollectionUtils.isNotEmpty(customerCoupons)) {
+            CustomerCoupon customerCoupon = customerCoupons.get(0);
+            BaseIdReqVO vo = new BaseIdReqVO();
+            vo.setId(customerCoupon.getCustomerId());
+            BizBaseResponse<CustomerDTO> crmResult = customerClient.getCustomerById(vo);
+            if (crmResult != null && crmResult.getData() != null && crmResult.getData().getPhoneNumber().equals(phone)) {
+                result = " { \"code\": \"" + customerCoupon.getCode().concat("\", \"type\":1 }");
+            } else {
+                throw new StoreSaasMarketingException("用户数据校验失败");
+            }
+        }
+        return QrCode.getQRCodeImage(result, 500, 500);
+    }
+
+    @Override
+    public Integer openGetUseStatusByCode(String code) throws InterruptedException {
+        Integer result = null;
+        for (int i = 0; null == result && i < 5; i++) {
+            if (redisTemplate.opsForHash().hasKey("WRITEOFFMAP", code)) {
+                String status = (String) redisTemplate.opsForHash().get("WRITEOFFMAP", code);
+                result = Integer.parseInt(status);
+                redisTemplate.opsForHash().delete("WRITEOFFMAP", code);
+            } else {
+                Thread.sleep(1000);
+            }
+        }
+        if (null == result) {
+            if (code.startsWith("YHQ")) {
+                CustomerCouponExample example = new CustomerCouponExample();
+                example.createCriteria().andCodeEqualTo(code);
+                List<CustomerCoupon> coupons = customerCouponMapper.selectByExample(example);
+                if (null != coupons && !coupons.isEmpty()) {
+                    result = coupons.get(0).getUseStatus().intValue();
+                } else {
+                    throw new StoreSaasMarketingException("该优惠券不存在");
+                }
+            } else if (code.startsWith("YXHD")) {
+                ActivityCustomerExample activityCustomerExample = new ActivityCustomerExample();
+                activityCustomerExample.createCriteria().andActivityOrderCodeEqualTo(code);
+                List<ActivityCustomer> activityCustomers = activityCustomerMapper.selectByExample(activityCustomerExample);
+                if (null != activityCustomers && !activityCustomers.isEmpty()) {
+                    result = activityCustomers.get(0).getUseStatus().intValue();
+                } else {
+                    throw new StoreSaasMarketingException("该营销活动不存在");
+                }
+            } else {
+                throw new StoreSaasMarketingException("code不符合编码规范");
+            }
+        }
+        return result;
     }
 
     @Override
@@ -761,7 +1086,7 @@ public class IMCouponServiceImpl implements IMCouponService {
      * @return
      */
     private Map<String, List<CouponScopeCategory>> getCouponScopeCategories(List<String> couponCodeList) {
-        if (CollectionUtils.isEmpty(couponCodeList)){
+        if (CollectionUtils.isEmpty(couponCodeList)) {
             return Maps.newHashMap();
         }
         CouponScopeCategoryExample example = new CouponScopeCategoryExample();

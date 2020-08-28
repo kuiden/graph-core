@@ -1,9 +1,14 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class Coupon {
+/**
+ * coupon
+ * @author 
+ */
+public class Coupon implements Serializable {
     /**
      * 优惠券活动ID
      */
@@ -123,6 +128,13 @@ public class Coupon {
      * 更新时间
      */
     private Date updateTime;
+
+    /**
+     * 占用数量
+     */
+    private Long occupyNum;
+
+    private static final long serialVersionUID = 1L;
 
     public Long getId() {
         return id;
@@ -314,5 +326,13 @@ public class Coupon {
 
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public Long getOccupyNum() {
+        return occupyNum;
+    }
+
+    public void setOccupyNum(Long occupyNum) {
+        this.occupyNum = occupyNum;
     }
 }

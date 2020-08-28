@@ -24,9 +24,24 @@ public interface IMessageQuantityService {
 
     /**
      * 通过租户id和门店id减用户可用次数
-     * @param reduceMessage
+     * @param usedNum
      */
-    void reduceQuantity(MessageQuantity reduceMessage);
+    void reduceQuantity(MessageQuantity select, Integer usedNum, String updateUser, boolean releaseOccupy);
+
+    /**
+     * 占用/释放门店的短信额度
+     * @param occupyNum
+     */
+    void setStoreOccupyQuantity(MessageQuantity select, Long occupyNum, String updateUser, boolean occupy);
+
+    /**
+     * 获取门店的短信数量信息
+     * @param tenantId
+     * @param storeId
+     * @return
+     */
+    Long getStoreMessageQuantity(Long tenantId, Long storeId);
+
 }
 
 
