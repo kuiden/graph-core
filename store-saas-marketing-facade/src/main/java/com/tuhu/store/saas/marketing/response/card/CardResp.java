@@ -71,9 +71,9 @@ public class CardResp {
     private String expiryDate;
 
     /**
-     * b端 - 有效期显示字符串
+     * 有效期
      */
-    private String date;
+    private Date date;
 
     /**
      * 金额
