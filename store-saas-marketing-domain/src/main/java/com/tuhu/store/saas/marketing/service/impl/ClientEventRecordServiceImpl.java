@@ -128,7 +128,8 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
                 endUserVisitedStoreEntity.setOpenId(openId);
                 endUserVisitedStoreEntity.setStoreId(storeId);
                 iEndUserVisitedStoreService.recordEndUserVistiedStore(endUserVisitedStoreEntity);
-            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType()) && sourceType == 0) {
+            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType()) && sourceType == 0
+                    && StringUtils.isNotBlank(clientEventRecordRequest.getCustomerId()) && StringUtils.isNotBlank(storeId)) {
                 EndUserVisitedCouponEntity endUserVisitedCouponEntity = new EndUserVisitedCouponEntity();
                 endUserVisitedCouponEntity.setOpenId(openId);
                 endUserVisitedCouponEntity.setStoreId(storeId);
