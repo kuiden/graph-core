@@ -233,8 +233,7 @@ public class CardServiceImpl implements ICardService {
             if (!resp.getForever()) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日");
                 resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
-                dateFormat = new SimpleDateFormat("yyyy.MM.dd");
-                resp.setDate(dateFormat.format(card.getExpiryDate()));
+                resp.setDate(card.getExpiryDate());
                 Date date = new Date();
                 Date expiryDate = DataTimeUtil.getDateZeroTime(card.getExpiryDate());
                 if (date.compareTo(expiryDate) > 0) {
