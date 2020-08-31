@@ -131,7 +131,7 @@
 					<level>ERROR</level>
 				</filter>
 				<!--<filter class="com.tuhu.finance.utils.common.filter.SentrySwitchFilter"></filter>-->
-				<dsn>http://ed6125fb80c14770a61f1f7c100d45bb:dc6963e0c99f4236b14c3373aa5a2e94@172.17.3.57/27
+				<dsn>http://4f88e9f6fb084cb38ddf6252454b73fc:a7b4cb163af54635895395cdef5fef6a@172.17.3.57/36
 				</dsn>
 			</appender>
 		</then>
