@@ -12,7 +12,6 @@ import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
-import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CardTemplateMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper;
@@ -149,6 +148,18 @@ public class CardServiceImpl implements ICardService {
     @Override
     @Transactional
     public Boolean updateCardQuantity(UpdateCardVo updateCardVo) {
+        log.info("updateCardQuantity-> req -> {}",updateCardVo);
+        CrdCard card = cardMapper.selectByPrimaryKey(updateCardVo.getCardId());
+        if (null == card){
+            throw new StoreSaasMarketingException("次卡不存在");
+        }
+        if (!card.getStatus().equals(CardStatusEnum.ACTIVATED.getEnumCode())){
+            throw new StoreSaasMarketingException("卡未激活");
+        }
+        if (DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()){
+            throw new StoreSaasMarketingException("次卡已过期");
+        }
+
         String key = "updateCardQuantity:" + updateCardVo.getCardId();
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
@@ -168,10 +179,10 @@ public class CardServiceImpl implements ICardService {
                         //检查更新次数后是否会超过总次数 或 小于0
                         Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
                         if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0) {
-                            throw new MarketingException("次卡更新失败，更新后次数超过可用数");
+                            throw new StoreSaasMarketingException("次卡更新失败，更新后次数超过可用数");
                         }
                         if (quantity.compareTo(0) < 0){
-                            throw new MarketingException("次卡更新失败，更新后次数小于0");
+                            throw new StoreSaasMarketingException("次卡更新失败，更新后次数小于0");
                         }
                         item.setUsedQuantity(quantity);
                         item.setUpdateTime(date);
