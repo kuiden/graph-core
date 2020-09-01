@@ -340,19 +340,21 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             goodsMap.put(item.getGoodsId(),item);
             goodsIdList.add(item.getGoodsId());
         }
-        QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
-        queryGoodsListVO.setStoreId(req.getStoreId());
-        queryGoodsListVO.setTenantId(req.getTenantId());
-        queryGoodsListVO.setGoodsIdList(goodsIdList);
-        queryGoodsListVO.setGoodsSource("");
-        BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
-        if (null != productResult.getData()){
-            productResult.getData().stream().forEach(x -> {
-                if (goodsMap.containsKey(x.getGoodsId())){
-                    CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
-                    goodsItem.setServiceItemName(x.getGoodsName());
-                }
-            });
+        if (!goodsIdList.isEmpty()){
+            QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
+            queryGoodsListVO.setStoreId(req.getStoreId());
+            queryGoodsListVO.setTenantId(req.getTenantId());
+            queryGoodsListVO.setGoodsIdList(goodsIdList);
+            queryGoodsListVO.setGoodsSource("");
+            BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
+            if (null != productResult.getData()){
+                productResult.getData().stream().forEach(x -> {
+                    if (goodsMap.containsKey(x.getGoodsId())){
+                        CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
+                        goodsItem.setServiceItemName(x.getGoodsName());
+                    }
+                });
+            }
         }
         //查询最新服务信息
         List<String> serviceIdList = new ArrayList<>();
@@ -361,21 +363,23 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             serviceMap.put(item.getGoodsId(),item);
             serviceIdList.add(item.getGoodsId());
         }
-        GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
-        goodsForMarketReq.setGoodsName("");
-        goodsForMarketReq.setStoreId(req.getStoreId());
-        goodsForMarketReq.setTenantId(req.getTenantId());
-        goodsForMarketReq.setServiceIdList(serviceIdList);
-        goodsForMarketReq.setPageSize(500);
-        BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
-        if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
-            List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-            serviceGoodsList.stream().forEach(x -> {
-                if (serviceMap.containsKey(x.getId())){
-                    CardItemResp serviceItem = serviceMap.get(x.getId());
-                    serviceItem.setServiceItemName(x.getServiceName());
-                }
-            });
+        if (!serviceIdList.isEmpty()){
+            GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
+            goodsForMarketReq.setGoodsName("");
+            goodsForMarketReq.setStoreId(req.getStoreId());
+            goodsForMarketReq.setTenantId(req.getTenantId());
+            goodsForMarketReq.setServiceIdList(serviceIdList);
+            goodsForMarketReq.setPageSize(500);
+            BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
+            if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
+                List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
+                serviceGoodsList.stream().forEach(x -> {
+                    if (serviceMap.containsKey(x.getId())){
+                        CardItemResp serviceItem = serviceMap.get(x.getId());
+                        serviceItem.setServiceItemName(x.getServiceName());
+                    }
+                });
+            }
         }
         resp.setCardServiceItem(cardServiceItem);
         resp.setCardGoodsItem(cardGoodsItem);
