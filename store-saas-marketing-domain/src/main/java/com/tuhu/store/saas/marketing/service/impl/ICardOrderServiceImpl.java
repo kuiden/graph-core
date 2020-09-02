@@ -4,16 +4,21 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.boot.common.utils.StringUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
+import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardOrderStatusEnum;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
 import com.tuhu.store.saas.marketing.enums.PaymentStatusEnum;
+import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
+import com.tuhu.store.saas.marketing.parameter.SMSParameter;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
@@ -25,11 +30,16 @@ import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
+import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
+import com.tuhu.store.saas.marketing.service.ISMSService;
 import com.tuhu.store.saas.marketing.util.CardOrderRedisCache;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
+import com.tuhu.store.saas.marketing.util.PhoneUtil;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import com.tuhu.store.saas.request.product.GoodsForMarketReq;
 import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -76,6 +86,13 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
     @Autowired
     private CardOrderRedisCache cardOrderRedisCache;
+
+    @Autowired
+    private IMessageTemplateLocalService iMessageTemplateLocalService;
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+    @Autowired
+    private ISMSService ismsService;
 
     public static final String cardOrderRedisPrefix = "CARDORDER:KKD:NO:";
 
@@ -256,6 +273,35 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         return resp;
     }
 
+    private void sendCardPaySms(Long storeId, String phone, String cardName) {
+        log.info("sendCardPaySms,storeId:{},phone:{},cardName:{}",storeId,phone,cardName);
+        try {
+            if (PhoneUtil.isPhoneLegal(phone)) {
+                String smsTemplateId = iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(SMSTypeEnum.SAAS_CARD_PAY.templateCode(), null);
+                if (StringUtils.isNotBlank(smsTemplateId)) {
+                    List<String> list = new ArrayList<>();
+                    StoreInfoVO storeInfoVO = new StoreInfoVO();
+                    storeInfoVO.setStoreId(storeId);
+                    StoreDTO storeDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+                    if (storeDTO != null && StringUtils.isNotBlank(storeDTO.getStoreName())) {
+                        list.add(storeDTO.getStoreName());
+                        list.add(cardName);
+                        SMSParameter smsParameter = new SMSParameter();
+                        smsParameter.setPhone(phone);
+                        smsParameter.setTemplateId(smsTemplateId);
+                        smsParameter.setDatas(list);
+                        SMSResult smsResult = ismsService.sendCommonSms(smsParameter);
+                        if (!smsResult.isSendResult()) {
+                            log.error("sendCardPaySms fail,message:{}", smsResult.getStatusMsg());
+                        }
+                    }
+                }
+            }
+        }catch (Exception e){
+            log.error("sendCardPaySms fail",e);
+        }
+    }
+
     @Override
     @Transactional
     public void updateCardPaymentStatus(String orderNo, Long storeId, Long tenantId, Long amount) {
@@ -282,6 +328,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             cardOrder.setPayedAmount(new BigDecimal(amount).divide(new BigDecimal(100)));
             cardOrder.setUpdateTime(date);
             result += crdCardOrderMapper.updateByPrimaryKeySelective(cardOrder);
+            //次卡开卡并支付发送短信
+            sendCardPaySms(storeId, cardOrder.getCustomerPhoneNumber(), card.getCardName());
         } else {
             throw new StoreSaasMarketingException("源开卡单不存在，调用updateCardPaymentStatus失败");
         }
