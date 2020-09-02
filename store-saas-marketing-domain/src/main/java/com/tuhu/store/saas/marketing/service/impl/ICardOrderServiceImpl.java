@@ -19,6 +19,7 @@ import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
+import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
@@ -31,6 +32,7 @@ import com.tuhu.store.saas.request.product.GoodsForMarketReq;
 import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
 import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -88,7 +90,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         baseIdReqVO.setStoreId(req.getStoreId());
         baseIdReqVO.setTenantId(req.getTenantId());
         CustomerDTO customerDTO = customerClient.getCustomerById(baseIdReqVO).getData();
-        if (null == customerDTO){
+        if (null == customerDTO) {
             throw new StoreSaasMarketingException("未获取到客户信息");
         }
         req.setCustomerName(customerDTO.getName());
@@ -98,14 +100,14 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         CrdCard crdCard = new CrdCard();
         BeanUtils.copyProperties(req, crdCard);
         Long templateId = req.getCardTemplateId();
-        CardTemplate cardTemplate = cardTemplateMapper.getCardTemplateById(templateId,req.getTenantId(),req.getStoreId());
-        if (null == cardTemplate){
+        CardTemplate cardTemplate = cardTemplateMapper.getCardTemplateById(templateId, req.getTenantId(), req.getStoreId());
+        if (null == cardTemplate) {
             throw new StoreSaasMarketingException("无此卡模板数据");
         }
-        if ("DISABLE".equals(cardTemplate.getStatus())){
+        if ("DISABLE".equals(cardTemplate.getStatus())) {
             throw new StoreSaasMarketingException("卡模板已停用");
         }
-        if (null != customerDTO.getGender()){
+        if (null != customerDTO.getGender()) {
             crdCard.setCustomerGender(customerDTO.getGender());
         }
         crdCard.setForever((byte) (req.getForever() ? 1 : 0));
@@ -121,9 +123,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
         //新增次卡关联的商品和服务
         List<CardTemplateItem> cardTemplateItems = cardTemplateItemMapper.selectCardTemplateItemList(templateId);
-        for (CardTemplateItem item : cardTemplateItems){
+        for (CardTemplateItem item : cardTemplateItems) {
             CrdCardItem crdCardItem = new CrdCardItem();
-            BeanUtils.copyProperties(item,crdCardItem);
+            BeanUtils.copyProperties(item, crdCardItem);
             crdCardItem.setAmount(item.getFaceAmount());
             crdCardItem.setCardId(crdCard.getId());
             crdCardItem.setCardName(crdCard.getCardName());
@@ -133,7 +135,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
         //新增开卡单
         CrdCardOrder crdCardOrder = new CrdCardOrder();
-        BeanUtils.copyProperties(req,crdCardOrder);
+        BeanUtils.copyProperties(req, crdCardOrder);
         crdCardOrder.setCardId(crdCard.getId());
         crdCardOrder.setCardName(cardTemplate.getCardName());
         crdCardOrder.setAmount(cardTemplate.getFaceAmount());
@@ -143,8 +145,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_NOT.getEnumCode());
         crdCardOrder.setCardStatus(CardStatusEnum.INACTIVATED.getEnumCode());
         //生成开卡单号
-        String code = cardOrderRedisCache.getCode(cardOrderRedisPrefix,req.getStoreId());
-        if (null == req.getStoreNo()){
+        String code = cardOrderRedisCache.getCode(cardOrderRedisPrefix, req.getStoreId());
+        if (null == req.getStoreNo()) {
             req.setStoreNo(req.getStoreId().toString());
         }
         crdCardOrder.setOrderNo(getCardOrderNumber(code, req.getStoreNo()));
@@ -172,7 +174,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         addReceivingVO.setCreateTime(new Date());
 
         Boolean result = storeReceivingClient.addReceiving(addReceivingVO).getData();
-        if (null == result || !result){
+        if (null == result || !result) {
             throw new StoreSaasMarketingException("创建待收记录失败");
         }
         return addReceivingVO.getOrderId();
@@ -192,12 +194,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         CrdCardOrderExample.Criteria nameCriteria = cardOrderExample.createCriteria();
         CrdCardOrderExample.Criteria phoneCriteria = cardOrderExample.createCriteria();
         //客户姓名、手机号模糊查询
-        if (null != req.getCondition()){
+        if (null != req.getCondition()) {
             nameCriteria.andCustomerNameLike("%" + req.getCondition() + "%");
             phoneCriteria.andCustomerPhoneNumberLike("%" + req.getCondition() + "%");
         }
         //支付状态 未支付、已结清
-        if (null != req.getPaymentStatus()){
+        if (null != req.getPaymentStatus()) {
             nameCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
             phoneCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
         }
@@ -211,9 +213,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
         List<CardOrderResp> cardOrderRespList = new ArrayList<>();
 
-        for (CrdCardOrder item : cardOrderList){
+        for (CrdCardOrder item : cardOrderList) {
             CardOrderResp cardOrderResp = new CardOrderResp();
-            BeanUtils.copyProperties(item,cardOrderResp);
+            BeanUtils.copyProperties(item, cardOrderResp);
             cardOrderResp.setCardStatus(CardStatusEnum.valueOf(item.getCardStatus()).getDescription());
             cardOrderResp.setCardStatusCode(CardStatusEnum.valueOf(item.getCardStatus()).getEnumCode());
             cardOrderResp.setPaymentStatus(PaymentStatusEnum.valueOf(item.getPaymentStatus()).getDescription());
@@ -227,21 +229,21 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             cardOrderResp.setCardTemplateId(crdCard.getCardTemplateId());
             cardOrderResp.setCardTypeCode(crdCard.getCardTypeCode());
             //如果卡不是永久有效，则判断卡是否过期
-            if (!cardOrderResp.getForever()){
+            if (!cardOrderResp.getForever()) {
                 cardOrderResp.setExpiryDate(crdCard.getExpiryDate());
                 Date date = new Date();
                 Date expiryDate = DataTimeUtil.getDateZeroTime(crdCard.getExpiryDate());
-                if (date.compareTo(expiryDate) > 0){
+                if (date.compareTo(expiryDate) > 0) {
                     cardOrderResp.setCardStatus(CardStatusEnum.EXPIRED.getDescription());
                     cardOrderResp.setCardStatusCode(CardStatusEnum.EXPIRED.getEnumCode());
                 }
             }
             //计算剩余次数
             Long remainQuantity = 0L;
-            for (CrdCardItem cardItem : crdCardItems){
+            for (CrdCardItem cardItem : crdCardItems) {
                 remainQuantity += (cardItem.getMeasuredQuantity() - cardItem.getUsedQuantity());
             }
-            if (remainQuantity.compareTo(0L) <= 0){
+            if (remainQuantity.compareTo(0L) <= 0) {
                 cardOrderResp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
                 cardOrderResp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
             }
@@ -257,17 +259,17 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Override
     @Transactional
     public void updateCardPaymentStatus(String orderNo, Long storeId, Long tenantId, Long amount) {
-        log.info("开卡单号：{}, storeId：{}, tenantId：{}, 金额：{}",orderNo,storeId,tenantId,amount);
+        log.info("开卡单号：{}, storeId：{}, tenantId：{}, 金额：{}", orderNo, storeId, tenantId, amount);
 
         CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
         cardOrderExample.createCriteria().andOrderNoEqualTo(orderNo)
-                        .andStoreIdEqualTo(storeId).andTenantIdEqualTo(tenantId);
+                .andStoreIdEqualTo(storeId).andTenantIdEqualTo(tenantId);
         List<CrdCardOrder> crdCardOrders = crdCardOrderMapper.selectByExample(cardOrderExample);
         Integer result = 0;
-        if (null != crdCardOrders && !crdCardOrders.isEmpty()){
+        if (null != crdCardOrders && !crdCardOrders.isEmpty()) {
             CrdCardOrder cardOrder = crdCardOrders.get(0);
             CrdCard card = crdCardMapper.selectByPrimaryKey(cardOrder.getCardId());
-            if (null == card){
+            if (null == card) {
                 throw new StoreSaasMarketingException("获取不到卡信息，调用updateCardPaymentStatus失败");
             }
             card.setStatus(CardStatusEnum.ACTIVATED.getEnumCode());
@@ -280,21 +282,21 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             cardOrder.setPayedAmount(new BigDecimal(amount).divide(new BigDecimal(100)));
             cardOrder.setUpdateTime(date);
             result += crdCardOrderMapper.updateByPrimaryKeySelective(cardOrder);
-        } else{
+        } else {
             throw new StoreSaasMarketingException("源开卡单不存在，调用updateCardPaymentStatus失败");
         }
-        if (result != 2){
+        if (result != 2) {
             throw new StoreSaasMarketingException("更新卡状态失败");
         }
     }
 
     @Override
     public CardOrderDetailResp queryCardOrder(QueryCardOrderReq req) {
-        log.info("卡详情请求参数：{}",JSONObject.toJSON(req));
+        log.info("卡详情请求参数：{}", JSONObject.toJSON(req));
         CrdCardOrder cardOrder = crdCardOrderMapper.selectByPrimaryKey(req.getCardOrderId());
 
         CardOrderDetailResp resp = new CardOrderDetailResp();
-        BeanUtils.copyProperties(cardOrder,resp);
+        BeanUtils.copyProperties(cardOrder, resp);
 
         CrdCard card = crdCardMapper.selectByPrimaryKey(cardOrder.getCardId());
         resp.setForever(card.getForever() == 1 ? true : false);
@@ -302,12 +304,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         resp.setCardStatusCode(CardStatusEnum.valueOf(card.getStatus()).getEnumCode());
         resp.setCardStatus(CardStatusEnum.valueOf(card.getStatus()).getDescription());
         //如果卡不是永久有效，则判断卡是否过期
-        if (!resp.getForever()){
+        if (!resp.getForever()) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
             Date date = new Date();
             Date expiryDate = DataTimeUtil.getDateZeroTime(card.getExpiryDate());
-            if (date.compareTo(expiryDate) > 0){
+            if (date.compareTo(expiryDate) > 0) {
                 resp.setCardStatus(CardStatusEnum.EXPIRED.getDescription());
                 resp.setCardStatusCode(CardStatusEnum.EXPIRED.getEnumCode());
             }
@@ -321,12 +323,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         List<CrdCardItem> cardItems = crdCardItemMapper.selectByExample(example);
         List<CardItemResp> cardServiceItem = new ArrayList<>();
         List<CardItemResp> cardGoodsItem = new ArrayList<>();
-        for (CrdCardItem item : cardItems){
+        for (CrdCardItem item : cardItems) {
             CardItemResp itemResp = new CardItemResp();
-            BeanUtils.copyProperties(item,itemResp);
+            BeanUtils.copyProperties(item, itemResp);
             itemResp.setRemainQuantity(itemResp.getMeasuredQuantity() - itemResp.getUsedQuantity());
             remainQuantity += itemResp.getRemainQuantity();
-            if (item.getType().intValue() == 1){
+            if (item.getType().intValue() == 1) {
                 cardServiceItem.add(itemResp);
             } else {
                 cardGoodsItem.add(itemResp);
@@ -335,21 +337,21 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
         //查询最新商品信息
         List<String> goodsIdList = new ArrayList<>();
-        Map<String,CardItemResp> goodsMap = new HashMap<>();
-        for (CardItemResp item : cardGoodsItem){
-            goodsMap.put(item.getGoodsId(),item);
+        Map<String, CardItemResp> goodsMap = new HashMap<>();
+        for (CardItemResp item : cardGoodsItem) {
+            goodsMap.put(item.getGoodsId(), item);
             goodsIdList.add(item.getGoodsId());
         }
-        if (!goodsIdList.isEmpty()){
+        if (!goodsIdList.isEmpty()) {
             QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
             queryGoodsListVO.setStoreId(req.getStoreId());
             queryGoodsListVO.setTenantId(req.getTenantId());
             queryGoodsListVO.setGoodsIdList(goodsIdList);
             queryGoodsListVO.setGoodsSource("");
-            BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
-            if (null != productResult.getData()){
+            BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
+            if (null != productResult.getData()) {
                 productResult.getData().stream().forEach(x -> {
-                    if (goodsMap.containsKey(x.getGoodsId())){
+                    if (goodsMap.containsKey(x.getGoodsId())) {
                         CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
                         goodsItem.setServiceItemName(x.getGoodsName());
                     }
@@ -358,12 +360,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         }
         //查询最新服务信息
         List<String> serviceIdList = new ArrayList<>();
-        Map<String,CardItemResp> serviceMap = new HashMap<>();
-        for (CardItemResp item : cardServiceItem){
-            serviceMap.put(item.getGoodsId(),item);
+        Map<String, CardItemResp> serviceMap = new HashMap<>();
+        for (CardItemResp item : cardServiceItem) {
+            serviceMap.put(item.getGoodsId(), item);
             serviceIdList.add(item.getGoodsId());
         }
-        if (!serviceIdList.isEmpty()){
+        if (!serviceIdList.isEmpty()) {
             GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
             goodsForMarketReq.setGoodsName("");
             goodsForMarketReq.setStoreId(req.getStoreId());
@@ -374,7 +376,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
                 serviceGoodsList.stream().forEach(x -> {
-                    if (serviceMap.containsKey(x.getId())){
+                    if (serviceMap.containsKey(x.getId())) {
                         CardItemResp serviceItem = serviceMap.get(x.getId());
                         serviceItem.setServiceItemName(x.getServiceName());
                     }
@@ -383,7 +385,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         }
         resp.setCardServiceItem(cardServiceItem);
         resp.setCardGoodsItem(cardGoodsItem);
-        if (remainQuantity.compareTo(0L) <= 0){
+        if (remainQuantity.compareTo(0L) <= 0) {
             resp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
             resp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
         }
@@ -392,10 +394,35 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     }
 
     @Override
-    public List<CustomerCardOrder> getCustomersForCusGroup( Long storeId, Date beginTime){
+    public List<CustomerCardOrder> getCustomersForCusGroup(Long storeId, Date beginTime) {
 
-        return crdCardOrderMapper.getCustomersForCusGroup(storeId,beginTime);
+        return crdCardOrderMapper.getCustomersForCusGroup(storeId, beginTime);
 
+    }
+
+    @Autowired
+    private CustomerCouponMapper customerCouponMapper;
+
+    @Override
+    public Map<String, List<ComputeMarktingCustomerForReportResp>> ComputeMarktingCustomerForReport(Long storeId, Long tenantId) {
+        log.info("ComputeMarktingCustomerForReport -> req -> {}", storeId, tenantId);
+        Map<String, List<ComputeMarktingCustomerForReportResp>> result = new HashMap<>();
+        List<ComputeMarktingCustomerForReportResp> coupons = customerCouponMapper.ComputeMarktingCustomerForReportByCoupon(storeId, tenantId);
+        if (!CollectionUtils.isNotEmpty(coupons)) {
+            coupons = new ArrayList<>();
+        }
+        List<ComputeMarktingCustomerForReportResp> activities = customerCouponMapper.ComputeMarktingCustomerForReportByActivity(storeId, tenantId);
+        if (!CollectionUtils.isNotEmpty(activities)) {
+            activities = new ArrayList<>();
+        }
+        List<ComputeMarktingCustomerForReportResp> cards = customerCouponMapper.ComputeMarktingCustomerForReportByCard(storeId, tenantId);
+        if (!CollectionUtils.isNotEmpty(cards)) {
+            cards = new ArrayList<>();
+        }
+        result.put("customerCoupon", coupons);
+        result.put("activityCustomer", activities);
+        result.put("crdCard", cards);
+        return result;
     }
 
 }
