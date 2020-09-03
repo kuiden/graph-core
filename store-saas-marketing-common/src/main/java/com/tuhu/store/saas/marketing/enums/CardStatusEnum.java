@@ -15,18 +15,31 @@ import lombok.Getter;
  */
 @Getter
 public enum CardStatusEnum {
-    INACTIVATED("INACTIVATED","未激活"),
-    ACTIVATED("ACTIVATED","已激活"),
-    EXPIRED("EXPIRED","已过期"),
-    FINISHED("FINISHED","已用完");
+    INACTIVATED("INACTIVATED","未激活",4),
+    ACTIVATED("ACTIVATED","已激活",1),
+    EXPIRED("EXPIRED","已过期",3),
+    FINISHED("FINISHED","已用完",2);
 
 
     private String enumCode;
 
     private String description;
 
-    CardStatusEnum(String enumCode, String description) {
+    private Integer sort;
+
+    CardStatusEnum(String enumCode, String description,Integer sort) {
         this.enumCode = enumCode;
         this.description = description;
+        this.sort = sort;
+    }
+
+    public static Integer getSort(String code){
+        CardStatusEnum[] enums = values();
+        for (CardStatusEnum codeEnum : enums) {
+            if (codeEnum.getEnumCode().equals(code)) {
+                return codeEnum.getSort();
+            }
+        }
+        return  CardStatusEnum.INACTIVATED.getSort();
     }
 }
