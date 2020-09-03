@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.controller.pc;
 
 import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.constant.MiniNotifyConstant;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.controller.VerificationCodeUtils;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
@@ -87,7 +88,7 @@ public class H5ReservationApi extends BaseApi {
         if(StringUtils.isBlank(req.getMarketingId())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "优惠券或活动id不能为空");
         }
-        req.setTeminal(0);
+        req.setTeminal(MiniNotifyConstant.H5);
         //校验验证码
         String code = storeRedisUtils.redisGet(verificationCodeKey+req.getCustomerPhoneNumber());
         if(code == null){
@@ -120,7 +121,7 @@ public class H5ReservationApi extends BaseApi {
             req.setMarketingName(activityResp.getActivityTitle());
         }
 
-        result.setData(iNewReservationService.addReservation(req,2));
+        result.setData(iNewReservationService.addReservation(req, MiniNotifyConstant.H5));
         storeRedisUtils.redisDelete(verificationCodeKey+req.getCustomerPhoneNumber());
         return result;
     }
