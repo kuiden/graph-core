@@ -481,6 +481,7 @@
   WHERE
       a.store_id =  #{storeId}
       AND a.tenant_id =  #{tenantId}
+      AND b.use_status = 1
   </select>
 
   <select id="ComputeMarktingCustomerForReportByActivity" resultType="com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp">
@@ -495,6 +496,7 @@
     WHERE
         a.store_id = #{storeId}
         AND a.tenant_id =  #{tenantId}
+        AND a.use_status = 1
   </select>
 
 
