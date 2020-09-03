@@ -472,7 +472,7 @@
   SELECT
       b.customer_id AS customerId,
       'customerCoupon' AS groupName,
-      b.create_time AS date,
+      b.use_time AS date,
       b.use_status AS STATUS,
       b.use_time AS useTime
   FROM
@@ -486,7 +486,7 @@
   <select id="ComputeMarktingCustomerForReportByActivity" resultType="com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp">
     SELECT
         a.customer_id AS customerId,
-        a.create_time AS date,
+        a.use_time AS date,
         'activityCustomer' AS groupName,
         a.use_status AS STATUS,
         a.use_time AS useTime

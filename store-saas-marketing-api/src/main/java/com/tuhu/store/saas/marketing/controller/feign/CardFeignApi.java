@@ -55,7 +55,7 @@ public class CardFeignApi {
 
     @GetMapping("/ComputeMarketingCustomerForReport")
     @ApiOperation("计算优惠券/次卡/活动/消费客户生成报表数据")
-    public BizBaseResponse<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReport(@RequestParam Long storeId,
+    public BizBaseResponse<Map<String, List<ComputeMarktingCustomerForReportResp>>> ComputeMarktingCustomerForReport(@RequestParam Long storeId,
                                                                                                   @RequestParam Long tenantId) {
         if(storeId == null || storeId <=0 || tenantId== null || tenantId <=0){
             throw new StoreSaasMarketingException("参数验证失败");
