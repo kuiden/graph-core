@@ -282,6 +282,25 @@ public class CardServiceImpl implements ICardService {
                 cardRespList.add(resp);
             }
         }
+        //次卡排序
+        if(CollectionUtils.isNotEmpty(cardRespList)){
+            Collections.sort(cardRespList,new Comparator<CardResp>(){
+                @Override
+                public int compare(CardResp o1, CardResp o2) {
+                    Integer diff = CardStatusEnum.getSort(o1.getCardStatusCode())- CardStatusEnum.getSort(o2.getCardStatusCode());
+                    if(diff!=0){
+                        return diff;
+                    }
+                    if(o1.getUpdateTime().after(o2.getUpdateTime())){
+                        return -1;
+                    }else if(o1.getUpdateTime().before(o2.getUpdateTime())){
+                        return 1;
+                    }else {
+                        return 0;
+                    }
+                }
+            });
+        }
         return cardRespList;
     }
 
