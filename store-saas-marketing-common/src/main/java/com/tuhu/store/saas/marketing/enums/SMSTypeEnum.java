@@ -51,12 +51,7 @@ public enum SMSTypeEnum {
     /**
      *【云雀智修】活动报名成功！请于活动截止日前到店消费～您参与的活动：{1}，活动截止日：{2}。
      */
-    SAAS_STORE_ACTIVITY_APPLY("SAAS_STORE_ACTIVITY_APPLY", "营销活动报名成功"),
-
-
-    SAAS_CARD_PAY("SAAS_CARD_PAY","次卡开卡已付款"),
-
-    SAAS_CARD_CONSUMER("SAAS_CARD_CONSUMER","次卡消费")
+    SAAS_STORE_ACTIVITY_APPLY("SAAS_STORE_ACTIVITY_APPLY", "营销活动报名成功")
 
     ;
     private String templateCode;

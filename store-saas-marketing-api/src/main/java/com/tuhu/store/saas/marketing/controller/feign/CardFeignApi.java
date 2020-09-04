@@ -1,18 +1,13 @@
 package com.tuhu.store.saas.marketing.controller.feign;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
-import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author wangyuqing
@@ -53,14 +48,5 @@ public class CardFeignApi {
         return new BizBaseResponse(iCardService.hasCardByCustomerId(customerId, storeId, tenantId));
     }
 
-    @GetMapping("/ComputeMarketingCustomerForReport")
-    @ApiOperation("计算优惠券/次卡/活动/消费客户生成报表数据")
-    public BizBaseResponse<Map<String, List<ComputeMarktingCustomerForReportResp>>> ComputeMarktingCustomerForReport(@RequestParam Long storeId,
-                                                                                                  @RequestParam Long tenantId) {
-        if(storeId == null || storeId <=0 || tenantId== null || tenantId <=0){
-            throw new StoreSaasMarketingException("参数验证失败");
-        }
-        Map<String, List<ComputeMarktingCustomerForReportResp>> result = iCardOrderService.ComputeMarktingCustomerForReport(storeId,tenantId);
-        return new BizBaseResponse(result);
-    }
+
 }
