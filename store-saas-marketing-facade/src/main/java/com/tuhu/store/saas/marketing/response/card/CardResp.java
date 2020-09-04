@@ -123,4 +123,9 @@ public class CardResp {
      */
     private List<CardItemResp> cardGoodsItem;
 
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
+
 }
