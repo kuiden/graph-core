@@ -2,7 +2,6 @@ package com.tuhu.store.saas.marketing.controller.pc;
 
 import com.alibaba.fastjson.JSONObject;
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.marketing.constant.MiniNotifyConstant;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.SrvReservationChannelEnum;
@@ -49,9 +48,9 @@ public class ReservationApi extends BaseApi {
         if(StringUtils.isBlank(req.getCustomerId())){
             return new BizBaseResponse<>(MarketingBizErrorCodeEnum.PARAM_ERROR, "客户ID不能为空");
         }
-        req.setTeminal(MiniNotifyConstant.STORE);
+        req.setTeminal(1);
         req.setSourceChannel(SrvReservationChannelEnum.MD.getEnumCode());
-        result.setData(iNewReservationService.addReservation(req, MiniNotifyConstant.STORE));
+        result.setData(iNewReservationService.addReservation(req,0));
         return result;
     }
 

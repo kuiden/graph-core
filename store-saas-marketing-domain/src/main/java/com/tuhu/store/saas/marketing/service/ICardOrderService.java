@@ -5,13 +5,11 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
-import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author wangyuqing
@@ -41,6 +39,4 @@ public interface ICardOrderService {
 
 
     List<CustomerCardOrder> getCustomersForCusGroup(Long storeId, Date beginTime);
-
-    Map<String, List<ComputeMarktingCustomerForReportResp>> ComputeMarktingCustomerForReport(Long storeId, Long tenantId);
 }

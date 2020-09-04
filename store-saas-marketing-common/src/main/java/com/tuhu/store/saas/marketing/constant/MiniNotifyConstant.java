@@ -38,17 +38,5 @@ public class MiniNotifyConstant {
      */
     public static final String OPENINGEXPIRYDATE = "1970-01-01 18:00:00";
 
-    /**
-     * teminalType
-     * 0:H5
-     * 1:门店
-     * 2:小程序首页入口
-     * 3:小程序优惠券或者活动入口
-     */
-    public static final Integer H5 = 0;
-    public static final Integer STORE = 1;
-    public static final Integer MINI_HOME = 2;
-    public static final Integer MINI_MARKETING = 3;
-
 
 }
