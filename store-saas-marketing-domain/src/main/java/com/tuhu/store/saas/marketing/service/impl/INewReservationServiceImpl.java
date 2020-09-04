@@ -7,6 +7,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.java.common.utils.DateUtil;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
+import com.tuhu.store.saas.marketing.constant.MiniNotifyConstant;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
@@ -127,7 +128,6 @@ public class INewReservationServiceImpl implements INewReservationService {
         return result;
     }
 
-    //teminalType 门店：0,小程序首页入口：1, H5:2, 小程序优惠券或者活动入口：3
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
         log.info("C端新增预约单addReservation入参：", JSONObject.toJSONString(req));
@@ -139,7 +139,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         String id = idKeyGen.generateId(req.getTenantId());
         order.setId(id);
         order.setReservationOrdeNo(getOrderCode(req.getStoreId(),UserContextHolder.getUser()==null?null:UserContextHolder.getUser().getStoreNo()));
-        order.setStatus(type == 0 ? SrvReservationStatusEnum.CONFIRMED.getEnumCode() : SrvReservationStatusEnum.UNCONFIRMED.getEnumCode());
+        order.setStatus(type == MiniNotifyConstant.STORE ? SrvReservationStatusEnum.CONFIRMED.getEnumCode() : SrvReservationStatusEnum.UNCONFIRMED.getEnumCode());
         order.setCreateTime(new Date());
         order.setUpdateTime(new Date());
         order.setCreateUser(req.getUserId());
@@ -150,7 +150,7 @@ public class INewReservationServiceImpl implements INewReservationService {
         //发送短信
         StoreInfoDTO storeInfo = getStoreInfo(req.getStoreId());
         if(storeInfo != null){
-            if(type == 0 || type == 2){//发给客户：【门店名称】（【门店联系手机】），【预约月日时分】，【门店地址，只展示详细地址，不展示省市区】
+            if(type == MiniNotifyConstant.STORE || type == MiniNotifyConstant.H5){//发给客户：【门店名称】（【门店联系手机】），【预约月日时分】，【门店地址，只展示详细地址，不展示省市区】
                 List<String> list = new ArrayList<>();
                 list.add(storeInfo.getStoreName());
                 list.add(storeInfo.getClientAppointPhone() == null?"":storeInfo.getClientAppointPhone());
@@ -160,13 +160,13 @@ public class INewReservationServiceImpl implements INewReservationService {
             }
             //门店预约电话不为空时才发送短信
             if(StringUtils.isNotBlank(storeInfo.getClientAppointPhone())){
-                if(type == 1){//发给门店老板：客户【客户手机】通过“车主小程序”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
+                if(type == MiniNotifyConstant.MINI_HOME){//发给门店老板：客户【客户手机】通过“车主小程序”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
                     List<String> list = new ArrayList<>();
                     list.add(order.getCustomerPhoneNumber());
                     list.add(dealMdDate(order.getEstimatedArriveTime()));
                     sendSms(storeInfo.getClientAppointPhone(),SMSTypeEnum.SAAS_MINI_ORDER_CREATE.templateCode(),list);
                 }
-                if(type == 2 || type == 3){//发给门店老板:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
+                if(type == MiniNotifyConstant.H5 || type == MiniNotifyConstant.MINI_MARKETING){//发给门店老板:客户【门店联系手机】通过“【活动名称】”预约【预约月日时分】到店，汽配龙APP→我的→门店管理，查看详情
                     List<String> list = new ArrayList<>();
                     list.add(order.getCustomerPhoneNumber());
                     list.add(req.getMarketingName());
@@ -183,7 +183,7 @@ public class INewReservationServiceImpl implements INewReservationService {
     public Boolean updateReservation(NewReservationReq req) {
         log.info("车主小程序端修改预约单updateReservation入参：", JSONObject.toJSONString(req));
         //校验
-        validReservationParam(req,1,2);
+        validReservationParam(req,MiniNotifyConstant.MINI_HOME,2);
         SrvReservationOrder newOrder = new SrvReservationOrder();
         BeanUtils.copyProperties(req,newOrder);
         newOrder.setUpdateUser(req.getCustomerId());
@@ -416,7 +416,6 @@ public class INewReservationServiceImpl implements INewReservationService {
     /**
      * 新增和修改预约单共同的校验
      * @param req
-     * @param teminalType 门店：0,小程序：1,H5:2
      * @param operateType 1:新增 ，2：修改
      */
     private void validReservationParam(NewReservationReq req, Integer teminalType, Integer operateType) {
@@ -440,7 +439,7 @@ public class INewReservationServiceImpl implements INewReservationService {
             throw new StoreSaasMarketingException("当前预约时间段不能预约,门店预约时间范围为：" + hmDateFormat.format(storeMap.get("startTime")) + "-" + hmDateFormat.format(storeMap.get("endTime")));
         }
         //如果手机号不在门店客户中，添加客户(只有小程序和H5会出现这种情况)
-        if(teminalType != 0){
+        if(teminalType != MiniNotifyConstant.STORE){
             AddVehicleReq addVehicleReq = new AddVehicleReq();
             addVehicleReq.setStoreId(req.getStoreId());
             addVehicleReq.setTenantId(req.getTenantId());
