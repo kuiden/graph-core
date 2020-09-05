@@ -75,4 +75,11 @@
         and now() <![CDATA[>]]> DATE_ADD(estimated_arrive_time,INTERVAL #{expireTime} SECOND)
     </update>
 
+    <select id="countReservationOrder" resultType="java.lang.Integer">
+        select count(1) from srv_reservation_order
+        where store_id = #{storeId}
+        and tenant_id = #{tenantId}
+        and status in ('UNCONFIRMED','CONFIRMED')
+    </select>
+
 </mapper>

@@ -53,4 +53,9 @@ public class IReservationOrderServiceImpl implements IReservationOrderService {
     public int update(SrvReservationOrder newOrder) {
         return reservationOrderMapper.updateReservation(newOrder);
     }
+
+    @Override
+    public Integer countReservationOrder(Long tenantId, Long storeId) {
+        return reservationOrderMapper.countReservationOrder(tenantId,storeId);
+    }
 }
