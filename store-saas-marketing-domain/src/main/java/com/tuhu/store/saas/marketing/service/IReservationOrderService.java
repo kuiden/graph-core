@@ -28,4 +28,9 @@ public interface IReservationOrderService {
 
     //车主小程序更新预约单
     int update(SrvReservationOrder newOrder);
+
+    /*
+     * 获取门店预约数 ： 统计已预约还未确认/已确认的预约单数量
+     */
+    Integer countReservationOrder(Long tenantId, Long storeId);
 }

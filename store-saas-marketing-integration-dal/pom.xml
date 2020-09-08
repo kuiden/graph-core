@@ -19,6 +19,10 @@
             <groupId>com.tuhu</groupId>
             <artifactId>store-saas-marketing-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.tuhu</groupId>
+            <artifactId>store-saas-marketing-facade</artifactId>
+        </dependency>
         <!-- Please replace it with your own datasource -->
         <dependency>
             <groupId>com.tuhu</groupId>

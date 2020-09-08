@@ -1474,16 +1474,16 @@ public class CouponServiceImpl implements ICouponService {
                 customerCouponExample.createCriteria().andCodeEqualTo(code);
                 List<CustomerCoupon> customerCouponList = customerCouponMapper.selectByExample(customerCouponExample);
                 if (CollectionUtils.isEmpty(customerCouponList)) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
+                    //redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("优惠券查询失败");
                 }
                 CustomerCoupon customerCoupon = customerCouponList.get(0);
                 if (customerCoupon.getUseStatus() == Byte.valueOf((byte) 1)) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
+                    //redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("优惠券已经被使用");
                 }
                 if (customerCoupon.getUseEndTime().getTime() < System.currentTimeMillis()) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
+                    //redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("优惠券已经过期");
                 }
                 Date now = new Date();
@@ -1497,11 +1497,11 @@ public class CouponServiceImpl implements ICouponService {
                 customerCouponExampleCriteria.andUseStatusEqualTo((byte) 0);
                 int updateCount = customerCouponMapper.updateByExampleSelective(customerCoupon, customerCouponExample);
                 if (updateCount == 0) {
-                    redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
+                    //redisTemplate.opsForHash().put("WRITEOFFMAP", code, "-1");
                     throw new StoreSaasMarketingException("指定的客户优惠券已被使用:" + code);
                 }
                 result = "核销成功";
-                redisTemplate.opsForHash().put("WRITEOFFMAP", code, "1");
+                //redisTemplate.opsForHash().put("WRITEOFFMAP", code, "1");
             } finally {
                 storeRedisUtils.releaseLock(cacheKey, value.toString());
             }

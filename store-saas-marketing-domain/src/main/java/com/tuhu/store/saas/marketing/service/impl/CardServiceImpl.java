@@ -12,7 +12,6 @@ import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
-import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CardTemplateMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper;
@@ -149,6 +148,18 @@ public class CardServiceImpl implements ICardService {
     @Override
     @Transactional
     public Boolean updateCardQuantity(UpdateCardVo updateCardVo) {
+        log.info("updateCardQuantity-> req -> {}",updateCardVo);
+        CrdCard card = cardMapper.selectByPrimaryKey(updateCardVo.getCardId());
+        if (null == card){
+            throw new StoreSaasMarketingException("次卡不存在");
+        }
+        if (!card.getStatus().equals(CardStatusEnum.ACTIVATED.getEnumCode())){
+            throw new StoreSaasMarketingException("卡未激活");
+        }
+        if (DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()){
+            throw new StoreSaasMarketingException("次卡已过期");
+        }
+
         String key = "updateCardQuantity:" + updateCardVo.getCardId();
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
@@ -168,10 +179,10 @@ public class CardServiceImpl implements ICardService {
                         //检查更新次数后是否会超过总次数 或 小于0
                         Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
                         if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0) {
-                            throw new MarketingException("次卡更新失败，更新后次数超过可用数");
+                            throw new StoreSaasMarketingException("次卡更新失败，更新后次数超过可用数");
                         }
                         if (quantity.compareTo(0) < 0){
-                            throw new MarketingException("次卡更新失败，更新后次数小于0");
+                            throw new StoreSaasMarketingException("次卡更新失败，更新后次数小于0");
                         }
                         item.setUsedQuantity(quantity);
                         item.setUpdateTime(date);
@@ -233,8 +244,7 @@ public class CardServiceImpl implements ICardService {
             if (!resp.getForever()) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日");
                 resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
-                dateFormat = new SimpleDateFormat("yyyy.MM.dd");
-                resp.setDate(dateFormat.format(card.getExpiryDate()));
+                resp.setDate(card.getExpiryDate());
                 Date date = new Date();
                 Date expiryDate = DataTimeUtil.getDateZeroTime(card.getExpiryDate());
                 if (date.compareTo(expiryDate) > 0) {
@@ -271,6 +281,25 @@ public class CardServiceImpl implements ICardService {
                     resp.getCardStatusCode().equals(req.getCardStatus())) {
                 cardRespList.add(resp);
             }
+        }
+        //次卡排序
+        if(CollectionUtils.isNotEmpty(cardRespList)){
+            Collections.sort(cardRespList,new Comparator<CardResp>(){
+                @Override
+                public int compare(CardResp o1, CardResp o2) {
+                    Integer diff = CardStatusEnum.getSort(o1.getCardStatusCode())- CardStatusEnum.getSort(o2.getCardStatusCode());
+                    if(diff!=0){
+                        return diff;
+                    }
+                    if(o1.getUpdateTime().after(o2.getUpdateTime())){
+                        return -1;
+                    }else if(o1.getUpdateTime().before(o2.getUpdateTime())){
+                        return 1;
+                    }else {
+                        return 0;
+                    }
+                }
+            });
         }
         return cardRespList;
     }
@@ -325,7 +354,7 @@ public class CardServiceImpl implements ICardService {
         }
 
         //查商品
-        if (req.getType() == 2){
+        if (req.getType() == 2 && !goodsIdList.isEmpty()){
             QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
             queryGoodsListVO.setStoreId(req.getStoreId());
             queryGoodsListVO.setTenantId(req.getTenantId());
@@ -396,7 +425,7 @@ public class CardServiceImpl implements ICardService {
             }
         }
         //查服务
-        if (req.getType() == 1){
+        if (req.getType() == 1 && !goodsIdList.isEmpty()){
             GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
             goodsForMarketReq.setGoodsName("");
             if (null != req.getSearch()){
@@ -451,19 +480,21 @@ public class CardServiceImpl implements ICardService {
             goodsMap.put(item.getGoodsId(),item);
             goodsIdList.add(item.getGoodsId());
         }
-        QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
-        queryGoodsListVO.setStoreId(req.getStoreId());
-        queryGoodsListVO.setTenantId(req.getTenantId());
-        queryGoodsListVO.setGoodsIdList(goodsIdList);
-        queryGoodsListVO.setGoodsSource("");
-        BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
-        if (null != productResult.getData()){
-            productResult.getData().stream().forEach(x -> {
-                if (goodsMap.containsKey(x.getGoodsId())){
-                    CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
-                    goodsItem.setServiceItemName(x.getGoodsName());
-                }
-            });
+        if (!goodsIdList.isEmpty()){
+            QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
+            queryGoodsListVO.setStoreId(req.getStoreId());
+            queryGoodsListVO.setTenantId(req.getTenantId());
+            queryGoodsListVO.setGoodsIdList(goodsIdList);
+            queryGoodsListVO.setGoodsSource("");
+            BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
+            if (null != productResult.getData()){
+                productResult.getData().stream().forEach(x -> {
+                    if (goodsMap.containsKey(x.getGoodsId())){
+                        CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
+                        goodsItem.setServiceItemName(x.getGoodsName());
+                    }
+                });
+            }
         }
         //查询最新服务信息
         List<String> serviceIdList = new ArrayList<>();
@@ -472,21 +503,23 @@ public class CardServiceImpl implements ICardService {
             serviceMap.put(item.getGoodsId(),item);
             serviceIdList.add(item.getGoodsId());
         }
-        GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
-        goodsForMarketReq.setGoodsName("");
-        goodsForMarketReq.setStoreId(req.getStoreId());
-        goodsForMarketReq.setTenantId(req.getTenantId());
-        goodsForMarketReq.setServiceIdList(serviceIdList);
-        goodsForMarketReq.setPageSize(500);
-        BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
-        if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
-            List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-            serviceGoodsList.stream().forEach(x -> {
-                if (serviceMap.containsKey(x.getId())){
-                    CardItemResp serviceItem = serviceMap.get(x.getId());
-                    serviceItem.setServiceItemName(x.getServiceName());
-                }
-            });
+        if (!serviceIdList.isEmpty()){
+            GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
+            goodsForMarketReq.setGoodsName("");
+            goodsForMarketReq.setStoreId(req.getStoreId());
+            goodsForMarketReq.setTenantId(req.getTenantId());
+            goodsForMarketReq.setServiceIdList(serviceIdList);
+            goodsForMarketReq.setPageSize(500);
+            BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
+            if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
+                List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
+                serviceGoodsList.stream().forEach(x -> {
+                    if (serviceMap.containsKey(x.getId())){
+                        CardItemResp serviceItem = serviceMap.get(x.getId());
+                        serviceItem.setServiceItemName(x.getServiceName());
+                    }
+                });
+            }
         }
         cardResp.setCardGoodsItem(cardGoodsItem);
         cardResp.setCardServiceItem(cardServiceItem);
