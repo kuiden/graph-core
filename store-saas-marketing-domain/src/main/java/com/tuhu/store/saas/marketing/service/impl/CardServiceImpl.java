@@ -156,7 +156,7 @@ public class CardServiceImpl implements ICardService {
         if (!card.getStatus().equals(CardStatusEnum.ACTIVATED.getEnumCode())){
             throw new StoreSaasMarketingException("卡未激活");
         }
-        if (DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()){
+        if (card.getForever().intValue() == 0 && DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()){
             throw new StoreSaasMarketingException("次卡已过期");
         }
 
@@ -178,7 +178,7 @@ public class CardServiceImpl implements ICardService {
                     if (itemQuantity.containsKey(item.getGoodsId())) {
                         //检查更新次数后是否会超过总次数 或 小于0
                         Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
-                        if (quantity.compareTo(item.getMeasuredQuantity()) > 0 || quantity.compareTo(0) < 0) {
+                        if (quantity.compareTo(item.getMeasuredQuantity()) > 0) {
                             throw new StoreSaasMarketingException("次卡更新失败，更新后次数超过可用数");
                         }
                         if (quantity.compareTo(0) < 0){
