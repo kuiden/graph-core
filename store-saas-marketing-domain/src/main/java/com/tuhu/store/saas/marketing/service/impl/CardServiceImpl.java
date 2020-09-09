@@ -228,9 +228,10 @@ public class CardServiceImpl implements ICardService {
         if (null != req.getCustomerPhoneNumber()) {
             criteria.andCustomerPhoneNumberEqualTo(req.getCustomerPhoneNumber());
         }
-        if (null != req.getCardStatus()) {
-            criteria.andStatusEqualTo(req.getCardStatus());
-        }
+        criteria.andStatusEqualTo(CardStatusEnum.ACTIVATED.getEnumCode());
+//        if (null != req.getCardStatus()) {
+//            criteria.andStatusEqualTo(req.getCardStatus());
+//        }
         cardExample.setOrderByClause("update_time desc");
         List<CrdCard> cardList = cardMapper.selectByExample(cardExample);
 
