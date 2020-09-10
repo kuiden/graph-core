@@ -466,4 +466,50 @@
     WHERE  EXISTS
     <![CDATA[ (select 1 where (select COUNT(1) from customer_coupon where coupon_code= #{couponCode,jdbcType=VARCHAR}) < #{grantNumber,jdbcType=BIGINT} || -1= #{grantNumber,jdbcType=BIGINT}) ]]>
   </insert>
+
+
+  <select id="ComputeMarktingCustomerForReportByCoupon" resultType="com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp">
+  SELECT
+      b.customer_id AS customerId,
+      'customerCoupon' AS groupName,
+      b.use_time AS date,
+      b.use_status AS STATUS,
+      b.use_time AS useTime
+  FROM
+      coupon AS a
+      INNER JOIN customer_coupon AS b ON a.CODE = b.coupon_code
+  WHERE
+      a.store_id =  #{storeId}
+      AND a.tenant_id =  #{tenantId}
+      AND b.use_status = 1
+  </select>
+
+  <select id="ComputeMarktingCustomerForReportByActivity" resultType="com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp">
+    SELECT
+        a.customer_id AS customerId,
+        a.use_time AS date,
+        'activityCustomer' AS groupName,
+        a.use_status AS STATUS,
+        a.use_time AS useTime
+    FROM
+        activity_customer AS a
+    WHERE
+        a.store_id = #{storeId}
+        AND a.tenant_id =  #{tenantId}
+        AND a.use_status = 1
+  </select>
+
+
+  <select id="ComputeMarktingCustomerForReportByCard" resultType="com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp">
+  SELECT
+      a.create_time AS date,
+      'crdCard' AS groupName,
+      a.customer_id AS customerId
+  FROM
+      crd_card AS a
+  WHERE
+      a.store_id =  #{storeId}
+      AND a.tenant_id =  #{tenantId}
+  </select>
+
 </mapper>

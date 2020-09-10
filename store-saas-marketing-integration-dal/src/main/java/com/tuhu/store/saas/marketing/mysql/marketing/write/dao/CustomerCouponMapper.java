@@ -5,11 +5,13 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerCouponExample;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.request.CustomerCouponSearch;
+import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
+
 @Mapper
 public interface CustomerCouponMapper {
     int countByExample(CustomerCouponExample example);
@@ -23,6 +25,7 @@ public interface CustomerCouponMapper {
     int insertSelective(CustomerCoupon record);
 
     int insertBySendCoupon(CustomerCoupon record);
+
     List<CustomerCoupon> selectByExample(CustomerCouponExample example);
 
     CustomerCoupon selectByPrimaryKey(Long id);
@@ -49,5 +52,11 @@ public interface CustomerCouponMapper {
 
     List<CustomerCoupon> selectByServiceOrderId(@Param("serviceOrderId") String serviceOrderId);
 
-    int updateoccupyNumByCode(@Param("occupyNum") Long occupyNum,@Param("code") String code);
+    int updateoccupyNumByCode(@Param("occupyNum") Long occupyNum, @Param("code") String code);
+
+    List<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReportByCoupon(@Param("storeId") Long storeId, @Param("tenantId") Long tenantId);
+
+    List<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReportByActivity(@Param("storeId") Long storeId, @Param("tenantId") Long tenantId);
+
+    List<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReportByCard(@Param("storeId") Long storeId, @Param("tenantId") Long tenantId);
 }
