@@ -128,4 +128,8 @@ public class CardResp {
      */
     private Date updateTime;
 
+
+
+    private Integer sort;
+
 }
