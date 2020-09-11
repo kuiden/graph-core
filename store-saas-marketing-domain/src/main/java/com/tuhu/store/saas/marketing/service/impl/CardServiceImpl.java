@@ -148,15 +148,15 @@ public class CardServiceImpl implements ICardService {
     @Override
     @Transactional
     public Boolean updateCardQuantity(UpdateCardVo updateCardVo) {
-        log.info("updateCardQuantity-> req -> {}",updateCardVo);
+        log.info("updateCardQuantity-> req -> {}", updateCardVo);
         CrdCard card = cardMapper.selectByPrimaryKey(updateCardVo.getCardId());
-        if (null == card){
+        if (null == card) {
             throw new StoreSaasMarketingException("次卡不存在");
         }
-        if (!card.getStatus().equals(CardStatusEnum.ACTIVATED.getEnumCode())){
+        if (!card.getStatus().equals(CardStatusEnum.ACTIVATED.getEnumCode())) {
             throw new StoreSaasMarketingException("卡未激活");
         }
-        if (card.getForever().intValue() == 0 && DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()){
+        if (card.getForever().intValue() == 0 && DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()) {
             throw new StoreSaasMarketingException("次卡已过期");
         }
 
@@ -181,7 +181,7 @@ public class CardServiceImpl implements ICardService {
                         if (quantity.compareTo(item.getMeasuredQuantity()) > 0) {
                             throw new StoreSaasMarketingException("次卡更新失败，更新后次数超过可用数");
                         }
-                        if (quantity.compareTo(0) < 0){
+                        if (quantity.compareTo(0) < 0) {
                             throw new StoreSaasMarketingException("次卡更新失败，更新后次数小于0");
                         }
                         item.setUsedQuantity(quantity);
@@ -242,6 +242,11 @@ public class CardServiceImpl implements ICardService {
             resp.setCardStatus(CardStatusEnum.valueOf(card.getStatus()).getDescription());
             resp.setCardStatusCode(CardStatusEnum.valueOf(card.getStatus()).getEnumCode());
             resp.setForever(card.getForever() == 1 ? true : false);
+
+            resp.setCardStatus(CardStatusEnum.ACTIVATED.getDescription());
+            resp.setCardStatusCode(CardStatusEnum.ACTIVATED.getEnumCode());
+            resp.setSort(CardStatusEnum.ACTIVATED.getSort());
+            
             if (!resp.getForever()) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日");
                 resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
@@ -251,6 +256,7 @@ public class CardServiceImpl implements ICardService {
                 if (date.compareTo(expiryDate) > 0) {
                     resp.setCardStatus(CardStatusEnum.EXPIRED.getDescription());
                     resp.setCardStatusCode(CardStatusEnum.EXPIRED.getEnumCode());
+                    resp.setSort(CardStatusEnum.EXPIRED.getSort());
                 }
             }
             Long remainQuantity = 0L;
@@ -277,6 +283,7 @@ public class CardServiceImpl implements ICardService {
             if (remainQuantity.compareTo(0L) <= 0) {
                 resp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
                 resp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
+                resp.setSort(CardStatusEnum.FINISHED.getSort());
             }
             if (null == req.getCardStatus() ||
                     resp.getCardStatusCode().equals(req.getCardStatus())) {
@@ -284,31 +291,39 @@ public class CardServiceImpl implements ICardService {
             }
         }
         //次卡排序
-        if(CollectionUtils.isNotEmpty(cardRespList)){
-            Collections.sort(cardRespList,new Comparator<CardResp>(){
+/*        if (CollectionUtils.isNotEmpty(cardRespList)) {
+            Collections.sort(cardRespList, new Comparator<CardResp>() {
                 @Override
                 public int compare(CardResp o1, CardResp o2) {
-                    Integer diff = CardStatusEnum.getSort(o1.getCardStatusCode())- CardStatusEnum.getSort(o2.getCardStatusCode());
-                    if(diff!=0){
+                    Integer diff = CardStatusEnum.getSort(o1.getCardStatusCode()) - CardStatusEnum.getSort(o2.getCardStatusCode());
+                    if (diff != 0) {
                         return diff;
                     }
-                    if(o1.getUpdateTime().after(o2.getUpdateTime())){
+                    if (o1.getUpdateTime().after(o2.getUpdateTime())) {
                         return -1;
-                    }else if(o1.getUpdateTime().before(o2.getUpdateTime())){
+                    } else if (o1.getUpdateTime().before(o2.getUpdateTime())) {
                         return 1;
-                    }else {
+                    } else {
                         return 0;
                     }
                 }
             });
         }
+
+        return cardRespList;
+        */
+
+        Comparator<CardResp> statuCodeASC = Comparator.comparing(CardResp::getSort);
+        // update time 降序
+        Comparator<CardResp> byUpdateTimeDESC = Comparator.comparing(CardResp::getUpdateTime).reversed();
+        Collections.sort(cardRespList,statuCodeASC.thenComparing(byUpdateTimeDESC));
         return cardRespList;
     }
 
     @Override
     public List<CardUseRecordResp> consumptionHistory(Long id) {
         BizBaseResponse<List<CardUseRecordDTO>> bizBaseResponse = serviceOrderClient.getCardUseRecord(id.toString());
-        if (!bizBaseResponse.isSuccess()){
+        if (!bizBaseResponse.isSuccess()) {
             throw new StoreSaasMarketingException("获取使用记录失败");
         }
         List<CardUseRecordDTO> recordDTOList = bizBaseResponse.getData();
@@ -344,31 +359,31 @@ public class CardServiceImpl implements ICardService {
                 .andTypeEqualTo(req.getType().byteValue());
         List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
         List<QueryCardItemResp> queryCardItemResps = new ArrayList<>();
-        Map<String,QueryCardItemResp> respMap = new HashMap<>();
+        Map<String, QueryCardItemResp> respMap = new HashMap<>();
         List<String> goodsIdList = new ArrayList<>();
         for (CrdCardItem item : cardItems) {
             QueryCardItemResp resp = new QueryCardItemResp();
-            BeanUtils.copyProperties(item,resp);
-            resp.setRemainQuantity(resp.getMeasuredQuantity()-resp.getUsedQuantity());
-            respMap.put(item.getGoodsId(),resp);
+            BeanUtils.copyProperties(item, resp);
+            resp.setRemainQuantity(resp.getMeasuredQuantity() - resp.getUsedQuantity());
+            respMap.put(item.getGoodsId(), resp);
             goodsIdList.add(item.getGoodsId());
         }
 
         //查商品
-        if (req.getType() == 2 && !goodsIdList.isEmpty()){
+        if (req.getType() == 2 && !goodsIdList.isEmpty()) {
             QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
             queryGoodsListVO.setStoreId(req.getStoreId());
             queryGoodsListVO.setTenantId(req.getTenantId());
             queryGoodsListVO.setGoodsIdList(goodsIdList);
             queryGoodsListVO.setGoodsSource("");
-            BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
-            if(productResult != null && CollectionUtils.isNotEmpty(productResult.getData())){
+            BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
+            if (productResult != null && CollectionUtils.isNotEmpty(productResult.getData())) {
                 List<QueryGoodsListDTO> queryGoodsListDTOS = productResult.getData();
-                if (null != req.getSearch()){
+                if (null != req.getSearch()) {
                     String search = req.getSearch();
                     queryGoodsListDTOS = queryGoodsListDTOS.stream()
-                            .filter(x -> x.getBrandName().indexOf(search)>-1 || x.getGoodsName().indexOf(search)>-1
-                                    || x.getGoodsCode().indexOf(search)>-1).collect(Collectors.toList());
+                            .filter(x -> x.getBrandName().indexOf(search) > -1 || x.getGoodsName().indexOf(search) > -1
+                                    || x.getGoodsCode().indexOf(search) > -1).collect(Collectors.toList());
                     goodsIdList.clear();
                     queryGoodsListDTOS.stream().forEach(x -> goodsIdList.add(x.getGoodsId()));
                 }
@@ -407,17 +422,17 @@ public class CardServiceImpl implements ICardService {
                         throw new StoreSaasMarketingException("根据门店商品ID和仓库ID查询库存信息异常");
                     }
                 }
-                for (QueryGoodsListDTO dto : queryGoodsListDTOS){
+                for (QueryGoodsListDTO dto : queryGoodsListDTOS) {
                     QueryCardItemResp.CardGoods resp = new QueryCardItemResp.CardGoods();
-                    BeanUtils.copyProperties(dto,resp);
+                    BeanUtils.copyProperties(dto, resp);
                     resp.setBusinessCategory(dto.getBusinessCategoryCode());
                     if (null != dto.getProductId()) {
                         resp.setProductId(String.valueOf(dto.getProductId()));
                     }
-                    resp.setUsedNum(inventoryMap.getOrDefault(resp.getGoodsId(),BigDecimal.ZERO));
+                    resp.setUsedNum(inventoryMap.getOrDefault(resp.getGoodsId(), BigDecimal.ZERO));
                     resp.setWarehouseId(warehouseId);
                     resp.setWarehouseName(warehouseName);
-                    if (respMap.containsKey(dto.getGoodsId())){
+                    if (respMap.containsKey(dto.getGoodsId())) {
                         QueryCardItemResp queryCardItemResp = respMap.get(dto.getGoodsId());
                         queryCardItemResp.setGoods(resp);
                         queryCardItemResps.add(queryCardItemResp);
@@ -426,10 +441,10 @@ public class CardServiceImpl implements ICardService {
             }
         }
         //查服务
-        if (req.getType() == 1 && !goodsIdList.isEmpty()){
+        if (req.getType() == 1 && !goodsIdList.isEmpty()) {
             GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
             goodsForMarketReq.setGoodsName("");
-            if (null != req.getSearch()){
+            if (null != req.getSearch()) {
                 goodsForMarketReq.setGoodsName(req.getSearch());
             }
             goodsForMarketReq.setStoreId(req.getStoreId());
@@ -439,10 +454,10 @@ public class CardServiceImpl implements ICardService {
             BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
             if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-                for (ServiceGoodsListForMarketResp x : serviceGoodsList){
+                for (ServiceGoodsListForMarketResp x : serviceGoodsList) {
                     QueryCardItemResp.CardService resp = new QueryCardItemResp.CardService();
-                    BeanUtils.copyProperties(x,resp);
-                    if (respMap.containsKey(x.getId())){
+                    BeanUtils.copyProperties(x, resp);
+                    if (respMap.containsKey(x.getId())) {
                         QueryCardItemResp queryCardItemResp = respMap.get(x.getId());
                         queryCardItemResp.setService(resp);
                         queryCardItemResps.add(queryCardItemResp);
@@ -476,21 +491,21 @@ public class CardServiceImpl implements ICardService {
         }
         //查询最新商品信息
         List<String> goodsIdList = new ArrayList<>();
-        Map<String,CardItemResp> goodsMap = new HashMap<>();
-        for (CardItemResp item : cardGoodsItem){
-            goodsMap.put(item.getGoodsId(),item);
+        Map<String, CardItemResp> goodsMap = new HashMap<>();
+        for (CardItemResp item : cardGoodsItem) {
+            goodsMap.put(item.getGoodsId(), item);
             goodsIdList.add(item.getGoodsId());
         }
-        if (!goodsIdList.isEmpty()){
+        if (!goodsIdList.isEmpty()) {
             QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
             queryGoodsListVO.setStoreId(req.getStoreId());
             queryGoodsListVO.setTenantId(req.getTenantId());
             queryGoodsListVO.setGoodsIdList(goodsIdList);
             queryGoodsListVO.setGoodsSource("");
-            BizBaseResponse<List<QueryGoodsListDTO>> productResult  = productClient.queryGoodsListV2(queryGoodsListVO);
-            if (null != productResult.getData()){
+            BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
+            if (null != productResult.getData()) {
                 productResult.getData().stream().forEach(x -> {
-                    if (goodsMap.containsKey(x.getGoodsId())){
+                    if (goodsMap.containsKey(x.getGoodsId())) {
                         CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
                         goodsItem.setServiceItemName(x.getGoodsName());
                     }
@@ -499,12 +514,12 @@ public class CardServiceImpl implements ICardService {
         }
         //查询最新服务信息
         List<String> serviceIdList = new ArrayList<>();
-        Map<String,CardItemResp> serviceMap = new HashMap<>();
-        for (CardItemResp item : cardServiceItem){
-            serviceMap.put(item.getGoodsId(),item);
+        Map<String, CardItemResp> serviceMap = new HashMap<>();
+        for (CardItemResp item : cardServiceItem) {
+            serviceMap.put(item.getGoodsId(), item);
             serviceIdList.add(item.getGoodsId());
         }
-        if (!serviceIdList.isEmpty()){
+        if (!serviceIdList.isEmpty()) {
             GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
             goodsForMarketReq.setGoodsName("");
             goodsForMarketReq.setStoreId(req.getStoreId());
@@ -515,7 +530,7 @@ public class CardServiceImpl implements ICardService {
             if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
                 serviceGoodsList.stream().forEach(x -> {
-                    if (serviceMap.containsKey(x.getId())){
+                    if (serviceMap.containsKey(x.getId())) {
                         CardItemResp serviceItem = serviceMap.get(x.getId());
                         serviceItem.setServiceItemName(x.getServiceName());
                     }
