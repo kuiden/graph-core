@@ -246,7 +246,8 @@ public class MiniCouponApi extends BaseApi {
 
     @GetMapping("/customerCouponDetail/{couponId}")
     public ResultObject getCustomerCouponDetail(@PathVariable Long couponId){
-        iCouponService.get
+//        iCouponService.get
+        return null;
 
     }
 }

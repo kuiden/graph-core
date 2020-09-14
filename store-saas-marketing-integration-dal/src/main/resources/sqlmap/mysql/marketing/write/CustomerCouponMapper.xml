@@ -522,7 +522,7 @@
   </select>
 
   <select id="countCustomerCoupon" resultType="java.lang.Integer">
-    select count (1) from  customer_coupon
+    select count(1) from  customer_coupon
     WHERE customer_id = #{customerId}
   </select>
 
