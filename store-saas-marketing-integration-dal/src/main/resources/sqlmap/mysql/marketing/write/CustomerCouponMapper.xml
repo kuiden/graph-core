@@ -512,4 +512,18 @@
       AND a.tenant_id =  #{tenantId}
   </select>
 
+  <select id="selectByCustomerId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    FROM
+    customer_coupon
+    WHERE customer_id = #{customerId}
+    order by use_end_time desc
+  </select>
+
+  <select id="countCustomerCoupon" resultType="java.lang.Integer">
+    select count (1) from  customer_coupon
+    WHERE customer_id = #{customerId}
+  </select>
+
 </mapper>

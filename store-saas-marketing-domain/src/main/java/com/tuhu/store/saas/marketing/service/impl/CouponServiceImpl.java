@@ -19,7 +19,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMap
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.response.CouponScopeCategoryResp;
+import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.response.dto.*;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
@@ -28,9 +28,6 @@ import com.tuhu.store.saas.marketing.util.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderItemVO;
-import com.tuhu.store.saas.marketing.response.CommonResp;
-import com.tuhu.store.saas.marketing.response.CouponResp;
-import com.tuhu.store.saas.marketing.response.CouponStatisticsForCustomerMarketResp;
 import com.xiangyun.versionhelper.VersionHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -1744,5 +1741,48 @@ public class CouponServiceImpl implements ICouponService {
             return 0L;
         }
         return availableAccount;
+    }
+
+    /**
+     * 分页查询用户领券信息
+     *
+     * @param couponRequest
+     * @return
+     */
+    @Override
+    public PageInfo<CustomerCouponResponse> getCustomerCouponList(CustomerCouponRequest couponRequest) {
+        PageHelper.startPage(couponRequest.getPageNum(), couponRequest.getPageSize());
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByCustomerId(couponRequest.getCustomerId());
+        if (CollectionUtils.isEmpty(customerCoupons)){
+            return new PageInfo<>(Lists.newArrayList());
+        }
+        PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
+        List<CustomerCouponResponse> list = new ArrayList<>();
+        for (CustomerCoupon customerCoupon:customerCoupons) {
+            //判断优惠券是否有效
+            CustomerCouponResponse response = new CustomerCouponResponse();
+            response.setId(customerCoupon.getId());
+            response.setCreateTime(customerCoupon.getCreateTime());
+            response.setCustomerId(customerCoupon.getCustomerId());
+            Date useEndTime = customerCoupon.getUseEndTime();
+            Integer useStatus = customerCoupon.getUseStatus().intValue();
+            Integer status = 2;
+            if (useStatus==1){
+                status = 1;
+            }else {
+                //判断当前日期是否大于useEndTime
+                Date now = new Date();
+                int i = now.compareTo(useEndTime);
+                if (i<1){
+                    status = 0;
+                }
+            }
+            response.setStatus(status);
+            list.add(response);
+        }
+        PageInfo<CustomerCouponResponse> info = new PageInfo<>();
+        BeanUtils.copyProperties(pageInfo,info);
+        info.setList(list);
+        return info;
     }
 }

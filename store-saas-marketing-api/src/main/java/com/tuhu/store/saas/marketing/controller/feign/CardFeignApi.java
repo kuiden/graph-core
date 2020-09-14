@@ -4,6 +4,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
+import com.tuhu.store.saas.marketing.response.dto.CustomerMarketCountDTO;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import io.swagger.annotations.Api;
@@ -62,5 +63,12 @@ public class CardFeignApi {
         }
         Map<String, List<ComputeMarktingCustomerForReportResp>> result = iCardOrderService.ComputeMarktingCustomerForReport(storeId,tenantId);
         return new BizBaseResponse(result);
+    }
+
+    @GetMapping("/customerCouponAndCardCount/{customerId}")
+    @ApiOperation("获取用户次卡与优惠券总数")
+    public BizBaseResponse<CustomerMarketCountDTO> getCustomerMarketInfo(@PathVariable String customerId){
+        CustomerMarketCountDTO customerMarketCountDTO = iCardService.queryCustomerMarketInfo(customerId);
+        return new BizBaseResponse<>(customerMarketCountDTO);
     }
 }

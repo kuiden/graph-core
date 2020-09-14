@@ -6,16 +6,14 @@ import com.tuhu.store.saas.marketing.dataobject.Coupon;
 import com.tuhu.store.saas.marketing.dataobject.CouponScopeCategory;
 import com.tuhu.store.saas.marketing.dataobject.Customer;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
+import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.response.CouponStatisticsForCustomerMarketResp;
+import com.tuhu.store.saas.marketing.response.CustomerCouponResponse;
 import com.tuhu.store.saas.marketing.response.dto.CustomerCouponDTO;
 import com.tuhu.store.saas.marketing.response.dto.ServiceOrderCouponDTO;
-import com.tuhu.store.saas.marketing.request.AddCouponReq;
-import com.tuhu.store.saas.marketing.request.CouponListReq;
-import com.tuhu.store.saas.marketing.request.EditCouponReq;
-import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -199,4 +197,13 @@ public interface ICouponService {
      * @return
      */
     Long getCouponAvailableAccount(Long id, Long storeId);
+
+    /**
+     * 分页查询用户领券信息
+     * @param couponRequest
+     * @return
+     */
+    PageInfo<CustomerCouponResponse> getCustomerCouponList(CustomerCouponRequest couponRequest);
+
+
 }

@@ -7,6 +7,7 @@ import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.response.card.*;
+import com.tuhu.store.saas.marketing.response.dto.CustomerMarketCountDTO;
 
 import java.util.List;
 
@@ -65,5 +66,7 @@ public  interface ICardService {
 
     CardResp clientQueryCardItem(QueryCardItemReq req);
 
+    //查询用户次卡与优惠券总数
+    CustomerMarketCountDTO queryCustomerMarketInfo(String customerId);
 
 }

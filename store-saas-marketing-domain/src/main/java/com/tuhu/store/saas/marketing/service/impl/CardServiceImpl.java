@@ -16,6 +16,7 @@ import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CardTemplateMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
@@ -23,7 +24,11 @@ import com.tuhu.store.saas.marketing.remote.reponse.CardUseRecordDTO;
 import com.tuhu.store.saas.marketing.remote.wms.StoreWmsClient;
 import com.tuhu.store.saas.marketing.request.card.*;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
-import com.tuhu.store.saas.marketing.response.card.*;
+import com.tuhu.store.saas.marketing.response.card.CardItemResp;
+import com.tuhu.store.saas.marketing.response.card.CardResp;
+import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
+import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
+import com.tuhu.store.saas.marketing.response.dto.CustomerMarketCountDTO;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.service.ICardTemplateItemService;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
@@ -77,6 +82,9 @@ public class CardServiceImpl implements ICardService {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private CustomerCouponMapper customerCouponMapper;
 
     @Override
     @Transactional
@@ -246,7 +254,7 @@ public class CardServiceImpl implements ICardService {
             resp.setCardStatus(CardStatusEnum.ACTIVATED.getDescription());
             resp.setCardStatusCode(CardStatusEnum.ACTIVATED.getEnumCode());
             resp.setSort(CardStatusEnum.ACTIVATED.getSort());
-            
+
             if (!resp.getForever()) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年MM月dd日");
                 resp.setExpiryDate(dateFormat.format(card.getExpiryDate()));
@@ -316,7 +324,7 @@ public class CardServiceImpl implements ICardService {
         Comparator<CardResp> statuCodeASC = Comparator.comparing(CardResp::getSort);
         // update time 降序
         Comparator<CardResp> byUpdateTimeDESC = Comparator.comparing(CardResp::getUpdateTime).reversed();
-        Collections.sort(cardRespList,statuCodeASC.thenComparing(byUpdateTimeDESC));
+        Collections.sort(cardRespList, statuCodeASC.thenComparing(byUpdateTimeDESC));
         return cardRespList;
     }
 
@@ -540,6 +548,16 @@ public class CardServiceImpl implements ICardService {
         cardResp.setCardGoodsItem(cardGoodsItem);
         cardResp.setCardServiceItem(cardServiceItem);
         return cardResp;
+    }
+
+    @Override
+    public CustomerMarketCountDTO queryCustomerMarketInfo(String customerId) {
+        CustomerMarketCountDTO customerMarketCountDTO = new CustomerMarketCountDTO();
+        int onceCardCount = cardMapper.countByCustomerId(customerId);
+        customerMarketCountDTO.setOnceCardCount(onceCardCount);
+        Integer couponCount = customerCouponMapper.countCustomerCoupon(customerId);
+        customerMarketCountDTO.setCouponCount(couponCount);
+        return customerMarketCountDTO;
     }
 
 

@@ -59,4 +59,9 @@ public interface CustomerCouponMapper {
     List<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReportByActivity(@Param("storeId") Long storeId, @Param("tenantId") Long tenantId);
 
     List<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReportByCard(@Param("storeId") Long storeId, @Param("tenantId") Long tenantId);
+
+
+    List<CustomerCoupon> selectByCustomerId(@Param("customerId") String customerId);
+
+    int countCustomerCoupon(@Param("customerId") String customerId);
 }

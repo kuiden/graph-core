@@ -298,7 +298,12 @@
       <include refid="Example_Where_Clause" />
     </if>
   </select>
-  <update id="updateByExampleSelective" parameterType="map">
+
+    <select id="countByCustomerId" resultType="java.lang.Integer">
+      select count(1) from crd_card where  customer_id = #{customerId}
+    </select>
+
+    <update id="updateByExampleSelective" parameterType="map">
     update crd_card
     <set>
       <if test="record.id != null">
