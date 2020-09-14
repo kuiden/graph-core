@@ -1,8 +1,10 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
+import com.tuhu.store.saas.marketing.request.card.CustomerCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
@@ -43,4 +45,7 @@ public interface ICardOrderService {
     List<CustomerCardOrder> getCustomersForCusGroup(Long storeId, Date beginTime);
 
     Map<String, List<ComputeMarktingCustomerForReportResp>> ComputeMarktingCustomerForReport(Long storeId, Long tenantId);
+
+    PageInfo<CardOrderResp> customerCardList(CustomerCardOrderReq req);
+
 }

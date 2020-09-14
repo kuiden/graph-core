@@ -276,7 +276,6 @@ public class IMCouponServiceImpl implements IMCouponService {
                     }
                 }
             }
-
         } catch (Exception e) {
             log.error("getCouponReceiveList error", e);
         }

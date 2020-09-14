@@ -22,13 +22,13 @@ import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
+import com.tuhu.store.saas.marketing.request.card.CustomerCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
-import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
@@ -274,7 +274,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     }
 
     private void sendCardPaySms(Long storeId, String phone, String cardName) {
-        log.info("sendCardPaySms,storeId:{},phone:{},cardName:{}",storeId,phone,cardName);
+        log.info("sendCardPaySms,storeId:{},phone:{},cardName:{}", storeId, phone, cardName);
         try {
             if (PhoneUtil.isPhoneLegal(phone)) {
                 String smsTemplateId = iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(SMSTypeEnum.SAAS_CARD_PAY.templateCode(), null);
@@ -297,8 +297,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
                     }
                 }
             }
-        }catch (Exception e){
-            log.error("sendCardPaySms fail",e);
+        } catch (Exception e) {
+            log.error("sendCardPaySms fail", e);
         }
     }
 
@@ -471,6 +471,60 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         result.put("activityCustomer", activities);
         result.put("crdCard", cards);
         return result;
+    }
+
+    @Override
+    public PageInfo<CardOrderResp> customerCardList(CustomerCardOrderReq req) {
+        PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
+        CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
+        CrdCardOrderExample.Criteria customerIdCriteria = cardOrderExample.createCriteria();
+        customerIdCriteria.andCustomerIdEqualTo(req.getCustomerId());
+        customerIdCriteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId()).andPaymentStatusEqualTo("PAYMENT_OK");
+        cardOrderExample.setOrderByClause("update_time desc");
+        List<CrdCardOrder> crdCardOrders = crdCardOrderMapper.selectByExample(cardOrderExample);
+        PageInfo<CrdCardOrder> cardOrderPageInfo = new PageInfo<>(crdCardOrders);
+        List<CardOrderResp> cardOrderRespList = new ArrayList<>();
+        for (CrdCardOrder item : crdCardOrders) {
+            CardOrderResp cardOrderResp = new CardOrderResp();
+            BeanUtils.copyProperties(item, cardOrderResp);
+            cardOrderResp.setCardStatus(CardStatusEnum.valueOf(item.getCardStatus()).getDescription());
+            cardOrderResp.setCardStatusCode(CardStatusEnum.valueOf(item.getCardStatus()).getEnumCode());
+            cardOrderResp.setPaymentStatus(PaymentStatusEnum.valueOf(item.getPaymentStatus()).getDescription());
+            cardOrderResp.setPaymentStatusCode(PaymentStatusEnum.valueOf(item.getPaymentStatus()).getEnumCode());
+            CrdCard crdCard = crdCardMapper.selectByPrimaryKey(item.getCardId());
+            CrdCardItemExample cardItemExample = new CrdCardItemExample();
+            cardItemExample.createCriteria().andCardIdEqualTo(item.getCardId())
+                    .andStoreIdEqualTo(item.getStoreId()).andTenantIdEqualTo(item.getTenantId());
+            List<CrdCardItem> crdCardItems = crdCardItemMapper.selectByExample(cardItemExample);
+            cardOrderResp.setForever(crdCard.getForever() == 1 ? true : false);
+            cardOrderResp.setCardTemplateId(crdCard.getCardTemplateId());
+            cardOrderResp.setCardTypeCode(crdCard.getCardTypeCode());
+            //如果卡不是永久有效，则判断卡是否过期
+            if (!cardOrderResp.getForever()) {
+                cardOrderResp.setExpiryDate(crdCard.getExpiryDate());
+                Date date = new Date();
+                Date expiryDate = DataTimeUtil.getDateZeroTime(crdCard.getExpiryDate());
+                if (date.compareTo(expiryDate) > 0) {
+                    cardOrderResp.setCardStatus(CardStatusEnum.EXPIRED.getDescription());
+                    cardOrderResp.setCardStatusCode(CardStatusEnum.EXPIRED.getEnumCode());
+                }
+            }
+            //计算剩余次数
+            Long remainQuantity = 0L;
+            for (CrdCardItem cardItem : crdCardItems) {
+                remainQuantity += (cardItem.getMeasuredQuantity() - cardItem.getUsedQuantity());
+            }
+            if (remainQuantity.compareTo(0L) <= 0) {
+                cardOrderResp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
+                cardOrderResp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
+            }
+            cardOrderResp.setRemainQuantity(remainQuantity);
+            cardOrderRespList.add(cardOrderResp);
+        }
+        PageInfo<CardOrderResp> resp = new PageInfo<>(cardOrderRespList);
+        resp.setTotal(cardOrderPageInfo.getTotal());
+        return resp;
+
     }
 
 }
