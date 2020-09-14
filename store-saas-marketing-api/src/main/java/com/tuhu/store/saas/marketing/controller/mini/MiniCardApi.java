@@ -70,5 +70,7 @@ public class MiniCardApi extends BaseApi {
         return new BizBaseResponse(iCardService.consumptionHistory(cardId));
     }
 
+    /****************************************H5*******************************************************/
+
 
 }
