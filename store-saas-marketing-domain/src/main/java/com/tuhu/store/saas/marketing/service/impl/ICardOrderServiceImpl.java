@@ -524,7 +524,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         PageInfo<CardOrderResp> resp = new PageInfo<>(cardOrderRespList);
         resp.setTotal(cardOrderPageInfo.getTotal());
         return resp;
-
     }
 
 }

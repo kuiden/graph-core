@@ -61,14 +61,14 @@ public class MiniCardOrderApi extends BaseApi {
         return new BizBaseResponse(iCardOrderService.queryCardOrder(req));
     }
 
-    //
+    //客户开卡列表分页查询
     @GetMapping("/customerCardList")
     @ApiOperation("客户开卡单列表")
     public BizBaseResponse<PageInfo<CardOrderResp>> customerCardList(@RequestBody CustomerCardOrderReq req){
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
-
-        return null;
+        PageInfo<CardOrderResp> cardOrderRespPageInfo = iCardOrderService.customerCardList(req);
+        return new BizBaseResponse<>(cardOrderRespPageInfo);
     }
 
 
