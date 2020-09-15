@@ -9,12 +9,9 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
-import com.tuhu.store.saas.marketing.response.CommonResp;
-import com.tuhu.store.saas.marketing.response.CouponStatisticsForCustomerMarketResp;
-import com.tuhu.store.saas.marketing.response.CustomerCouponResponse;
+import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.response.dto.CustomerCouponDTO;
 import com.tuhu.store.saas.marketing.response.dto.ServiceOrderCouponDTO;
-import com.tuhu.store.saas.marketing.response.CouponResp;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -204,6 +201,13 @@ public interface ICouponService {
      * @return
      */
     PageInfo<CustomerCouponResponse> getCustomerCouponList(CustomerCouponRequest couponRequest);
+
+    /**
+     * H5获取客户消费券详情
+     * @param id
+     * @return
+     */
+    CustomerCouponDetailResponse getCustomerCouponDetail(Long id);
 
 
 }

@@ -526,4 +526,16 @@
     WHERE customer_id = #{customerId}
   </select>
 
+  <select id="queryCustomerCouponDetailById"
+          resultType="com.tuhu.store.saas.marketing.response.CustomerCouponDetailResponse">
+    select cc.id as id ,c.title as title,c.type as type ,c.condition_limit as conditionLimit ,
+    c.content_value as contentValue ,c.discount_value as discountValue , cc.use_start_time as useStartTime,
+    cc.use_end_time as useEndTime, cc.create_time as createTime, cc.use_status as useStatus,
+    cc.receive_type as receiveType , cc.coupon_code as couponCode ,cc.customer_id as customerId ,
+    cc.send_user as sendUser, cc.code as code
+    from customer_coupon cc
+    left join coupon c on cc.coupon_code = c.code
+    where  cc.id = #{id}
+  </select>
+
 </mapper>

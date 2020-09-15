@@ -6,7 +6,9 @@ import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CouponScopeTypeEnum;
 import com.tuhu.store.saas.marketing.enums.CouponTypeEnum;
@@ -1784,5 +1786,45 @@ public class CouponServiceImpl implements ICouponService {
         BeanUtils.copyProperties(pageInfo,info);
         info.setList(list);
         return info;
+    }
+
+    /**
+     * H5获取客户消费券详情
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public CustomerCouponDetailResponse getCustomerCouponDetail(Long id) {
+        Long storeId = UserContextHolder.getStoreId();
+        Long tenantId = UserContextHolder.getTenantId();
+        CustomerCouponDetailResponse detail = customerCouponMapper.queryCustomerCouponDetailById(id);
+        //判断优惠券状态
+        Integer useStatus = detail.getUseStatus();
+        Date useEndTime = detail.getUseEndTime();
+        Integer status = 2;
+        if (useStatus==1){
+            status = 1;
+        }else {
+            //判断当前日期是否大于useEndTime
+            Date now = new Date();
+            int i = now.compareTo(useEndTime);
+            if (i<1){
+                status = 0;
+            }
+        }
+        detail.setStatus(status);
+        //根据customerId获取客户信息
+        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+        baseIdReqVO.setId(detail.getCustomerId());
+        baseIdReqVO.setStoreId(storeId);
+        baseIdReqVO.setTenantId(tenantId);
+        BizBaseResponse<CustomerDTO> customerById = customerClient.getCustomerById(baseIdReqVO);
+        CustomerDTO data = customerById.getData();
+        if (data!=null){
+            detail.setCustomerName(data.getName());
+            detail.setPhoneNumber(data.getPhoneNumber());
+        }
+        return detail;
     }
 }

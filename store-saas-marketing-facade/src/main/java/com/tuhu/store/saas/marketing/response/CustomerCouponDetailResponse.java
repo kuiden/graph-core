@@ -15,11 +15,14 @@ public class CustomerCouponDetailResponse {
     private Date useStartTime;
     private Date useEndTime;
     private Date createTime;
+    private Integer useStatus;
     private Integer status;
     private Integer receiveType;
     private String couponCode;
     private String customerName;
+    private String customerId;
     private String phoneNumber;
     private String sendUser;
+    private String code;
 
 }
