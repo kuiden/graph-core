@@ -605,4 +605,9 @@
 	    and is_delete=0
 	    group by customer_id
     </select>
+    <select id="selectCrdCardOrderByCustomerPhoneNumber"
+            resultMap="BaseResultMap">
+      select <include refid="Base_Column_List" /> from `crd_card_order` where store_id = #{storeId} and tenant_id = #{tenantId}
+      and customer_phone_number = #{customerPhoneNumber} ORDER BY update_time desc
+    </select>
 </mapper>

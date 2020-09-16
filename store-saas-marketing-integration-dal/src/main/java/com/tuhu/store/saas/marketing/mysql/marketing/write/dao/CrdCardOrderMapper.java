@@ -34,5 +34,7 @@ public interface CrdCardOrderMapper {
 
     List<CustomerCardOrder> getCustomersForCusGroup(@Param("storeId") Long storeId, @Param("beginTime") Date beginTime);
 
+    List<CrdCardOrder> selectCrdCardOrderByCustomerPhoneNumber(@Param("storeId") Long storeId,@Param("tenantId") Long tenantId,@Param("customerPhoneNumber") String customerPhoneNumber);
+
 
 }

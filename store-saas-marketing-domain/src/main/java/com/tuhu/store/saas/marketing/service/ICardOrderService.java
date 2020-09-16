@@ -46,6 +46,4 @@ public interface ICardOrderService {
 
     Map<String, List<ComputeMarktingCustomerForReportResp>> ComputeMarktingCustomerForReport(Long storeId, Long tenantId);
 
-    PageInfo<CardOrderResp> customerCardList(CustomerCardOrderReq req);
-
 }
