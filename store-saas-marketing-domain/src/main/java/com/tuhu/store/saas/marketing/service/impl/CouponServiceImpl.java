@@ -1756,7 +1756,10 @@ public class CouponServiceImpl implements ICouponService {
         PageHelper.startPage(couponRequest.getPageNum(), couponRequest.getPageSize());
         List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByCustomerId(couponRequest.getCustomerId());
         if (CollectionUtils.isEmpty(customerCoupons)){
-            return new PageInfo<>(Lists.newArrayList());
+            PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
+            PageInfo<CustomerCouponResponse> info = new PageInfo<>();
+            BeanUtils.copyProperties(pageInfo,info);
+            return info;
         }
         PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
         List<CustomerCouponResponse> list = new ArrayList<>();
