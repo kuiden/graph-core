@@ -1782,7 +1782,7 @@ public class CouponServiceImpl implements ICouponService {
             response.setCustomerId(customerCoupon.getCustomerId());
             Date useEndTime = customerCoupon.getUseEndTime();
             Integer useStatus = customerCoupon.getUseStatus().intValue();
-            Integer status = 2;
+            Integer status = -1;
             if (useStatus==1){
                 status = 1;
             }else {
@@ -1816,7 +1816,7 @@ public class CouponServiceImpl implements ICouponService {
         //判断优惠券状态
         Integer useStatus = detail.getUseStatus();
         Date useEndTime = detail.getUseEndTime();
-        Integer status = 2;
+        Integer status = -1;
         if (useStatus==1){
             status = 1;
         }else {

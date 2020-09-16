@@ -16,6 +16,7 @@ public class CustomerCouponDetailResponse {
     private Date useEndTime;
     private Date createTime;
     private Integer useStatus;
+    //优惠券状态 -1为已过期
     private Integer status;
     private Integer receiveType;
     private String couponCode;
