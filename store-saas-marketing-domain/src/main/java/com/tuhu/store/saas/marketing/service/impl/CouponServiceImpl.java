@@ -1754,7 +1754,8 @@ public class CouponServiceImpl implements ICouponService {
     @Override
     public PageInfo<CustomerCouponResponse> getCustomerCouponList(CustomerCouponRequest couponRequest) {
         PageHelper.startPage(couponRequest.getPageNum(), couponRequest.getPageSize());
-        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByCustomerId(couponRequest.getCustomerId());
+        String customerId = couponRequest.getCustomerId();
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByCustomerId(customerId);
         if (CollectionUtils.isEmpty(customerCoupons)){
             PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
             PageInfo<CustomerCouponResponse> info = new PageInfo<>();
@@ -1762,11 +1763,21 @@ public class CouponServiceImpl implements ICouponService {
             return info;
         }
         PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
+        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+        baseIdReqVO.setId(customerId);
+        baseIdReqVO.setStoreId(UserContextHolder.getStoreId());
+        baseIdReqVO.setTenantId(UserContextHolder.getTenantId());
+        BizBaseResponse<CustomerDTO> customerById = customerClient.getCustomerById(baseIdReqVO);
+        if (customerById.getData()==null){
+            throw new StoreSaasMarketingException("获取用户信息失败");
+        }
+        CustomerDTO data = customerById.getData();
         List<CustomerCouponResponse> list = new ArrayList<>();
         for (CustomerCoupon customerCoupon:customerCoupons) {
             //判断优惠券是否有效
             CustomerCouponResponse response = new CustomerCouponResponse();
             response.setId(customerCoupon.getId());
+            response.setCustomerName(data.getName());
             response.setCreateTime(customerCoupon.getCreateTime());
             response.setCustomerId(customerCoupon.getCustomerId());
             Date useEndTime = customerCoupon.getUseEndTime();
