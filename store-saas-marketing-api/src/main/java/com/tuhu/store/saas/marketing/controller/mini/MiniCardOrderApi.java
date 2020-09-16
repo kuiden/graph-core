@@ -2,7 +2,6 @@ package com.tuhu.store.saas.marketing.controller.mini;
 
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.CustomerCardOrderReq;
@@ -10,7 +9,6 @@ import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
-import com.tuhu.store.saas.order.request.serviceorder.BaseIdReq;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +33,7 @@ public class MiniCardOrderApi extends BaseApi {
 
     @PostMapping("/add")
     @ApiOperation("新建开卡单")
-    public BizBaseResponse<String> add(@Validated @RequestBody AddCardOrderReq req){
+    public BizBaseResponse<String> add(@Validated @RequestBody AddCardOrderReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setCreateUser(super.getUserId());
@@ -47,7 +45,7 @@ public class MiniCardOrderApi extends BaseApi {
 
     @PostMapping("/list")
     @ApiOperation("开卡单列表")
-    public BizBaseResponse<PageInfo<CardOrderResp>> list(@Validated @RequestBody ListCardOrderReq req){
+    public BizBaseResponse<PageInfo<CardOrderResp>> list(@Validated @RequestBody ListCardOrderReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(iCardOrderService.getCardOrderList(req));
@@ -55,7 +53,7 @@ public class MiniCardOrderApi extends BaseApi {
 
     @PostMapping("/query")
     @ApiOperation("查询开卡单")
-    public BizBaseResponse query(@Validated @RequestBody QueryCardOrderReq req){
+    public BizBaseResponse query(@Validated @RequestBody QueryCardOrderReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(iCardOrderService.queryCardOrder(req));
@@ -64,7 +62,7 @@ public class MiniCardOrderApi extends BaseApi {
     //客户开卡列表分页查询
     @GetMapping("/customerCardList")
     @ApiOperation("客户开卡单列表")
-    public BizBaseResponse<PageInfo<CardOrderResp>> customerCardList(@RequestBody CustomerCardOrderReq req){
+    public BizBaseResponse<PageInfo<CardOrderResp>> customerCardList(@RequestBody CustomerCardOrderReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         PageInfo<CardOrderResp> cardOrderRespPageInfo = iCardOrderService.customerCardList(req);
