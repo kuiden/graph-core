@@ -305,7 +305,7 @@
     </select>
 
     <select id="countByCustomerId" resultType="java.lang.Integer">
-            select count(1) from crd_card_order where customer_id = #{customerId}
+            select count(1) from crd_card_order where customer_id = #{customerId} and payment_status = 'PAYMENT_OK'
     </select>
 
     <update id="updateByExampleSelective" parameterType="map">

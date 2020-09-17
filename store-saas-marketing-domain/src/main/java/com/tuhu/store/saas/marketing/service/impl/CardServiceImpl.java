@@ -553,6 +553,7 @@ public class CardServiceImpl implements ICardService {
     @Override
     public CustomerMarketCountDTO queryCustomerMarketInfo(String customerId) {
         CustomerMarketCountDTO customerMarketCountDTO = new CustomerMarketCountDTO();
+        //统计客户次卡总数只统计已付款结清的次卡总数
         int onceCardCount = cardMapper.countByCustomerId(customerId);
         customerMarketCountDTO.setOnceCardCount(onceCardCount);
         Integer couponCount = customerCouponMapper.countCustomerCoupon(customerId);
