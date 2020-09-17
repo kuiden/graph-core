@@ -1780,6 +1780,7 @@ public class CouponServiceImpl implements ICouponService {
             response.setCustomerName(data.getName());
             response.setCreateTime(customerCoupon.getCreateTime());
             response.setCustomerId(customerCoupon.getCustomerId());
+            response.setCustomerCouponCode(customerCoupon.getCode());
             Date useEndTime = customerCoupon.getUseEndTime();
             Integer useStatus = customerCoupon.getUseStatus().intValue();
             Integer status = -1;
