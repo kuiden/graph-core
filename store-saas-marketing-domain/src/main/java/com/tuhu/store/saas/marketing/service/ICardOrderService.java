@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.CustomerCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
@@ -45,5 +46,9 @@ public interface ICardOrderService {
     List<CustomerCardOrder> getCustomersForCusGroup(Long storeId, Date beginTime);
 
     Map<String, List<ComputeMarktingCustomerForReportResp>> ComputeMarktingCustomerForReport(Long storeId, Long tenantId);
+
+
+    //客户最后次卡订单的创建时间
+    Map<String, Date> customerLastPurchaseTime(CustomerLastPurchaseRequest request);
 
 }

@@ -22,6 +22,7 @@ import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.remote.reponse.CardUseRecordDTO;
 import com.tuhu.store.saas.marketing.remote.wms.StoreWmsClient;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.card.*;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.response.card.CardItemResp;
@@ -560,6 +561,8 @@ public class CardServiceImpl implements ICardService {
         customerMarketCountDTO.setCouponCount(couponCount);
         return customerMarketCountDTO;
     }
+
+
 
 
     private CardTemplate convertorToCardTemplate(CardTemplateModel cardTemplateModelReq) {

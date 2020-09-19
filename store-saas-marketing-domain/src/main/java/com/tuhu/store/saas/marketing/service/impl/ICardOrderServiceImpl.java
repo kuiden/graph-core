@@ -21,6 +21,8 @@ import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseDTO;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
@@ -50,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author wangyuqing
@@ -474,5 +477,25 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         result.put("activityCustomer", activities);
         result.put("crdCard", cards);
         return result;
+    }
+
+    @Override
+    public Map<String, Date> customerLastPurchaseTime(CustomerLastPurchaseRequest request) {
+        Map<String, Date> hashMap = new HashMap<>();
+        List<String> customerIds = request.getCustomerIds();
+        Long storeId = request.getStoreId();
+        Long tenantId = request.getTenantId();
+        List<CustomerLastPurchaseDTO> list= crdCardOrderMapper.queryCustomerLastPurchaseTime(tenantId,storeId,customerIds);
+        Map<String, List<CustomerLastPurchaseDTO>> map = list.stream().collect(Collectors.groupingBy(CustomerLastPurchaseDTO::getCustomerId));
+        for (String customerId : customerIds) {
+            List<CustomerLastPurchaseDTO> purchaseDTOS = map.get(customerId);
+            if (CollectionUtils.isNotEmpty(purchaseDTOS)) {
+                Date purchaseTime = purchaseDTOS.get(0).getPurchaseTime();
+                hashMap.put(customerId, purchaseTime);
+            } else {
+                hashMap.put(customerId, null);
+            }
+        }
+        return hashMap;
     }
 }

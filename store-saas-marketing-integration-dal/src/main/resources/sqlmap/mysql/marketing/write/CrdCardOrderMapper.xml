@@ -610,4 +610,16 @@
       select <include refid="Base_Column_List" /> from `crd_card_order` where store_id = #{storeId} and tenant_id = #{tenantId}
       and customer_phone_number = #{customerPhoneNumber} ORDER BY update_time desc
     </select>
+    <select id="queryCustomerLastPurchaseTime"
+            resultType="com.tuhu.store.saas.marketing.request.CustomerLastPurchaseDTO">
+      select  * from (select customer_id , create_time AS purchaseTime
+      from crd_card_order where store_id = #{storeId} and tenant_id = #{tenantId} and is_delete = 0
+      and customer_id IN
+      <foreach collection="customerIds" item="customerId" open="(" close=")" separator=",">
+        #{customerId}
+      </foreach>
+      ORDER BY
+      create_time
+      DESC) t group by t.customer_id
+    </select>
 </mapper>

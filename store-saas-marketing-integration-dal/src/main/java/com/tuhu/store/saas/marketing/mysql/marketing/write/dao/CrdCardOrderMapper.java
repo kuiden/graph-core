@@ -7,7 +7,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseDTO;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.web.bind.annotation.PathVariable;
 
 public interface CrdCardOrderMapper {
     long countByExample(CrdCardOrderExample example);
@@ -37,4 +39,5 @@ public interface CrdCardOrderMapper {
     List<CrdCardOrder> selectCrdCardOrderByCustomerPhoneNumber(@Param("storeId") Long storeId,@Param("tenantId") Long tenantId,@Param("customerPhoneNumber") String customerPhoneNumber);
 
 
+    List<CustomerLastPurchaseDTO> queryCustomerLastPurchaseTime(@Param("tenantId") Long tenantId, @Param("storeId")  Long storeId,@Param("customerIds") List<String> customerIds);
 }
