@@ -35,13 +35,13 @@
     <repositories>
         <repository>
             <id>nexus_public</id>
-            <url>http://maven.tuhu.work:8081/nexus/content/groups/public/</url>
+            <url>https://nexus.tuhu.cn/nexus/content/groups/public/</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>nexus_public</id>
-            <url>http://maven.tuhu.work:8081/nexus/content/groups/public/</url>
+            <url>https://nexus.tuhu.cn/nexus/content/groups/public/</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -49,12 +49,12 @@
         <repository>
             <id>release</id>
             <name>release???</name>
-            <url>http://maven.tuhu.work:8081/nexus/content/repositories/releases/</url>
+            <url>https://nexus.tuhu.cn/nexus/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
             <id>snapshots</id>
             <name>snapshots</name>
-            <url>http://maven.tuhu.work:8081/nexus/content/repositories/snapshots/</url>
+            <url>https://nexus.tuhu.cn/nexus/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 

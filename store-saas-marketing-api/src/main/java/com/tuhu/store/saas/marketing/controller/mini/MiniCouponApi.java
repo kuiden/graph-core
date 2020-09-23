@@ -237,4 +237,17 @@ public class MiniCouponApi extends BaseApi {
         return new ResultObject(couponStatisticsForCustomerMarketResp);
     }
 
+
+    @PostMapping("/customerCoupon")
+    public BizBaseResponse getCustomerCouponList(@RequestBody CustomerCouponRequest couponRequest){
+        PageInfo<CustomerCouponResponse> customerCouponList = iCouponService.getCustomerCouponList(couponRequest);
+        return new BizBaseResponse(customerCouponList);
+    }
+
+    @GetMapping("/customerCouponDetail/{couponId}")
+    public BizBaseResponse getCustomerCouponDetail(@PathVariable Long couponId){
+        CustomerCouponDetailResponse detail = iCouponService.getCustomerCouponDetail(couponId);
+        return new BizBaseResponse(detail);
+
+    }
 }

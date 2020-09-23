@@ -6,7 +6,9 @@ import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CouponScopeTypeEnum;
 import com.tuhu.store.saas.marketing.enums.CouponTypeEnum;
@@ -19,7 +21,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMap
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.request.*;
-import com.tuhu.store.saas.marketing.response.CouponScopeCategoryResp;
+import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.response.dto.*;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
@@ -28,9 +30,6 @@ import com.tuhu.store.saas.marketing.util.*;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderItemVO;
-import com.tuhu.store.saas.marketing.response.CommonResp;
-import com.tuhu.store.saas.marketing.response.CouponResp;
-import com.tuhu.store.saas.marketing.response.CouponStatisticsForCustomerMarketResp;
 import com.xiangyun.versionhelper.VersionHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -1744,5 +1743,103 @@ public class CouponServiceImpl implements ICouponService {
             return 0L;
         }
         return availableAccount;
+    }
+
+    /**
+     * 分页查询用户领券信息
+     *
+     * @param couponRequest
+     * @return
+     */
+    @Override
+    public PageInfo<CustomerCouponResponse> getCustomerCouponList(CustomerCouponRequest couponRequest) {
+        PageHelper.startPage(couponRequest.getPageNum(), couponRequest.getPageSize());
+        String customerId = couponRequest.getCustomerId();
+        List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByCustomerId(customerId);
+        if (CollectionUtils.isEmpty(customerCoupons)){
+            PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
+            PageInfo<CustomerCouponResponse> info = new PageInfo<>();
+            BeanUtils.copyProperties(pageInfo,info);
+            return info;
+        }
+        PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
+        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+        baseIdReqVO.setId(customerId);
+        baseIdReqVO.setStoreId(UserContextHolder.getStoreId());
+        baseIdReqVO.setTenantId(UserContextHolder.getTenantId());
+        BizBaseResponse<CustomerDTO> customerById = customerClient.getCustomerById(baseIdReqVO);
+        if (customerById.getData()==null){
+            throw new StoreSaasMarketingException("获取用户信息失败");
+        }
+        CustomerDTO data = customerById.getData();
+        List<CustomerCouponResponse> list = new ArrayList<>();
+        for (CustomerCoupon customerCoupon:customerCoupons) {
+            //判断优惠券是否有效
+            CustomerCouponResponse response = new CustomerCouponResponse();
+            response.setId(customerCoupon.getId());
+            response.setCustomerName(data.getName());
+            response.setCreateTime(customerCoupon.getCreateTime());
+            response.setCustomerId(customerCoupon.getCustomerId());
+            response.setCustomerCouponCode(customerCoupon.getCode());
+            Date useEndTime = customerCoupon.getUseEndTime();
+            Integer useStatus = customerCoupon.getUseStatus().intValue();
+            Integer status = -1;
+            if (useStatus==1){
+                status = 1;
+            }else {
+                //判断当前日期是否大于useEndTime
+                Date now = new Date();
+                int i = now.compareTo(useEndTime);
+                if (i<1){
+                    status = 0;
+                }
+            }
+            response.setStatus(status);
+            list.add(response);
+        }
+        PageInfo<CustomerCouponResponse> info = new PageInfo<>();
+        BeanUtils.copyProperties(pageInfo,info);
+        info.setList(list);
+        return info;
+    }
+
+    /**
+     * H5获取客户消费券详情
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public CustomerCouponDetailResponse getCustomerCouponDetail(Long id) {
+        Long storeId = UserContextHolder.getStoreId();
+        Long tenantId = UserContextHolder.getTenantId();
+        CustomerCouponDetailResponse detail = customerCouponMapper.queryCustomerCouponDetailById(id);
+        //判断优惠券状态
+        Integer useStatus = detail.getUseStatus();
+        Date useEndTime = detail.getUseEndTime();
+        Integer status = -1;
+        if (useStatus==1){
+            status = 1;
+        }else {
+            //判断当前日期是否大于useEndTime
+            Date now = new Date();
+            int i = now.compareTo(useEndTime);
+            if (i<1){
+                status = 0;
+            }
+        }
+        detail.setStatus(status);
+        //根据customerId获取客户信息
+        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+        baseIdReqVO.setId(detail.getCustomerId());
+        baseIdReqVO.setStoreId(storeId);
+        baseIdReqVO.setTenantId(tenantId);
+        BizBaseResponse<CustomerDTO> customerById = customerClient.getCustomerById(baseIdReqVO);
+        CustomerDTO data = customerById.getData();
+        if (data!=null){
+            detail.setCustomerName(data.getName());
+            detail.setPhoneNumber(data.getPhoneNumber());
+        }
+        return detail;
     }
 }
