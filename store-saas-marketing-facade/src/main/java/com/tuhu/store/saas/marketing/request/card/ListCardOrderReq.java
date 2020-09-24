@@ -11,7 +11,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
-import java.util.Date;
 
 /**
  * @author sunkuo
@@ -32,7 +31,7 @@ public class ListCardOrderReq {
 
     @Min(0)
     @ApiModelProperty(value = "pageNum", dataType = "Integer", required = false, example = "0")
-    private Integer pageNum = 0;
+    private Integer pageNum = 1;
 
     @ApiModelProperty(value = "门店ID", dataType = "Long", required = false, example = "17")
     private Long storeId;
@@ -41,6 +40,7 @@ public class ListCardOrderReq {
     private Long tenantId;
 
     @ApiModelProperty(value = "开卡单收款状态")
+    //930,客户详情进入需要查询所有状态的次卡订单信息,加入 ALL状态
     private String paymentStatus;
 
 }

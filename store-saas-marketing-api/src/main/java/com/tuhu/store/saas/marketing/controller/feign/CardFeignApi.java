@@ -2,8 +2,10 @@ package com.tuhu.store.saas.marketing.controller.feign;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
+import com.tuhu.store.saas.marketing.response.dto.CustomerMarketCountDTO;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.ICardService;
 import io.swagger.annotations.Api;
@@ -11,6 +13,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -62,5 +65,18 @@ public class CardFeignApi {
         }
         Map<String, List<ComputeMarktingCustomerForReportResp>> result = iCardOrderService.ComputeMarktingCustomerForReport(storeId,tenantId);
         return new BizBaseResponse(result);
+    }
+
+    @GetMapping("/customerCouponAndCardCount/{customerId}")
+    @ApiOperation("获取用户次卡与优惠券总数")
+    public BizBaseResponse<CustomerMarketCountDTO> getCustomerMarketInfo(@PathVariable String customerId){
+        CustomerMarketCountDTO customerMarketCountDTO = iCardService.queryCustomerMarketInfo(customerId);
+        return new BizBaseResponse<>(customerMarketCountDTO);
+    }
+
+    @PostMapping(value = "/customerLastPurchaseTime")
+    public BizBaseResponse<Map<String, Date>> customerLastPurchaseTime(@RequestBody CustomerLastPurchaseRequest request){
+        Map<String, Date> stringDateMap = iCardOrderService.customerLastPurchaseTime(request);
+        return new BizBaseResponse<>(stringDateMap);
     }
 }

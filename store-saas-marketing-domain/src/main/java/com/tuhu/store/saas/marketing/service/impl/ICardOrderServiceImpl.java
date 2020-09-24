@@ -21,6 +21,8 @@ import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseDTO;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
@@ -28,7 +30,6 @@ import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportRe
 import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
-import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
@@ -51,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author wangyuqing
@@ -206,26 +208,30 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Override
     public PageInfo<CardOrderResp> getCardOrderList(ListCardOrderReq req) {
         log.info("开卡单列表查询请求参数：{}", JSONObject.toJSON(req));
-        PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
-        CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
-        CrdCardOrderExample.Criteria nameCriteria = cardOrderExample.createCriteria();
-        CrdCardOrderExample.Criteria phoneCriteria = cardOrderExample.createCriteria();
-        //客户姓名、手机号模糊查询
-        if (null != req.getCondition()) {
-            nameCriteria.andCustomerNameLike("%" + req.getCondition() + "%");
-            phoneCriteria.andCustomerPhoneNumberLike("%" + req.getCondition() + "%");
+        List<CrdCardOrder> cardOrderList  = new ArrayList<>();
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+        if (org.apache.commons.lang3.StringUtils.equals(req.getPaymentStatus(),"ALL")){
+            cardOrderList = crdCardOrderMapper.selectCrdCardOrderByCustomerPhoneNumber(req.getStoreId(), req.getTenantId(), req.getCondition());
+        }else {
+            CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
+            CrdCardOrderExample.Criteria nameCriteria = cardOrderExample.createCriteria();
+            CrdCardOrderExample.Criteria phoneCriteria = cardOrderExample.createCriteria();
+            //客户姓名、手机号模糊查询
+            if (null != req.getCondition()) {
+                nameCriteria.andCustomerNameLike("%" + req.getCondition() + "%");
+                phoneCriteria.andCustomerPhoneNumberLike("%" + req.getCondition() + "%");
+            }
+            //支付状态 未支付、已结清
+            if (null != req.getPaymentStatus()) {
+                nameCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
+                phoneCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
+            }
+            nameCriteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+            phoneCriteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+            cardOrderExample.or(phoneCriteria);
+            cardOrderExample.setOrderByClause("update_time desc");
+            cardOrderList = crdCardOrderMapper.selectByExample(cardOrderExample);
         }
-        //支付状态 未支付、已结清
-        if (null != req.getPaymentStatus()) {
-            nameCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
-            phoneCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
-        }
-        nameCriteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
-        phoneCriteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
-        cardOrderExample.or(phoneCriteria);
-        cardOrderExample.setOrderByClause("update_time desc");
-
-        List<CrdCardOrder> cardOrderList = crdCardOrderMapper.selectByExample(cardOrderExample);
         PageInfo<CrdCardOrder> cardOrderPageInfo = new PageInfo<>(cardOrderList);
 
         List<CardOrderResp> cardOrderRespList = new ArrayList<>();
@@ -274,7 +280,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     }
 
     private void sendCardPaySms(Long storeId, String phone, String cardName) {
-        log.info("sendCardPaySms,storeId:{},phone:{},cardName:{}",storeId,phone,cardName);
+        log.info("sendCardPaySms,storeId:{},phone:{},cardName:{}", storeId, phone, cardName);
         try {
             if (PhoneUtil.isPhoneLegal(phone)) {
                 String smsTemplateId = iMessageTemplateLocalService.getSMSTemplateIdByCodeAndStoreId(SMSTypeEnum.SAAS_CARD_PAY.templateCode(), null);
@@ -297,8 +303,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
                     }
                 }
             }
-        }catch (Exception e){
-            log.error("sendCardPaySms fail",e);
+        } catch (Exception e) {
+            log.error("sendCardPaySms fail", e);
         }
     }
 
@@ -473,4 +479,23 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         return result;
     }
 
+    @Override
+    public Map<String, Date> customerLastPurchaseTime(CustomerLastPurchaseRequest request) {
+        Map<String, Date> hashMap = new HashMap<>();
+        List<String> customerIds = request.getCustomerIds();
+        Long storeId = request.getStoreId();
+        Long tenantId = request.getTenantId();
+        List<CustomerLastPurchaseDTO> list= crdCardOrderMapper.queryCustomerLastPurchaseTime(tenantId,storeId,customerIds);
+        Map<String, List<CustomerLastPurchaseDTO>> map = list.stream().collect(Collectors.groupingBy(CustomerLastPurchaseDTO::getCustomerId));
+        for (String customerId : customerIds) {
+            List<CustomerLastPurchaseDTO> purchaseDTOS = map.get(customerId);
+            if (CollectionUtils.isNotEmpty(purchaseDTOS)) {
+                Date purchaseTime = purchaseDTOS.get(0).getPurchaseTime();
+                hashMap.put(customerId, purchaseTime);
+            } else {
+                hashMap.put(customerId, null);
+            }
+        }
+        return hashMap;
+    }
 }

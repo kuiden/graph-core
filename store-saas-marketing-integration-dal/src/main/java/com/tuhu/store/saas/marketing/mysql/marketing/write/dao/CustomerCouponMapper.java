@@ -6,6 +6,7 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerCoupon;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.request.CustomerCouponSearch;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
+import com.tuhu.store.saas.marketing.response.CustomerCouponDetailResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -59,4 +60,11 @@ public interface CustomerCouponMapper {
     List<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReportByActivity(@Param("storeId") Long storeId, @Param("tenantId") Long tenantId);
 
     List<ComputeMarktingCustomerForReportResp> ComputeMarktingCustomerForReportByCard(@Param("storeId") Long storeId, @Param("tenantId") Long tenantId);
+
+
+    List<CustomerCoupon> selectByCustomerId(@Param("customerId") String customerId);
+
+    int countCustomerCoupon(@Param("customerId") String customerId);
+
+    CustomerCouponDetailResponse queryCustomerCouponDetailById(@Param("id")Long id);
 }

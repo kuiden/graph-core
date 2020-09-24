@@ -27,4 +27,6 @@ public interface CrdCardMapper {
     int updateByPrimaryKeySelective(CrdCard record);
 
     int updateByPrimaryKey(CrdCard record);
+
+    int countByCustomerId(@Param("customerId")String customerId);
 }

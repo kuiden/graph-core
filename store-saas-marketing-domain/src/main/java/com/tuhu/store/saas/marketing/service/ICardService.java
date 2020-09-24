@@ -1,14 +1,18 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.response.card.*;
+import com.tuhu.store.saas.marketing.response.dto.CustomerMarketCountDTO;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 次卡相关接口
@@ -64,6 +68,10 @@ public  interface ICardService {
 
 
     CardResp clientQueryCardItem(QueryCardItemReq req);
+
+    //查询用户次卡与优惠券总数
+    CustomerMarketCountDTO queryCustomerMarketInfo(String customerId);
+
 
 
 }
