@@ -1,8 +1,12 @@
 package com.tuhu.store.saas.marketing.controller.feign;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.boot.common.facade.response.BizResponse;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerMarketCountDTO;
@@ -78,5 +82,10 @@ public class CardFeignApi {
     public BizBaseResponse<Map<String, Date>> customerLastPurchaseTime(@RequestBody CustomerLastPurchaseRequest request){
         Map<String, Date> stringDateMap = iCardOrderService.customerLastPurchaseTime(request);
         return new BizBaseResponse<>(stringDateMap);
+    }
+
+    @PostMapping(value = "/getCardTemplateList")
+    public BizResponse<PageInfo<CardTemplateModel>> getCardTemplateList(@RequestBody CardTemplateReq req) {
+        return new BizResponse(iCardService.getCardTemplatePageInfo(req));
     }
 }
