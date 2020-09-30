@@ -2,8 +2,10 @@ package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.marketing.dataobject.CrdCardOrder;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.CustomerCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
@@ -21,23 +23,23 @@ import java.util.Map;
  * @since 2020/8/4 16:40
  */
 public interface ICardOrderService {
-    /*
+    /**
      * 开卡
      */
     String addCardOrder(AddCardOrderReq req);
 
-    /*
+    /**
      * 获取开卡单列表
      */
     PageInfo<CardOrderResp> getCardOrderList(ListCardOrderReq req);
 
-   /*
+   /**
     * 更新卡支付状态
     */
    void updateCardPaymentStatus(String orderNo, Long storeId, Long tenantId, Long amount);
 
 
-   /*
+   /**
     * 卡详情
     */
     CardOrderDetailResp queryCardOrder(QueryCardOrderReq req);
@@ -48,7 +50,14 @@ public interface ICardOrderService {
     Map<String, List<ComputeMarktingCustomerForReportResp>> ComputeMarktingCustomerForReport(Long storeId, Long tenantId);
 
 
-    //客户最后次卡订单的创建时间
+    /**
+     * 客户最后次卡订单的创建时间
+     */
     Map<String, Date> customerLastPurchaseTime(CustomerLastPurchaseRequest request);
+
+    /**
+     * 统计次卡，计算员工提成
+     */
+    List<CrdCardOrder> queryCardToCommission(QueryCardToCommissionReq request);
 
 }

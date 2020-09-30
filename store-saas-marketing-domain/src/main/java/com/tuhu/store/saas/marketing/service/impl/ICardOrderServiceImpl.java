@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.boot.common.utils.StringUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
@@ -23,6 +24,7 @@ import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseDTO;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
@@ -35,6 +37,7 @@ import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
 import com.tuhu.store.saas.marketing.util.CardOrderRedisCache;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
+import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.PhoneUtil;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import com.tuhu.store.saas.request.product.GoodsForMarketReq;
@@ -497,5 +500,30 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             }
         }
         return hashMap;
+    }
+
+    @Override
+    public List<CrdCardOrder> queryCardToCommission(QueryCardToCommissionReq request) {
+        List<CrdCardOrder> cardOrderList= Lists.newArrayList();
+        CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
+        CrdCardOrderExample.Criteria criteria = cardOrderExample.createCriteria();
+        criteria.andIsDeleteEqualTo(Byte.valueOf("0"));
+        if (Objects.nonNull(request.getStartTime())) {
+            criteria.andCreateTimeGreaterThanOrEqualTo(request.getStartTime());
+        }
+        if (Objects.nonNull(request.getEndTime())) {
+            criteria.andCreateTimeLessThanOrEqualTo(request.getEndTime());
+        }
+        cardOrderExample.setOrderByClause("update_time desc");
+        cardOrderList = crdCardOrderMapper.selectByExample(cardOrderExample);
+
+/*        CrdCardExample cardExample = new CrdCardExample();
+        CrdCardExample.Criteria criteria = cardExample.createCriteria();
+        criteria.andIdIn();
+        criteria.andStatusEqualTo(CardStatusEnum.ACTIVATED.getEnumCode());
+        cardExample.setOrderByClause("update_time desc");
+        List<CrdCard> cardList = crdCardMapper.selectByExample(cardExample);*/
+
+        return cardOrderList;
     }
 }

@@ -87,7 +87,7 @@ public class SrvReservationOrder {
     private Integer teminal;
 
     /**
-     * 预约渠道:MD(门店创建);ZXYY(小程序在线预约);COUPON(优惠券营销);ACTIVITY(活动营销)
+     * 预约渠道:MD(门店创建);ZXYY(小程序在线预约);COUPON(优惠券营销);ACTIVITY(活动营销);SUBCARD(次卡办理)
      */
     private String sourceChannel;
 
