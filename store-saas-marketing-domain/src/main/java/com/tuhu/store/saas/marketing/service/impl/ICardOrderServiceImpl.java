@@ -546,7 +546,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             BeanUtils.copyProperties(crdCardOrder, crdCardOrderExtendDTO);
             if (Objects.nonNull(crdCardMap.get(crdCardOrder.getCardId()))) {
                 CrdCard crdCardTemp = crdCardMap.get(crdCardOrder.getCardId());
-                if (Objects.nonNull(crdCardMap.get(crdCardTemp.getCardTemplateId()))) {
+                if (Objects.nonNull(cardTemplateMap.get(crdCardTemp.getCardTemplateId()))) {
                     crdCardOrderExtendDTO.setCardTemplateId(crdCardTemp.getCardTemplateId());
                 }
             }

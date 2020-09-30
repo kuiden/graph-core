@@ -139,12 +139,13 @@ public class CardServiceImpl implements ICardService {
         log.info("CardServiceImpl-> addCardTemplate req={}", req);
         PageInfo<CardTemplateModel> result = new PageInfo<>();
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
-        List<CardTemplate> cardTemplates = cardTemplateMapper.selectPage(req.getStatus(), req.getQuery(), req.getTenantId(), req.getStoreId(),req.getIsShow());
+        List<CardTemplate> cardTemplates = cardTemplateMapper.selectPage(req.getStatus(), req.getQuery(), req.getTenantId(), req.getStoreId(), req.getIsShow());
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
             PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
             List<CardTemplateModel> resultArray = new ArrayList<>();
             for (CardTemplate x : cardTemplates) {
-                CardTemplateModel model = new CardTemplateModel();
+                //CardTemplateModel model = new CardTemplateModel();
+                CardTemplateModel model = this.getCardTemplateById(x.getId(), x.getTenantId(), x.getStoreId());
                 BeanUtils.copyProperties(x, model);
                 resultArray.add(model);
             }
@@ -561,8 +562,6 @@ public class CardServiceImpl implements ICardService {
         customerMarketCountDTO.setCouponCount(couponCount);
         return customerMarketCountDTO;
     }
-
-
 
 
     private CardTemplate convertorToCardTemplate(CardTemplateModel cardTemplateModelReq) {
