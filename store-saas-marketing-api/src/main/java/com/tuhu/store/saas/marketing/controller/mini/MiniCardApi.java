@@ -77,8 +77,8 @@ public class MiniCardApi extends BaseApi {
     @PostMapping(value = "/getCardTemplateList")
     @ApiOperation(value = "卡模板列表")
     public BizBaseResponse<PageInfo<CardTemplateModel>> getCardTemplateList(@RequestBody CardTemplateReq req) {
-        req.setTenantId(super.getTenantId());
-        req.setStoreId(super.getStoreId());
+        req.setTenantId(EndUserContextHolder.getTenantId());
+        req.setStoreId(EndUserContextHolder.getStoreId());
         req.setIsShow((byte) 1);
         return new BizBaseResponse<>(iCardService.getCardTemplatePageInfo(req));
     }

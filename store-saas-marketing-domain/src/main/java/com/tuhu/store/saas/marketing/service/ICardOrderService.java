@@ -13,6 +13,7 @@ import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
+import com.tuhu.store.saas.marketing.response.dto.CrdCardOrderExtendDTO;
 
 import java.util.Date;
 import java.util.List;
@@ -58,6 +59,6 @@ public interface ICardOrderService {
     /**
      * 统计次卡，计算员工提成
      */
-    List<CrdCardOrder> queryCardToCommission(QueryCardToCommissionReq request);
+    List<CrdCardOrderExtendDTO> queryCardToCommission(QueryCardToCommissionReq request);
 
 }

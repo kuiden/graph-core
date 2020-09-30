@@ -31,4 +31,7 @@ public interface CardTemplateMapper {
     //  List<CardTemplate> queryCardTemplateList(CardTemplateCondition cardTemplateCondition);
 
     //  CardTemplate queryCardTemplate(CardTemplateCondition cardTemplateCondition);
+
+    List<CardTemplate> selectCardTemplateByIds(@Param("cardTemplateIds") List<Long> cardTemplateIds);
+
 }
