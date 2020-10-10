@@ -56,7 +56,8 @@
       actual_amount =#{actualAmount} ,
       description =#{description},
       update_user = #{updateUser},
-       update_time = #{updateTime}
+        update_time = #{updateTime},
+          is_show = #{isShow}
       where id = #{id}  AND tenant_id=#{tenantId} AND store_id=#{storeId}
    </update>
 
