@@ -12,7 +12,7 @@ public class EndUserVistiedStoreRequest {
 //    @NotEmpty
     private String openIdCode;
 
-    @NotEmpty
+//    @NotEmpty
     private String storeId;
 
     @NotEmpty

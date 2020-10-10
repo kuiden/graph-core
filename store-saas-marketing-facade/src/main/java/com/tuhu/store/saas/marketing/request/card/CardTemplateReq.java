@@ -15,4 +15,6 @@ public class CardTemplateReq extends BaseReq implements Serializable {
     private String query;
 
     private String status;
+
+    private Byte isShow;
 }

@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.boot.common.utils.StringUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
@@ -23,6 +24,7 @@ import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseDTO;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.ListCardOrderReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
@@ -30,11 +32,13 @@ import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportRe
 import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.card.CardOrderResp;
+import com.tuhu.store.saas.marketing.response.dto.CrdCardOrderExtendDTO;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
 import com.tuhu.store.saas.marketing.service.ISMSService;
 import com.tuhu.store.saas.marketing.util.CardOrderRedisCache;
 import com.tuhu.store.saas.marketing.util.DataTimeUtil;
+import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.PhoneUtil;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import com.tuhu.store.saas.request.product.GoodsForMarketReq;
@@ -52,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -208,11 +213,11 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Override
     public PageInfo<CardOrderResp> getCardOrderList(ListCardOrderReq req) {
         log.info("开卡单列表查询请求参数：{}", JSONObject.toJSON(req));
-        List<CrdCardOrder> cardOrderList  = new ArrayList<>();
+        List<CrdCardOrder> cardOrderList = new ArrayList<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
-        if (org.apache.commons.lang3.StringUtils.equals(req.getPaymentStatus(),"ALL")){
+        if (org.apache.commons.lang3.StringUtils.equals(req.getPaymentStatus(), "ALL")) {
             cardOrderList = crdCardOrderMapper.selectCrdCardOrderByCustomerPhoneNumber(req.getStoreId(), req.getTenantId(), req.getCondition());
-        }else {
+        } else {
             CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
             CrdCardOrderExample.Criteria nameCriteria = cardOrderExample.createCriteria();
             CrdCardOrderExample.Criteria phoneCriteria = cardOrderExample.createCriteria();
@@ -485,7 +490,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         List<String> customerIds = request.getCustomerIds();
         Long storeId = request.getStoreId();
         Long tenantId = request.getTenantId();
-        List<CustomerLastPurchaseDTO> list= crdCardOrderMapper.queryCustomerLastPurchaseTime(tenantId,storeId,customerIds);
+        List<CustomerLastPurchaseDTO> list = crdCardOrderMapper.queryCustomerLastPurchaseTime(tenantId, storeId, customerIds);
         Map<String, List<CustomerLastPurchaseDTO>> map = list.stream().collect(Collectors.groupingBy(CustomerLastPurchaseDTO::getCustomerId));
         for (String customerId : customerIds) {
             List<CustomerLastPurchaseDTO> purchaseDTOS = map.get(customerId);
@@ -497,5 +502,61 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             }
         }
         return hashMap;
+    }
+
+    @Override
+    public List<CrdCardOrderExtendDTO> queryCardToCommission(QueryCardToCommissionReq request) {
+        List<CrdCardOrderExtendDTO> crdCardOrderExtendDTOList = Lists.newArrayList();
+
+        List<CrdCardOrder> crdCardOrderList = Lists.newArrayList();
+        CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
+        CrdCardOrderExample.Criteria criteria = cardOrderExample.createCriteria();
+        criteria.andIsDeleteEqualTo(Byte.valueOf("0"));
+        //开卡单状态  已结算
+        criteria.andStatusEqualTo(CardOrderStatusEnum.SETTLE_CARD.getEnumCode());
+        //收款状态  已结清
+        criteria.andPaymentStatusEqualTo(PaymentStatusEnum.PAYMENT_OK.getEnumCode());
+
+        if (Objects.nonNull(request.getStartTime())) {
+            criteria.andCreateTimeGreaterThanOrEqualTo(request.getStartTime());
+        }
+        if (Objects.nonNull(request.getEndTime())) {
+            criteria.andCreateTimeLessThanOrEqualTo(request.getEndTime());
+        }
+        cardOrderExample.setOrderByClause("update_time desc");
+        crdCardOrderList = crdCardOrderMapper.selectByExample(cardOrderExample);
+        if (CollectionUtils.isEmpty(crdCardOrderList)) {
+            return crdCardOrderExtendDTOList;
+        }
+
+        List<Long> crdCardIds = crdCardOrderList.stream().map(crdCardOrder -> crdCardOrder.getCardId()).collect(Collectors.toList());
+        CrdCardExample cardExample = new CrdCardExample();
+        CrdCardExample.Criteria cardExampleCriteria = cardExample.createCriteria();
+        cardExampleCriteria.andIdIn(crdCardIds);
+        cardExample.setOrderByClause("update_time desc");
+        List<CrdCard> crdCardList = crdCardMapper.selectByExample(cardExample);
+        if (CollectionUtils.isEmpty(crdCardList)) {
+            return crdCardOrderExtendDTOList;
+        }
+        List<Long> cardTemplateIds = crdCardList.stream().map(crdCard -> crdCard.getCardTemplateId()).collect(Collectors.toList());
+        List<CardTemplate> cardTemplateList = cardTemplateMapper.selectCardTemplateByIds(cardTemplateIds);
+        if (CollectionUtils.isEmpty(cardTemplateList)) {
+            return crdCardOrderExtendDTOList;
+        }
+        Map<Long, CrdCard> crdCardMap = crdCardList.stream().collect(Collectors.toMap(CrdCard::getId, Function.identity()));
+        Map<Long, CardTemplate> cardTemplateMap = cardTemplateList.stream().collect(Collectors.toMap(CardTemplate::getId, Function.identity()));
+
+        crdCardOrderList.forEach(crdCardOrder -> {
+            CrdCardOrderExtendDTO crdCardOrderExtendDTO = new CrdCardOrderExtendDTO();
+            BeanUtils.copyProperties(crdCardOrder, crdCardOrderExtendDTO);
+            if (Objects.nonNull(crdCardMap.get(crdCardOrder.getCardId()))) {
+                CrdCard crdCardTemp = crdCardMap.get(crdCardOrder.getCardId());
+                if (Objects.nonNull(cardTemplateMap.get(crdCardTemp.getCardTemplateId()))) {
+                    crdCardOrderExtendDTO.setCardTemplateId(crdCardTemp.getCardTemplateId());
+                }
+            }
+            crdCardOrderExtendDTOList.add(crdCardOrderExtendDTO);
+        });
+        return crdCardOrderExtendDTOList;
     }
 }

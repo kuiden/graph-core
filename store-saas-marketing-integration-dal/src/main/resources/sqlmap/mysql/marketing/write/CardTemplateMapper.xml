@@ -22,23 +22,24 @@
         <result column="update_time" property="updateTime"/>
         <result column="is_delete" property="isDelete"/>
         <result column="type" property="type"/>
+        <result column="is_show" jdbcType="TINYINT" property="isShow"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id, card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period,
          card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time,
-          is_delete , type
+          is_delete, `type`, is_show
     </sql>
 
     <insert id="insertCardTemplate" parameterType="com.tuhu.store.saas.marketing.dataobject.CardTemplate" keyColumn="id"
             keyProperty="id"
             useGeneratedKeys="true">
     insert into crd_card_template ( card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period
-    , card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time , type)
+    , card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time , `type`, is_show)
     values (#{cardCategoryCode},#{cardName},#{faceAmount},#{actualAmount},#{discountAmount},#{forever},#{expiryPeriod}
     ,#{cardTypeCode},#{status},#{description},#{storeId},#{tenantId},#{createUser},#{updateUser},#{createTime},#{updateTime},
-    #{type}
+    #{type},#{isShow}
     )
     </insert>
 
@@ -55,7 +56,8 @@
       actual_amount =#{actualAmount} ,
       description =#{description},
       update_user = #{updateUser},
-       update_time = #{updateTime}
+        update_time = #{updateTime},
+          is_show = #{isShow}
       where id = #{id}  AND tenant_id=#{tenantId} AND store_id=#{storeId}
    </update>
 
@@ -105,9 +107,24 @@
             AND a.status = #{status}
         </if>
         <if test="query != null and query != ''">
-            AND a.card_name like  CONCAT('%',#{query}, '%')
+            AND a.card_name like CONCAT('%',#{query}, '%')
+        </if>
+        <if test="isShow != null">
+            AND a.is_show = #{isShow,jdbcType=TINYINT}
         </if>
         order by update_time desc
     </select>
+
+    <select id="selectCardTemplateByIds" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        crd_card_template
+        where id IN
+        <foreach collection="cardTemplateIds" item="cardTemplateId" open="(" close=")" separator=",">
+            #{cardTemplateId}
+        </foreach>
+    </select>
+
 
 </mapper>
