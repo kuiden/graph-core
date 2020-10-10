@@ -512,6 +512,11 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
         CrdCardOrderExample.Criteria criteria = cardOrderExample.createCriteria();
         criteria.andIsDeleteEqualTo(Byte.valueOf("0"));
+        //开卡单状态  已结算
+        criteria.andStatusEqualTo(CardOrderStatusEnum.SETTLE_CARD.getEnumCode());
+        //收款状态  已结清
+        criteria.andPaymentStatusEqualTo(PaymentStatusEnum.PAYMENT_OK.getEnumCode());
+
         if (Objects.nonNull(request.getStartTime())) {
             criteria.andCreateTimeGreaterThanOrEqualTo(request.getStartTime());
         }
