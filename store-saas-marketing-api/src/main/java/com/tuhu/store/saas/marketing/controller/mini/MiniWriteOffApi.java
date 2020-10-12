@@ -2,7 +2,9 @@ package com.tuhu.store.saas.marketing.controller.mini;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.dataobject.CrdCard;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardMapper;
 import com.tuhu.store.saas.marketing.request.ActivityCustomerReq;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.ICouponService;
@@ -25,6 +27,9 @@ public class MiniWriteOffApi extends BaseApi {
     @Autowired
     private ICouponService couponService;
 
+    @Autowired
+    private CrdCardMapper cardMapper;
+
     /**
      * 核销扫码
      *
@@ -35,13 +40,10 @@ public class MiniWriteOffApi extends BaseApi {
     public BizBaseResponse<String> writeOff(@RequestParam String code) {
         String result = "";
         long storeId = super.getStoreId();
-        //code门店校验
-        //
         if (code.startsWith("YHQ")) {
             if (!code.startsWith("YHQ" + String.format(new StringBuilder("%0").append(4).append("d").toString(), storeId))) {
                 throw new StoreSaasMarketingException("非本门店优惠券");
             }
-            //   couponService.writeOffCustomerCouponV2(code);
             result = "customerCoupon";
         } else if (code.startsWith("YXHD")) {
 
@@ -49,6 +51,20 @@ public class MiniWriteOffApi extends BaseApi {
                 throw new StoreSaasMarketingException("非本门店活动");
             }
             result = "activity";
+        } else {
+            // 目前传其他的只有次卡核销
+            Long id = 0L;
+            try {
+                id = Long.valueOf(code);
+            } catch (Exception ex) {
+                throw new StoreSaasMarketingException("参数验证失败");
+            }
+
+            CrdCard crdCard = cardMapper.selectByPrimaryKey(id);
+            if (crdCard == null || crdCard.getStoreId() != storeId) {
+                throw new StoreSaasMarketingException("非本门店卡");
+            }
+            result = "card";
         }
         return new BizBaseResponse<>(result);
     }
