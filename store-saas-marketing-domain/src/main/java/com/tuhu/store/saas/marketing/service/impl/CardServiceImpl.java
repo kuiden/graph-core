@@ -13,10 +13,7 @@ import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CardTemplateMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardItemMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CrdCardMapper;
-import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMapper;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
@@ -226,6 +223,9 @@ public class CardServiceImpl implements ICardService {
         return result;
     }
 
+    @Autowired
+    private CrdCardOrderMapper crdCardOrderMapper;
+
     @Override
     public List<CardResp> queryCardRespList(MiniQueryCardReq req) {
         log.info("查询客户次卡，请求参数：{}", JSONObject.toJSON(req));
@@ -245,6 +245,15 @@ public class CardServiceImpl implements ICardService {
         cardExample.setOrderByClause("update_time desc");
         List<CrdCard> cardList = cardMapper.selectByExample(cardExample);
 
+        Map<Long, Long> cardOrderIdMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(cardList)) {
+            CrdCardOrderExample crdCardOrderExample = new CrdCardOrderExample();
+            crdCardOrderExample.createCriteria().andCardIdIn(cardList.stream().map(x -> x.getId()).collect(Collectors.toList()));
+            List<CrdCardOrder> crdCardOrderList = crdCardOrderMapper.selectByExample(crdCardOrderExample);
+            if (CollectionUtils.isNotEmpty(crdCardOrderList)) {
+                cardOrderIdMap.putAll(crdCardOrderList.stream().collect(Collectors.toMap(k -> k.getCardId(), v -> v.getId(), (i, j) -> i)));
+            }
+        }
         List<CardResp> cardRespList = new ArrayList<>();
         for (CrdCard card : cardList) {
             CardResp resp = new CardResp();
@@ -252,7 +261,7 @@ public class CardServiceImpl implements ICardService {
             resp.setCardStatus(CardStatusEnum.valueOf(card.getStatus()).getDescription());
             resp.setCardStatusCode(CardStatusEnum.valueOf(card.getStatus()).getEnumCode());
             resp.setForever(card.getForever() == 1 ? true : false);
-
+            resp.setCardOrderId(cardOrderIdMap.get(card.getId()));
             resp.setCardStatus(CardStatusEnum.ACTIVATED.getDescription());
             resp.setCardStatusCode(CardStatusEnum.ACTIVATED.getEnumCode());
             resp.setSort(CardStatusEnum.ACTIVATED.getSort());

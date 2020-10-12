@@ -29,6 +29,10 @@ public class CardResp {
     private Long id;
 
     /**
+     * 开卡单ID
+     */
+    private Long cardOrderId;
+    /**
      * 卡状态
      */
     private String cardStatus;
@@ -127,7 +131,6 @@ public class CardResp {
      * 更新时间
      */
     private Date updateTime;
-
 
 
     private Integer sort;
