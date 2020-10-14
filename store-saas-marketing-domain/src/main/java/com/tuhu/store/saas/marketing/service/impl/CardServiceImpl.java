@@ -393,12 +393,21 @@ public class CardServiceImpl implements ICardService {
         List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
         List<QueryCardItemResp> queryCardItemResps = new ArrayList<>();
         List<String> goodsIdList = new ArrayList<>();
+        Map<String,QueryCardItemResp> cardItemRespMap = new HashMap<>();
         for (CrdCardItem item : cardItems) {
-            QueryCardItemResp resp = new QueryCardItemResp();
-            BeanUtils.copyProperties(item, resp);
-            resp.setRemainQuantity(resp.getMeasuredQuantity() - resp.getUsedQuantity());
-            queryCardItemResps.add(resp);
-            goodsIdList.add(item.getGoodsId());
+            if (cardItemRespMap.containsKey(item.getGoodsId())){
+                QueryCardItemResp resp = cardItemRespMap.get(item.getGoodsId());
+                resp.setMeasuredQuantity(resp.getMeasuredQuantity()+item.getMeasuredQuantity());
+                resp.setUsedQuantity(resp.getUsedQuantity()+item.getUsedQuantity());
+                resp.setRemainQuantity(resp.getMeasuredQuantity()-resp.getUsedQuantity());
+            } else {
+                QueryCardItemResp resp = new QueryCardItemResp();
+                BeanUtils.copyProperties(item, resp);
+                resp.setRemainQuantity(resp.getMeasuredQuantity() - resp.getUsedQuantity());
+                queryCardItemResps.add(resp);
+                goodsIdList.add(item.getGoodsId());
+                cardItemRespMap.put(item.getGoodsId(),resp);
+            }
         }
 
         //查商品
