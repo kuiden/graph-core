@@ -26,9 +26,12 @@ public interface CardTemplateMapper {
 
     CardTemplate getCardTemplateById(@Param("id") Long id, @Param("tenantId") Long tenantId, @Param("storeId") Long storeId);
 
-    List<CardTemplate> selectPage(@Param("status") String status,@Param("query") String query, @Param("tenantId") Long tenantId, @Param("storeId") Long storeId);
+    List<CardTemplate> selectPage(@Param("status") String status,@Param("query") String query, @Param("tenantId") Long tenantId, @Param("storeId") Long storeId,@Param("isShow") Byte isShow);
 
     //  List<CardTemplate> queryCardTemplateList(CardTemplateCondition cardTemplateCondition);
 
     //  CardTemplate queryCardTemplate(CardTemplateCondition cardTemplateCondition);
+
+    List<CardTemplate> selectCardTemplateByIds(@Param("cardTemplateIds") List<Long> cardTemplateIds);
+
 }

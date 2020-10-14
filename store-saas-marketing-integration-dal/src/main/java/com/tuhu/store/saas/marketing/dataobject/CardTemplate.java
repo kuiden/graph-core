@@ -119,6 +119,11 @@ public class CardTemplate implements Serializable {
 
     private Byte type ;
 
+    /**
+     * 是否车主端展示
+     */
+    private Byte isShow;
+
 
     private List<CardTemplateItem> cardTemplateItemList;
 

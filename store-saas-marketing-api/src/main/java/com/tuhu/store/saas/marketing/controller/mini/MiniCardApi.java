@@ -1,8 +1,11 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
 import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
 import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
 import com.tuhu.store.saas.marketing.response.card.CardResp;
@@ -33,7 +36,7 @@ public class MiniCardApi extends BaseApi {
 
     @PostMapping("/client/query")
     @ApiOperation("C端-查询客户次卡")
-    public BizBaseResponse<List<CardResp>> clientQuery(@Validated @RequestBody MiniQueryCardReq req){
+    public BizBaseResponse<List<CardResp>> clientQuery(@Validated @RequestBody MiniQueryCardReq req) {
         req.setCustomerId(EndUserContextHolder.getCustomerId());
         req.setStoreId(EndUserContextHolder.getStoreId());
         req.setTenantId(EndUserContextHolder.getTenantId());
@@ -50,7 +53,7 @@ public class MiniCardApi extends BaseApi {
 
     @PostMapping("/query")
     @ApiOperation("B端-查询客户次卡")
-    public BizBaseResponse<List<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req){
+    public BizBaseResponse<List<CardResp>> query(@Validated @RequestBody MiniQueryCardReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(iCardService.queryCardRespList(req));
@@ -68,6 +71,16 @@ public class MiniCardApi extends BaseApi {
     @ApiOperation("次卡消费历史")
     public BizBaseResponse consumptionHistory(@RequestParam Long cardId) {
         return new BizBaseResponse(iCardService.consumptionHistory(cardId));
+    }
+
+
+    @PostMapping(value = "/client/getCardTemplateList")
+    @ApiOperation(value = "卡模板列表")
+    public BizBaseResponse<PageInfo<CardTemplateModel>> getCardTemplateList(@RequestBody CardTemplateReq req) {
+        req.setTenantId(EndUserContextHolder.getTenantId());
+        req.setStoreId(EndUserContextHolder.getStoreId());
+        req.setIsShow((byte) 1);
+        return new BizBaseResponse<>(iCardService.getCardTemplatePageInfo(req));
     }
 
     /****************************************H5*******************************************************/

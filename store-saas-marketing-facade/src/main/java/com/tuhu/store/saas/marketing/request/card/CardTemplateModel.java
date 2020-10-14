@@ -47,6 +47,7 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "模板状态", dataType = "String", required = false, example = "ENABLE")
     private String status;
 
+
     @Min(value = 0,message = "卡面值不能低于0元")
     @ApiModelProperty(value = "卡面值", dataType = "Long", required = false, example = "100")
     private BigDecimal faceAmount;
@@ -87,6 +88,10 @@ public class CardTemplateModel {
 
     @ApiModelProperty(value = "过期时间  日期格式 开卡的时候用", dataType = "Date", required = false, example = "2020-08-06")
     private  Date expiryDate;
+
+    @ApiModelProperty(value = "车主端是否展示", dataType = "Integer", required = false, example = "1")
+    private Byte isShow;
+
     @Valid
     List<CardTemplateItemModel> cardTemplateItemModelList;
 }

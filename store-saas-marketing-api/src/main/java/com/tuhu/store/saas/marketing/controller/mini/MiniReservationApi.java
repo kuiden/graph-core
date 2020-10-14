@@ -77,7 +77,8 @@ public class MiniReservationApi extends EndUserApi {
         req.setTeminal(MiniNotifyConstant.MINI_HOME);
         Integer teminalType = MiniNotifyConstant.MINI_HOME;
         if(SrvReservationChannelEnum.COUPON.getEnumCode().equals(req.getSourceChannel()) ||
-                SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())){
+                SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())||
+                SrvReservationChannelEnum.SUBCARD.getEnumCode().equals(req.getSourceChannel())){
             teminalType = MiniNotifyConstant.MINI_MARKETING;
         }
         result.setData(iNewReservationService.addReservation(req,teminalType));
