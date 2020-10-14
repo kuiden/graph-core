@@ -179,23 +179,37 @@ public class CardServiceImpl implements ICardService {
                         .andTenantIdEqualTo(updateCardVo.getTenantId())
                         .andCardIdEqualTo(updateCardVo.getCardId());
                 List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
+                Map<String,List<CrdCardItem>> cardItemsMap = cardItems.stream().collect(Collectors.groupingBy(x->x.getGoodsId()));
                 Map<String, Integer> itemQuantity = updateCardVo.getItemQuantity();
                 Date date = new Date();
-                for (CrdCardItem item : cardItems) {
-                    if (itemQuantity.containsKey(item.getGoodsId())) {
-                        //检查更新次数后是否会超过总次数 或 小于0
-                        Integer quantity = itemQuantity.get(item.getGoodsId()) + item.getUsedQuantity();
-                        if (quantity.compareTo(item.getMeasuredQuantity()) > 0) {
+                for (String goodsId : cardItemsMap.keySet()){
+                    if (itemQuantity.containsKey(goodsId)){
+                        //计算次数
+                        Integer totalQuantity = itemQuantity.get(goodsId);
+                        for (CrdCardItem item : cardItemsMap.get(goodsId)){
+                            Integer quantity = totalQuantity + item.getUsedQuantity();
+                            Integer usedQuantity = item.getUsedQuantity();
+                            if (quantity.compareTo(item.getMeasuredQuantity()) > 0) {
+                                //更新
+                                item.setUsedQuantity(item.getMeasuredQuantity());
+                            } else if (quantity.compareTo(0) < 0) {
+                                //更新
+                                item.setUsedQuantity(0);
+                            } else {
+                                item.setUsedQuantity(quantity);
+                            }
+                            totalQuantity -= (item.getUsedQuantity() - usedQuantity);
+                            item.setUpdateTime(date);
+                            Integer result = cardItemMapper.updateByPrimaryKeySelective(item);
+                            if (result <= 0) {
+                                ok = false;
+                            }
+                        }
+                        if (totalQuantity.compareTo(0) > 0){
                             throw new StoreSaasMarketingException("次卡更新失败，更新后次数超过可用数");
                         }
-                        if (quantity.compareTo(0) < 0) {
+                        if (totalQuantity.compareTo(0) < 0){
                             throw new StoreSaasMarketingException("次卡更新失败，更新后次数小于0");
-                        }
-                        item.setUsedQuantity(quantity);
-                        item.setUpdateTime(date);
-                        Integer result = cardItemMapper.updateByPrimaryKeySelective(item);
-                        if (result <= 0) {
-                            ok = false;
                         }
                     }
                 }
@@ -378,13 +392,12 @@ public class CardServiceImpl implements ICardService {
                 .andTypeEqualTo(req.getType().byteValue());
         List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
         List<QueryCardItemResp> queryCardItemResps = new ArrayList<>();
-        Map<String, QueryCardItemResp> respMap = new HashMap<>();
         List<String> goodsIdList = new ArrayList<>();
         for (CrdCardItem item : cardItems) {
             QueryCardItemResp resp = new QueryCardItemResp();
             BeanUtils.copyProperties(item, resp);
             resp.setRemainQuantity(resp.getMeasuredQuantity() - resp.getUsedQuantity());
-            respMap.put(item.getGoodsId(), resp);
+            queryCardItemResps.add(resp);
             goodsIdList.add(item.getGoodsId());
         }
 
@@ -441,20 +454,20 @@ public class CardServiceImpl implements ICardService {
                         throw new StoreSaasMarketingException("根据门店商品ID和仓库ID查询库存信息异常");
                     }
                 }
-                for (QueryGoodsListDTO dto : queryGoodsListDTOS) {
-                    QueryCardItemResp.CardGoods resp = new QueryCardItemResp.CardGoods();
-                    BeanUtils.copyProperties(dto, resp);
-                    resp.setBusinessCategory(dto.getBusinessCategoryCode());
-                    if (null != dto.getProductId()) {
-                        resp.setProductId(String.valueOf(dto.getProductId()));
-                    }
-                    resp.setUsedNum(inventoryMap.getOrDefault(resp.getGoodsId(), BigDecimal.ZERO));
-                    resp.setWarehouseId(warehouseId);
-                    resp.setWarehouseName(warehouseName);
-                    if (respMap.containsKey(dto.getGoodsId())) {
-                        QueryCardItemResp queryCardItemResp = respMap.get(dto.getGoodsId());
+                Map<String,QueryGoodsListDTO> goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
+                for (QueryCardItemResp queryCardItemResp : queryCardItemResps){
+                    if (goodsListDTOMap.containsKey(queryCardItemResp.getGoodsId())){
+                        QueryGoodsListDTO dto = goodsListDTOMap.get(queryCardItemResp.getGoodsId());
+                        QueryCardItemResp.CardGoods resp = new QueryCardItemResp.CardGoods();
+                        BeanUtils.copyProperties(dto, resp);
+                        resp.setBusinessCategory(dto.getBusinessCategoryCode());
+                        if (null != dto.getProductId()) {
+                            resp.setProductId(String.valueOf(dto.getProductId()));
+                        }
+                        resp.setUsedNum(inventoryMap.getOrDefault(resp.getGoodsId(), BigDecimal.ZERO));
+                        resp.setWarehouseId(warehouseId);
+                        resp.setWarehouseName(warehouseName);
                         queryCardItemResp.setGoods(resp);
-                        queryCardItemResps.add(queryCardItemResp);
                     }
                 }
             }
@@ -473,13 +486,12 @@ public class CardServiceImpl implements ICardService {
             BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
             if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-                for (ServiceGoodsListForMarketResp x : serviceGoodsList) {
-                    QueryCardItemResp.CardService resp = new QueryCardItemResp.CardService();
-                    BeanUtils.copyProperties(x, resp);
-                    if (respMap.containsKey(x.getId())) {
-                        QueryCardItemResp queryCardItemResp = respMap.get(x.getId());
+                Map<String,ServiceGoodsListForMarketResp> serviceListMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v->v));
+                for (QueryCardItemResp queryCardItemResp : queryCardItemResps){
+                    if (serviceListMap.containsKey(queryCardItemResp.getGoodsId())){
+                        QueryCardItemResp.CardService resp = new QueryCardItemResp.CardService();
+                        BeanUtils.copyProperties(serviceListMap.get(queryCardItemResp.getGoodsId()), resp);
                         queryCardItemResp.setService(resp);
-                        queryCardItemResps.add(queryCardItemResp);
                     }
                 }
             }
@@ -510,9 +522,7 @@ public class CardServiceImpl implements ICardService {
         }
         //查询最新商品信息
         List<String> goodsIdList = new ArrayList<>();
-        Map<String, CardItemResp> goodsMap = new HashMap<>();
         for (CardItemResp item : cardGoodsItem) {
-            goodsMap.put(item.getGoodsId(), item);
             goodsIdList.add(item.getGoodsId());
         }
         if (!goodsIdList.isEmpty()) {
@@ -522,20 +532,18 @@ public class CardServiceImpl implements ICardService {
             queryGoodsListVO.setGoodsIdList(goodsIdList);
             queryGoodsListVO.setGoodsSource("");
             BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
-            if (null != productResult.getData()) {
-                productResult.getData().stream().forEach(x -> {
-                    if (goodsMap.containsKey(x.getGoodsId())) {
-                        CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
-                        goodsItem.setServiceItemName(x.getGoodsName());
+            if (productResult != null && CollectionUtils.isNotEmpty(productResult.getData())) {
+                Map<String,QueryGoodsListDTO> goodsListDTOMap = productResult.getData().stream().collect(Collectors.toMap(x->x.getGoodsId(),v -> v));
+                for (CardItemResp item : cardGoodsItem) {
+                    if (goodsListDTOMap.containsKey(item.getGoodsId())){
+                        item.setServiceItemName(goodsListDTOMap.get(item.getGoodsId()).getGoodsName());
                     }
-                });
+                }
             }
         }
         //查询最新服务信息
         List<String> serviceIdList = new ArrayList<>();
-        Map<String, CardItemResp> serviceMap = new HashMap<>();
         for (CardItemResp item : cardServiceItem) {
-            serviceMap.put(item.getGoodsId(), item);
             serviceIdList.add(item.getGoodsId());
         }
         if (!serviceIdList.isEmpty()) {
@@ -548,12 +556,12 @@ public class CardServiceImpl implements ICardService {
             BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
             if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-                serviceGoodsList.stream().forEach(x -> {
-                    if (serviceMap.containsKey(x.getId())) {
-                        CardItemResp serviceItem = serviceMap.get(x.getId());
-                        serviceItem.setServiceItemName(x.getServiceName());
+                Map<String,ServiceGoodsListForMarketResp> serviceGoodsListForMarketRespMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v -> v));
+                for (CardItemResp item : cardServiceItem) {
+                    if (serviceGoodsListForMarketRespMap.containsKey(item.getGoodsId())){
+                        item.setServiceItemName(serviceGoodsListForMarketRespMap.get(item.getGoodsId()).getServiceName());
                     }
-                });
+                }
             }
         }
         cardResp.setCardGoodsItem(cardGoodsItem);
