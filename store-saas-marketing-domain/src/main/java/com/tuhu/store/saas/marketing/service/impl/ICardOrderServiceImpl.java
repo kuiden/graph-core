@@ -396,9 +396,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
 
         //查询最新商品信息
         List<String> goodsIdList = new ArrayList<>();
-        Map<String, CardItemResp> goodsMap = new HashMap<>();
         for (CardItemResp item : cardGoodsItem) {
-            goodsMap.put(item.getGoodsId(), item);
             goodsIdList.add(item.getGoodsId());
         }
         if (!goodsIdList.isEmpty()) {
@@ -408,20 +406,18 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             queryGoodsListVO.setGoodsIdList(goodsIdList);
             queryGoodsListVO.setGoodsSource("");
             BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
-            if (null != productResult.getData()) {
-                productResult.getData().stream().forEach(x -> {
-                    if (goodsMap.containsKey(x.getGoodsId())) {
-                        CardItemResp goodsItem = goodsMap.get(x.getGoodsId());
-                        goodsItem.setServiceItemName(x.getGoodsName());
+            if (productResult != null && CollectionUtils.isNotEmpty(productResult.getData())) {
+                Map<String,QueryGoodsListDTO> goodsListDTOMap = productResult.getData().stream().collect(Collectors.toMap(x->x.getGoodsId(),v -> v));
+                for (CardItemResp item : cardGoodsItem) {
+                    if (goodsListDTOMap.containsKey(item.getGoodsId())){
+                        item.setServiceItemName(goodsListDTOMap.get(item.getGoodsId()).getGoodsName());
                     }
-                });
+                }
             }
         }
         //查询最新服务信息
         List<String> serviceIdList = new ArrayList<>();
-        Map<String, CardItemResp> serviceMap = new HashMap<>();
         for (CardItemResp item : cardServiceItem) {
-            serviceMap.put(item.getGoodsId(), item);
             serviceIdList.add(item.getGoodsId());
         }
         if (!serviceIdList.isEmpty()) {
@@ -434,12 +430,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
             if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-                serviceGoodsList.stream().forEach(x -> {
-                    if (serviceMap.containsKey(x.getId())) {
-                        CardItemResp serviceItem = serviceMap.get(x.getId());
-                        serviceItem.setServiceItemName(x.getServiceName());
+                Map<String,ServiceGoodsListForMarketResp> serviceGoodsListForMarketRespMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v -> v));
+                for (CardItemResp item : cardServiceItem) {
+                    if (serviceGoodsListForMarketRespMap.containsKey(item.getGoodsId())){
+                        item.setServiceItemName(serviceGoodsListForMarketRespMap.get(item.getGoodsId()).getServiceName());
                     }
-                });
+                }
             }
         }
         resp.setCardServiceItem(cardServiceItem);
@@ -448,7 +444,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             resp.setCardStatus(CardStatusEnum.FINISHED.getDescription());
             resp.setCardStatusCode(CardStatusEnum.FINISHED.getEnumCode());
         }
-
         return resp;
     }
 
