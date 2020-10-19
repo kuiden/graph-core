@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.request.valueCard;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
 
