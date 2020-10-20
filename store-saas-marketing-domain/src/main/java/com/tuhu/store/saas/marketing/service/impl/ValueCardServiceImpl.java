@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
@@ -41,6 +42,8 @@ import sun.misc.Unsafe;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -337,16 +340,6 @@ public class ValueCardServiceImpl implements IValueCardService {
         map.put("present",present);
         return map;
     }
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-
-    @Autowired
-    private CodeFactory codeFactory;
-
-    @Autowired
-    private CustomerClient customerClient ;
-
     @Autowired
     private StoreReceivingClient storeReceivingClient;
     private  final  static  String settlementCacheKey = "ValueCardServiceImpl:settlement:customerIdKey:";
