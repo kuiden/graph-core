@@ -90,14 +90,11 @@ public class MiniValueCardApi extends BaseApi {
         return new BizBaseResponse();
     }
 
-    @ApiOperation("H5-客户储值卡核销")
-    @GetMapping("/consumption")
-    BizBaseResponse<Boolean> customerConsumption(@RequestBody ValueCardConsumptionReq req){
-
-        return new BizBaseResponse();
-    }
-
-
-
+//    @ApiOperation("H5-客户储值卡核销")
+//    @GetMapping("/consumption")
+//    BizBaseResponse<Boolean> customerConsumption(@RequestBody ValueCardConsumptionReq req){
+//
+//        return new BizBaseResponse();
+//    }
 
 }
