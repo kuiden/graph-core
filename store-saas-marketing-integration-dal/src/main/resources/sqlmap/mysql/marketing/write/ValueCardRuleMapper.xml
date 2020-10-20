@@ -102,6 +102,10 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
+  <delete id="deleteByStoreIdAndTenantId">
+    delete from value_card_rule
+    where store_id = #{storeId} and tenant_id = #{tenantId}
+  </delete>
   <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardRule">
     insert into value_card_rule (id, store_id, tenant_id, 
       condition_limit, amount, present_amount, 

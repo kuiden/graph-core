@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.request.valueCard;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.Min;
 import java.math.BigDecimal;
 
 /**
@@ -11,8 +12,6 @@ import java.math.BigDecimal;
  */
 @Data
 public class ValueCardRuleReq {
-
-    private Long id;
 
     @ApiModelProperty("满额")
     private BigDecimal amount;

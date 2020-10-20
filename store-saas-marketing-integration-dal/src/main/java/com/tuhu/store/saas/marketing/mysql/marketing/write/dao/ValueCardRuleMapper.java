@@ -12,6 +12,8 @@ public interface ValueCardRuleMapper {
 
     int deleteByPrimaryKey(Long id);
 
+    int deleteByStoreIdAndTenantId(@Param("storeId") Long storeId,@Param("tenantId") Long tenantId);
+
     int insert(ValueCardRule record);
 
     int insertSelective(ValueCardRule record);
