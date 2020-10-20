@@ -13,8 +13,6 @@ import java.math.BigDecimal;
 @Data
 public class ValueCardRuleReq {
 
-    private Long id;
-
     @ApiModelProperty("满额")
     private BigDecimal amount;
 

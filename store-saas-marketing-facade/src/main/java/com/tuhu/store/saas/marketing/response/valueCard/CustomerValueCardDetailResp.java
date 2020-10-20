@@ -42,12 +42,12 @@ public class CustomerValueCardDetailResp {
     private BigDecimal rechargeAmount;
 
     @ApiModelProperty("累计充值次数")
-    private BigDecimal rechargeCount;
+    private Integer rechargeCount;
 
     @ApiModelProperty("累计消费金额")
     private BigDecimal consumptionAmount;
 
     @ApiModelProperty("累计消费次数")
-    private BigDecimal consumptionCount;
+    private Integer consumptionCount;
 
 }
