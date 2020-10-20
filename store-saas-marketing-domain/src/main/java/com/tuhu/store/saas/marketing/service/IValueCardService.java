@@ -28,10 +28,12 @@ public interface IValueCardService {
 
     PageInfo<ValueCardChangeResp> customerValueCardChangeList(CustomerValueCardDetailReq req);
 
-    //Map<String,BigDecimal> customerValueCardAmount(CustomerValueCardDetailReq req);
+    Map<String,BigDecimal> customerValueCardAmount(CustomerValueCardDetailReq req);
 
     Boolean customerRechargeOrRefund(ValueCardRechargeOrRefundReq req);
 
     Boolean customerConsumption(ValueCardConsumptionReq req);
+
+    PageInfo<ValueCardChangeResp> rechargeRecord(ValueCardChangeRecordReq req);
 
 }

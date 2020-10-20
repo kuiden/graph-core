@@ -76,11 +76,11 @@ public class MiniValueCardApi extends BaseApi {
     }
 
     @ApiOperation("H5-客户储值卡余额")
-    @GetMapping("/customer/queryAmount")
+    @PostMapping("/customer/queryAmount")
     BizBaseResponse<Map<String,BigDecimal>> customerValueCardAmount(@RequestBody CustomerValueCardDetailReq req){
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
-        return new BizBaseResponse();
+        return new BizBaseResponse(iValueCardService.customerValueCardAmount(req));
     }
 
     @ApiOperation("H5-客户储值卡充值、退款")
