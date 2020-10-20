@@ -117,7 +117,7 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChange">
+  <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChange" useGeneratedKeys="true" keyProperty="id">
     insert into value_card_change (id, card_id, store_id, 
       tenant_id, change_no, order_no, 
       fin_no, salesman_id, salesman_name, 

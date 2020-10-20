@@ -1,5 +1,8 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
+import com.tuhu.store.saas.marketing.request.valueCard.ValueCardRechargeOrRefundReq;
+import org.springframework.validation.annotation.Validated;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -9,6 +12,19 @@ import java.util.Date;
  * @author 
  */
 public class ValueCard implements Serializable {
+    public  ValueCard(){}
+    //根据入参构建数据
+    public ValueCard (ValueCardRechargeOrRefundReq req){
+        this.storeId= req.getStoreId();
+        this.tenantId= req.getTenantId();
+        this.customerId = req.getCustomerId();
+        this.amount =BigDecimal.ZERO;
+        this.presentAmount = BigDecimal.ZERO;
+        this.createTime = new Date(System.currentTimeMillis());
+        this.updateTime = this.createTime;
+        this.isDelete = false;
+    }
+
     private Long id;
 
     /**

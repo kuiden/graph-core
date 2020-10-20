@@ -30,7 +30,7 @@ public interface IValueCardService {
 
     //Map<String,BigDecimal> customerValueCardAmount(CustomerValueCardDetailReq req);
 
-    Boolean customerRechargeOrRefund(ValueCardRechargeOrRefundReq req);
+    String settlement(ValueCardRechargeOrRefundReq req);
 
     Boolean customerConsumption(ValueCardConsumptionReq req);
 

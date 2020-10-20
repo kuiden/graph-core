@@ -1,6 +1,8 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
+import com.tuhu.boot.common.facade.BizBasePageResponse;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
@@ -12,7 +14,9 @@ import com.tuhu.store.saas.marketing.service.IValueCardService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -77,17 +81,23 @@ public class MiniValueCardApi extends BaseApi {
 
     @ApiOperation("H5-客户储值卡余额")
     @GetMapping("/customer/queryAmount")
-    BizBaseResponse<Map<String,BigDecimal>> customerValueCardAmount(@RequestBody CustomerValueCardDetailReq req){
+    BizBaseResponse<Map<String,BigDecimal>> customerValueCardAmount(@RequestBody @Validated CustomerValueCardDetailReq req){
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse();
     }
 
-    @ApiOperation("H5-客户储值卡充值、退款")
-    @GetMapping("/rechargeOrRefund")
-    BizBaseResponse<Boolean> customerRechargeOrRefund(@RequestBody ValueCardRechargeOrRefundReq req){
-
-        return new BizBaseResponse();
+    @ApiOperation("H5-客户储值卡结算")
+    @PostMapping("/settlement")
+    BizBaseResponse<String> settlement(@RequestBody @Validated ValueCardRechargeOrRefundReq req){
+        if (req!= null && req.getType()==Integer.valueOf(2) &&
+                (StringUtils.isBlank(req.getSalesmanId())||StringUtils.isBlank(req.getSalesmanName()))){
+            return  new BizBasePageResponse<>(BizErrorCodeEnum.PARAM_IS_NULL,"参数验证失败");
+        }
+        req.setTenantId(super.getTenantId());
+        req.setStoreId(super.getStoreId());
+        String result =  iValueCardService.settlement(req);
+        return new BizBaseResponse<>(result);
     }
 
     @ApiOperation("H5-客户储值卡核销")
