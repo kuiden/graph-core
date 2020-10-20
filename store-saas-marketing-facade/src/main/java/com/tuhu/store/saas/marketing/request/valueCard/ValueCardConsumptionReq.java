@@ -27,4 +27,8 @@ public class ValueCardConsumptionReq {
 
     @ApiModelProperty("业务单号")
     private String orderNo;
+
+    @ApiModelProperty("营收单号")
+    private String finNo;
+
 }

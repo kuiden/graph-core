@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.dataobject.*;
@@ -17,10 +18,13 @@ import com.tuhu.store.saas.marketing.response.valueCard.QueryValueCardListResp;
 import com.tuhu.store.saas.marketing.response.valueCard.QueryValueCardRuleResp;
 import com.tuhu.store.saas.marketing.response.valueCard.ValueCardChangeResp;
 import com.tuhu.store.saas.marketing.service.IValueCardService;
+import com.tuhu.store.saas.marketing.util.CodeFactory;
+import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +51,12 @@ public class ValueCardServiceImpl implements IValueCardService {
 
     @Autowired
     private CustomerClient customerClient;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private CodeFactory codeFactory;
 
     @Override
     @Transactional
@@ -95,9 +105,9 @@ public class ValueCardServiceImpl implements IValueCardService {
         example.createCriteria().andStoreIdEqualTo(storeId)
                 .andTenantIdEqualTo(tenantId);
         List<ValueCardRule> ruleList = valueCardRuleMapper.selectByExample(example);
-        QueryValueCardRuleResp resp = null;
+        QueryValueCardRuleResp resp = new QueryValueCardRuleResp();
+        resp.setConditionLimit(new BigDecimal(-1));
         if (CollectionUtils.isNotEmpty(ruleList)){
-            resp = new QueryValueCardRuleResp();
             resp.setConditionLimit(ruleList.get(0).getConditionLimit());
             List<ValueCardRuleReq> ruleRespList = new ArrayList<>();
             for (ValueCardRule valueCardRule : ruleList){
@@ -323,8 +333,81 @@ public class ValueCardServiceImpl implements IValueCardService {
     }
 
     @Override
+    @Transactional
     public Boolean customerConsumption(ValueCardConsumptionReq req) {
-        return null;
+        log.info("储值卡核销请求参数：{}",req);
+        String key = "valueCardConsumption:" + req.getCustomerId();
+        RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
+        StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
+        Object value = storeRedisUtils.tryLock(key, 1000, 1000);
+        Boolean result = true;
+        if (null != value) {
+            try {
+                if (req.getAmount().compareTo(BigDecimal.ZERO) > 0){
+                    ValueCard valueCard = null;
+                    if (null != req.getCardId()){
+                        valueCard = valueCardMapper.selectByPrimaryKey(req.getCardId());
+                    } else {
+                        ValueCardExample example = new ValueCardExample();
+                        example.createCriteria().andCustomerIdEqualTo(req.getCustomerId())
+                                .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
+                                .andIsDeleteEqualTo(false);
+                        List<ValueCard> valueCardList = valueCardMapper.selectByExample(example);
+                        if (CollectionUtils.isNotEmpty(valueCardList)){
+                            valueCard = valueCardList.get(0);
+                        }
+                    }
+                    if (null == valueCard){
+                        throw new StoreSaasMarketingException("客户未开通储值卡");
+                    }
+                    //分配本金和赠送金扣减金额
+                    BigDecimal principal = valueCard.getAmount();
+                    BigDecimal changePrincipal = BigDecimal.ZERO;
+                    BigDecimal present = valueCard.getPresentAmount();
+                    BigDecimal changePresent = BigDecimal.ZERO;
+                    if (req.getAmount().compareTo(principal) <= 0) {
+                        changePrincipal = changePrincipal.subtract(req.getAmount());
+                        principal = principal.subtract(req.getAmount());
+                    } else{
+                        changePresent = principal.subtract(req.getAmount());
+                        present = present.add(changePresent);
+                        changePrincipal = changePrincipal.subtract(principal);
+                        principal = BigDecimal.ZERO;
+                    }
+                    if (present.compareTo(BigDecimal.ZERO) < 0){
+                        throw new StoreSaasMarketingException("客户储值余额不足");
+                    }
+                    Date date = new Date();
+                    //生成变更记录
+                    ValueCardChange cardChange = new ValueCardChange();
+                    cardChange.setCardId(valueCard.getId());
+                    cardChange.setStoreId(valueCard.getStoreId());
+                    cardChange.setTenantId(valueCard.getTenantId());
+                    String codeNumber = "CZBG" + req.getStoreId() + codeFactory.getCodeNumberv2("CZBG", req.getStoreId());
+                    cardChange.setChangeNo(codeNumber);
+                    cardChange.setOrderNo(req.getOrderNo());
+                    cardChange.setFinNo(req.getFinNo());
+                    cardChange.setChangePrincipal(changePrincipal);
+                    cardChange.setChangePresent(changePresent);
+                    cardChange.setAmount(valueCard.getAmount().add(valueCard.getPresentAmount()).subtract(req.getAmount()));
+                    cardChange.setChangeType(1);
+                    cardChange.setStatus(true);
+                    cardChange.setCreateTime(date);
+                    cardChange.setUpdateTime(date);
+                    result = valueCardChangeMapper.insertSelective(cardChange) > 0;
+                    //更新账户余额
+                    valueCard.setAmount(principal);
+                    valueCard.setPresentAmount(present);
+                    valueCard.setUpdateTime(date);
+                    result = result && valueCardMapper.updateByPrimaryKeySelective(valueCard) > 0;
+                }
+            } finally {
+                storeRedisUtils.releaseLock(key, value.toString());
+            }
+        } else {
+            result = false;
+        }
+        return result;
     }
 
     @Override
