@@ -688,6 +688,7 @@ public class ValueCardServiceImpl implements IValueCardService {
     @Transactional
     public Boolean confirmReceipt(ConfirmReceiptReq req) {
         log.info("储值变更单号确认收款 req-> {}", req);
+        Boolean result = false;
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         String key = confirmReceiptCacheKey.concat(req.getId().toString());
@@ -714,7 +715,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                 }
                 // 开始
                 //变更流水状态
-                valueCardChange.setStatus(Boolean.FALSE);
+                valueCardChange.setStatus(Boolean.TRUE);
                 valueCardChange.setUpdateTime(new Date(System.currentTimeMillis()));
                 //变更客户卡的钱
                 valueCard.setAmount(valueCardChange.getChangePrincipal().add(valueCard.getAmount()));
@@ -723,6 +724,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                 if (valueCardMapper.updateByPrimaryKey(valueCard) <= 0 || valueCardChangeMapper.updateByPrimaryKey(valueCardChange) <= 0) {
                     throw new StoreSaasMarketingException("变更单确认收款失败");
                 }
+                result = Boolean.TRUE;
             } finally {
                 storeRedisUtils.releaseLock(key, value.toString());
             }
@@ -730,6 +732,6 @@ public class ValueCardServiceImpl implements IValueCardService {
         {
             throw new StoreSaasMarketingException("该单号正在进行确认收款");
         }
-        return Boolean.TRUE;
+        return result;
     }
 }
