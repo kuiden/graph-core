@@ -397,7 +397,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "valueCardSettlement");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         //如果要去除分布式锁 请考虑并发环境
-        Object value = storeRedisUtils.tryLock(settlementCacheKey.concat(req.getCustomerId()), 1000, 1000);
+        Object value = storeRedisUtils.tryLock(settlementCacheKey.concat(req.getCustomerId()), 10, 10);
         if (value != null) {
             try {
                 //查看当前用户余额记录
@@ -484,7 +484,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                         }
                         //添加一个变更单号
                         valueCardChange.setFinNo(finNo);
-                        valueCardMapper.updateByPrimaryKey(valueCard);
+                        valueCardChangeMapper.updateByPrimaryKey(valueCardChange);
                     }
 
 
@@ -570,7 +570,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         String key = "valueCardConsumption:" + req.getCustomerId();
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
-        Object value = storeRedisUtils.tryLock(key, 1000, 1000);
+        Object value = storeRedisUtils.tryLock(key, 10, 10);
         Boolean result = true;
         if (null != value) {
             try {
@@ -680,5 +680,56 @@ public class ValueCardServiceImpl implements IValueCardService {
             }
         }
         return respPageInfo;
+    }
+
+    private  final  static  String confirmReceiptCacheKey = "ValueCardServiceImpl:confirmReceipt:finNoKey:";
+
+    @Override
+    @Transactional
+    public Boolean confirmReceipt(ConfirmReceiptReq req) {
+        log.info("储值变更单号确认收款 req-> {}", req);
+        RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
+        StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
+        String key = confirmReceiptCacheKey.concat(req.getId().toString());
+        Object value = storeRedisUtils.tryLock(key, 10, 10);
+        if (null != value) {
+            try {
+                ValueCardChange valueCardChange = valueCardChangeMapper.selectByPrimaryKey(req.getId());
+                if (valueCardChange == null) {
+                    throw new StoreSaasMarketingException("查询不到变更单号");
+                }
+                if (!valueCardChange.getStoreId().equals(req.getStoreId()) || !valueCardChange.getTenantId().equals(req.getTenantId())) {
+                    throw new StoreSaasMarketingException("数据存在越权");
+                }
+                long oilVaule = (valueCardChange.getChangePrincipal().multiply(new BigDecimal(100))).longValue();
+                if (oilVaule != req.getAmount()) {
+                    throw new StoreSaasMarketingException("收费金额匹配错误");
+                }
+                if (valueCardChange.getStatus()) {
+                    throw new StoreSaasMarketingException("该流水已经生效");
+                }
+                ValueCard valueCard = valueCardMapper.selectByPrimaryKey(valueCardChange.getCardId());
+                if (valueCard == null) {
+                    throw new StoreSaasMarketingException("没有查询到客户储值卡总信息");
+                }
+                // 开始
+                //变更流水状态
+                valueCardChange.setStatus(Boolean.FALSE);
+                valueCardChange.setUpdateTime(new Date(System.currentTimeMillis()));
+                //变更客户卡的钱
+                valueCard.setAmount(valueCardChange.getChangePrincipal().add(valueCard.getAmount()));
+                valueCard.setPresentAmount(valueCardChange.getChangePresent().add(valueCard.getPresentAmount()));
+                valueCard.setUpdateTime(new Date(System.currentTimeMillis()));
+                if (valueCardMapper.updateByPrimaryKey(valueCard) <= 0 || valueCardChangeMapper.updateByPrimaryKey(valueCardChange) <= 0) {
+                    throw new StoreSaasMarketingException("变更单确认收款失败");
+                }
+            } finally {
+                storeRedisUtils.releaseLock(key, value.toString());
+            }
+        }else
+        {
+            throw new StoreSaasMarketingException("该单号正在进行确认收款");
+        }
+        return Boolean.TRUE;
     }
 }

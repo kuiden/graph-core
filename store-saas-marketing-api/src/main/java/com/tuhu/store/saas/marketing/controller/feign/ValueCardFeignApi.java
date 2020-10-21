@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.controller.feign;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.request.valueCard.ConfirmReceiptReq;
 import com.tuhu.store.saas.marketing.request.valueCard.CustomerValueCardDetailReq;
 import com.tuhu.store.saas.marketing.request.valueCard.ValueCardConsumptionReq;
 import com.tuhu.store.saas.marketing.service.IValueCardService;
@@ -30,10 +31,18 @@ public class ValueCardFeignApi {
         return new BizBaseResponse(iValueCardService.customerConsumption(req));
     }
 
+
     @ApiOperation("获取储值卡余额")
     @PostMapping("/getAmount")
     BizBaseResponse<Map<String,BigDecimal>> getValueCardAmount(@RequestBody CustomerValueCardDetailReq req){
         return new BizBaseResponse<>(iValueCardService.customerValueCardAmount(req));
     }
+
+    @ApiOperation("储值变更单确认收款")
+    @PostMapping("/confirmReceipt")
+    BizBaseResponse<Boolean> confirmReceipt(@RequestBody ConfirmReceiptReq req){
+        return new BizBaseResponse(iValueCardService.confirmReceipt(req));
+    }
+
 
 }
