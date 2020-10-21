@@ -450,7 +450,9 @@ public class ValueCardServiceImpl implements IValueCardService {
                     if (valueCardChangeMapper.insert(valueCardChange) <= 0) {
                         throw new StoreSaasMarketingException("添加余额变更流水失败");
                     }
+                    result = valueCardChange.getId().toString();
                     if (hasPayProcess) {
+                        String  finNo = null;
                         BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
                         baseIdReqVO.setId(valueCard.getCustomerId());
                         baseIdReqVO.setStoreId(valueCard.getStoreId());
@@ -468,20 +470,20 @@ public class ValueCardServiceImpl implements IValueCardService {
                                 if (addResultObject.getData().equals(Boolean.FALSE)) {
                                     throw new StoreSaasMarketingException("创建退货单失败");
                                 }
-                                result = addResultObject.getData();
+                                finNo = addResultObject.getData();
                             }
                         } else if (valueCardChange.getChangeType() == Integer.valueOf(0)) {
                             //生成一条待付单
 
                             //通知finance添加待付
                             AddNonpaymentVO addNonpaymentVO = createAddNonpaymentVO(valueCardChange, valueCard.getCustomerId(), customerDTO.getName(), customerDTO.getPhoneNumber());
-                            result = storeReceivingClient.addNonpaymentForValueCard(addNonpaymentVO).getData();
+                            finNo = storeReceivingClient.addNonpaymentForValueCard(addNonpaymentVO).getData();
                         }
-                        if (StringUtils.isBlank(result)) {
+                        if (StringUtils.isBlank(finNo)) {
                             throw new StoreSaasMarketingException("创建变更单失败");
                         }
                         //添加一个变更单号
-                        valueCardChange.setFinNo(result);
+                        valueCardChange.setFinNo(finNo);
                         valueCardMapper.updateByPrimaryKey(valueCard);
                     }
 
