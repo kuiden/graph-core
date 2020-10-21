@@ -1,5 +1,8 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.request.valueCard.ValueCardRechargeOrRefundReq;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -106,6 +109,35 @@ public class ValueCardChange implements Serializable {
     private Boolean isDelete;
 
     private static final long serialVersionUID = 1L;
+    public ValueCardChange(){}
+
+    /**
+     * 充值和退款初始化
+     * @param valueCard
+     * @param req
+     */
+    public ValueCardChange(ValueCard valueCard, ValueCardRechargeOrRefundReq req) {
+        this.setCardId(valueCard.getId());
+        this.tenantId = valueCard.getTenantId();
+        this.storeId = valueCard.getStoreId();
+        this.salesmanId = req.getSalesmanId();
+        this.salesmanName = req.getSalesmanName();
+        if (valueCard.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+            //如果当前数据为初始化的数据则当前变更的总额就是 当前客户总额
+            this.amount = req.getChangePrincipal();
+        }
+        this.status = Boolean.FALSE;
+        this.isDelete = Boolean.FALSE;
+        this.changeType = req.getType();
+        this.createUserName = UserContextHolder.getName();
+        this.createUserId= UserContextHolder.getStoreUserId();
+        this.updateUserId = UserContextHolder.getStoreUserId();
+        this.changePrincipal = req.getChangePrincipal();
+        this.createTime = valueCard.getUpdateTime();
+        this.updateTime = valueCard.getUpdateTime();
+        this.remark = req.getRemark();
+        this.changePresent = req.getChangePresent();
+    }
 
     public Long getId() {
         return id;
