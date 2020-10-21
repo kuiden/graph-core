@@ -361,11 +361,11 @@ public class ValueCardServiceImpl implements IValueCardService {
             throw new StoreSaasMarketingException("查询不到储值卡信息,无法退款");
         }
         //客户退款钱不够的情况 当本金-当前要扣除的本金 <0的话 证明不够扣的
-        if (model.getAmount().add(req.getChangePresent()).compareTo(BigDecimal.ZERO) == Integer.valueOf(-1)) {
+        if (model.getAmount().add(req.getChangePrincipal()).compareTo(BigDecimal.ZERO) == Integer.valueOf(-1)) {
             throw new StoreSaasMarketingException("当前本金不足,无法退款");
         }
         //客户退款钱不够的情况 当赠送金-当前要扣除的赠送金 <0的话 证明不够扣的
-        if (model.getPresentAmount().add(req.getChangePrincipal()).compareTo(BigDecimal.ZERO) == Integer.valueOf(-1)) {
+        if (model.getPresentAmount().add(req.getChangePresent()).compareTo(BigDecimal.ZERO) == Integer.valueOf(-1)) {
             throw new StoreSaasMarketingException("当前本金不足,无法退款");
         }
         return Boolean.TRUE;
@@ -714,13 +714,15 @@ public class ValueCardServiceImpl implements IValueCardService {
                     throw new StoreSaasMarketingException("没有查询到客户储值卡总信息");
                 }
                 // 开始
-                //变更流水状态
-                valueCardChange.setStatus(Boolean.TRUE);
-                valueCardChange.setUpdateTime(new Date(System.currentTimeMillis()));
+
                 //变更客户卡的钱
                 valueCard.setAmount(valueCardChange.getChangePrincipal().add(valueCard.getAmount()));
                 valueCard.setPresentAmount(valueCardChange.getChangePresent().add(valueCard.getPresentAmount()));
                 valueCard.setUpdateTime(new Date(System.currentTimeMillis()));
+                //变更流水状态
+                valueCardChange.setStatus(Boolean.TRUE);
+                valueCardChange.setAmount(valueCard.getPresentAmount().add(valueCard.getAmount()));
+                valueCardChange.setUpdateTime(new Date(System.currentTimeMillis()));
                 if (valueCardMapper.updateByPrimaryKey(valueCard) <= 0 || valueCardChangeMapper.updateByPrimaryKey(valueCardChange) <= 0) {
                     throw new StoreSaasMarketingException("变更单确认收款失败");
                 }
