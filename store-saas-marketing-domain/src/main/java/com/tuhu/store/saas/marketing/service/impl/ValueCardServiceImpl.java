@@ -240,6 +240,16 @@ public class ValueCardServiceImpl implements IValueCardService {
         resp.setAmount(valueCard.getAmount().add(valueCard.getPresentAmount()));
         resp.setPrincipalAmount(valueCard.getAmount());
 
+        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+        baseIdReqVO.setId(valueCard.getCustomerId());
+        baseIdReqVO.setStoreId(valueCard.getStoreId());
+        baseIdReqVO.setTenantId(valueCard.getTenantId());
+        BizBaseResponse<CustomerDTO> customerDTOBizBaseResponse = customerClient.getCustomerById(baseIdReqVO);
+        CustomerDTO customerDTO = customerDTOBizBaseResponse.getData() != null ?
+                customerDTOBizBaseResponse.getData() : new CustomerDTO();
+        resp.setCustomerName(customerDTO.getName());
+        resp.setCustomerPhone(customerDTO.getPhoneNumber());
+
         //查询储值变更
         ValueCardChangeExample cardChangeExample = new ValueCardChangeExample();
         cardChangeExample.createCriteria().andCardIdEqualTo(valueCard.getId())
