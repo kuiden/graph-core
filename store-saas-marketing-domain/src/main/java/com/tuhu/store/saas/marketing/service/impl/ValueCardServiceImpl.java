@@ -553,10 +553,18 @@ public class ValueCardServiceImpl implements IValueCardService {
         receivingVO.setStoreNo(UserContextHolder.getUser().getStoreNo());
         return receivingVO;
     }
+
+    /*
+     * 核销节点：结算页点击“选择收款方式”或“确认收款”后即核销储值余额
+     * 核销规则：优先扣减本金，本金扣为0后，才开始扣减赠送金
+     */
     @Override
     @Transactional
     public Boolean customerConsumption(ValueCardConsumptionReq req) {
         log.info("储值卡核销请求参数：{}",req);
+        if (null == req.getStoreId() || null == req.getTenantId() || null == req.getCustomerId()){
+            throw new StoreSaasMarketingException("参数校验失败");
+        }
         String key = "valueCardConsumption:" + req.getCustomerId();
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
