@@ -86,7 +86,7 @@ public class MarketingApi extends BaseApi {
         String addMarketingKey = addMarketingKeyPrefix + "" + addReq.getStoreId() + addReq.getTenantId();
         RedisUtils redisUtils = new RedisUtils(redisTemplate,"addMarketing");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
-        Object value = storeRedisUtils.tryLock(addMarketingKey, 1000, 1000);
+        Object value = storeRedisUtils.tryLock(addMarketingKey, 10, 10);
         if (value != null) {
             try {
                 success = iCustomerMarketingService.addMarketingCustomer(addReq);

@@ -36,4 +36,5 @@ public interface IValueCardService {
 
     PageInfo<ValueCardChangeResp> rechargeRecord(ValueCardChangeRecordReq req);
 
+    Boolean confirmReceipt(ConfirmReceiptReq req);
 }

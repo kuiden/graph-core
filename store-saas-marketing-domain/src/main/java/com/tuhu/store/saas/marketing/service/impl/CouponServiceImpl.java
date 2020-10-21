@@ -853,7 +853,7 @@ public class CouponServiceImpl implements ICouponService {
         String occupyNumKey = occupyNumKeyPrefix + "" + x.getStoreId() + x.getTenantId() + x.getCode();
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "occupyNum");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
-        Object value = storeRedisUtils.tryLock(occupyNumKey, 1000, 1000);
+        Object value = storeRedisUtils.tryLock(occupyNumKey, 10, 10);
         if (value != null) {
             try {
                 if (x.getGrantNumber() < 0) {//不限量，直接叠加预占数
@@ -1466,7 +1466,7 @@ public class CouponServiceImpl implements ICouponService {
         String cacheKey = "writeOffCustomerCouponV2" + "" + code;
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "writeOffCustomer");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
-        Object value = storeRedisUtils.tryLock(cacheKey, 1000, 1000);
+        Object value = storeRedisUtils.tryLock(cacheKey, 10, 10);
         if (value != null) {
             try {
                 CustomerCouponExample customerCouponExample = new CustomerCouponExample();

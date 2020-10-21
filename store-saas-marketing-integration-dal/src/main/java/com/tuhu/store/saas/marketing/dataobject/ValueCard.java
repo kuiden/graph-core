@@ -25,6 +25,14 @@ public class ValueCard implements Serializable {
         this.isDelete = false;
     }
 
+    //根据入参构建数据
+    public ValueCard (boolean isDefault){
+        this.amount =BigDecimal.ZERO;
+        this.presentAmount = BigDecimal.ZERO;
+        this.createTime = new Date(System.currentTimeMillis());
+        this.updateTime = this.createTime;
+        this.isDelete = false;
+    }
     private Long id;
 
     /**
