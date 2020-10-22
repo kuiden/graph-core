@@ -441,6 +441,7 @@ public class ValueCardServiceImpl implements IValueCardService {
 
                         valueCard.setAmount(valueCard.getAmount().add(req.getChangePrincipal()));
                         valueCard.setPresentAmount(valueCard.getPresentAmount().add(req.getChangePresent()));
+                        valueCard.setUpdateTime(new Date(System.currentTimeMillis()));
                         log.info("修改总表开始 valueCard->{}", valueCard);
                         //update 修改总余额
                         if (valueCardMapper.updateByPrimaryKey(valueCard) <= 0) {
@@ -626,6 +627,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                     cardChange.setTenantId(valueCard.getTenantId());
                     String codeNumber = "CZBG" + req.getStoreId() + codeFactory.getCodeNumberv2("CZBG", req.getStoreId());
                     cardChange.setChangeNo(codeNumber);
+                    cardChange.setOrderId(req.getOrderId());
                     cardChange.setOrderNo(req.getOrderNo());
                     cardChange.setFinNo(req.getFinNo());
                     cardChange.setChangePrincipal(changePrincipal);
