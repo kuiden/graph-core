@@ -108,6 +108,11 @@ public class ValueCardChange implements Serializable {
      */
     private Boolean isDelete;
 
+    /**
+     * 关联业务订单id
+     */
+    private String orderId;
+
     private static final long serialVersionUID = 1L;
     public ValueCardChange(){}
 
@@ -305,5 +310,13 @@ public class ValueCardChange implements Serializable {
 
     public void setIsDelete(Boolean isDelete) {
         this.isDelete = isDelete;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
     }
 }

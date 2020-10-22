@@ -23,6 +23,7 @@
     <result column="update_user_id" jdbcType="VARCHAR" property="updateUserId" />
     <result column="create_user_name" jdbcType="VARCHAR" property="createUserName" />
     <result column="is_delete" jdbcType="BIT" property="isDelete" />
+    <result column="order_id" jdbcType="VARCHAR" property="orderId" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -85,7 +86,7 @@
   <sql id="Base_Column_List">
     id, card_id, store_id, tenant_id, change_no, order_no, fin_no, salesman_id, salesman_name, 
     change_principal, change_present, amount, change_type, `status`, create_time, update_time, 
-    remark, create_user_id, update_user_id, create_user_name, is_delete
+    remark, create_user_id, update_user_id, create_user_name, is_delete, order_id
   </sql>
   <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChangeExample" resultMap="BaseResultMap">
     select
@@ -124,16 +125,16 @@
       change_principal, change_present, amount, 
       change_type, `status`, create_time, 
       update_time, remark, create_user_id, 
-      update_user_id, create_user_name, is_delete
-      )
+      update_user_id, create_user_name, is_delete, 
+      order_id)
     values (#{id,jdbcType=BIGINT}, #{cardId,jdbcType=BIGINT}, #{storeId,jdbcType=BIGINT}, 
       #{tenantId,jdbcType=BIGINT}, #{changeNo,jdbcType=VARCHAR}, #{orderNo,jdbcType=VARCHAR}, 
       #{finNo,jdbcType=VARCHAR}, #{salesmanId,jdbcType=VARCHAR}, #{salesmanName,jdbcType=VARCHAR}, 
       #{changePrincipal,jdbcType=DECIMAL}, #{changePresent,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL}, 
       #{changeType,jdbcType=INTEGER}, #{status,jdbcType=BIT}, #{createTime,jdbcType=TIMESTAMP}, 
       #{updateTime,jdbcType=TIMESTAMP}, #{remark,jdbcType=VARCHAR}, #{createUserId,jdbcType=VARCHAR}, 
-      #{updateUserId,jdbcType=VARCHAR}, #{createUserName,jdbcType=VARCHAR}, #{isDelete,jdbcType=BIT}
-      )
+      #{updateUserId,jdbcType=VARCHAR}, #{createUserName,jdbcType=VARCHAR}, #{isDelete,jdbcType=BIT}, 
+      #{orderId,jdbcType=VARCHAR})
   </insert>
   <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChange">
     insert into value_card_change
@@ -201,6 +202,9 @@
       <if test="isDelete != null">
         is_delete,
       </if>
+      <if test="orderId != null">
+        order_id,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -265,6 +269,9 @@
       </if>
       <if test="isDelete != null">
         #{isDelete,jdbcType=BIT},
+      </if>
+      <if test="orderId != null">
+        #{orderId,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
@@ -340,6 +347,9 @@
       <if test="record.isDelete != null">
         is_delete = #{record.isDelete,jdbcType=BIT},
       </if>
+      <if test="record.orderId != null">
+        order_id = #{record.orderId,jdbcType=VARCHAR},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -367,7 +377,8 @@
       create_user_id = #{record.createUserId,jdbcType=VARCHAR},
       update_user_id = #{record.updateUserId,jdbcType=VARCHAR},
       create_user_name = #{record.createUserName,jdbcType=VARCHAR},
-      is_delete = #{record.isDelete,jdbcType=BIT}
+      is_delete = #{record.isDelete,jdbcType=BIT},
+      order_id = #{record.orderId,jdbcType=VARCHAR}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -435,6 +446,9 @@
       <if test="isDelete != null">
         is_delete = #{isDelete,jdbcType=BIT},
       </if>
+      <if test="orderId != null">
+        order_id = #{orderId,jdbcType=VARCHAR},
+      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
@@ -459,7 +473,8 @@
       create_user_id = #{createUserId,jdbcType=VARCHAR},
       update_user_id = #{updateUserId,jdbcType=VARCHAR},
       create_user_name = #{createUserName,jdbcType=VARCHAR},
-      is_delete = #{isDelete,jdbcType=BIT}
+      is_delete = #{isDelete,jdbcType=BIT},
+      order_id = #{orderId,jdbcType=VARCHAR}
     where id = #{id,jdbcType=BIGINT}
   </update>
 </mapper>

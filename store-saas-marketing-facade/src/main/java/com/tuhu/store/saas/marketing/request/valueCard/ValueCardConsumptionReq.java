@@ -25,6 +25,9 @@ public class ValueCardConsumptionReq {
     @ApiModelProperty("消费金额")
     private BigDecimal amount;
 
+    @ApiModelProperty("业务订单id")
+    private String orderId;
+
     @ApiModelProperty("业务单号")
     private String orderNo;
 

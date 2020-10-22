@@ -26,6 +26,9 @@ public class ValueCardChangeResp {
     @ApiModelProperty("变更单号")
     private String changeNo;
 
+    @ApiModelProperty("关联业务订单id")
+    private String orderId;
+
     @ApiModelProperty("关联业务单号")
     private String orderNo;
 
