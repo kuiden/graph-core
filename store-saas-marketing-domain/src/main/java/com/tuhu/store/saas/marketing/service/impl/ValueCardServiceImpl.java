@@ -254,7 +254,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         ValueCardChangeExample cardChangeExample = new ValueCardChangeExample();
         cardChangeExample.createCriteria().andCardIdEqualTo(valueCard.getId())
                 .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
-                .andIsDeleteEqualTo(false);
+                .andStatusEqualTo(true).andIsDeleteEqualTo(false);
         List<ValueCardChange> cardChanges = valueCardChangeMapper.selectByExample(cardChangeExample);
         BigDecimal rechargeAmount = BigDecimal.ZERO;
         Integer rechargeCount = 0;
@@ -671,7 +671,9 @@ public class ValueCardServiceImpl implements IValueCardService {
             ValueCardChangeExample cardChangeExample = new ValueCardChangeExample();
             ValueCardChangeExample.Criteria criteria = cardChangeExample.createCriteria();
             criteria.andCardIdEqualTo(cardId).andStoreIdEqualTo(req.getStoreId())
-                    .andTenantIdEqualTo(req.getTenantId()).andIsDeleteEqualTo(false);
+                    .andTenantIdEqualTo(req.getTenantId())
+                    .andStatusEqualTo(true)
+                    .andIsDeleteEqualTo(false);
             if (req.getType().equals(0)){ //充值/退款
                 criteria.andChangeTypeIn(Arrays.asList(0,2));
             } else if (req.getType().equals(1)){    //消费
