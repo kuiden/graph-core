@@ -127,10 +127,7 @@ public class ValueCardChange implements Serializable {
         this.storeId = valueCard.getStoreId();
         this.salesmanId = req.getSalesmanId();
         this.salesmanName = req.getSalesmanName();
-        if (valueCard.getAmount().compareTo(BigDecimal.ZERO) == 0) {
-            //如果当前数据为初始化的数据则当前变更的总额就是 当前客户总额
-            this.amount = req.getChangePrincipal();
-        }
+        this.amount = valueCard.getAmount().add(valueCard.getPresentAmount());
         this.status = Boolean.FALSE;
         this.isDelete = Boolean.FALSE;
         this.changeType = req.getType();
