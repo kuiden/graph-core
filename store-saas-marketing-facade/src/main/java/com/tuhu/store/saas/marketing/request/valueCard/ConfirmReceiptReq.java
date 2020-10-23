@@ -20,6 +20,8 @@ public class ConfirmReceiptReq implements Serializable {
     @ApiModelProperty("最终收费金额")
     private Long amount;
     @ApiModelProperty("变更单主键ID")
-    private  Long id;
+    private Long id;
+
+    private String customerId;
 
 }

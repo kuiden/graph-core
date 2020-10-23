@@ -302,7 +302,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         cardChangeExample.createCriteria().andCardIdEqualTo(req.getCardId())
                 .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
                 .andStatusEqualTo(true).andIsDeleteEqualTo(false);
-        cardChangeExample.setOrderByClause("update_time desc");
+        cardChangeExample.setOrderByClause("create_time desc");
         List<ValueCardChange> cardChanges = valueCardChangeMapper.selectByExample(cardChangeExample);
         PageInfo<ValueCardChangeResp> respPageInfo = new PageInfo<>();
         if (CollectionUtils.isNotEmpty(cardChanges)){
@@ -679,7 +679,7 @@ public class ValueCardServiceImpl implements IValueCardService {
             } else if (req.getType().equals(1)){    //消费
                 criteria.andChangeTypeEqualTo(1);
             }
-            cardChangeExample.setOrderByClause("update_time desc");
+            cardChangeExample.setOrderByClause("create_time desc");
             List<ValueCardChange> cardChanges = valueCardChangeMapper.selectByExample(cardChangeExample);
             if (CollectionUtils.isNotEmpty(cardChanges)){
                 PageInfo<ValueCardChange> pageInfo = new PageInfo<>(cardChanges);
@@ -705,7 +705,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         Boolean result = false;
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
-        String key = confirmReceiptCacheKey.concat(req.getId().toString());
+        String key = confirmReceiptCacheKey.concat(req.getCustomerId());
         Object value = storeRedisUtils.tryLock(key, 10, 10);
         if (null != value) {
             try {
@@ -730,8 +730,8 @@ public class ValueCardServiceImpl implements IValueCardService {
 
                 //退款 则判断客户的储值本金和赠金变更后是否会小于0
                 if (valueCardChange.getChangeType().equals(0)
-                        && (valueCardChange.getChangePrincipal().compareTo(valueCard.getAmount()) > 0
-                        || valueCardChange.getChangePresent().compareTo(valueCard.getPresentAmount()) > 0)) {
+                        && (valueCardChange.getChangePrincipal().add(valueCard.getAmount()).compareTo(BigDecimal.ZERO) < 0
+                        || valueCardChange.getChangePresent().add(valueCard.getPresentAmount()).compareTo(BigDecimal.ZERO) < 0)) {
                     throw new StoreSaasMarketingException("退款失败");
                 }
 
