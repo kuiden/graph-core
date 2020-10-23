@@ -725,6 +725,14 @@ public class ValueCardServiceImpl implements IValueCardService {
                 if (valueCard == null) {
                     throw new StoreSaasMarketingException("没有查询到客户储值卡总信息");
                 }
+
+                //退款 则判断客户的储值本金和赠金变更后是否会小于0
+                if (valueCardChange.getChangeType().equals(0)
+                        && (valueCardChange.getChangePrincipal().compareTo(valueCard.getAmount()) > 0
+                        || valueCardChange.getChangePresent().compareTo(valueCard.getPresentAmount()) > 0)) {
+                    throw new StoreSaasMarketingException("退款失败");
+                }
+
                 // 开始
 
                 //变更客户卡的钱
