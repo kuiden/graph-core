@@ -34,4 +34,10 @@ public class ValueCardConsumptionReq {
     @ApiModelProperty("营收单号")
     private String finNo;
 
+    @ApiModelProperty("创建人id")
+    private String createUserId;
+
+    @ApiModelProperty("创建人姓名")
+    private String createUserName;
+
 }

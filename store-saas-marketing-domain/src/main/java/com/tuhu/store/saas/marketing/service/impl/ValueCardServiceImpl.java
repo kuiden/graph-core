@@ -649,6 +649,8 @@ public class ValueCardServiceImpl implements IValueCardService {
                     cardChange.setStatus(true);
                     cardChange.setCreateTime(date);
                     cardChange.setUpdateTime(date);
+                    cardChange.setCreateUserId(req.getCreateUserId());
+                    cardChange.setCreateUserName(req.getCreateUserName());
                     result = valueCardChangeMapper.insertSelective(cardChange) > 0;
                     //更新账户余额
                     valueCard.setAmount(principal);

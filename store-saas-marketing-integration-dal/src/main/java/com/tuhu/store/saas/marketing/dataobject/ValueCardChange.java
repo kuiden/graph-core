@@ -135,8 +135,8 @@ public class ValueCardChange implements Serializable {
         this.createUserId= UserContextHolder.getStoreUserId();
         this.updateUserId = UserContextHolder.getStoreUserId();
         this.changePrincipal = req.getChangePrincipal();
-        this.createTime = valueCard.getUpdateTime();
-        this.updateTime = valueCard.getUpdateTime();
+        this.createTime = new Date(System.currentTimeMillis());
+        this.updateTime = new Date(System.currentTimeMillis());
         this.remark = req.getRemark();
         this.changePresent = req.getChangePresent();
     }
