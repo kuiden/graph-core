@@ -231,50 +231,59 @@ public class ValueCardServiceImpl implements IValueCardService {
                 valueCard = valueCardList.get(0);
             }
         }
-        if (null == valueCard){
-            throw new StoreSaasMarketingException("客户未开通储值卡");
-        }
         CustomerValueCardDetailResp resp = new CustomerValueCardDetailResp();
-        BeanUtils.copyProperties(valueCard,resp);
-        resp.setCardId(valueCard.getId());
-        resp.setAmount(valueCard.getAmount().add(valueCard.getPresentAmount()));
-        resp.setPrincipalAmount(valueCard.getAmount());
-
+        //查客户信息
         BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
-        baseIdReqVO.setId(valueCard.getCustomerId());
-        baseIdReqVO.setStoreId(valueCard.getStoreId());
-        baseIdReqVO.setTenantId(valueCard.getTenantId());
+        baseIdReqVO.setId(req.getCustomerId());
+        baseIdReqVO.setStoreId(req.getStoreId());
+        baseIdReqVO.setTenantId(req.getTenantId());
         BizBaseResponse<CustomerDTO> customerDTOBizBaseResponse = customerClient.getCustomerById(baseIdReqVO);
         CustomerDTO customerDTO = customerDTOBizBaseResponse.getData() != null ?
                 customerDTOBizBaseResponse.getData() : new CustomerDTO();
         resp.setCustomerName(customerDTO.getName());
         resp.setCustomerPhone(customerDTO.getPhoneNumber());
+        if (null == valueCard){
+            //客户未开通过储值账户
+            resp.setCustomerId(req.getCustomerId());
+            resp.setAmount(BigDecimal.ZERO);
+            resp.setPrincipalAmount(BigDecimal.ZERO);
+            resp.setPresentAmount(BigDecimal.ZERO);
+            resp.setRechargeAmount(BigDecimal.ZERO);
+            resp.setRechargeCount(0);
+            resp.setConsumptionAmount(BigDecimal.ZERO);
+            resp.setConsumptionCount(0);
+        } else {
+            BeanUtils.copyProperties(valueCard,resp);
+            resp.setCardId(valueCard.getId());
+            resp.setAmount(valueCard.getAmount().add(valueCard.getPresentAmount()));
+            resp.setPrincipalAmount(valueCard.getAmount());
 
-        //查询储值变更
-        ValueCardChangeExample cardChangeExample = new ValueCardChangeExample();
-        cardChangeExample.createCriteria().andCardIdEqualTo(valueCard.getId())
-                .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
-                .andStatusEqualTo(true).andIsDeleteEqualTo(false);
-        List<ValueCardChange> cardChanges = valueCardChangeMapper.selectByExample(cardChangeExample);
-        BigDecimal rechargeAmount = BigDecimal.ZERO;
-        Integer rechargeCount = 0;
-        BigDecimal consumptionAmount = BigDecimal.ZERO;
-        Integer consumptionCount = 0;
-        if (CollectionUtils.isNotEmpty(cardChanges)){
-            for (ValueCardChange cardChange : cardChanges){
-                if (cardChange.getChangeType().equals(1)){ //消费
-                    consumptionAmount = consumptionAmount.add(cardChange.getChangePrincipal()).add(cardChange.getChangePresent());
-                    consumptionCount++;
-                } else if (cardChange.getChangeType().equals(2)){ //充值
-                    rechargeAmount = rechargeAmount.add(cardChange.getChangePrincipal()).add(cardChange.getChangePresent());
-                    rechargeCount++;
+            //查询储值变更
+            ValueCardChangeExample cardChangeExample = new ValueCardChangeExample();
+            cardChangeExample.createCriteria().andCardIdEqualTo(valueCard.getId())
+                    .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
+                    .andStatusEqualTo(true).andIsDeleteEqualTo(false);
+            List<ValueCardChange> cardChanges = valueCardChangeMapper.selectByExample(cardChangeExample);
+            BigDecimal rechargeAmount = BigDecimal.ZERO;
+            Integer rechargeCount = 0;
+            BigDecimal consumptionAmount = BigDecimal.ZERO;
+            Integer consumptionCount = 0;
+            if (CollectionUtils.isNotEmpty(cardChanges)){
+                for (ValueCardChange cardChange : cardChanges){
+                    if (cardChange.getChangeType().equals(1)){ //消费
+                        consumptionAmount = consumptionAmount.add(cardChange.getChangePrincipal()).add(cardChange.getChangePresent());
+                        consumptionCount++;
+                    } else if (cardChange.getChangeType().equals(2)){ //充值
+                        rechargeAmount = rechargeAmount.add(cardChange.getChangePrincipal()).add(cardChange.getChangePresent());
+                        rechargeCount++;
+                    }
                 }
             }
+            resp.setRechargeAmount(rechargeAmount);
+            resp.setRechargeCount(rechargeCount);
+            resp.setConsumptionAmount(consumptionAmount);
+            resp.setConsumptionCount(consumptionCount);
         }
-        resp.setRechargeAmount(rechargeAmount);
-        resp.setRechargeCount(rechargeCount);
-        resp.setConsumptionAmount(consumptionAmount);
-        resp.setConsumptionCount(consumptionCount);
         return resp;
     }
 
@@ -294,7 +303,8 @@ public class ValueCardServiceImpl implements IValueCardService {
             if (CollectionUtils.isNotEmpty(valueCardList)){
                 req.setCardId(valueCardList.get(0).getId());
             } else{
-                throw new StoreSaasMarketingException("客户未开通储值卡");
+                //throw new StoreSaasMarketingException("客户未开通储值卡");
+                return new PageInfo<>();
             }
         }
         PageHelper.startPage(req.getPageNum(),req.getPageSize());
