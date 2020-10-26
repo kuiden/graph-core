@@ -206,6 +206,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                 }
                 queryValueCardListResps.add(resp);
             }
+            BeanUtils.copyProperties(pageInfo,respPageInfo);
             respPageInfo.setList(queryValueCardListResps);
             respPageInfo.setTotal(pageInfo.getTotal());
         }
@@ -323,6 +324,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                 BeanUtils.copyProperties(cardChange,resp);
                 respList.add(resp);
             }
+            BeanUtils.copyProperties(pageInfo,respPageInfo);
             respPageInfo.setList(respList);
             respPageInfo.setTotal(pageInfo.getTotal());
         }
@@ -647,6 +649,8 @@ public class ValueCardServiceImpl implements IValueCardService {
                     cardChange.setStatus(true);
                     cardChange.setCreateTime(date);
                     cardChange.setUpdateTime(date);
+                    cardChange.setCreateUserId(req.getCreateUserId());
+                    cardChange.setCreateUserName(req.getCreateUserName());
                     result = valueCardChangeMapper.insertSelective(cardChange) > 0;
                     //更新账户余额
                     valueCard.setAmount(principal);
@@ -699,6 +703,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                     BeanUtils.copyProperties(cardChange,resp);
                     respList.add(resp);
                 }
+                BeanUtils.copyProperties(pageInfo,respPageInfo);
                 respPageInfo.setList(respList);
                 respPageInfo.setTotal(pageInfo.getTotal());
             }
