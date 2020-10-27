@@ -747,7 +747,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                 if (valueCardChange.getChangeType().equals(0)
                         && (valueCardChange.getChangePrincipal().add(valueCard.getAmount()).compareTo(BigDecimal.ZERO) < 0
                         || valueCardChange.getChangePresent().add(valueCard.getPresentAmount()).compareTo(BigDecimal.ZERO) < 0)) {
-                    throw new StoreSaasMarketingException("退款失败");
+                    throw new StoreSaasMarketingException("FAILED");
                 }
 
                 // 开始
