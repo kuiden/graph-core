@@ -41,11 +41,9 @@ public class ValueCardRechargeOrRefundReq implements Serializable {
     private String remark;
 
     @ApiModelProperty(value = "销售人员ID",example = "张三",dataType = "String")
-    @NotNull(message = "销售人员ID不能为空")
     private String salesmanId;
 
     @ApiModelProperty("销售人员姓名")
-    @NotNull(message = "销售人员姓名不能为空")
     private String salesmanName;
 
     @ApiModelProperty(value = "创建人id", hidden = true)

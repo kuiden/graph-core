@@ -90,10 +90,6 @@ public class MiniValueCardApi extends BaseApi {
     @ApiOperation("H5-客户储值卡结算")
     @PostMapping("/settlement")
     BizBaseResponse<String> settlement(@RequestBody @Validated ValueCardRechargeOrRefundReq req){
-        if (req!= null && req.getType()==Integer.valueOf(2) &&
-                (StringUtils.isBlank(req.getSalesmanId())||StringUtils.isBlank(req.getSalesmanName()))){
-            return  new BizBasePageResponse<>(BizErrorCodeEnum.PARAM_IS_NULL,"参数验证失败");
-        }
         req.setTenantId(super.getTenantId());
         req.setStoreId(super.getStoreId());
         String result =  iValueCardService.settlement(req);
