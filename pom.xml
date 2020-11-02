@@ -18,7 +18,7 @@
     <properties>
         <parent-project.version>0.0.1-RELEASE</parent-project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <xxl-job-core.version>2.0.1</xxl-job-core.version>
+        <xxl-job-core.version>2.1.1</xxl-job-core.version>
         <facade.version>0.0.1-RELEASE</facade.version>
         <saas-store-order-facade.version>0.0.1-SNAPSHOT</saas-store-order-facade.version>
         <saas-store-crm-remote-model.version>0.0.1-SNAPSHOT</saas-store-crm-remote-model.version>
