@@ -861,7 +861,7 @@ public class IMCouponServiceImpl implements IMCouponService {
                 storeInfo.setLon(resultData.getData().getLon());
                 storeInfo.setOpeningEffectiveDate(resultData.getData().getOpeningEffectiveDate());
                 storeInfo.setOpeningExpiryDate(resultData.getData().getOpeningExpiryDate());
-                storeInfo.setMobilePhone(resultData.getData().getMobilePhone());
+                storeInfo.setMobilePhone(resultData.getData().getClientAppointPhone());
                 resp.setStoreInfo(storeInfo);
             }
         }
