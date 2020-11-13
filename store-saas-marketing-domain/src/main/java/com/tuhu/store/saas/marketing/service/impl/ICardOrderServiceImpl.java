@@ -221,6 +221,11 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             CrdCardOrderExample cardOrderExample = new CrdCardOrderExample();
             CrdCardOrderExample.Criteria nameCriteria = cardOrderExample.createCriteria();
             CrdCardOrderExample.Criteria phoneCriteria = cardOrderExample.createCriteria();
+            //根据客户id查询
+            if (null != req.getCustomerId()){
+                nameCriteria.andCustomerIdEqualTo(req.getCustomerId());
+                phoneCriteria.andCustomerIdEqualTo(req.getCustomerId());
+            }
             //客户姓名、手机号模糊查询
             if (null != req.getCondition()) {
                 nameCriteria.andCustomerNameLike("%" + req.getCondition() + "%");
