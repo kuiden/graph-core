@@ -43,4 +43,7 @@ public class ListCardOrderReq {
     //930,客户详情进入需要查询所有状态的次卡订单信息,加入 ALL状态
     private String paymentStatus;
 
+    @ApiModelProperty(value = "客户ID（不必填）")
+    private String customerId;
+
 }
