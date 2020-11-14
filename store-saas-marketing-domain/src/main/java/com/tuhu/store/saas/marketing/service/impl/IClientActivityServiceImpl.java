@@ -246,6 +246,7 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         if (resultData != null && resultData.getData() != null) {
             ClientStoreInfoVO storeInfo = new ClientStoreInfoVO();
             BeanUtils.copyProperties(resultData.getData(),storeInfo);
+            storeInfo.setMobilePhone(resultData.getData().getClientAppointPhone());
             activityResp.setStoreInfo(storeInfo);
         }
         if(!activityResp.getStatus()){

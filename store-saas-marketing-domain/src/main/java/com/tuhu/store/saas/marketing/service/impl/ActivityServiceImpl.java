@@ -1671,6 +1671,13 @@ public class ActivityServiceImpl implements IActivityService {
         activityExampleCriteria.andEndTimeGreaterThan(new Date());
         activityExample.setOrderByClause("start_time asc");
         List<Activity> activityList = activityMapper.selectByExample(activityExample);
+        if (CollectionUtils.isNotEmpty(activityList)) {
+            activityList.forEach(a->{
+                if (StringUtils.isNotEmpty(a.getPicUrl()) && a.getPicUrl().startsWith("http:")) {
+                    a.setPicUrl(a.getPicUrl().replaceFirst("http:", "https:"));
+                }
+            });
+        }
         return activityList;
     }
 
