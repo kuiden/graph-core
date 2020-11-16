@@ -170,7 +170,7 @@ public class CardServiceImpl implements ICardService {
         String key = "updateCardQuantity:" + updateCardVo.getCardId();
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
-        Object value = storeRedisUtils.tryLock(key, 1000, 1000);
+        Object value = storeRedisUtils.tryLock(key, 10, 10);
         Boolean ok = true;
         if (null != value) {
             try {
