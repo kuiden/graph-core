@@ -46,7 +46,7 @@ public class LogRecordAspect {
     @Autowired
     private SysReqLogService sysReqLogService;
 
-    @Pointcut("execution(public * com.tuhu.store.saas.marketing.controller.*.*(..))")
+    @Pointcut("execution(public * com.tuhu.store.saas.marketing.controller..*.*(..))")
     public void excudeService() {
     }
 
