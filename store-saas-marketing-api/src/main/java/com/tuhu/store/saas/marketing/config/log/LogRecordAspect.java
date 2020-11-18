@@ -66,7 +66,7 @@ public class LogRecordAspect {
                 logger.info(method + "doAround, url: {}, method: {}, uri: {}, params: {}", url, method, uri, args[i]);
             }
         } catch (Exception e) {
-            logger.info(method + "doAround, url: {}, method: {}, uri: {}, params: {}", url, method, uri, queryString);
+            logger.error(method + "doAroundError", e);
         }
         Object result = pjp.proceed();
         long endTime = new Date().getTime();
