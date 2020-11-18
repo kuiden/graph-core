@@ -38,7 +38,7 @@ import java.util.List;
 public class LogRecordAspect {
     private static final Logger logger = LoggerFactory.getLogger(LogRecordAspect.class);
     private static AntPathMatcher matcher = new AntPathMatcher();
-    @Value("${sys.req.whitelist.urls:/sys/all}")
+    @Value("${sys.req.whitelist.urls:/feign/**}")
     private String SYS_REQ_WHITELIST_URLS;
     @Value("${sys.req.save.switch:true}")
     private Boolean SAVE_SWITCH;
