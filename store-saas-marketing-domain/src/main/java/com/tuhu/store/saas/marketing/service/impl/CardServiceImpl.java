@@ -589,6 +589,11 @@ public class CardServiceImpl implements ICardService {
         return customerMarketCountDTO;
     }
 
+    @Override
+    public List<QueryCardItemResp> queryCardItemByCustomer(QueryByCustomerIdReq req) {
+        return null;
+    }
+
 
     private CardTemplate convertorToCardTemplate(CardTemplateModel cardTemplateModelReq) {
         CardTemplate cardTemplate = new CardTemplate();
