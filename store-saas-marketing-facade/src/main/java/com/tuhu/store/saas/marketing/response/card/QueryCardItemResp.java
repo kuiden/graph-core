@@ -49,6 +49,7 @@ public class QueryCardItemResp implements Serializable {
     /*
      * 剩余次数
      */
+    @ApiModelProperty("可用次数")
     private Integer remainQuantity;
 
     /**
