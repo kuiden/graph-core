@@ -81,6 +81,7 @@ public class MiniCardApi extends BaseApi {
     }
 
     /****************************************H5*******************************************************/
+
     @PostMapping("/queryCardItemByCustomer")
     @ApiOperation("根据客户查询次卡商品/服务项目")
     public BizBaseResponse<List<QueryCardItemResp>> queryCardItemByCustomer(@Validated @RequestBody QueryByCustomerIdReq req) {

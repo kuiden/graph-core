@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 import com.tuhu.store.saas.marketing.dataobject.CrdCardItem;
 import com.tuhu.store.saas.marketing.dataobject.CrdCardItemExample;
 import java.util.List;
+
+import com.tuhu.store.saas.marketing.request.card.QueryAvailableItemsReq;
 import org.apache.ibatis.annotations.Param;
 
 public interface CrdCardItemMapper {
@@ -27,4 +29,6 @@ public interface CrdCardItemMapper {
     int updateByPrimaryKeySelective(CrdCardItem record);
 
     int updateByPrimaryKey(CrdCardItem record);
+
+    List<CrdCardItem> selectAvailableItems(QueryAvailableItemsReq req);
 }

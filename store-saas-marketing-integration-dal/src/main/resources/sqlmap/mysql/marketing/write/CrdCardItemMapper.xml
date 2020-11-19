@@ -113,6 +113,24 @@
     from crd_card_item
     where id = #{id,jdbcType=BIGINT}
   </select>
+  <select id="selectAvailableItems" parameterType="com.tuhu.store.saas.marketing.request.card.QueryAvailableItemsReq" resultMap="BaseResultMap">
+    select b.*
+    from crd_card AS a LEFT JOIN crd_card_item AS b ON a.id = b.card_id
+    where a.store_id = #{storeId}
+    and a.tenant_id = #{tenantId}
+    <if test="customerId != null">
+        and a.customer_id = #{customerId}
+    </if>
+    <if test="customerPhoneNumber != null">
+        and a.customer_phone_number = #{customerPhoneNumber}
+    </if>
+    and a.status = "ACTIVATED"
+    and b.type = #{type}
+    and b.is_delete = false
+    and b.measured_quantity > b.used_quantity
+    and (a.forever = 1 OR a.expiry_date > #{date})
+    ORDER BY a.forever,a.expiry_date;
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from crd_card_item
     where id = #{id,jdbcType=BIGINT}
