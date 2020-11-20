@@ -55,6 +55,8 @@ public class LogRecordAspect {
 
     @Around("excudeService()")
     public Object doAround(ProceedingJoinPoint pjp) throws Throwable {
+        String requestId = UUID.randomUUID().toString().replaceAll("-","").toUpperCase();
+        log.info("startlogRequestId=" + requestId);
         long startTime = new Date().getTime();
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String method = request.getMethod();
@@ -71,7 +73,7 @@ public class LogRecordAspect {
         long endTime = new Date().getTime();
         long time = endTime - startTime;
         if (SAVE_SWITCH) {
-            saveReqLog(request, objects, result, time);
+            saveReqLog(request, objects, result, time, requestId);
         }
         return result;
     }
@@ -83,7 +85,7 @@ public class LogRecordAspect {
      * @param reqObjects
      * @param result
      */
-    private void saveReqLog(HttpServletRequest request, List<Object> reqObjects, Object result, long time) {
+    private void saveReqLog(HttpServletRequest request, List<Object> reqObjects, Object result, long time, String requestId) {
         try {
             String method = request.getMethod();
             String uri = request.getRequestURI();
@@ -95,8 +97,6 @@ public class LogRecordAspect {
                 }
             }
             SysReqLog sysReqLog = new SysReqLog();
-            String requestId = UUID.randomUUID().toString().replaceAll("-","").toUpperCase();
-            log.info("logRequestId:" + requestId);
             sysReqLog.setRequestId(requestId);
             MDC.put(REQUEST_ID_KEY, requestId);
             CoreUser customUser = UserContextHolder.getUser();
@@ -113,6 +113,7 @@ public class LogRecordAspect {
             sysReqLog.setResParams(getValue(JSON.toJSONString(result)));
             sysReqLog.setTime(time + "");
             sysReqLogService.saveReqLog(sysReqLog);
+            log.info("endlogRequestId=" + requestId);
         } catch (Exception e) {
             log.error("marketingsaveReqLog.error:", e);
         }
