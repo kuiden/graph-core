@@ -96,7 +96,7 @@ public class LogRecordAspect {
                 }
             }
             SysReqLog sysReqLog = new SysReqLog();
-            String requestId = UUID.randomUUID().toString();
+            String requestId = UUID.randomUUID().toString().replaceAll("-","").toUpperCase();
             sysReqLog.setRequestId(requestId);
             MDC.put(REQUEST_ID_KEY, requestId);
             CoreUser customUser = UserContextHolder.getUser();
