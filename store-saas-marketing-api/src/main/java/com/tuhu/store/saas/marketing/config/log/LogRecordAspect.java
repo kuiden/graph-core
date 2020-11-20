@@ -12,6 +12,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * aop 记录请求和返回数据日志
@@ -36,13 +38,15 @@ import java.util.List;
 @Configuration
 @Order(ApiCommonConstant.ORDERED_CUSTOM_HIGHEST - 10)
 public class LogRecordAspect {
-    private static final Logger logger = LoggerFactory.getLogger(LogRecordAspect.class);
-    private static AntPathMatcher matcher = new AntPathMatcher();
+    private final static Logger logger = LoggerFactory.getLogger(LogRecordAspect.class);
+    private final static AntPathMatcher matcher = new AntPathMatcher();
+    private final static String REQUEST_ID_KEY = "requestId";
     @Value("${sys.req.whitelist.urls:/feign/**}")
     private String SYS_REQ_WHITELIST_URLS;
     @Value("${sys.req.save.switch:true}")
     private Boolean SAVE_SWITCH;
-
+    @Value("${sys.req.log.length:5000}")
+    private Integer SYS_REQ_LOG_LENGTH;
     @Autowired
     private SysReqLogService sysReqLogService;
 
@@ -54,16 +58,12 @@ public class LogRecordAspect {
     public Object doAround(ProceedingJoinPoint pjp) throws Throwable {
         long startTime = new Date().getTime();
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-        String url = request.getRequestURL().toString();
         String method = request.getMethod();
-        String uri = request.getRequestURI();
-        String queryString = request.getQueryString();
         List<Object> objects = new ArrayList<>();
         try {
             Object[] args = pjp.getArgs();
             for (int i = 0; i < args.length; i++) {
                 objects.add(args[i]);
-                logger.info(method + "doAround, url: {}, method: {}, uri: {}, params: {}", url, method, uri, args[i]);
             }
         } catch (Exception e) {
             logger.error(method + "doAroundError", e);
@@ -96,12 +96,14 @@ public class LogRecordAspect {
                 }
             }
             SysReqLog sysReqLog = new SysReqLog();
+            String requestId = UUID.randomUUID().toString();
+            sysReqLog.setRequestId(requestId);
+            MDC.put(REQUEST_ID_KEY, requestId);
             CoreUser customUser = UserContextHolder.getUser();
             if (null != customUser) {
                 String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
                 BeanUtils.copyProperties(customUser, sysReqLog);
                 sysReqLog.setToken(authorization);
-                logger.info("marketingsaveReqLog{}", JSON.toJSONString(customUser));
             }
             sysReqLog.setSource("store-saas-marketing");
             sysReqLog.setMethod(method);
@@ -110,7 +112,6 @@ public class LogRecordAspect {
             sysReqLog.setReqParams(getValue(JSON.toJSONString(reqObjects)));
             sysReqLog.setResParams(getValue(JSON.toJSONString(result)));
             sysReqLog.setTime(time + "");
-            logger.info("marketingsaveReqLog{}", JSON.toJSONString(sysReqLog));
             sysReqLogService.saveReqLog(sysReqLog);
         } catch (Exception e) {
             logger.error("marketingsaveReqLog.error:", e);
@@ -118,8 +119,8 @@ public class LogRecordAspect {
     }
 
     private String getValue(String val) {
-        if (null != val && val.length() > 5000) {
-            return val.substring(0, 5000);
+        if (null != val && val.length() > SYS_REQ_LOG_LENGTH) {
+            return val.substring(0, SYS_REQ_LOG_LENGTH);
         }
         return val;
     }

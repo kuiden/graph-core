@@ -57,4 +57,6 @@ public class SysReqLog implements Serializable {
     @TableField(value = "createTime")
     private Date createTime;
     private String time;
+    @TableField(value = "requestId")
+    private String requestId;
 }
