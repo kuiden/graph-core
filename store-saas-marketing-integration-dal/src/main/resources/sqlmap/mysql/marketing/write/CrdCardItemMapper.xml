@@ -125,7 +125,9 @@
         and a.customer_phone_number = #{customerPhoneNumber}
     </if>
     and a.status = "ACTIVATED"
-    and b.type = #{type}
+    <if test="type != null">
+      and b.type = #{type}
+    </if>
     and b.is_delete = false
     and b.measured_quantity > b.used_quantity
     and (a.forever = 1 OR a.expiry_date > #{date})
