@@ -6,19 +6,18 @@ import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SysReqLog;
 import com.tuhu.store.saas.marketing.remote.CoreUser;
 import com.tuhu.store.saas.marketing.sys.SysReqLogService;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -34,11 +33,11 @@ import java.util.UUID;
  * @author yangshengyong
  * @since 2020-11-18
  */
+@Slf4j
 @Aspect
-@Configuration
+@Component
 @Order(ApiCommonConstant.ORDERED_CUSTOM_HIGHEST - 10)
 public class LogRecordAspect {
-    private final static Logger logger = LoggerFactory.getLogger(LogRecordAspect.class);
     private final static AntPathMatcher matcher = new AntPathMatcher();
     private final static String REQUEST_ID_KEY = "requestId";
     @Value("${sys.req.whitelist.urls:/feign/**}")
@@ -66,7 +65,7 @@ public class LogRecordAspect {
                 objects.add(args[i]);
             }
         } catch (Exception e) {
-            logger.error(method + "doAroundError", e);
+            log.error(method + "doAroundError", e);
         }
         Object result = pjp.proceed();
         long endTime = new Date().getTime();
@@ -97,6 +96,7 @@ public class LogRecordAspect {
             }
             SysReqLog sysReqLog = new SysReqLog();
             String requestId = UUID.randomUUID().toString().replaceAll("-","").toUpperCase();
+            log.info("logRequestId:" + requestId);
             sysReqLog.setRequestId(requestId);
             MDC.put(REQUEST_ID_KEY, requestId);
             CoreUser customUser = UserContextHolder.getUser();
@@ -114,7 +114,7 @@ public class LogRecordAspect {
             sysReqLog.setTime(time + "");
             sysReqLogService.saveReqLog(sysReqLog);
         } catch (Exception e) {
-            logger.error("marketingsaveReqLog.error:", e);
+            log.error("marketingsaveReqLog.error:", e);
         }
     }
 
