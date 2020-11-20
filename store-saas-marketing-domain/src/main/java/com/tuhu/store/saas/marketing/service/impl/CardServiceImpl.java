@@ -758,6 +758,125 @@ public class CardServiceImpl implements ICardService {
         return resultList;
     }
 
+    @Override
+    public List<QueryCardItemResp> allotCardItem(AllotCardItemReq req) {
+        log.info("按有效期分配次卡项目，请求参数：{}", JSONObject.toJSON(req));
+        if (null == req.getStoreId() || null == req.getTenantId() || (null == req.getCustomerId() && null == req.getCustomerPhoneNumber())){
+            throw new StoreSaasMarketingException("参数校验失败");
+        }
+        List<QueryCardItemResp> resultList = new ArrayList<>();
+        //查客户可用次卡项目
+        QueryAvailableItemsReq queryAvailableItemsReq = new QueryAvailableItemsReq();
+        if (null != req.getCustomerId()){
+            queryAvailableItemsReq.setCustomerId(req.getCustomerId());
+        } else if (null != req.getCustomerPhoneNumber()) {
+            queryAvailableItemsReq.setCustomerPhoneNumber(req.getCustomerPhoneNumber());
+        }
+        queryAvailableItemsReq.setType(req.getType());
+        queryAvailableItemsReq.setStoreId(req.getStoreId());
+        queryAvailableItemsReq.setTenantId(req.getTenantId());
+        queryAvailableItemsReq.setDate(DataTimeUtil.getDateStartTime(new Date()));
+        //未过期 且 可用次数大于0 按 临近有效期排序
+        List<CrdCardItem> cardItems = cardItemMapper.selectAvailableItems(queryAvailableItemsReq);
+
+        if (CollectionUtils.isNotEmpty(cardItems)){
+            //goodsId - 次数
+            Map<String,Integer> goodsNumMap = req.getGoodsNumMap();
+            //过滤出要分配的项目
+            cardItems = cardItems.stream().filter(x -> goodsNumMap.containsKey(x.getGoodsId())).collect(Collectors.toList());
+            //goodsId - 次卡项目
+            Map<String,List<CrdCardItem>> cardItemsMap = cardItems.stream().collect(Collectors.groupingBy(x->x.getGoodsId()));
+            List<String> goodsIdList = cardItems.stream().map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
+
+            //查商品
+            if (req.getType() == 2 && !goodsIdList.isEmpty()) {
+                QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
+                queryGoodsListVO.setStoreId(req.getStoreId());
+                queryGoodsListVO.setTenantId(req.getTenantId());
+                queryGoodsListVO.setGoodsIdList(goodsIdList);
+                queryGoodsListVO.setGoodsSource("");
+                BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
+                if (productResult != null && CollectionUtils.isNotEmpty(productResult.getData())) {
+                    List<QueryGoodsListDTO> queryGoodsListDTOS = productResult.getData();
+                    Map<String,QueryGoodsListDTO> goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
+
+                    //商品
+                    for (String goodsId : goodsIdList){
+                        if (goodsNumMap.containsKey(goodsId) && cardItemsMap.containsKey(goodsId) && goodsListDTOMap.containsKey(goodsId)){
+                            List<CrdCardItem> cardItemList = cardItemsMap.get(goodsId);
+                            Integer num = goodsNumMap.get(goodsId);
+                            //组装商品信息
+                            QueryGoodsListDTO dto = goodsListDTOMap.get(goodsId);
+                            QueryCardItemResp.CardGoods resp = new QueryCardItemResp.CardGoods();
+                            BeanUtils.copyProperties(dto, resp);
+                            resp.setBusinessCategory(dto.getBusinessCategoryCode());
+                            if (null != dto.getProductId()) {
+                                resp.setProductId(String.valueOf(dto.getProductId()));
+                            }
+                            //按次卡 在前面的优先分配
+                            int index = 0;
+                            while (num > 0 && index < cardItemList.size()){
+                                CrdCardItem item = cardItemList.get(index);
+                                Integer remainQuantity = item.getMeasuredQuantity() - item.getUsedQuantity();
+                                //拆成一条一条显示- -
+                                while (num > 0 && remainQuantity > 0){
+                                    QueryCardItemResp queryCardItemResp = new QueryCardItemResp();
+                                    BeanUtils.copyProperties(item, queryCardItemResp);
+                                    queryCardItemResp.setRemainQuantity(1);
+                                    queryCardItemResp.setGoods(resp);
+                                    resultList.add(queryCardItemResp);
+                                    num--;
+                                }
+                                index++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            //查服务
+            if (req.getType() == 1 && !goodsIdList.isEmpty()) {
+                GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
+                goodsForMarketReq.setGoodsName("");
+                goodsForMarketReq.setStoreId(req.getStoreId());
+                goodsForMarketReq.setTenantId(req.getTenantId());
+                goodsForMarketReq.setServiceIdList(goodsIdList);
+                goodsForMarketReq.setPageSize(500);
+                BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
+                if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
+                    List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
+                    Map<String,ServiceGoodsListForMarketResp> serviceListMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v->v));
+                    for (String goodsId : goodsIdList){
+                        if (goodsNumMap.containsKey(goodsId) && cardItemsMap.containsKey(goodsId) && serviceListMap.containsKey(goodsId)){
+                            List<CrdCardItem> cardItemList = cardItemsMap.get(goodsId);
+                            Integer num = goodsNumMap.get(goodsId);
+                            //组装商品信息
+                            QueryCardItemResp.CardService resp = new QueryCardItemResp.CardService();
+                            BeanUtils.copyProperties(serviceListMap.get(goodsId), resp);
+                            //按次卡 在前面的优先分配
+                            int index = 0;
+                            while (num > 0 && index < cardItemList.size()){
+                                CrdCardItem item = cardItemList.get(index);
+                                Integer remainQuantity = item.getMeasuredQuantity() - item.getUsedQuantity();
+                                //拆成一条一条显示- -
+                                while (num > 0 && remainQuantity > 0){
+                                    QueryCardItemResp queryCardItemResp = new QueryCardItemResp();
+                                    BeanUtils.copyProperties(item, queryCardItemResp);
+                                    queryCardItemResp.setRemainQuantity(1);
+                                    queryCardItemResp.setService(resp);
+                                    resultList.add(queryCardItemResp);
+                                    num--;
+                                }
+                                index++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return resultList;
+    }
+
 
     private CardTemplate convertorToCardTemplate(CardTemplateModel cardTemplateModelReq) {
         CardTemplate cardTemplate = new CardTemplate();

@@ -90,4 +90,12 @@ public class MiniCardApi extends BaseApi {
         return new BizBaseResponse(iCardService.queryCardItemByCustomer(req));
     }
 
+    @PostMapping("/allotCardItem")
+    @ApiOperation("分配次卡项目 - 临近有效期优先使用")
+    public BizBaseResponse<List<QueryCardItemResp>> allotCardItem(@Validated @RequestBody AllotCardItemReq req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        return new BizBaseResponse(iCardService.allotCardItem(req));
+    }
+
 }
