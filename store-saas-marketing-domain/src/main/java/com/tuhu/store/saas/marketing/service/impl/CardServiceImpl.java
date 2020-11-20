@@ -772,7 +772,7 @@ public class CardServiceImpl implements ICardService {
         } else if (null != req.getCustomerPhoneNumber()) {
             queryAvailableItemsReq.setCustomerPhoneNumber(req.getCustomerPhoneNumber());
         }
-        queryAvailableItemsReq.setType(req.getType());
+        queryAvailableItemsReq.setType(null);
         queryAvailableItemsReq.setStoreId(req.getStoreId());
         queryAvailableItemsReq.setTenantId(req.getTenantId());
         queryAvailableItemsReq.setDate(DataTimeUtil.getDateStartTime(new Date()));
@@ -788,8 +788,10 @@ public class CardServiceImpl implements ICardService {
             Map<String,List<CrdCardItem>> cardItemsMap = cardItems.stream().collect(Collectors.groupingBy(x->x.getGoodsId()));
             List<String> goodsIdList = cardItems.stream().map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
 
-            //查商品
-            if (req.getType() == 2 && !goodsIdList.isEmpty()) {
+            if (!goodsIdList.isEmpty()) {
+                Map<String,QueryGoodsListDTO> goodsListDTOMap = new HashMap<>();
+                Map<String,ServiceGoodsListForMarketResp> serviceListMap = new HashMap<>();
+                //查商品信息
                 QueryGoodsListVO queryGoodsListVO = new QueryGoodsListVO();
                 queryGoodsListVO.setStoreId(req.getStoreId());
                 queryGoodsListVO.setTenantId(req.getTenantId());
@@ -798,44 +800,9 @@ public class CardServiceImpl implements ICardService {
                 BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
                 if (productResult != null && CollectionUtils.isNotEmpty(productResult.getData())) {
                     List<QueryGoodsListDTO> queryGoodsListDTOS = productResult.getData();
-                    Map<String,QueryGoodsListDTO> goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
-
-                    //商品
-                    for (String goodsId : goodsIdList){
-                        if (goodsNumMap.containsKey(goodsId) && cardItemsMap.containsKey(goodsId) && goodsListDTOMap.containsKey(goodsId)){
-                            List<CrdCardItem> cardItemList = cardItemsMap.get(goodsId);
-                            Integer num = goodsNumMap.get(goodsId);
-                            //组装商品信息
-                            QueryGoodsListDTO dto = goodsListDTOMap.get(goodsId);
-                            QueryCardItemResp.CardGoods resp = new QueryCardItemResp.CardGoods();
-                            BeanUtils.copyProperties(dto, resp);
-                            resp.setBusinessCategory(dto.getBusinessCategoryCode());
-                            if (null != dto.getProductId()) {
-                                resp.setProductId(String.valueOf(dto.getProductId()));
-                            }
-                            //按次卡 在前面的优先分配
-                            int index = 0;
-                            while (num > 0 && index < cardItemList.size()){
-                                CrdCardItem item = cardItemList.get(index);
-                                Integer remainQuantity = item.getMeasuredQuantity() - item.getUsedQuantity();
-                                //拆成一条一条显示- -
-                                while (num > 0 && remainQuantity > 0){
-                                    QueryCardItemResp queryCardItemResp = new QueryCardItemResp();
-                                    BeanUtils.copyProperties(item, queryCardItemResp);
-                                    queryCardItemResp.setRemainQuantity(1);
-                                    queryCardItemResp.setGoods(resp);
-                                    resultList.add(queryCardItemResp);
-                                    num--;
-                                }
-                                index++;
-                            }
-                        }
-                    }
+                    goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
                 }
-            }
-
-            //查服务
-            if (req.getType() == 1 && !goodsIdList.isEmpty()) {
+                //查服务信息
                 GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
                 goodsForMarketReq.setGoodsName("");
                 goodsForMarketReq.setStoreId(req.getStoreId());
@@ -845,30 +812,48 @@ public class CardServiceImpl implements ICardService {
                 BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
                 if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                     List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-                    Map<String,ServiceGoodsListForMarketResp> serviceListMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v->v));
-                    for (String goodsId : goodsIdList){
-                        if (goodsNumMap.containsKey(goodsId) && cardItemsMap.containsKey(goodsId) && serviceListMap.containsKey(goodsId)){
-                            List<CrdCardItem> cardItemList = cardItemsMap.get(goodsId);
-                            Integer num = goodsNumMap.get(goodsId);
-                            //组装商品信息
-                            QueryCardItemResp.CardService resp = new QueryCardItemResp.CardService();
-                            BeanUtils.copyProperties(serviceListMap.get(goodsId), resp);
-                            //按次卡 在前面的优先分配
-                            int index = 0;
-                            while (num > 0 && index < cardItemList.size()){
-                                CrdCardItem item = cardItemList.get(index);
-                                Integer remainQuantity = item.getMeasuredQuantity() - item.getUsedQuantity();
-                                //拆成一条一条显示- -
-                                while (num > 0 && remainQuantity > 0){
-                                    QueryCardItemResp queryCardItemResp = new QueryCardItemResp();
-                                    BeanUtils.copyProperties(item, queryCardItemResp);
-                                    queryCardItemResp.setRemainQuantity(1);
-                                    queryCardItemResp.setService(resp);
-                                    resultList.add(queryCardItemResp);
-                                    num--;
-                                }
-                                index++;
+                    serviceListMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v->v));
+                }
+
+                //生成返回结果
+                for (String goodsId : goodsIdList){
+                    if (goodsNumMap.containsKey(goodsId) && cardItemsMap.containsKey(goodsId)){
+                        List<CrdCardItem> cardItemList = cardItemsMap.get(goodsId);
+                        Integer num = goodsNumMap.get(goodsId);
+                        //服务信息
+                        QueryCardItemResp.CardService cardService = new QueryCardItemResp.CardService();
+                        //商品信息
+                        QueryCardItemResp.CardGoods cardGoods = new QueryCardItemResp.CardGoods();
+                        if (serviceListMap.containsKey(goodsId)){
+                            //copy服务信息
+                            BeanUtils.copyProperties(serviceListMap.get(goodsId), cardService);
+                        }
+                        if (goodsListDTOMap.containsKey(goodsId)){
+                            //copy商品信息
+                            QueryGoodsListDTO dto = goodsListDTOMap.get(goodsId);
+                            BeanUtils.copyProperties(dto, cardGoods);
+                            cardGoods.setBusinessCategory(dto.getBusinessCategoryCode());
+                            if (null != dto.getProductId()) {
+                                cardGoods.setProductId(String.valueOf(dto.getProductId()));
                             }
+                        }
+                        //按次卡 在前面的优先分配
+                        int index = 0;
+                        while (num > 0 && index < cardItemList.size()){
+                            CrdCardItem item = cardItemList.get(index);
+                            Integer remainQuantity = item.getMeasuredQuantity() - item.getUsedQuantity();
+                            //拆成一条一条显示- -
+                            while (num > 0 && remainQuantity > 0){
+                                QueryCardItemResp queryCardItemResp = new QueryCardItemResp();
+                                BeanUtils.copyProperties(item, queryCardItemResp);
+                                queryCardItemResp.setRemainQuantity(1);
+                                queryCardItemResp.setService(cardService);
+                                queryCardItemResp.setGoods(cardGoods);
+                                resultList.add(queryCardItemResp);
+                                remainQuantity--;
+                                num--;
+                            }
+                            index++;
                         }
                     }
                 }

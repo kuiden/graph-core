@@ -20,9 +20,6 @@ public class AllotCardItemReq {
     @ApiModelProperty(value = "商品id - 次数")
     private Map<String,Integer> goodsNumMap;
 
-    @ApiModelProperty(value = "类型 1服务 2商品")
-    private Integer type = 1;
-
     private Long storeId;
 
     private Long tenantId;
