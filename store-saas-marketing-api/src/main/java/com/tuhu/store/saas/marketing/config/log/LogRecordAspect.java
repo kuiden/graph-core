@@ -56,6 +56,7 @@ public class LogRecordAspect {
     @Around("excudeService()")
     public Object doAround(ProceedingJoinPoint pjp) throws Throwable {
         String requestId = UUID.randomUUID().toString().replaceAll("-","").toUpperCase();
+        MDC.put(REQUEST_ID_KEY, requestId);
         log.info("startlogRequestId=" + requestId);
         long startTime = new Date().getTime();
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
@@ -98,7 +99,6 @@ public class LogRecordAspect {
             }
             SysReqLog sysReqLog = new SysReqLog();
             sysReqLog.setRequestId(requestId);
-            MDC.put(REQUEST_ID_KEY, requestId);
             CoreUser customUser = UserContextHolder.getUser();
             if (null != customUser) {
                 String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
