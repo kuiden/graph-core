@@ -76,8 +76,9 @@ public class LogRecordAspect {
         try {
             result = pjp.proceed();
         } catch (BizException e){
+            log.error(request.getRequestURI(),e);
             BizBaseResponse response = new BizBaseResponse();
-            response.setCode(e.getErrorCode().getCode());
+            response.setCode(4000);
             response.setMessage(e.getErrorMessage());
             result = response;
         } catch (Exception e){
