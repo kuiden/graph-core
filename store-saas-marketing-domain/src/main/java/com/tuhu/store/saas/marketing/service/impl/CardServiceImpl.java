@@ -798,9 +798,19 @@ public class CardServiceImpl implements ICardService {
                 queryGoodsListVO.setGoodsIdList(goodsIdList);
                 queryGoodsListVO.setGoodsSource("");
                 BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
+                String warehouseId = null;
+                String warehouseName = null;
                 if (productResult != null && CollectionUtils.isNotEmpty(productResult.getData())) {
                     List<QueryGoodsListDTO> queryGoodsListDTOS = productResult.getData();
                     goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
+
+                    StoreInfoRelatedDTO storeRelatedResponse = storeInfoClient.getRelatedInfoByStoreId(req.getStoreId()).getData();
+                    log.info("查询门店仓库信息返回：{}", JSON.toJSONString(storeRelatedResponse));
+                    if (null == storeRelatedResponse) {
+                        throw new StoreSaasMarketingException("获取门店关联的信息异常");
+                    }
+                    warehouseId = String.valueOf(storeRelatedResponse.getStoreOutPurchaseWarehouseId());
+                    warehouseName = storeRelatedResponse.getStoreOutPurchaseWarehouseName();
                 }
                 //查服务信息
                 GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
@@ -836,6 +846,8 @@ public class CardServiceImpl implements ICardService {
                             if (null != dto.getProductId()) {
                                 cardGoods.setProductId(String.valueOf(dto.getProductId()));
                             }
+                            cardGoods.setWarehouseId(warehouseId);
+                            cardGoods.setWarehouseName(warehouseName);
                         }
                         //按次卡 在前面的优先分配
                         int index = 0;
