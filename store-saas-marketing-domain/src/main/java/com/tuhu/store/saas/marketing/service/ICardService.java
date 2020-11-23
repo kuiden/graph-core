@@ -71,5 +71,7 @@ public  interface ICardService {
 
     List<QueryCardItemResp> queryCardItemByCustomer(QueryByCustomerIdReq req);
 
+    List<QueryCardItemResp> allotCardItem(AllotCardItemReq req);
+
 
 }
