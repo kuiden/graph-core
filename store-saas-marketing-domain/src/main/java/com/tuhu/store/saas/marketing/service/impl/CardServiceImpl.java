@@ -847,8 +847,12 @@ public class CardServiceImpl implements ICardService {
                                 QueryCardItemResp queryCardItemResp = new QueryCardItemResp();
                                 BeanUtils.copyProperties(item, queryCardItemResp);
                                 queryCardItemResp.setRemainQuantity(1);
-                                queryCardItemResp.setService(cardService);
-                                queryCardItemResp.setGoods(cardGoods);
+                                //服务
+                                if (item.getType() == 1) {
+                                    queryCardItemResp.setService(cardService);
+                                } else { //商品
+                                    queryCardItemResp.setGoods(cardGoods);
+                                }
                                 resultList.add(queryCardItemResp);
                                 remainQuantity--;
                                 num--;
