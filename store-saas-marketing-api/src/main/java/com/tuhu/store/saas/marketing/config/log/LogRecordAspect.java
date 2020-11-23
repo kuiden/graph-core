@@ -40,7 +40,7 @@ import java.util.UUID;
 public class LogRecordAspect {
     private final static AntPathMatcher matcher = new AntPathMatcher();
     private final static String REQUEST_ID_KEY = "requestId";
-    @Value("${sys.req.whitelist.urls:/feign/**}")
+    @Value("${sys.req.whitelist.urls:/feign1/**}")
     private String SYS_REQ_WHITELIST_URLS;
     @Value("${sys.req.save.switch:true}")
     private Boolean SAVE_SWITCH;
