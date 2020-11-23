@@ -1,6 +1,8 @@
 package com.tuhu.store.saas.marketing.config.log;
 
 import com.alibaba.fastjson.JSON;
+import com.tuhu.boot.common.exceptions.BizException;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.constant.ApiCommonConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SysReqLog;
@@ -70,7 +72,20 @@ public class LogRecordAspect {
         } catch (Exception e) {
             log.error(method + "doAroundError", e);
         }
-        Object result = pjp.proceed();
+        Object result = null;
+        try {
+            result = pjp.proceed();
+        } catch (BizException e){
+            BizBaseResponse response = new BizBaseResponse();
+            response.setCode(e.getErrorCode().getCode());
+            response.setMessage(e.getErrorMessage());
+            result = response;
+        } catch (Exception e){
+            BizBaseResponse response = new BizBaseResponse();
+            response.setCode(-9999);
+            response.setMessage(getValue(e.getMessage()));
+            result = response;
+        }
         long endTime = new Date().getTime();
         long time = endTime - startTime;
         if (SAVE_SWITCH) {
