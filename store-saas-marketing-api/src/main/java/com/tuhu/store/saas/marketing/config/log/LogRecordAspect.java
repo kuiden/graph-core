@@ -38,7 +38,6 @@ import java.util.UUID;
 @Slf4j
 @Aspect
 @Component
-@Order(ApiCommonConstant.ORDERED_CUSTOM_HIGHEST - 10)
 public class LogRecordAspect {
     private final static AntPathMatcher matcher = new AntPathMatcher();
     private final static String REQUEST_ID_KEY = "requestId";
