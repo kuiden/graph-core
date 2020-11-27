@@ -163,8 +163,12 @@ public class CardServiceImpl implements ICardService {
         if (!card.getStatus().equals(CardStatusEnum.ACTIVATED.getEnumCode())) {
             throw new StoreSaasMarketingException("卡未激活");
         }
-        if (card.getForever().intValue() == 0 && DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()) {
-            throw new StoreSaasMarketingException("次卡已过期");
+        //如果次数为正数才判断次卡是否过期
+        Map<String, Integer> itemQuantity = updateCardVo.getItemQuantity();
+        for (Integer value : itemQuantity.values()) {
+            if (value.compareTo(0) > 0 && card.getForever().intValue() == 0 && DataTimeUtil.getDateZeroTime(card.getExpiryDate()).getTime() < System.currentTimeMillis()){
+                throw new StoreSaasMarketingException("次卡已过期");
+            }
         }
 
         String key = "updateCardQuantity:" + updateCardVo.getCardId();
@@ -180,7 +184,6 @@ public class CardServiceImpl implements ICardService {
                         .andCardIdEqualTo(updateCardVo.getCardId());
                 List<CrdCardItem> cardItems = cardItemMapper.selectByExample(example);
                 Map<String,List<CrdCardItem>> cardItemsMap = cardItems.stream().collect(Collectors.groupingBy(x->x.getGoodsId()));
-                Map<String, Integer> itemQuantity = updateCardVo.getItemQuantity();
                 Date date = new Date();
                 for (String goodsId : cardItemsMap.keySet()){
                     if (itemQuantity.containsKey(goodsId)){
