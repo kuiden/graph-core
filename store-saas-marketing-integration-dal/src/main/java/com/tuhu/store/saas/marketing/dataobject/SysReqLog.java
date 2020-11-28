@@ -23,40 +23,40 @@ public class SysReqLog implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
     @TableField(value = "store_id")
-    private Long storeId;
+    private Long storeId = 0L;
     @TableField(value = "company_id")
-    private Long companyId;
+    private Long companyId = 0L;
     @TableField(value = "open_id")
-    private String openId;
+    private String openId = "";
     @TableField(value = "store_user_id")
-    private String storeUserId;
+    private String storeUserId = "";
     @TableField(value = "user_id")
-    private Long userId;
+    private Long userId = 0L;
     @TableField(value = "account")
-    private String account;
+    private String account = "";
     @TableField(value = "org_id")
-    private Long orgId;
+    private Long orgId  = 0L;
     @TableField(value = "tenant_id")
-    private Long tenantId;
+    private Long tenantId  = 0L;
     @TableField(value = "username")
-    private String username;
+    private String username  = "";
     @TableField(value = "nick_name")
-    private String nickName;
-    private String token;
-    private String source;
+    private String nickName = "";
+    private String token = "";
+    private String source  = "";
     @TableField(value = "reqUrl")
-    private String reqUrl;
+    private String reqUrl = "";
     @TableField(value = "method")
-    private String method;
+    private String method = "";
     @TableField(value = "reqUri")
-    private String reqUri;
+    private String reqUri = "";
     @TableField(value = "reqParams")
-    private String reqParams;
+    private String reqParams  = "";
     @TableField(value = "resParams")
-    private String resParams;
+    private String resParams  = "";
     @TableField(value = "createTime")
-    private Date createTime;
-    private String time;
+    private Date createTime = new Date();
+    private String time = "";
     @TableField(value = "requestId")
-    private String requestId;
+    private String requestId = "";
 }
