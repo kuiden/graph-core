@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author wangyuqing
@@ -48,6 +49,7 @@ public class QueryCardItemResp implements Serializable {
     /*
      * 剩余次数
      */
+    @ApiModelProperty("可用次数")
     private Integer remainQuantity;
 
     /**
@@ -83,6 +85,9 @@ public class QueryCardItemResp implements Serializable {
     private CardGoods goods;
 
     private CardService service;
+
+    @ApiModelProperty("拥有相同商品的次卡们(临近有效期的在前面)")
+    private List<Cards> cards;
 
     @Data
     public static class CardGoods implements Serializable{
@@ -241,6 +246,20 @@ public class QueryCardItemResp implements Serializable {
          * 是否上线（’1’-上线，’0’-未上线）
          */
         private Integer online;
+
+    }
+
+    @Data
+    public static class Cards implements Serializable{
+
+        @ApiModelProperty("卡ID")
+        private Long cardId;
+
+        @ApiModelProperty("卡名称")
+        private String cardName;
+
+        @ApiModelProperty("剩余次数")
+        private Integer remainQuantity;
 
     }
 }
