@@ -13,4 +13,6 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
  */
 public interface SeckillActivityMapper extends BaseWriteMapper<SeckillActivity> {
 
+    int autoUpdateOffShelf();
+
 }

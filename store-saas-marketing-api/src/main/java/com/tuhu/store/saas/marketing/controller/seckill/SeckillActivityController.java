@@ -1,10 +1,14 @@
 package com.tuhu.store.saas.marketing.controller.seckill;
 
 
+import com.baomidou.mybatisplus.plugins.Page;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillClassificationReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,11 +26,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/seckill/activity")
 public class SeckillActivityController extends BaseApi {
+    @Autowired
+    private SeckillActivityService seckillActivityService;
 
-    @PostMapping(value = "/list")
+    @PostMapping(value = "/pageList")
     @ApiOperation(value = "秒杀活动列表 1未开始、2进行中、9已下架")
-    public BizBaseResponse list(){
-        return new BizBaseResponse();
+    public BizBaseResponse<Page<SeckillActivityResp>> pageList(@RequestBody SeckillActivityReq req){
+        return new BizBaseResponse(seckillActivityService.pageList(req));
     }
 
     @PostMapping(value = "/dataStatistics")
@@ -40,13 +46,13 @@ public class SeckillActivityController extends BaseApi {
 
     @PostMapping(value = "/onShelf")
     @ApiOperation(value = "编辑上架")
-    public BizBaseResponse onShelf(@Validated @RequestBody SeckillClassificationReq req){
+    public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityReq req){
         return new BizBaseResponse();
     }
 
     @PostMapping(value = "/offShelf")
     @ApiOperation(value = "活动下架")
-    public BizBaseResponse stop(@Validated @RequestBody SeckillClassificationReq req){
+    public BizBaseResponse offShelf(@Validated @RequestBody SeckillActivityReq req){
         return new BizBaseResponse();
     }
 
