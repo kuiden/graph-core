@@ -4,10 +4,7 @@ import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
-import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
-import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
-import com.tuhu.store.saas.marketing.request.card.MiniQueryCardReq;
-import com.tuhu.store.saas.marketing.request.card.QueryCardItemReq;
+import com.tuhu.store.saas.marketing.request.card.*;
 import com.tuhu.store.saas.marketing.response.card.CardResp;
 import com.tuhu.store.saas.marketing.response.card.QueryCardItemResp;
 import com.tuhu.store.saas.marketing.service.ICardService;
@@ -85,5 +82,20 @@ public class MiniCardApi extends BaseApi {
 
     /****************************************H5*******************************************************/
 
+    @PostMapping("/queryCardItemByCustomer")
+    @ApiOperation("根据客户查询次卡商品/服务项目")
+    public BizBaseResponse<List<QueryCardItemResp>> queryCardItemByCustomer(@Validated @RequestBody QueryByCustomerIdReq req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        return new BizBaseResponse(iCardService.queryCardItemByCustomer(req));
+    }
+
+    @PostMapping("/allotCardItem")
+    @ApiOperation("分配次卡项目 - 临近有效期优先使用")
+    public BizBaseResponse<List<QueryCardItemResp>> allotCardItem(@Validated @RequestBody AllotCardItemReq req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        return new BizBaseResponse(iCardService.allotCardItem(req));
+    }
 
 }

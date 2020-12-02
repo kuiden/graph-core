@@ -1,17 +1,21 @@
 package com.tuhu.store.saas.marketing.service.customergroup;
 
+
 import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.CustomerCardOrder;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.SpringApplicationContextUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
-
+@Slf4j
 public abstract class AbstractFactorFilter implements CustomerGroupFactorFilter{
 
     private CustomerGroupFactorFilter filter;
@@ -30,8 +34,16 @@ public abstract class AbstractFactorFilter implements CustomerGroupFactorFilter{
      * @param list2
      * @return
      */
-    public List<String> getInterSections(List<String> list1,List<String> list2){
-        return list1.stream().filter(item -> list2.contains(item)).collect(toList());
+    public List<String> getInterSections(List<String> list1, List<String> list2) {
+        log.info("getInterSections-> req  list1：{}, list2:{}", list1, list2);
+        List<String> result = null;
+        if (CollectionUtils.isNotEmpty(list1) && CollectionUtils.isNotEmpty(list2)) {
+            result = list1.stream().filter(item -> list2.contains(item)).collect(toList());
+        } else {
+            result = new ArrayList<>(0);
+        }
+        log.info("getInterSections -> result : {}", result);
+        return result;
     }
 
     /**
