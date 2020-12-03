@@ -25,6 +25,9 @@ public class SeckillActivityReq implements Serializable {
     @ApiModelProperty(value = "状态 0未开始、1进行中、9已下架")
     private Integer status = 0;
 
+    @ApiModelProperty(value = "活动标题")
+    private String activityTitle;
+
     private Long storeId;
 
     private Long tenantId;

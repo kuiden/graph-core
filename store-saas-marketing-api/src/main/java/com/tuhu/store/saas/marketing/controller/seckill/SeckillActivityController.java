@@ -14,10 +14,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,7 +28,7 @@ import java.util.List;
  */
 @Api(value = "SeckillActivityController", tags = "秒杀活动")
 @RestController
-@RequestMapping("/seckill/activity")
+@RequestMapping("/mini/seckill/activity")
 public class SeckillActivityController extends BaseApi {
     @Autowired
     private SeckillActivityService seckillActivityService;
@@ -44,13 +41,13 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.pageList(req));
     }
 
-    @PostMapping(value = "/dataStatistics")
+    @GetMapping(value = "/dataStatistics")
     @ApiOperation(value = "活动数据-数据统计")
     public BizBaseResponse<SeckillActivityStatisticsResp> dataStatistics(@Param("activityId") String activityId) {
         return new BizBaseResponse(seckillActivityService.dataStatistics(activityId));
     }
 
-    @PostMapping(value = "/pageList")
+    @PostMapping(value = "/pageBuyList")
     @ApiOperation(value = "活动数据-已购客户、浏览未购买客户分页列表")
     public BizBaseResponse<Page<SeckillActivityResp>> pageBuyList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
@@ -59,7 +56,7 @@ public class SeckillActivityController extends BaseApi {
     }
 
 
-    @PostMapping(value = "/participateDetail")
+    @GetMapping(value = "/participateDetail")
     @ApiOperation(value = "参与详情")
     public BizBaseResponse<List<SeckillRegistrationRecordResp>> participateDetail(@Param("customersId") String customersId) {
         return new BizBaseResponse(seckillActivityService.participateDetail(customersId));
@@ -72,7 +69,7 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse();
     }
 
-    @PostMapping(value = "/offShelf")
+    @GetMapping(value = "/offShelf")
     @ApiOperation(value = "活动下架")
     public BizBaseResponse<Boolean> offShelf(@Param("activityId") String activityId) {
         return new BizBaseResponse(seckillActivityService.offShelf(activityId));
