@@ -67,6 +67,8 @@ public class SeckillActivity implements Serializable {
     @TableField("is_delete")
     private Integer isDelete;
 
+    private Integer status;
+
 
     public static final String ID = "id";
 
@@ -83,5 +85,7 @@ public class SeckillActivity implements Serializable {
     public static final String UPDATE_TIME = "update_time";
 
     public static final String IS_DELETE = "is_delete";
+
+    public static final String STATUS = "status";
 
 }

@@ -1,9 +1,9 @@
 package com.tuhu.store.saas.marketing.request.seckill;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * <p>
@@ -16,34 +16,19 @@ import java.util.Date;
 @Data
 public class SeckillActivityReq implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    @ApiModelProperty(value = "页号")
+    private Integer pageNum = 1;
 
-    /**
-     * 主键
-     */
-    private String id;
-    /**
-     * 租户id
-     */
+    @ApiModelProperty(value = "每页条数")
+    private Integer pageSize = 10;
+
+    @ApiModelProperty(value = "状态 0未开始、1进行中、9已下架")
+    private Integer status = 0;
+
+    private Long storeId;
+
     private Long tenantId;
-    /**
-     * 创建人
-     */
-    private String createUser;
-    /**
-     * 修改人
-     */
-    private String updateUser;
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-    /**
-     * 修改时间
-     */
-    private Date updateTime;
-    /**
-     * 删除标识 0未删除 1删除
-     */
-    private Integer isDelete;
+
+    @ApiModelProperty(value = "手机号")
+    private String phone;
 }
