@@ -1,5 +1,7 @@
 package com.tuhu.store.saas.marketing.response.seckill;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,36 +16,18 @@ import java.util.Date;
  * @since 2020-12-02
  */
 @Data
+@ApiModel(value = "SeckillActivityResp", description = "秒杀活动记录")
 public class SeckillActivityResp implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键
-     */
+    @ApiModelProperty(value = "活动id")
     private String id;
-    /**
-     * 租户id
-     */
-    private Long tenantId;
-    /**
-     * 创建人
-     */
-    private String createUser;
-    /**
-     * 修改人
-     */
-    private String updateUser;
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-    /**
-     * 修改时间
-     */
-    private Date updateTime;
-    /**
-     * 删除标识 0未删除 1删除
-     */
-    private Integer isDelete;
+    @ApiModelProperty(value = "状态")
+    private Integer status;
+    @ApiModelProperty(value = "状态名称")
+    private String statusName;
+    @ApiModelProperty(value = "售出个数")
+    private Integer salesNumber = 0;
+    @ApiModelProperty(value = "总个数")
+    private Integer totalNumber;
+    @ApiModelProperty(value = "活动标题")
+    private String activityTitle;
 }

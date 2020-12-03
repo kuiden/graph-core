@@ -21,7 +21,6 @@
         update_time = now(),
         update_user = 'autoUpdateOffShelf'
         where 1=1
-        and status = 2
         and end_time <![CDATA[  < ]]> now()
     </update>
 
