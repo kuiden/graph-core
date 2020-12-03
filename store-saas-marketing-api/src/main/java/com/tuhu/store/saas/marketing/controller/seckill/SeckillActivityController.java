@@ -34,7 +34,7 @@ public class SeckillActivityController extends BaseApi {
     private SeckillActivityService seckillActivityService;
 
     @PostMapping(value = "/pageList")
-    @ApiOperation(value = "秒杀活动列表 status 1未开始、2进行中、9已下架")
+    @ApiOperation(value = "秒杀活动列表 status 0未开始、1进行中、9已下架 , 全部状态-1")
     public BizBaseResponse<Page<SeckillActivityResp>> pageList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
@@ -47,12 +47,12 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.dataStatistics(activityId));
     }
 
-    @PostMapping(value = "/pageBuyList")
-    @ApiOperation(value = "活动数据-已购客户、浏览未购买客户分页列表")
-    public BizBaseResponse<Page<SeckillActivityResp>> pageBuyList(@RequestBody SeckillActivityReq req) {
+    @PostMapping(value = "/pageBuyOrBrowseList")
+    @ApiOperation(value = "活动数据-已购客户、浏览未购买客户分页列表 状态 0已购客户、1浏览未购买")
+    public BizBaseResponse<Page<SeckillActivityResp>> pageBuyOrBrowseList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
-        return new BizBaseResponse(seckillActivityService.pageBuyList(req));
+        return new BizBaseResponse(seckillActivityService.pageBuyOrBrowseList(req));
     }
 
 

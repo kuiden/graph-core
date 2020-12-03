@@ -2,6 +2,9 @@ package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 
 import com.tuhu.base.mapper.BaseWriteMapper;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +17,7 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 public interface SeckillActivityMapper extends BaseWriteMapper<SeckillActivity> {
 
     int autoUpdateOffShelf();
+
+    List<SeckillActivity> pageList(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("activityTitle") String activityTitle, @Param("status") Integer status);
 
 }

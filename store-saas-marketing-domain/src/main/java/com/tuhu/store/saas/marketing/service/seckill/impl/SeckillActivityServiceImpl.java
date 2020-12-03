@@ -1,15 +1,16 @@
 package com.tuhu.store.saas.marketing.service.seckill.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
 import com.tuhu.springcloud.common.bean.BeanUtil;
+import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
@@ -17,13 +18,18 @@ import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +43,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMapper, SeckillActivity> implements SeckillActivityService {
+    @Autowired
+    private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
     @Override
     public int autoUpdateOffShelf() {
         return this.baseMapper.autoUpdateOffShelf();
@@ -47,13 +56,16 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         log.info("seckillPageList{}", JSON.toJSONString(req));
         PageInfo<SeckillActivityResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
-        PageInfo<SeckillActivity> pageInfo = new PageInfo<>(this.selectList(buildSearchParams(req)));
+        List selectList = this.baseMapper.pageList(req.getTenantId(), req.getStoreId(), req.getActivityTitle(), req.getStatus());
+        PageInfo<SeckillActivity> pageInfo = new PageInfo<>(selectList);
         List<SeckillActivityResp> responseList = Lists.newArrayList();
         List<SeckillActivity> list = pageInfo.getList();
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
-            //TODO map 返回下单数量
-            Map<String, Integer> activityIdNumMap = new HashMap<>();
-            List<String> ActivityId = new ArrayList<>();
+            List<String> activityIds = new ArrayList<>();
+            for (SeckillActivity activity : list) {
+                activityIds.add(activity.getId());
+            }
+            Map<String, Integer> activityIdNumMap = seckillRegistrationRecordService.activityIdNumMap(activityIds);
             responseList = list.stream().map(o -> {
                 SeckillActivityResp response = new SeckillActivityResp();
                 BeanUtils.copyProperties(o, response);
@@ -68,11 +80,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     /**
      * 返回数据组装
+     *
      * @param response
      * @param req
      */
-    private void dataHander(SeckillActivityResp response,SeckillActivityReq req, SeckillActivity o, Map<String, Integer> activityIdNumMap){
-        //TODO 返回下单数量
+    private void dataHander(SeckillActivityResp response, SeckillActivityReq req, SeckillActivity o, Map<String, Integer> activityIdNumMap) {
         Integer num = activityIdNumMap.get(o.getId());
         if (null != num) {
             response.setSalesNumber(num);
@@ -85,17 +97,17 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             response.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
         } else {
             response.setStatus(req.getStatus());
-            if (o.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
+            if (o.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus()) || SeckillConstant.STATUS.equals(req.getStatus())) {
                 Date startTime = o.getStartTime();
                 Date endTime = o.getEndTime();
                 Date now = new Date();
-                if(startTime.after(now)){
+                if (startTime.after(now)) {
                     // 未开始定义：当前时间小于活动开始时间，活动为进行中状态
                     response.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
-                }else if(startTime.before(now) && endTime.after(now)){
+                } else if (startTime.before(now) && endTime.after(now)) {
                     // 进行中定义：当前时间大于等于活动开始时间且小于结束时间，活动为进行中状态
                     response.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
-                }else {
+                } else {
                     // 已结束定义：当前时间大于等于活动结束时间，活动为进行中状态
                     response.setStatusName(SeckillActivityStatusEnum.XJ.getStatusName());
                 }
@@ -103,40 +115,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 response.setStatusName(SeckillActivityStatusEnum.XJ.getStatusName());
             }
         }
-    }
-
-
-    /**
-     * 构建查询条件
-     *
-     * @param req
-     * @return
-     */
-    private EntityWrapper<SeckillActivity> buildSearchParams(SeckillActivityReq req) {
-        EntityWrapper<SeckillActivity> search = new EntityWrapper<>();
-        search.orderBy(SeckillActivity.UPDATE_TIME, Boolean.FALSE);
-        if (null != req.getStoreId()) {
-            search.eq(SeckillActivity.STORE_ID, req.getStoreId());
-        }
-        if (null != req.getTenantId()) {
-            search.eq(SeckillActivity.TENANT_ID, req.getTenantId());
-        }
-        if (req.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
-            // 未开始定义：当前时间小于活动开始时间
-            search.gt(SeckillActivity.START_TIME, new Date()); //>
-        }else if(req.getStatus().equals(SeckillActivityStatusEnum.SJ.getStatus())){
-            // 进行中定义：当前时间大于等于活动开始时间且小于结束时间，活动为进行中状态
-            search.le(SeckillActivity.START_TIME, new Date()); //<=
-            search.gt(SeckillActivity.END_TIME, new Date());//>
-        }else {
-            // 已结束定义：当前时间大于等于活动结束时间，活动为进行中状态
-            search.andNew().lt(SeckillActivity.END_TIME, new Date()).//<
-            or().eq(SeckillActivity.STATUS, SeckillActivityStatusEnum.XJ.getStatus());
-        }
-        if (null != req.getActivityTitle()) {
-            search.eq(SeckillActivity.ACTIVITY_TITLE, req.getActivityTitle());
-        }
-        return search;
     }
 
     @Override
@@ -173,18 +151,20 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Override
     public List<SeckillRegistrationRecordResp> participateDetail(String customersId) {
-
-        return null;
+        if(null == customersId){
+            throw new StoreSaasMarketingException("客户ID不能为空");
+        }
+        return seckillRegistrationRecordService.participateDetail(customersId);
     }
 
     @Override
-    public PageInfo<SeckillRegistrationRecordResp> pageBuyList(SeckillActivityReq req) {
-        PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
-        PageHelper.startPage(req.getPageNum(), req.getPageSize());
-        //TODO 查询报名记录
-        PageInfo<SeckillActivity> pageInfo = new PageInfo<>();
-        BeanUtil.copyProperties(pageInfo, responsePageInfo);
-        responsePageInfo.setList(null);
-        return responsePageInfo;
+    public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
+        check(req.getSeckillActivityId());
+        if (req.getStatus().equals(0)) {//购买记录
+            return seckillRegistrationRecordService.pageBuyOrBrowseList(req);
+        } else {
+            //TODO 后面灯哥处理
+            return null;
+        }
     }
 }

@@ -21,23 +21,37 @@ import java.util.Date;
 @ApiModel(value = "SeckillRegistrationRecordResp", description = "秒杀活动记录")
 public class SeckillRegistrationRecordResp {
 
-    @ApiModelProperty(value = "客戶id")
-    private String customersId;
+    @ApiModelProperty(value = "秒杀活动主键id")
+    private String seckillActivityId;
 
-    @ApiModelProperty(value = "客户手机")
-    private String phone;
+    @ApiModelProperty(value = "报名客户id")
+    private String customerId;
 
-    @ApiModelProperty(value = "客户名称")
-    private String name;
+    @ApiModelProperty(value = "报名客户名称")
+    private String customerName;
 
-    @ApiModelProperty(value = "是否新客户 true 新客户 false 非新客户")
-    private boolean newCustomers;
+    @ApiModelProperty(value = "是否新客户 0:否 1:是")
+    private Integer isNewCustomer = 0;
 
-    @ApiModelProperty(value = "消费金额（元）")
-    private BigDecimal amount = BigDecimal.ZERO;
+    @ApiModelProperty(value = "购买人手机号码")
+    private String buyerPhoneNumber;
+
+    @ApiModelProperty(value = "使用人手机号码")
+    private String userPhoneNumber;
+
+    @ApiModelProperty(value = "购买数量")
+    private Long quantity;
+
+    @ApiModelProperty(value = "购买金额")
+    private BigDecimal expectAmount;
 
     @ApiModelProperty(value = "状态 购买N次")
     private String statusName;
+
+    @ApiModelProperty(value = "购买时间")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date paymentTime;
 
     @ApiModelProperty(value = "浏览时间")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
