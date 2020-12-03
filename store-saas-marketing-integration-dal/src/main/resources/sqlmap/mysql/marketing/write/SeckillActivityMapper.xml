@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.SeckillActivity">
+        <id column="id" property="id" />
+        <result column="tenant_id" property="tenantId" />
+        <result column="store_id" property="storeId" />
+        <result column="create_user" property="createUser" />
+        <result column="update_user" property="updateUser" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="is_delete" property="isDelete" />
+    </resultMap>
+
+    <update id="autoUpdateOffShelf">
+        update seckill_activity
+        set
+        status = 9 ,
+        update_time = now(),
+        update_user = 'autoUpdateOffShelf'
+        where 1=1
+        and status = 2
+        and end_time <![CDATA[  < ]]> now()
+    </update>
+
+</mapper>
