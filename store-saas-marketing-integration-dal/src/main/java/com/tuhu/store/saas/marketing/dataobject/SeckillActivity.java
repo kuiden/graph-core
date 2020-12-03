@@ -67,6 +67,15 @@ public class SeckillActivity implements Serializable {
     @TableField("is_delete")
     private Integer isDelete;
 
+    private Integer status;
+    @TableField("activity_title")
+    private String activityTitle;
+
+    @TableField("start_time")
+    private Date startTime;
+
+    @TableField("end_time")
+    private Date endTime;
 
     public static final String ID = "id";
 
@@ -80,8 +89,16 @@ public class SeckillActivity implements Serializable {
 
     public static final String CREATE_TIME = "create_time";
 
+    public static final String END_TIME = "end_time";
+
+    public static final String START_TIME = "start_time";
+
     public static final String UPDATE_TIME = "update_time";
 
     public static final String IS_DELETE = "is_delete";
+
+    public static final String STATUS = "status";
+
+    public static final String ACTIVITY_TITLE = "activity_title";
 
 }
