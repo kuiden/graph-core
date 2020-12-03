@@ -28,7 +28,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
      //   registry.addInterceptor(customerInterceptor).addPathPatterns("/mini/c/**");
         //B端拦截器
         registry.addInterceptor(userInterceptor)
-                .addPathPatterns("/card/**", "/marketing/**", "/mini/**", "/finance/**", "/distribution/**", "/order/reservation/**", "/customer/group/**")
+                .addPathPatterns("/card/**", "/marketing/**", "/mini/**", "/finance/**", "/distribution/**", "/order/reservation/**", "/customer/group/**","/seckill/**")
                 .excludePathPatterns("/feign/**", "/mini/c/coupon/**","/mini/card/client/*","/mini/card/consumptionHistory");
 
         registry.addInterceptor(endUserInterceptor)
