@@ -26,7 +26,7 @@ public class MysqlGenerator {
         AutoGenerator mpg = new AutoGenerator();
         // 全局配置
         GlobalConfig gc = new GlobalConfig();
-        gc.setOutputDir("D://generator");
+        gc.setOutputDir("D://generator1");
         gc.setFileOverride(true);
         gc.setActiveRecord(false);
         gc.setEnableCache(false);// XML 二级缓存
@@ -45,16 +45,16 @@ public class MysqlGenerator {
         DataSourceConfig dsc = new DataSourceConfig();
         dsc.setDbType(DbType.MYSQL);
         dsc.setDriverName("com.mysql.jdbc.Driver");
-        dsc.setUsername("user_shop");
-        dsc.setPassword("Itsme@999");
+        dsc.setUsername("common_saas");
+        dsc.setPassword("aYorNsoVDIc@WqJB");
         dsc.setUrl(
-                "jdbc:mysql://172.16.20.168:3306/db库名?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowMultiQueries=true");
+                "jdbc:mysql://172.17.7.4:3306/store_saas_marketing?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowMultiQueries=true");
         mpg.setDataSource(dsc);
         // 策略配置
         StrategyConfig strategy = new StrategyConfig();
         //        strategy.setTablePrefix("app_");// 此处可以修改为您的表前缀
         strategy.setNaming(NamingStrategy.underline_to_camel);// 表名生成策略
-        strategy.setInclude(new String[] { "test_user", "test_order" }); // 需要生成的表
+        strategy.setInclude(new String[] { "attached_info","seckill_activity"}); // 需要生成的表
         // strategy.setExclude(new String[]{"test"}); // 排除生成的表
         // 自定义实体父类
         //        strategy.setSuperEntityClass("top.ibase4j.core.base.BaseModel");
