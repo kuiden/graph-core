@@ -5,6 +5,16 @@
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.SeckillActivity">
         <id column="id" property="id" />
+        <result column="head_image" property="headImage" />
+        <result column="cad_card_expiry_date_type" property="cadCardExpiryDateType" />
+        <result column="cad_card_expiry_date_time" property="cadCardExpiryDateTime" />
+        <result column="cad_card_expiry_date_day" property="cadCardExpiryDateDay" />
+        <result column="sell_number_type" property="sellNumberType" />
+        <result column="sell_number" property="sellNumber" />
+        <result column="solo_sell_number_type" property="soloSellNumberType" />
+        <result column="solo_sell_number" property="soloSellNumber" />
+        <result column="original_price" property="originalPrice" />
+        <result column="new_price" property="newPrice" />
         <result column="tenant_id" property="tenantId" />
         <result column="store_id" property="storeId" />
         <result column="create_user" property="createUser" />
@@ -12,10 +22,12 @@
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />
         <result column="is_delete" property="isDelete" />
-        <result column="end_time" property="endTime" />
-        <result column="start_time" property="startTime" />
         <result column="status" property="status" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
         <result column="activity_title" property="activityTitle" />
+        <result column="template_id" property="templateId" />
+
     </resultMap>
 
     <update id="autoUpdateOffShelf">

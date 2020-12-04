@@ -9,6 +9,7 @@ import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ public class SeckillActivityController extends BaseApi {
     @Autowired
     private SeckillActivityService seckillActivityService;
 
+    @Autowired
+    private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
     @PostMapping(value = "/pageList")
     @ApiOperation(value = "秒杀活动列表 status 0未开始、1进行中、9已下架 , 全部状态-1")
     public BizBaseResponse<Page<SeckillActivityResp>> pageList(@RequestBody SeckillActivityReq req) {
@@ -44,7 +48,7 @@ public class SeckillActivityController extends BaseApi {
     @GetMapping(value = "/dataStatistics")
     @ApiOperation(value = "活动数据-数据统计")
     public BizBaseResponse<SeckillActivityStatisticsResp> dataStatistics(@Param("activityId") String activityId) {
-        return new BizBaseResponse(seckillActivityService.dataStatistics(activityId));
+        return new BizBaseResponse(seckillRegistrationRecordService.dataStatistics(activityId));
     }
 
     @PostMapping(value = "/pageBuyOrBrowseList")
@@ -59,7 +63,7 @@ public class SeckillActivityController extends BaseApi {
     @GetMapping(value = "/participateDetail")
     @ApiOperation(value = "参与详情")
     public BizBaseResponse<List<SeckillRegistrationRecordResp>> participateDetail(@Param("customersId") String customersId) {
-        return new BizBaseResponse(seckillActivityService.participateDetail(customersId));
+        return new BizBaseResponse(seckillRegistrationRecordService.participateDetail(customersId));
     }
 
 

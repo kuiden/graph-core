@@ -33,20 +33,40 @@
     </resultMap>
 
     <select id="pageBuyOrBrowseList" resultMap="BaseResultMap">
-        select
+        SELECT
         store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number,
         count(1) as quantity,sum(expect_amount) as expect_amount,max(is_new_customer) as is_new_customer
-        from seckill_registration_record
-        where
+        FROM seckill_registration_record
+        WHERE
         1=1
-        and is_delete = 0
-        and pay_status = 1
-        and store_id = #{storeId}
-        and tenant_id = #{tenantId}
+        AND is_delete = 0
+        AND pay_status = 1
+        AND store_id = #{storeId}
+        AND tenant_id = #{tenantId}
+        AND seckill_activity_id = #{seckillActivityId}
         <if test="phone != null and phone != ''">
             and buyer_phone_number like CONCAT('%',#{phone},'%')
         </if>
         group by store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number
         order by create_time desc
+    </select>
+
+    <select id="dataStatistics" resultMap="BaseResultMap">
+        SELECT
+        store_id,tenant_id,seckill_activity_id,
+        SUM(quantity) AS quantity,
+        SUM(expect_amount) AS expect_amount
+        FROM seckill_registration_record
+        WHERE
+        1=1
+        AND is_delete = 0
+        AND pay_status = 1
+        AND store_id = #{storeId}
+        AND tenant_id = #{tenantId}
+        AND seckill_activity_id = #{seckillActivityId}
+        <if test="type != null and type == 0 ">
+            AND date_format(payment_time, '%Y-%m-%d') = date_format(now(), '%Y-%m-%d')
+        </if>
+        GROUP BY store_id,tenant_id,seckill_activity_id
     </select>
 </mapper>

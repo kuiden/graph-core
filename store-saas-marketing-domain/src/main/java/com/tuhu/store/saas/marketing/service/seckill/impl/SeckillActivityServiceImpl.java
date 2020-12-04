@@ -10,7 +10,6 @@ import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
-import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
@@ -63,7 +62,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
             List<String> activityIds = new ArrayList<>();
             for (SeckillActivity activity : list) {
-                activityIds.add(activity.getId());
+                activityIds .add(activity.getId());
             }
             Map<String, Integer> activityIdNumMap = seckillRegistrationRecordService.activityIdNumMap(activityIds);
             responseList = list.stream().map(o -> {
@@ -127,7 +126,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         return this.updateById(activity);
     }
 
-    private SeckillActivity check(String activityId) {
+    public SeckillActivity check(String activityId) {
         if (null == activityId) {
             throw new StoreSaasMarketingException("活动ID不能为空");
         }
@@ -141,21 +140,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         return activity;
     }
 
-    @Override
-    public SeckillActivityStatisticsResp dataStatistics(String activityId) {
-        SeckillActivity activity = check(activityId);
-        SeckillActivityStatisticsResp resp = new SeckillActivityStatisticsResp();
-        //TODO 各种取数据计算
-        return resp;
-    }
 
-    @Override
-    public List<SeckillRegistrationRecordResp> participateDetail(String customersId) {
-        if(null == customersId){
-            throw new StoreSaasMarketingException("客户ID不能为空");
-        }
-        return seckillRegistrationRecordService.participateDetail(customersId);
-    }
+
 
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {

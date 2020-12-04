@@ -9,14 +9,19 @@ import com.google.common.collect.Lists;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -33,7 +38,8 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillRegistrationRecordMapper, SeckillRegistrationRecord> implements SeckillRegistrationRecordService {
-
+    @Autowired
+    private SeckillActivityService seckillActivityService;
     /**
      * 活动对应的支付成功的订单
      *
@@ -80,6 +86,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     @Override
     public List<SeckillRegistrationRecordResp> participateDetail(String customersId) {
+        if(null == customersId){
+            throw new StoreSaasMarketingException("客户ID不能为空");
+        }
         EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
         wrapper.eq(SeckillRegistrationRecord.CUSTOMER_ID, customersId);
         wrapper.eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_STATUS);
@@ -95,5 +104,14 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             }
         }
         return recordResps;
+    }
+
+    @Override
+    public SeckillActivityStatisticsResp dataStatistics(String activityId) {
+        SeckillActivity activity = seckillActivityService.check(activityId);
+        SeckillActivityStatisticsResp resp = new SeckillActivityStatisticsResp();
+        resp.setActivityTitle(activity.getActivityTitle());
+        //TODO 各种取数据计算
+        return resp;
     }
 }
