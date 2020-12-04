@@ -13,8 +13,8 @@ import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
@@ -75,6 +75,35 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         BeanUtil.copyProperties(pageInfo, responsePageInfo);
         responsePageInfo.setList(responseList);
         return responsePageInfo;
+    }
+
+    @Override
+    public List<SeckillActivityListResp> clientActivityList(Long storeId, Long tenantId) {
+        log.info("clientPageList -> storeId:{},tenantId:{}", storeId, tenantId);
+        List<SeckillActivityListResp> result = new ArrayList<>();
+        List<SeckillActivity> activityList = new ArrayList<>();
+        //查门店所有进行中和未开始的秒杀活动，优先展示进行中的活动，再展示未开始的活动
+        activityList.addAll(this.baseMapper.queryStart(storeId,tenantId));
+        activityList.addAll(this.baseMapper.queryNotStart(storeId,tenantId));
+        //查询活动对应的支付成功的订单数量
+        List<String> activityIds = activityList.stream().map(x->x.getId()).collect(Collectors.toList());
+        Map<String, Integer> activityIdNumMap = seckillRegistrationRecordService.activityIdNumMap(activityIds);
+        //组装返回数据
+        for (SeckillActivity seckillActivity : activityList){
+            SeckillActivityListResp resp = new SeckillActivityListResp();
+            BeanUtils.copyProperties(seckillActivity,resp);
+            if (resp.getStatus().equals(SeckillActivityStatusEnum.SJ.getStatus())){
+                resp.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
+            } else if (resp.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())){
+                resp.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
+            }
+            resp.setTotalNumber(seckillActivity.getSellNumber());
+            if (activityIdNumMap.containsKey(seckillActivity.getId())){
+                resp.setSalesNumber(activityIdNumMap.get(seckillActivity.getId()));
+            }
+            result.add(resp);
+        }
+        return result;
     }
 
     /**

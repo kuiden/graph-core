@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
@@ -32,6 +33,11 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      * @return
      */
     PageInfo<SeckillActivityResp> pageList(SeckillActivityReq req);
+
+    /*
+     * 查询活动列表 - C端
+     */
+    List<SeckillActivityListResp> clientActivityList(Long storeId, Long tenantId);
 
     /**
      * 下架活动

@@ -20,4 +20,10 @@ public interface SeckillActivityMapper extends BaseWriteMapper<SeckillActivity> 
 
     List<SeckillActivity> pageList(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("activityTitle") String activityTitle, @Param("status") Integer status);
 
+    //查询未开始的活动，按照开始时间排序
+    List<SeckillActivity> queryNotStart(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId);
+
+    //查询进行中的活动，按照结束时间排序
+    List<SeckillActivity> queryStart(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId);
+
 }
