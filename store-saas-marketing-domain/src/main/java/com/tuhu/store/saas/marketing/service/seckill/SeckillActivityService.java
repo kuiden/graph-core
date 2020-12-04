@@ -59,5 +59,5 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      * @param req
      * @return
      */
-    PageInfo<SeckillRegistrationRecordResp> pageBuyList(SeckillActivityReq req);
+    PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req);
 }

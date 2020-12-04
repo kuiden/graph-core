@@ -12,6 +12,10 @@
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />
         <result column="is_delete" property="isDelete" />
+        <result column="end_time" property="endTime" />
+        <result column="start_time" property="startTime" />
+        <result column="status" property="status" />
+        <result column="activity_title" property="activityTitle" />
     </resultMap>
 
     <update id="autoUpdateOffShelf">
@@ -23,5 +27,34 @@
         where 1=1
         and end_time <![CDATA[  < ]]> now()
     </update>
+
+    <select id="pageList" resultMap="BaseResultMap">
+        select
+        id,tenant_id,store_id,create_user,update_user,update_time,is_delete,end_time,start_time,status,activity_title
+        from seckill_activity
+        where
+        1=1
+        and is_delete = 0
+        and store_id = #{storeId}
+        and tenant_id = #{tenantId}
+        <if test="status != null and status == 0 ">
+            and status != 9
+            and start_time > now()
+        </if>
+        <if test="status != null and status == 1 ">
+            and status != 9
+            and start_time <![CDATA[<=]]> now() and end_time > now()
+        </if>
+        <if test="status != null and status == 9 ">
+            and (end_time <![CDATA[<]]> now() OR status = 9)
+        </if>
+        <if test="status != null and status == -1 ">
+            and ((start_time <![CDATA[<=]]> now() and end_time > now() and status != 9 ) OR (start_time > now() and status != 9))
+        </if>
+        <if test="activityTitle != null">
+            and activity_title like CONCAT('%',#{activityTitle},'%')
+        </if>
+        order by update_time desc
+    </select>
 
 </mapper>

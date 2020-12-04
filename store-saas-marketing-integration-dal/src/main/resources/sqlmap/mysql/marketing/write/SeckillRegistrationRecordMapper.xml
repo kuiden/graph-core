@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord">
+        <id column="id" property="id" />
+        <result column="order_no" property="orderNo" />
+        <result column="store_id" property="storeId" />
+        <result column="tenant_id" property="tenantId" />
+        <result column="seckill_activity_id" property="seckillActivityId" />
+        <result column="seckill_activity_name" property="seckillActivityName" />
+        <result column="customer_id" property="customerId" />
+        <result column="customer_name" property="customerName" />
+        <result column="is_new_customer" property="isNewCustomer" />
+        <result column="buyer_phone_number" property="buyerPhoneNumber" />
+        <result column="user_phone_number" property="userPhoneNumber" />
+        <result column="vehicle_number" property="vehicleNumber" />
+        <result column="unit_price" property="unitPrice" />
+        <result column="quantity" property="quantity" />
+        <result column="expect_amount" property="expectAmount" />
+        <result column="register_time" property="registerTime" />
+        <result column="effective_time" property="effectiveTime" />
+        <result column="payment_time" property="paymentTime" />
+        <result column="usage_status" property="usageStatus" />
+        <result column="pay_status" property="payStatus" />
+        <result column="payment_mode_code" property="paymentModeCode" />
+        <result column="create_user" property="createUser" />
+        <result column="update_user" property="updateUser" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="is_delete" property="isDelete" />
+    </resultMap>
+
+    <select id="pageBuyOrBrowseList" resultMap="BaseResultMap">
+        select
+        store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number,
+        count(1) as quantity,sum(expect_amount) as expect_amount,max(is_new_customer) as is_new_customer
+        from seckill_registration_record
+        where
+        1=1
+        and is_delete = 0
+        and pay_status = 1
+        and store_id = #{storeId}
+        and tenant_id = #{tenantId}
+        <if test="phone != null and phone != ''">
+            and buyer_phone_number like CONCAT('%',#{phone},'%')
+        </if>
+        group by store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number
+        order by create_time desc
+    </select>
+</mapper>
