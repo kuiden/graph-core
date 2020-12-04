@@ -44,10 +44,10 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 下架活动
-     * @param activityId
+     * @param seckillActivityId
      * @return
      */
-    boolean offShelf(String activityId);
+    boolean offShelf(String seckillActivityId);
 
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表

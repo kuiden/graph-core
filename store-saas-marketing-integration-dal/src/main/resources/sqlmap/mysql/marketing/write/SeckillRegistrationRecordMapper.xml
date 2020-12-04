@@ -124,4 +124,12 @@
         </if>
         GROUP BY customer_id,buyer_phone_number
     </select>
+
+    <select id="seckillActivity24AutoCancel" resultMap="BaseResultMap">
+      SELECT
+      id,store_id,tenant_id,seckill_activity_id,order_no
+      FROM seckill_registration_record
+      WHERE 1=1
+      AND DATE_ADD(register_time, INTERVAL 24 HOUR) <![CDATA[<=]]> NOW()  limit #{num}
+    </select>
 </mapper>

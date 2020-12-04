@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
@@ -13,6 +14,7 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
+import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
@@ -22,7 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -39,8 +43,16 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillRegistrationRecordMapper, SeckillRegistrationRecord> implements SeckillRegistrationRecordService {
+    @Value("${seckill.activity.cancel.num:200}")
+    private Integer NUM;
+
+    private final static Integer PAY_STATUS = 3; //支付状态 0:未支付 1:成功 2:失败 3:作废
+
     @Autowired
     private SeckillActivityService seckillActivityService;
+
+    @Autowired
+    private ServiceOrderClient serviceOrderClient;
 
     /**
      * 活动对应的支付成功的订单
@@ -145,6 +157,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         wrapper.eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_STATUS);
         wrapper.eq(SeckillRegistrationRecord.STORE_ID, UserContextHolder.getStoreId());
         wrapper.eq(SeckillRegistrationRecord.TENANT_ID, UserContextHolder.getTenantId());
+        wrapper.orderBy(SeckillRegistrationRecord.PAYMENT_TIME, Boolean.FALSE);
         List<SeckillRegistrationRecord> list = this.selectList(wrapper);
         List<SeckillRegistrationRecordResp> recordResps = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
@@ -196,6 +209,51 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             resp.setOldCustomerConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
         }
         return resp;
+    }
+
+    @Override
+    @Transactional
+    public void seckillActivity24AutoCancel() {
+        List<SeckillRegistrationRecord> list = this.baseMapper.seckillActivity24AutoCancel(NUM);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> orderNos = new ArrayList<>();
+            Date now = new Date();
+            for (SeckillRegistrationRecord record : list) {
+                String orderNo = record.getOrderNo();
+                orderNos.add(orderNo);
+                record.setPayStatus(PAY_STATUS);
+                record.setUpdateTime(now);
+                record.setUpdateUser("24AutoCancel");
+            }
+            //批量取消
+            if (CollectionUtils.isNotEmpty(orderNos)) {
+                boolean success = cancelReceivingAndTradeByOrderNos(orderNos);
+                if (success) {
+                    this.insertOrUpdateBatch(list);
+                }
+            }
+        }
+    }
+
+    /**
+     * 更新 待收单的收款状态已取消;交易单 已作废
+     *
+     * @param orderNos
+     * @return
+     */
+    private boolean cancelReceivingAndTradeByOrderNos(List<String> orderNos) {
+        log.info("cancelReceivingAndTradeByOrderNos{}", orderNos);
+        boolean success = false;
+        try {
+            BizBaseResponse baseResponse = serviceOrderClient.updateReceivingAndTradeByOrderNos(orderNos);
+            log.info("cancelReceivingAndTradeByOrderNosResult{}", JSON.toJSONString(baseResponse));
+            if (baseResponse.isSuccess()) {
+                success = true;
+            }
+        } catch (Exception e) {
+            log.error("cancelReceivingAndTradeByOrderNosError", e);
+        }
+        return success;
     }
 
     public static void main(String[] args) {
