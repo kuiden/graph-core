@@ -24,4 +24,6 @@ public interface SeckillRegistrationRecordMapper extends BaseWriteMapper<Seckill
     Integer getAllUserCountByTypeAndSeckillActivityId(@Param("seckillActivityId") String seckillActivityId, @Param("type") Integer type);
 
     Integer getBuyCountByTypeAndSeckillActivityId(@Param("seckillActivityId") String seckillActivityId, @Param("type") Integer type);
+
+    List<SeckillRegistrationRecord> seckillActivity24AutoCancel(@Param("num") Integer num);
 }

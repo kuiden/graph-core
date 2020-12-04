@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -39,6 +40,11 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillRegistrationRecordMapper, SeckillRegistrationRecord> implements SeckillRegistrationRecordService {
+    @Value("${seckill.activity.cancel.num:200}")
+    private Integer NUM;
+
+    private final static Integer PAY_STATUS = 3; //支付状态 0:未支付 1:成功 2:失败 3:作废
+
     @Autowired
     private SeckillActivityService seckillActivityService;
 
@@ -196,6 +202,26 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             resp.setOldCustomerConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
         }
         return resp;
+    }
+
+    @Override
+    public void seckillActivity24AutoCancel() {
+        List<SeckillRegistrationRecord> list = this.baseMapper.seckillActivity24AutoCancel(NUM);
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (SeckillRegistrationRecord record : list) {
+                try {
+                    //TODO 取消交易单，取消待收单
+                    String orderNo = record.getOrderNo();
+                    record.setPayStatus(PAY_STATUS);
+                    record.setUpdateTime(new Date());
+                    record.setUpdateUser("24AutoCancel");
+                    this.updateById(record);
+                    //取消报名单
+                } catch (Exception e) {
+                    log.error("seckillActivity24AutoCancel{}", record.getId(), e);
+                }
+            }
+        }
     }
 
     public static void main(String[] args) {

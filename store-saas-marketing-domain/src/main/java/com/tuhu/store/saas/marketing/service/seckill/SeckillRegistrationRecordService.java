@@ -55,6 +55,12 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      */
     PageInfo<SeckillRegistrationRecordResp> pageNoBuyBrowseList(SeckillActivityReq req);
 
+    /**
+     * 秒杀活动下单24小时未支付自动取消相关订单
+     * @return
+     */
+    void seckillActivity24AutoCancel();
+
 
 
 }
