@@ -63,7 +63,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
             List<String> activityIds = new ArrayList<>();
             for (SeckillActivity activity : list) {
-                activityIds.add(activity.getId());
+                activityIds .add(activity.getId());
             }
             Map<String, Integer> activityIdNumMap = seckillRegistrationRecordService.activityIdNumMap(activityIds);
             responseList = list.stream().map(o -> {
