@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityItemMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tuhu.store.saas.marketing.dataobject.SeckillActivityItem">
+        <id column="id" property="id" />
+        <result column="tenant_id" property="tenantId" />
+        <result column="store_id" property="storeId" />
+        <result column="create_user" property="createUser" />
+        <result column="update_user" property="updateUser" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="is_delete" property="isDelete" />
+        <result column="seckill_activity_id" property="seckillActivityId" />
+        <result column="goods_id" property="goodsId" />
+        <result column="goods_code" property="goodsCode" />
+        <result column="goods_name" property="goodsName" />
+        <result column="goods_type" property="goodsType" />
+        <result column="item_quantity" property="itemQuantity" />
+        <result column="original_price" property="originalPrice" />
+        <result column="new_price" property="newPrice" />
+        <result column="show_name" property="showName" />
+    </resultMap>
+
+</mapper>

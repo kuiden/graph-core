@@ -16,8 +16,8 @@ import lombok.experimental.Accessors;
  * 秒杀活动明细表
  * </p>
  *
- * @author yangshengyong
- * @since 2020-12-02
+ * @author zhaijingtao
+ * @since 2020-12-04
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -69,8 +69,48 @@ public class SeckillActivityItem implements Serializable {
     /**
      * 秒杀活动id
      */
-    @TableField("activity_id")
-    private String activityId;
+    @TableField("seckill_activity_id")
+    private String seckillActivityId;
+    /**
+     * 商品ID
+     */
+    @TableField("goods_id")
+    private String goodsId;
+    /**
+     * 商品编码code
+     */
+    @TableField("goods_code")
+    private String goodsCode;
+    /**
+     * 商品名称
+     */
+    @TableField("goods_name")
+    private String goodsName;
+    /**
+     * 商品类型，goods类型（0："商品,:1：服务）
+     */
+    @TableField("goods_type")
+    private Integer goodsType;
+    /**
+     * 商品数量
+     */
+    @TableField("item_quantity")
+    private Integer itemQuantity;
+    /**
+     * 商品原单价
+     */
+    @TableField("original_price")
+    private Long originalPrice;
+    /**
+     * 商品实际单价
+     */
+    @TableField("new_price")
+    private Long newPrice;
+    /**
+     * 展示名称
+     */
+    @TableField("show_name")
+    private String showName;
 
 
     public static final String ID = "id";
@@ -89,6 +129,22 @@ public class SeckillActivityItem implements Serializable {
 
     public static final String IS_DELETE = "is_delete";
 
-    public static final String ACTIVITY_ID = "activity_id";
+    public static final String SECKILL_ACTIVITY_ID = "seckill_activity_id";
+
+    public static final String GOODS_ID = "goods_id";
+
+    public static final String GOODS_CODE = "goods_code";
+
+    public static final String GOODS_NAME = "goods_name";
+
+    public static final String GOODS_TYPE = "goods_type";
+
+    public static final String ITEM_QUANTITY = "item_quantity";
+
+    public static final String ORIGINAL_PRICE = "original_price";
+
+    public static final String NEW_PRICE = "new_price";
+
+    public static final String SHOW_NAME = "show_name";
 
 }
