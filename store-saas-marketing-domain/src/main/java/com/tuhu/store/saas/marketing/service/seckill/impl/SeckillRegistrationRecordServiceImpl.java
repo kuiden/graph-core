@@ -157,6 +157,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         wrapper.eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_STATUS);
         wrapper.eq(SeckillRegistrationRecord.STORE_ID, UserContextHolder.getStoreId());
         wrapper.eq(SeckillRegistrationRecord.TENANT_ID, UserContextHolder.getTenantId());
+        wrapper.orderBy(SeckillRegistrationRecord.PAYMENT_TIME, Boolean.FALSE);
         List<SeckillRegistrationRecord> list = this.selectList(wrapper);
         List<SeckillRegistrationRecordResp> recordResps = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
