@@ -70,4 +70,29 @@
         order by update_time desc
     </select>
 
+    <select id="queryNotStart" resultMap="BaseResultMap">
+        select
+        *
+        from seckill_activity
+        where is_delete = 0
+        and store_id = #{storeId}
+        and tenant_id = #{tenantId}
+        and start_time > now()
+        and status != 9
+        order by start_time asc
+    </select>
+
+    <select id="queryStart" resultMap="BaseResultMap">
+        select
+        *
+        from seckill_activity
+        where is_delete = 0
+        and store_id = #{storeId}
+        and tenant_id = #{tenantId}
+        and start_time <![CDATA[<=]]> now()
+        and end_time > now()
+        and status != 9
+        order by end_time asc
+    </select>
+
 </mapper>
