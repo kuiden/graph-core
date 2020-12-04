@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/feign/seckill/activity")
-public class SeckillActivityMinController extends BaseApi {
+public class SeckillActivityPcController extends BaseApi {
 
 }
 
