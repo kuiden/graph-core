@@ -47,8 +47,8 @@ public class SeckillActivityController extends BaseApi {
 
     @GetMapping(value = "/dataStatistics")
     @ApiOperation(value = "活动数据-数据统计")
-    public BizBaseResponse<SeckillActivityStatisticsResp> dataStatistics(@Param("activityId") String activityId) {
-        return new BizBaseResponse(seckillRegistrationRecordService.dataStatistics(activityId));
+    public BizBaseResponse<SeckillActivityStatisticsResp> dataStatistics(@Param("seckillActivityId") String seckillActivityId) {
+        return new BizBaseResponse(seckillRegistrationRecordService.dataStatistics(seckillActivityId));
     }
 
     @PostMapping(value = "/pageBuyOrBrowseList")
@@ -65,7 +65,6 @@ public class SeckillActivityController extends BaseApi {
     public BizBaseResponse<List<SeckillRegistrationRecordResp>> participateDetail(@Param("customersId") String customersId) {
         return new BizBaseResponse(seckillRegistrationRecordService.participateDetail(customersId));
     }
-
 
     @PostMapping(value = "/onShelf")
     @ApiOperation(value = "编辑上架")

@@ -24,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillRegistrationRecordMapper, SeckillRegistrationRecord> implements SeckillRegistrationRecordService {
     @Autowired
     private SeckillActivityService seckillActivityService;
+
     /**
      * 活动对应的支付成功的订单
      *
@@ -65,11 +67,13 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
     @Override
-    public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
+    public PageInfo<SeckillRegistrationRecordResp> pageBuyList(SeckillActivityReq req) {
+        log.info("pageBuyList{}", JSON.toJSONString(req));
+        seckillActivityService.check(req.getSeckillActivityId());
         PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         //查询报名记录购买记录
-        PageInfo<SeckillRegistrationRecord> pageInfo = new PageInfo<>(this.baseMapper.pageBuyOrBrowseList(req.getTenantId(), req.getStoreId(), req.getSeckillActivityId(), req.getPhone()));
+        PageInfo<SeckillRegistrationRecord> pageInfo = new PageInfo<>(this.baseMapper.pageBuyList(req.getTenantId(), req.getStoreId(), req.getSeckillActivityId(), req.getPhone()));
         List<SeckillRegistrationRecord> list = pageInfo.getList();
         List<SeckillRegistrationRecordResp> responseList = Lists.newArrayList();
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
@@ -85,8 +89,55 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
     @Override
+    public PageInfo<SeckillRegistrationRecordResp> pageNoBuyBrowseList(SeckillActivityReq req) {
+        log.info("pageNoBuyBrowseList{}", JSON.toJSONString(req));
+        seckillActivityService.check(req.getSeckillActivityId());
+        PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+        //查询报名记录购买记录
+        PageInfo<SeckillRegistrationRecord> pageInfo = new PageInfo<>(this.baseMapper.pageNoBuyBrowseList(req.getTenantId(), req.getStoreId(), req.getSeckillActivityId(), req.getPhone()));
+        List<SeckillRegistrationRecord> list = pageInfo.getList();
+        List<SeckillRegistrationRecordResp> responseList = Lists.newArrayList();
+        if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
+            List<String> customerIds = new ArrayList<>();
+            for (SeckillRegistrationRecord record : list) {
+                customerIds.add(record.getCustomerId());
+            }
+            Map<String, Integer> customerIdNewMap = this.customerIdNewMap(customerIds, req.getSeckillActivityId());
+            responseList = list.stream().map(o -> {
+                SeckillRegistrationRecordResp response = new SeckillRegistrationRecordResp();
+                BeanUtils.copyProperties(o, response);
+                dataConversion(o, response, customerIdNewMap);
+                return response;
+            }).collect(Collectors.toList());
+        }
+        BeanUtil.copyProperties(pageInfo, responsePageInfo);
+        responsePageInfo.setList(responseList);
+        return responsePageInfo;
+    }
+
+    private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> customerIdNewMap) {
+        //是否新用户
+        if (null != customerIdNewMap.get(o.getBuyerPhoneNumber())) {
+            response.setIsNewCustomer(SeckillConstant.TYPE_1);
+        }
+    }
+
+    private Map<String, Integer> customerIdNewMap(List<String> customerIds,String seckillActivityId ) {
+        log.info("customerIdNewMap{}", JSON.toJSONString(customerIds));
+        EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
+        List<SeckillRegistrationRecord> list = this.selectList(wrapper);
+        if (CollectionUtils.isNotEmpty(list)) {
+            Map<String, Integer> customerIdNewMap = new HashMap<>();
+            //todo 获取用户对应的注册数据，算新用户
+            return customerIdNewMap;
+        }
+        return Collections.EMPTY_MAP;
+    }
+
+    @Override
     public List<SeckillRegistrationRecordResp> participateDetail(String customersId) {
-        if(null == customersId){
+        if (null == customersId) {
             throw new StoreSaasMarketingException("客户ID不能为空");
         }
         EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
@@ -107,11 +158,49 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
     @Override
-    public SeckillActivityStatisticsResp dataStatistics(String activityId) {
-        SeckillActivity activity = seckillActivityService.check(activityId);
+    public SeckillActivityStatisticsResp dataStatistics(String seckillActivityId) {
+        SeckillActivity activity = seckillActivityService.check(seckillActivityId);
         SeckillActivityStatisticsResp resp = new SeckillActivityStatisticsResp();
         resp.setActivityTitle(activity.getActivityTitle());
-        //TODO 各种取数据计算
+        Long storeId = UserContextHolder.getStoreId();
+        Long tenantId = UserContextHolder.getTenantId();
+        //今日成交，取当日成功支付购买的份数，注意不是支付笔数
+        SeckillRegistrationRecord todayDealRecord = this.baseMapper.dataStatistics(tenantId, storeId, seckillActivityId, SeckillConstant.TYPE);
+        if (null != todayDealRecord) {
+            resp.setTodayDeal(todayDealRecord.getQuantity());
+        }
+        //总成交，取当前活动成功支付购买的份数，注意不是支付笔数
+        SeckillRegistrationRecord totalDealRecord = this.baseMapper.dataStatistics(tenantId, storeId, seckillActivityId, null);
+        if (null != totalDealRecord) {
+            resp.setTotalDeal(totalDealRecord.getQuantity());
+            resp.setTotalAmount(totalDealRecord.getExpectAmount());  //总收入（元）
+        }
+        //获取新客
+        Integer newUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
+        if (null != newUserCount) {
+            resp.setNewCustomers(newUserCount);
+            Integer newBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
+            //新客转化率
+            newBuyCount = null == newBuyCount ? 0 : newBuyCount;
+            BigDecimal rate = new BigDecimal(newBuyCount).divide(new BigDecimal(newUserCount), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            resp.setNewCustomersConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
+        }
+        //唤醒老客
+        Integer oldUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
+        if (null != oldUserCount) {
+            resp.setOldCustomer(oldUserCount);
+            Integer oldBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
+            //老客转化率
+            oldBuyCount = null == oldBuyCount ? 0 : oldBuyCount;
+            BigDecimal rate = new BigDecimal(oldBuyCount).divide(new BigDecimal(oldUserCount), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            resp.setOldCustomerConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
+        }
         return resp;
+    }
+
+    public static void main(String[] args) {
+        BigDecimal DD = new BigDecimal(0).divide(new BigDecimal(1),4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+        String decimal = DD.setScale(1, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString();
+        System.out.println(decimal);
     }
 }

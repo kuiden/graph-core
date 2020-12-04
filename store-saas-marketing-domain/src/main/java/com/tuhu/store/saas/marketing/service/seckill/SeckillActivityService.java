@@ -50,8 +50,8 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 校验活动id
-     * @param activityId
+     * @param seckillActivityId
      * @return
      */
-    SeckillActivity check(String activityId);
+    SeckillActivity check(String seckillActivityId);
 }

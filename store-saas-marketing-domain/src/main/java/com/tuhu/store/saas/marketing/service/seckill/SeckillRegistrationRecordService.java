@@ -45,6 +45,16 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      * @param req
      * @return
      */
-    PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req);
+    PageInfo<SeckillRegistrationRecordResp> pageBuyList(SeckillActivityReq req);
+
+
+    /**
+     * 活动数据-已购客户、浏览未购买客户分页列表
+     * @param req
+     * @return
+     */
+    PageInfo<SeckillRegistrationRecordResp> pageNoBuyBrowseList(SeckillActivityReq req);
+
+
 
 }

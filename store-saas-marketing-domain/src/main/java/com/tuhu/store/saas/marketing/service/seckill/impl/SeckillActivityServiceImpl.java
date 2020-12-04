@@ -62,13 +62,13 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
             List<String> activityIds = new ArrayList<>();
             for (SeckillActivity activity : list) {
-                activityIds .add(activity.getId());
+                activityIds.add(activity.getId());
             }
             Map<String, Integer> activityIdNumMap = seckillRegistrationRecordService.activityIdNumMap(activityIds);
             responseList = list.stream().map(o -> {
                 SeckillActivityResp response = new SeckillActivityResp();
                 BeanUtils.copyProperties(o, response);
-                dataHander(response, req, o, activityIdNumMap);
+                dataConversion(response, req, o, activityIdNumMap);
                 return response;
             }).collect(Collectors.toList());
         }
@@ -83,7 +83,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
      * @param response
      * @param req
      */
-    private void dataHander(SeckillActivityResp response, SeckillActivityReq req, SeckillActivity o, Map<String, Integer> activityIdNumMap) {
+    private void dataConversion(SeckillActivityResp response, SeckillActivityReq req, SeckillActivity o, Map<String, Integer> activityIdNumMap) {
         Integer num = activityIdNumMap.get(o.getId());
         if (null != num) {
             response.setSalesNumber(num);
@@ -96,7 +96,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             response.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
         } else {
             response.setStatus(req.getStatus());
-            if (o.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus()) || SeckillConstant.STATUS.equals(req.getStatus())) {
+            if (SeckillActivityStatusEnum.XJ.getStatus().equals(o.getStatus()) || SeckillConstant.STATUS.equals(req.getStatus())) {
                 Date startTime = o.getStartTime();
                 Date endTime = o.getEndTime();
                 Date now = new Date();
@@ -126,11 +126,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         return this.updateById(activity);
     }
 
-    public SeckillActivity check(String activityId) {
-        if (null == activityId) {
+    public SeckillActivity check(String seckillActivityId) {
+        if (null == seckillActivityId) {
             throw new StoreSaasMarketingException("活动ID不能为空");
         }
-        SeckillActivity activity = this.selectById(activityId);
+        SeckillActivity activity = this.selectById(seckillActivityId);
         if (null == activity) {
             throw new StoreSaasMarketingException("活动不存在");
         }
@@ -147,10 +147,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
         check(req.getSeckillActivityId());
         if (req.getStatus().equals(0)) {//购买记录
-            return seckillRegistrationRecordService.pageBuyOrBrowseList(req);
-        } else {
-            //TODO 后面灯哥处理
-            return null;
+            return seckillRegistrationRecordService.pageBuyList(req);
+        } else {//浏览未购买  //TODO 后面灯哥处理
+            return seckillRegistrationRecordService.pageNoBuyBrowseList(req);
         }
     }
 }

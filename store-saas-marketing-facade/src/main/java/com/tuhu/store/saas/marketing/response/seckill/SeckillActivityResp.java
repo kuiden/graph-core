@@ -7,6 +7,7 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -28,8 +29,6 @@ public class SeckillActivityResp implements Serializable {
     private String statusName;
     @ApiModelProperty(value = "售出个数")
     private Integer salesNumber = 0;
-    @ApiModelProperty(value = "总个数")
-    private Integer totalNumber;
     @ApiModelProperty(value = "活动标题")
     private String activityTitle;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -40,4 +39,26 @@ public class SeckillActivityResp implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "结束时间")
     private Date endTime;
+    @ApiModelProperty(value = "现价")
+    private BigDecimal newPrice;
+    @ApiModelProperty(value = "原价")
+    private BigDecimal originalPrice;
+    @ApiModelProperty(value = "活动头图")
+    private String headImage;
+    @ApiModelProperty(value = "有效期类型")
+    private Integer cadCardExpiryDateType;
+    @ApiModelProperty(value = "相关次卡有效期时间")
+    private Date cadCardExpiryDateTime;
+    @ApiModelProperty(value = "相关次卡有效天数")
+    private Date cadCardExpiryDateDay;
+    @ApiModelProperty(value = "销售数量类型")
+    private Integer sellNumberType;
+    @ApiModelProperty(value = "销售数量")
+    private Integer sellNumber;
+    @ApiModelProperty(value = "单人销售数量类型")
+    private Integer soloSellNumberType;
+    @ApiModelProperty(value = "单人销售数量 -1不限")
+    private Integer soloSellNumber;
+    private String templateId;
+    private String cadCardTemplateId;
 }
