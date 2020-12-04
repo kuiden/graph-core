@@ -66,17 +66,18 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillRegistrationRecordService.participateDetail(customersId));
     }
 
+    @GetMapping(value = "/offShelf")
+    @ApiOperation(value = "活动下架")
+    public BizBaseResponse<Boolean> offShelf(@Param("seckillActivityId") String seckillActivityId) {
+        return new BizBaseResponse(seckillActivityService.offShelf(seckillActivityId));
+    }
+
     @PostMapping(value = "/onShelf")
     @ApiOperation(value = "编辑上架")
     public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityReq req) {
         return new BizBaseResponse();
     }
 
-    @GetMapping(value = "/offShelf")
-    @ApiOperation(value = "活动下架")
-    public BizBaseResponse<Boolean> offShelf(@Param("activityId") String activityId) {
-        return new BizBaseResponse(seckillActivityService.offShelf(activityId));
-    }
     //TODO 活动海报
 }
 
