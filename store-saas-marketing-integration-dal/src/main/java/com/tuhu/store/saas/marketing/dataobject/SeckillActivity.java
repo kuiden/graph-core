@@ -146,6 +146,15 @@ public class SeckillActivity implements Serializable {
     @TableField("template_id")
     private String templateId;
 
+
+    /**
+     * 卡模板ID
+     */
+    @TableField("cad_card_template_id")
+    private String cadCardTemplateId;
+
+
+    public static final String CADCARDTEMPLATEID = "cad_card_template_id";
     public static final String TEMPLATEID = "template_id";
 
     public static final String ID = "id";

@@ -27,6 +27,7 @@
         <result column="end_time" property="endTime" />
         <result column="activity_title" property="activityTitle" />
         <result column="template_id" property="templateId" />
+        <result column="cad_card_template_id" property="cadCardTemplateId" />
 
     </resultMap>
 
