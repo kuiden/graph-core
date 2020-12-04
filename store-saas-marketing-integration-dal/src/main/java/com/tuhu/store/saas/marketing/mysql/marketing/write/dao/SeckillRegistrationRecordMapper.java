@@ -17,4 +17,5 @@ import java.util.List;
 public interface SeckillRegistrationRecordMapper extends BaseWriteMapper<SeckillRegistrationRecord> {
     List<SeckillRegistrationRecord> pageBuyOrBrowseList(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("seckillActivityId") String seckillActivityId, @Param("phone") String phone);
 
+    SeckillRegistrationRecord dataStatistics(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("seckillActivityId") String seckillActivityId, @Param("type") Integer type);
 }

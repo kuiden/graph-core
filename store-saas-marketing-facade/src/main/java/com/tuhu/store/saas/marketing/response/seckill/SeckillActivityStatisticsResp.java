@@ -17,17 +17,18 @@ import java.math.BigDecimal;
 @ApiModel(value = "SeckillActivityStatisticsResp", description = "秒杀活动数据")
 @Data
 public class SeckillActivityStatisticsResp {
-    @ApiModelProperty(value = "活动id")
-    String activityId;
+    @ApiModelProperty(value = "秒杀活动主键id")
+    private String seckillActivityId;
 
     @ApiModelProperty(value = "活动名称")
-    private String activityName;
+    private String activityTitle;
 
     @ApiModelProperty(value = "今日成交，取当日成功支付购买的份数，注意不是支付笔数")
     private Integer todayDeal = 0;
 
     @ApiModelProperty(value = "总成交，取当前活动成功支付购买的份数，注意不是支付笔数")
     private Integer totalDeal = 0;
+
     @ApiModelProperty(value = "获取新客，通过此活动任意渠道页面登录且登录时在门店同步注册的手机号数量")
     private Integer newCustomers = 0;
 

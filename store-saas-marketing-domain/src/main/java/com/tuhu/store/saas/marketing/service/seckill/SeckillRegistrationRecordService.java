@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 
 import java.util.List;
@@ -26,17 +27,24 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
     Map<String, Integer> activityIdNumMap(List<String> activityIds);
 
     /**
+     * 活动数据
+     * @param activityId
+     * @return
+     */
+    SeckillActivityStatisticsResp dataStatistics(String activityId);
+
+    /**
+     * 参与详情
+     * @param customersId
+     * @return
+     */
+    List<SeckillRegistrationRecordResp> participateDetail(String customersId);
+
+    /**
      * 活动数据-已购客户、浏览未购买客户分页列表
      * @param req
      * @return
      */
     PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req);
-
-    /**
-     * 参与记录
-     * @param customersId
-     * @return
-     */
-    List<SeckillRegistrationRecordResp> participateDetail(String customersId);
 
 }

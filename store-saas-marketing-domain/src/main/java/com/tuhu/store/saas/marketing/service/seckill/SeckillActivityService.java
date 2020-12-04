@@ -41,23 +41,17 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
     boolean offShelf(String activityId);
 
     /**
-     * 活动数据
-     * @param activityId
-     * @return
-     */
-    SeckillActivityStatisticsResp dataStatistics(String activityId);
-
-    /**
-     * 参与详情
-     * @param customersId
-     * @return
-     */
-    List<SeckillRegistrationRecordResp> participateDetail(String customersId);
-
-    /**
      * 活动数据-已购客户、浏览未购买客户分页列表
      * @param req
      * @return
      */
     PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req);
+
+
+    /**
+     * 校验活动id
+     * @param activityId
+     * @return
+     */
+    SeckillActivity check(String activityId);
 }
