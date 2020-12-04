@@ -147,8 +147,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Override
     @Transactional
-    public boolean offShelf(String activityId) {
-        SeckillActivity activity = check(activityId);
+    public boolean offShelf(String seckillActivityId) {
+        SeckillActivity activity = check(seckillActivityId);
         activity.setStatus(SeckillActivityStatusEnum.XJ.getStatus());
         activity.setUpdateTime(new Date());
         activity.setUpdateUser(UserContextHolder.getStoreUserId());
