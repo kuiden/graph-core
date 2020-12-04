@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
@@ -13,6 +14,7 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
+import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
@@ -24,6 +26,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -47,6 +50,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     @Autowired
     private SeckillActivityService seckillActivityService;
+
+    @Autowired
+    private ServiceOrderClient serviceOrderClient;
 
     /**
      * 活动对应的支付成功的订单
@@ -205,23 +211,48 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
     @Override
+    @Transactional
     public void seckillActivity24AutoCancel() {
         List<SeckillRegistrationRecord> list = this.baseMapper.seckillActivity24AutoCancel(NUM);
         if (CollectionUtils.isNotEmpty(list)) {
+            List<String> orderNos = new ArrayList<>();
+            Date now = new Date();
             for (SeckillRegistrationRecord record : list) {
-                try {
-                    //TODO 取消交易单，取消待收单
-                    String orderNo = record.getOrderNo();
-                    record.setPayStatus(PAY_STATUS);
-                    record.setUpdateTime(new Date());
-                    record.setUpdateUser("24AutoCancel");
-                    this.updateById(record);
-                    //取消报名单
-                } catch (Exception e) {
-                    log.error("seckillActivity24AutoCancel{}", record.getId(), e);
+                String orderNo = record.getOrderNo();
+                orderNos.add(orderNo);
+                record.setPayStatus(PAY_STATUS);
+                record.setUpdateTime(now);
+                record.setUpdateUser("24AutoCancel");
+            }
+            //批量取消
+            if (CollectionUtils.isNotEmpty(orderNos)) {
+                boolean success = cancelReceivingAndTradeByOrderNos(orderNos);
+                if (success) {
+                    this.insertOrUpdateBatch(list);
                 }
             }
         }
+    }
+
+    /**
+     * 更新 待收单的收款状态已取消;交易单 已作废
+     *
+     * @param orderNos
+     * @return
+     */
+    private boolean cancelReceivingAndTradeByOrderNos(List<String> orderNos) {
+        log.info("cancelReceivingAndTradeByOrderNos{}", orderNos);
+        boolean success = false;
+        try {
+            BizBaseResponse baseResponse = serviceOrderClient.updateReceivingAndTradeByOrderNos(orderNos);
+            log.info("cancelReceivingAndTradeByOrderNosResult{}", JSON.toJSONString(baseResponse));
+            if (baseResponse.isSuccess()) {
+                success = true;
+            }
+        } catch (Exception e) {
+            log.error("cancelReceivingAndTradeByOrderNosError", e);
+        }
+        return success;
     }
 
     public static void main(String[] args) {
