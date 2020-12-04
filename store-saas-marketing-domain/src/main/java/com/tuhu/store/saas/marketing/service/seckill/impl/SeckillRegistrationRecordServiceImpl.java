@@ -1,11 +1,12 @@
 package com.tuhu.store.saas.marketing.service.seckill.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
@@ -13,18 +14,26 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
+import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
+import com.tuhu.store.saas.marketing.remote.order.TradeOrderClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
+import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +50,12 @@ import java.util.stream.Collectors;
 public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillRegistrationRecordMapper, SeckillRegistrationRecord> implements SeckillRegistrationRecordService {
     @Autowired
     private SeckillActivityService seckillActivityService;
+
+    @Autowired
+    private StoreReceivingClient storeReceivingClient;
+
+    @Autowired
+    private TradeOrderClient tradeOrderClient;
 
     /**
      * 活动对应的支付成功的订单
@@ -198,9 +213,112 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         return resp;
     }
 
-    public static void main(String[] args) {
+/*    public static void main(String[] args) {
         BigDecimal DD = new BigDecimal(0).divide(new BigDecimal(1),4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
         String decimal = DD.setScale(1, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString();
         System.out.println(decimal);
+    }*/
+
+
+    /**
+     * 判断登录手机号在活动下是否有未收款状态的待收单
+     *
+     * @param request
+     */
+    private void checkHasUnpaidReceiving(SeckillRegistrationRecord request) {
+        List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(request));
+        if (CollectionUtils.isNotEmpty(seckillRegistrationRecordList)) {
+            List<String> orderNos = seckillRegistrationRecordList.stream().map(p -> p.getOrderNo()).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(orderNos)) {
+                return;
+            }
+            try {
+                BizBaseResponse<Boolean> resultObjectdata = storeReceivingClient.updateInitReceivingListByOrderNos(orderNos);
+                log.info("storeReceivingClient.updateInitReceivingListByOrderNos  return:{}", JSON.toJSONString(resultObjectdata));
+                if (null != resultObjectdata && resultObjectdata.isSuccess() && null != resultObjectdata.getData()) {
+                    Boolean result = resultObjectdata.getData();
+                    if (null == result || !result) {
+                        log.warn("storeReceivingClient.updateInitReceivingListByOrderNos error:更新待收单失败");
+                        throw new StoreSaasMarketingException("更新待收单失败");
+                    }
+                }
+            } catch (Exception e) {
+                log.error("storeReceivingClient.updateInitReceivingListByOrderNos error", e);
+                throw e;
+            }
+        }
     }
+
+    /**
+     * 组装查询条件
+     *
+     * @param req
+     * @return
+     */
+    private EntityWrapper<SeckillRegistrationRecord> buildSearchParams(SeckillRegistrationRecord req) {
+        EntityWrapper<SeckillRegistrationRecord> search = new EntityWrapper<>();
+        search.orderBy(SeckillRegistrationRecord.UPDATE_TIME, Boolean.FALSE);
+        if (Objects.nonNull(req.getStoreId())) {
+            search.eq(SeckillRegistrationRecord.STORE_ID, req.getStoreId());
+        }
+        if (Objects.nonNull(req.getTenantId())) {
+            search.eq(SeckillRegistrationRecord.TENANT_ID, req.getTenantId());
+        }
+        if (Objects.nonNull(req.getPayStatus())) {
+            search.eq(SeckillRegistrationRecord.PAY_STATUS, req.getPayStatus());
+        }
+        if (Objects.nonNull(req.getIsDelete())) {
+            search.eq(SeckillRegistrationRecord.IS_DELETE, req.getIsDelete());
+        }
+        return search;
+    }
+
+
+    /**
+     * 添加待收单
+     *
+     * @param seckillRegistrationRecord
+     */
+    private void addReceiving(SeckillRegistrationRecord seckillRegistrationRecord) {
+        //新增待收记录
+        AddReceivingVO addReceivingVO = new AddReceivingVO();
+        addReceivingVO.setOrderId(seckillRegistrationRecord.getId());
+        addReceivingVO.setOrderNo(seckillRegistrationRecord.getOrderNo());
+        addReceivingVO.setOrderDate(seckillRegistrationRecord.getCreateTime());
+        addReceivingVO.setBusinessCategoryCode("SECKILL_ACTIVITY_ORDER");
+        addReceivingVO.setBusinessCategoryName("秒杀活动单");
+        addReceivingVO.setPayerId(seckillRegistrationRecord.getCustomerId());
+        addReceivingVO.setPayerName(seckillRegistrationRecord.getCustomerName());
+        addReceivingVO.setPayerPhoneNumber(seckillRegistrationRecord.getBuyerPhoneNumber());
+        addReceivingVO.setAmount(seckillRegistrationRecord.getExpectAmount().multiply(new BigDecimal(100)).longValue());
+        addReceivingVO.setDiscountAmount(0L);
+        addReceivingVO.setActualAmount(addReceivingVO.getAmount());
+        addReceivingVO.setPayedAmount(0L);
+        addReceivingVO.setStatus("INIT");
+        addReceivingVO.setPaymentStatus("UNRECEIVABLE");
+        addReceivingVO.setStoreId(seckillRegistrationRecord.getStoreId());
+        addReceivingVO.setTenantId(seckillRegistrationRecord.getTenantId());
+        addReceivingVO.setCreateTime(new Date());
+
+        Boolean result = storeReceivingClient.addReceiving(addReceivingVO).getData();
+        if (null == result || !result) {
+            throw new StoreSaasMarketingException("创建待收记录失败");
+        }
+    }
+
+
+    /**
+     * 根据秒杀活动创建交易单
+     *
+     * @param addReceivingVO
+     */
+    private void addTradeOrderBySeckillActivity(AddReceivingVO addReceivingVO) {
+        //根据秒杀活动创建交易单
+        String result = tradeOrderClient.addTradeOrderBySeckillActivity(addReceivingVO).getData();
+        if (StringUtils.isBlank(result)) {
+            throw new StoreSaasMarketingException("根据秒杀活动创建交易单失败");
+        }
+    }
+
+
 }

@@ -1,11 +1,9 @@
 package com.tuhu.store.saas.marketing.controller;
 
-import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.remote.ResultObject;
 
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
 import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
-import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerCouponDTO;
 import com.tuhu.store.saas.marketing.response.dto.ServiceOrderCouponDTO;
 import com.tuhu.store.saas.marketing.service.ICouponService;
