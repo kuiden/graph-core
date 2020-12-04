@@ -130,6 +130,6 @@
       id,store_id,tenant_id,seckill_activity_id,order_no
       FROM seckill_registration_record
       WHERE 1=1
-      AND DATE_ADD(register_time, INTERVAL 24 HOUR) >= NOW()  limit #{num}
+      AND DATE_ADD(register_time, INTERVAL 24 HOUR) <![CDATA[<=]]> NOW()  limit #{num}
     </select>
 </mapper>
