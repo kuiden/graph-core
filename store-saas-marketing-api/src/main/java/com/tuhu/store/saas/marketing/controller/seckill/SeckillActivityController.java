@@ -54,7 +54,7 @@ public class SeckillActivityController extends BaseApi {
 
     @PostMapping(value = "/pageBuyOrBrowseList")
     @ApiOperation(value = "活动数据-已购客户、浏览未购买客户分页列表 状态 0已购客户、1浏览未购买")
-    public BizBaseResponse<PageInfo<SeckillActivityResp>> pageBuyOrBrowseList(@RequestBody SeckillActivityReq req) {
+    public BizBaseResponse<PageInfo<SeckillRegistrationRecordResp>> pageBuyOrBrowseList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(seckillActivityService.pageBuyOrBrowseList(req));
