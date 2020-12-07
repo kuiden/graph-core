@@ -14,7 +14,6 @@ import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordSe
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,12 +47,12 @@ public class SeckillActivityController extends BaseApi {
 
     @GetMapping(value = "/dataStatistics")
     @ApiOperation(value = "活动数据-数据统计")
-    public BizBaseResponse<SeckillActivityStatisticsResp> dataStatistics(@Param("seckillActivityId") String seckillActivityId) {
+    public BizBaseResponse<SeckillActivityStatisticsResp> dataStatistics(@RequestParam("seckillActivityId") String seckillActivityId) {
         return new BizBaseResponse(seckillRegistrationRecordService.dataStatistics(seckillActivityId));
     }
 
     @PostMapping(value = "/pageBuyOrBrowseList")
-    @ApiOperation(value = "活动数据-已购客户、浏览未购买客户分页列表 状态 0已购客户、1浏览未购买")
+    @ApiOperation(value = "活动数据-已购客户、浏览未购买客户分页列表 状态 status 0已购客户、1浏览未购买")
     public BizBaseResponse<PageInfo<SeckillRegistrationRecordResp>> pageBuyOrBrowseList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
@@ -68,26 +67,25 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillRegistrationRecordService.pageBuyRecodeList(req));
     }
 
-
     @GetMapping(value = "/participateDetail")
     @ApiOperation(value = "参与详情")
-    public BizBaseResponse<List<SeckillRegistrationRecordResp>> participateDetail(@Param("customersId") String customersId) {
+    public BizBaseResponse<List<SeckillRegistrationRecordResp>> participateDetail(@RequestParam("customersId") String customersId) {
         return new BizBaseResponse(seckillRegistrationRecordService.participateDetail(customersId));
     }
 
     @GetMapping(value = "/offShelf")
     @ApiOperation(value = "活动下架")
-    public BizBaseResponse<Boolean> offShelf(@Param("seckillActivityId") String seckillActivityId) {
+    public BizBaseResponse<Boolean> offShelf(@RequestParam("seckillActivityId") String seckillActivityId) {
         return new BizBaseResponse(seckillActivityService.offShelf(seckillActivityId));
     }
 
-    @GetMapping(value = "/poster")
+    @PostMapping(value = "/poster")
     @ApiOperation(value = "活动海报")
     public BizBaseResponse<SeckillActivityResp> poster(@Validated @RequestBody SeckillActivityQrCodeReq request){
         return new BizBaseResponse(seckillActivityService.poster(request));
     }
 
-    @GetMapping(value = "/qrCodeUrl")
+    @PostMapping(value = "/qrCodeUrl")
     @ApiOperation(value = "活动二维码url")
     public BizBaseResponse<String> qrCodeUrl(@Validated @RequestBody SeckillActivityQrCodeReq request){
         return new BizBaseResponse(seckillActivityService.qrCodeUrl(request));

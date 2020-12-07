@@ -404,6 +404,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Transactional
     public boolean offShelf(String seckillActivityId) {
         SeckillActivity activity = check(seckillActivityId);
+        if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
+            throw new StoreSaasMarketingException("活动已下架");
+        }
         activity.setStatus(SeckillActivityStatusEnum.XJ.getStatus());
         activity.setUpdateTime(new Date());
         activity.setUpdateUser(UserContextHolder.getStoreUserId());
@@ -418,7 +421,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         SeckillActivityResp resp = new SeckillActivityResp();
         BeanUtils.copyProperties(activity, resp);
         String wxQrUrl = activity.getWxQrUrl();
-        if (null != wxQrUrl) {
+        if (StringUtils.isNotBlank(wxQrUrl)) {
             resp.setWxQrUrl(wxQrUrl);
         } else {
             wxQrUrl = getWxQrUrl(activity, request);
@@ -433,32 +436,13 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         return resp;
     }
 
-    /**
-     * 获取登录门店的信息
-     * @return
-     */
-    public StoreDTO getStoreInfo() {
-        StoreInfoVO vo = new StoreInfoVO();
-        vo.setStoreId(UserContextHolder.getStoreId());
-        vo.setTanentId(UserContextHolder.getTenantId());
-        BizBaseResponse<StoreDTO> result = storeInfoClient.getStoreInfo(vo);
-        log.info("getStoreInfo返回参数为:{}", JSONObject.toJSONString(result));
-        if (result == null || !result.isSuccess()) {
-            throw new StoreSaasMarketingException("获取门店信息出错");
-        }
-        if (Objects.isNull(result.getData())) {
-            throw new StoreSaasMarketingException("获取门店信息为空");
-        }
-        return result.getData();
-    }
-
     @Override
     @Transactional
     public String qrCodeUrl(SeckillActivityQrCodeReq request) {
         log.info("qrCodeUrl{}", JSON.toJSONString(request));
         SeckillActivity activity = check(request.getSeckillActivityId());
         String wxQrUrl = activity.getWxQrUrl();
-        if (null != wxQrUrl) {
+        if (StringUtils.isNotBlank(wxQrUrl)) {
             return wxQrUrl;
         }
         return getWxQrUrl(activity, request);
@@ -483,6 +467,16 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         return wxQrUrl;
     }
 
+    @Override
+    public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
+        check(req.getSeckillActivityId());
+        if (req.getStatus().equals(0)) {//购买记录
+            return seckillRegistrationRecordService.pageBuyList(req);
+        } else {//浏览未购买
+            return seckillRegistrationRecordService.pageNoBuyBrowseList(req);
+        }
+    }
+
     public SeckillActivity check(String seckillActivityId) {
         if (null == seckillActivityId) {
             throw new StoreSaasMarketingException("活动ID不能为空");
@@ -497,13 +491,22 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         return activity;
     }
 
-    @Override
-    public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
-        check(req.getSeckillActivityId());
-        if (req.getStatus().equals(0)) {//购买记录
-            return seckillRegistrationRecordService.pageBuyList(req);
-        } else {//浏览未购买
-            return seckillRegistrationRecordService.pageNoBuyBrowseList(req);
+    /**
+     * 获取登录门店的信息
+     * @return
+     */
+    public StoreDTO getStoreInfo() {
+        StoreInfoVO vo = new StoreInfoVO();
+        vo.setStoreId(UserContextHolder.getStoreId());
+        vo.setTanentId(UserContextHolder.getTenantId());
+        BizBaseResponse<StoreDTO> result = storeInfoClient.getStoreInfo(vo);
+        log.info("getStoreInfo返回参数为:{}", JSONObject.toJSONString(result));
+        if (result == null || !result.isSuccess()) {
+            throw new StoreSaasMarketingException("获取门店信息出错");
         }
+        if (Objects.isNull(result.getData())) {
+            throw new StoreSaasMarketingException("获取门店信息为空");
+        }
+        return result.getData();
     }
 }

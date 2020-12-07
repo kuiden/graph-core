@@ -370,6 +370,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         SeckillActivity activity = seckillActivityService.check(seckillActivityId);
         SeckillActivityStatisticsResp resp = new SeckillActivityStatisticsResp();
         resp.setActivityTitle(activity.getActivityTitle());
+        resp.setSeckillActivityId(seckillActivityId);
         Long storeId = UserContextHolder.getStoreId();
         Long tenantId = UserContextHolder.getTenantId();
         //今日成交，取当日成功支付购买的份数，注意不是支付笔数
@@ -385,7 +386,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
         //获取新客
         Integer newUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
-        if (null != newUserCount) {
+        if (null != newUserCount && newUserCount > 0) {
             resp.setNewCustomers(newUserCount);
             Integer newBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
             //新客转化率
@@ -395,7 +396,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
         //唤醒老客
         Integer oldUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
-        if (null != oldUserCount) {
+        if (null != oldUserCount && oldUserCount > 0) {
             resp.setOldCustomer(oldUserCount);
             Integer oldBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
             //老客转化率
