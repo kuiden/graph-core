@@ -12,14 +12,18 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,31 @@ import java.util.stream.Collectors;
 public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMapper, SeckillActivity> implements SeckillActivityService {
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
+    @Autowired
+    private ICardService cardService ;
+
+    public String saveSeckillActivity(SeckillActivityModel model) {
+        log.info("saveSeckillActivity-> start -> model -> {}", model);
+        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
+        SeckillActivityModel entity = isInsert ? null : super.selectById(model.getId()).toModel();
+        String checkResult = model.checkModel(entity, isInsert);
+        //如果检查信息为空的话则进入保存模式
+        if (!StringUtils.isNotBlank(checkResult)) {
+            log.info("数据保存失败 -> model ->{} entity -> {}", model, entity);
+            throw new StoreSaasMarketingException(checkResult);
+        }
+        if (isInsert) {
+            // 新增
+            //添加一张次卡模板
+
+
+            //保存商品和服务明显
+            //计算 商品/服务总价格
+        }
+
+        return "";
+
+    }
 
     @Override
     public int autoUpdateOffShelf() {

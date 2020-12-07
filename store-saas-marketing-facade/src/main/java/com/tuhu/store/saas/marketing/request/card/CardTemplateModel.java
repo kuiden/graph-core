@@ -82,7 +82,7 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "更新时间", dataType = "Date", required = false, example = "111")
     private Date updateTime;
 
-    @ApiModelProperty(value = "卡类型 1次卡", dataType = "Date", required = false, example = "1")
+    @ApiModelProperty(value = "卡类型 1次卡 2 活动创建的卡模板", dataType = "Date", required = false, example = "1")
     private Byte type ;
 
 
