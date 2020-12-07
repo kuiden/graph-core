@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.service.seckill;
 
 import com.baomidou.mybatisplus.service.IService;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplateItem;
+import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempItemReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSeckillTempItemReq;
 
 import java.util.List;
@@ -18,4 +19,7 @@ public interface SeckillTemplateItemService extends IService<SeckillTemplateItem
 
     boolean updateSeckillTempItem(List<EditSeckillTempItemReq> tempItems, String tempId, Long tenantId, String userId);
 
+    List<SeckillTemplateItem> getSeckillTempItemList(String templateId, Long tenantId);
+
+    boolean addSeckillTempItem(List<AddSeckillTempItemReq> itemsReq, String templateId, Long tenantId, String userId);
 }
