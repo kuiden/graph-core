@@ -317,15 +317,12 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         return activity;
     }
 
-
-
-
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
         check(req.getSeckillActivityId());
         if (req.getStatus().equals(0)) {//购买记录
             return seckillRegistrationRecordService.pageBuyList(req);
-        } else {//浏览未购买  //TODO 后面灯哥处理
+        } else {//浏览未购买
             return seckillRegistrationRecordService.pageNoBuyBrowseList(req);
         }
     }
