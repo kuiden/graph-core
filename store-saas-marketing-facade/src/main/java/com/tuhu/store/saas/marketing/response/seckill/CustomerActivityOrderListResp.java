@@ -15,11 +15,13 @@ import java.util.Date;
 public class CustomerActivityOrderListResp implements Serializable {
 
     @ApiModelProperty("活动id")
-    private String seckillActivityId;
+    private String id;
 
-    //活动标题
+    @ApiModelProperty("活动标题")
+    private String activityTitle;
 
-    //活动图片
+    @ApiModelProperty("活动头图")
+    private String headImage;
 
     @ApiModelProperty("活动内实付金额")
     private BigDecimal amount;
