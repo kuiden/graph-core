@@ -37,11 +37,6 @@ public class ServiceOrderRemoteFactory implements FallbackFactory<ServiceOrderCl
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 
-            @Override
-            public BizBaseResponse updateReceivingAndTradeByOrderNos(List<String> orderNos) {
-                log.error("updateReceivingAndTradeByOrderNos error,request={},error={}", orderNos, ExceptionUtils.getStackTrace(throwable));
-                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
-            }
         };
     }
 }

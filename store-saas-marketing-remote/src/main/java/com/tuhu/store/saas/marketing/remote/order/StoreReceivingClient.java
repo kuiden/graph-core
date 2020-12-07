@@ -5,9 +5,7 @@ import com.tuhu.store.saas.order.dto.finance.receiving.ReceivingDTO;
 import com.tuhu.store.saas.order.vo.finance.nonpayment.AddNonpaymentVO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -48,7 +46,7 @@ public interface StoreReceivingClient {
      * @param orderNos
      * @return
      */
-    @RequestMapping(value = "/feign/finance/receiving/updateInitReceivingListByOrderNos", method = RequestMethod.POST)
-    BizBaseResponse<Boolean> updateInitReceivingListByOrderNos(@RequestBody List<String> orderNos);
+    @PostMapping(value = "/feign/finance/receiving/updateReceivingAndTradeOrderByOrderNos")
+    BizBaseResponse updateReceivingAndTradeOrderByOrderNos(@RequestBody List<String> orderNos, @RequestParam("num") Integer num);
 
 }

@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.service.seckill;
 
 import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
+import com.mengfan.common.response.fianace.PaymentResponse;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
@@ -85,4 +86,12 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
     void customerActivityOrderAdd(SeckillRecordAddReq req);
 
 
+
+    /**
+     * 活动抢购-途虎回调
+     *
+     * @param paymentResponse
+     * @return
+     */
+    void callBack(PaymentResponse paymentResponse);
 }

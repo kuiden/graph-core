@@ -39,11 +39,10 @@ public class StoreReceivingRemoteFactory implements FallbackFactory<StoreReceivi
             }
 
             @Override
-            public BizBaseResponse<Boolean> updateInitReceivingListByOrderNos(List<String> orderNos) {
-                log.error("updateInitReceivingListByOrderNos error,error={}", "", ExceptionUtils.getStackTrace(throwable));
+            public BizBaseResponse updateReceivingAndTradeOrderByOrderNos(List<String> orderNos, Integer flag) {
+                log.error("updateReceivingAndTradeOrderByOrderNos error,error={}", "", ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
-
         };
     }
 }

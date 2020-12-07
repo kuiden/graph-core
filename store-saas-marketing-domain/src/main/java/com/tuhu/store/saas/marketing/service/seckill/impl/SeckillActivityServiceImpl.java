@@ -157,7 +157,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (CollectionUtils.isNotEmpty(activityIds)){
             //查询活动对应的支付成功的订单
             List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                    .in("seckill_activity_id",activityIds).eq("pay_status", SeckillConstant.PAY_STATUS)
+                    .in("seckill_activity_id",activityIds).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
                     .eq("is_delete",0).eq("store_id",storeId).eq("tenant_id",tenantId));
             Map<String,List<SeckillRegistrationRecord>> activityIdNumMap = seckillRegistrationRecords.stream().collect(Collectors.groupingBy(x->x.getSeckillActivityId()));
             //组装返回数据
@@ -198,7 +198,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         result.setTotalNumber(seckillActivity.getSellNumber());
         //查询已售数量、当前客户已购数量
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                .eq("seckill_activity_id",req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_STATUS)
+                .eq("seckill_activity_id",req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
                 .eq("is_delete",0).eq("store_id",req.getStoreId()).eq("tenant_id",req.getTenantId()));
         if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)){
             Integer salesNumber = 0;
@@ -279,7 +279,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         PageHelper.startPage(req.getPageNum(),req.getPageSize());
         //按照购买时间倒序排
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                .eq("seckill_activity_id",req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_STATUS)
+                .eq("seckill_activity_id",req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
                 .eq("is_delete",0).eq("store_id",req.getStoreId()).eq("tenant_id",req.getTenantId())
                 .orderBy("payment_time",false));
         PageInfo<SeckillRegistrationRecord> recordPageInfo = new PageInfo<>(seckillRegistrationRecords);
@@ -301,7 +301,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         //查询客户所有支付成功的订单,按支付时间倒序排
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
                 .eq("customer_id",customerId).eq("store_id",storeId).eq("tenant_id",tenantId)
-                .eq("pay_status", SeckillConstant.PAY_STATUS).eq("is_delete",0).orderBy("payment_time",false));
+                .eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS).eq("is_delete",0).orderBy("payment_time",false));
         if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)){
             //查询活动
             List<String> activityIds = seckillRegistrationRecords.stream().map(x->x.getSeckillActivityId()).distinct().collect(Collectors.toList());
@@ -336,7 +336,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         //查询客户在某一个活动下的购买记录
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
                 .eq("seckill_activity_id",req.getSeckillActivityId()).eq("customer_id",req.getCustomerId()).eq("store_id",req.getStoreId())
-                .eq("tenant_id",req.getTenantId()).eq("pay_status", SeckillConstant.PAY_STATUS).eq("is_delete",0)
+                .eq("tenant_id",req.getTenantId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS).eq("is_delete",0)
                 .orderBy("payment_time",false));
         if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)){
             Date now = new Date();
