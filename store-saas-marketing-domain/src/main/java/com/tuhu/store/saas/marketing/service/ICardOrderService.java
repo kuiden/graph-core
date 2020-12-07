@@ -61,4 +61,9 @@ public interface ICardOrderService {
      */
     List<CrdCardOrderExtendDTO> queryCardToCommission(QueryCardToCommissionReq request);
 
+
+    /**
+     * 通过秒杀活动创建次卡订单
+     */
+    void addCardOrderBySeckillActivity(AddCardOrderReq req);
 }

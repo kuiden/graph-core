@@ -10,7 +10,13 @@ import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRemindAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.*;
+import com.tuhu.store.saas.marketing.response.seckill.CustomerActivityOrderListResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.service.seckill.PayService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +40,12 @@ public class SeckillActivityMinController extends BaseApi {
 
     @Autowired
     private SeckillActivityService seckillActivityService;
+
+    @Autowired
+    private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+    @Autowired
+    private PayService payService;
 
     @GetMapping("/list")
     @ApiOperation("秒杀活动列表")
@@ -107,7 +119,7 @@ public class SeckillActivityMinController extends BaseApi {
     @ApiOperation("创建秒杀订单")
     public BizBaseResponse customerActivityOrderAdd(@RequestBody SeckillRecordAddReq req){
         //创建活动订单、待收单
-
+        seckillRegistrationRecordService.customerActivityOrderAdd(req);
         return new BizBaseResponse();
     }
 
@@ -117,6 +129,16 @@ public class SeckillActivityMinController extends BaseApi {
 
         return new BizBaseResponse();
     }
+
+
+    @GetMapping("/customer/test")
+    @ApiOperation("测试")
+    public BizBaseResponse getPayAuthTokenTest(){
+        payService.getPayAuthTokenTest();
+        return new BizBaseResponse();
+    }
+
+
 
 }
 

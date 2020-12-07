@@ -1,20 +1,17 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
-import com.baomidou.mybatisplus.enums.IdType;
-import java.math.BigDecimal;
-import java.util.Date;
-import com.baomidou.mybatisplus.annotations.TableId;
 import com.baomidou.mybatisplus.annotations.TableField;
+import com.baomidou.mybatisplus.annotations.TableId;
 import com.baomidou.mybatisplus.annotations.TableName;
-import java.io.Serializable;
-
-import com.baomidou.mybatisplus.annotations.Version;
-
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.springframework.beans.BeanUtils;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * <p>
@@ -160,6 +157,12 @@ public class SeckillActivity implements Serializable {
      */
     @TableField("cad_card_template_id")
     private String cadCardTemplateId;
+
+    /**
+     * 微信活动二维码
+     */
+    @TableField("wx_qr_url")
+    private String wxQrUrl;
 
 
     public static final String CADCARDTEMPLATEID = "cad_card_template_id";

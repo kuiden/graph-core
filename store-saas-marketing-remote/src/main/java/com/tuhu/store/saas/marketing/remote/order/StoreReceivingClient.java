@@ -1,12 +1,15 @@
 package com.tuhu.store.saas.marketing.remote.order;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.order.dto.finance.receiving.ReceivingDTO;
 import com.tuhu.store.saas.order.vo.finance.nonpayment.AddNonpaymentVO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import java.util.List;
 
 @FeignClient(name = "${feign.application.orderServer.name}",fallbackFactory = StoreReceivingRemoteFactory.class)
 public interface StoreReceivingClient {
@@ -37,5 +40,15 @@ public interface StoreReceivingClient {
      */
     @RequestMapping(value = "/feign/finance/receiving/addReceivingForValueCard", method = RequestMethod.POST)
     BizBaseResponse<String> addReceivingForValueCard(@RequestBody AddReceivingVO addReceivingVO);
+
+
+    /**
+     * 更新 根据来源单号查询待收单的收款状态 已取消
+     *
+     * @param orderNos
+     * @return
+     */
+    @RequestMapping(value = "/feign/finance/receiving/updateInitReceivingListByOrderNos", method = RequestMethod.POST)
+    BizBaseResponse<Boolean> updateInitReceivingListByOrderNos(@RequestBody List<String> orderNos);
 
 }

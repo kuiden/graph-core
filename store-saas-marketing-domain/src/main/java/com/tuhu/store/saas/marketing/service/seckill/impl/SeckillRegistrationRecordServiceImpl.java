@@ -1,34 +1,57 @@
 package com.tuhu.store.saas.marketing.service.seckill.impl;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
+import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.springcloud.common.annotation.DistributedLock;
 import com.tuhu.springcloud.common.bean.BeanUtil;
+import com.tuhu.store.saas.crm.vo.AddVehicleVO;
+import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
+import com.tuhu.store.saas.marketing.enums.SeckillActivitySellTypeEnum;
+import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
+import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
+import com.tuhu.store.saas.marketing.remote.order.TradeOrderClient;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.remote.order.ServiceOrderClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
+import com.tuhu.store.saas.marketing.util.CodeFactory;
+import com.tuhu.store.saas.marketing.util.IdKeyGen;
+import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
+import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,7 +75,25 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     private SeckillActivityService seckillActivityService;
 
     @Autowired
+    private StoreReceivingClient storeReceivingClient;
+
+    @Autowired
+    private TradeOrderClient tradeOrderClient;
+
+    @Autowired
     private ServiceOrderClient serviceOrderClient;
+
+    @Autowired
+    private StoreRedisUtils storeRedisUtils;
+
+    @Autowired
+    private CodeFactory codeFactory;
+
+    @Autowired
+    IdKeyGen idKeyGen;
+
+    @Autowired
+    private CustomerClient customerClient;
 
     /**
      * 活动对应的支付成功的订单
@@ -126,6 +167,60 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         BeanUtil.copyProperties(pageInfo, responsePageInfo);
         responsePageInfo.setList(responseList);
         return responsePageInfo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DistributedLock(key = "#req.seckillActivityId + #req.buyerPhoneNumber")
+    public void customerActivityOrderAdd(SeckillRecordAddReq req) {
+        log.info("customerActivityOrderAdd：{}", JSON.toJSONString(req));
+        //判断活动是否开启或者已结束
+        SeckillActivity seckillActivity = seckillActivityService.check(req.getSeckillActivityId());
+        if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
+            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.WSJ.getStatusName());
+        } else if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
+            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.XJ.getStatusName());
+        }
+        if (seckillActivity.getSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
+            if (req.getQuantity() > seckillActivity.getSellNumber()) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+            }
+        }
+        if (seckillActivity.getSoloSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
+            if (req.getQuantity() > seckillActivity.getSoloSellNumber()) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",单人销售数量不能大于" + seckillActivity.getSoloSellNumber());
+            }
+        }
+
+        Long storeId = req.getStoreId();
+        //生成秒杀活动编码
+        String codeNumber = codeFactory.getCodeNumber(CodeFactory.SECKILL_ACTIVITY_PREFIX_CODE, storeId);
+        String seckillActivityCode = codeFactory.generateSeckillActivityCode(storeId, codeNumber);
+        Object obj = storeRedisUtils.getAtomLock(seckillActivityCode, 2);
+        if (Objects.nonNull(obj)) {
+            try {
+                //写入抢购报名（订单）表数据
+                SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
+                BeanUtils.copyProperties(req, seckillRegistrationRecord);
+                seckillRegistrationRecord.setId(idKeyGen.generateId(req.getTenantId()));
+                seckillRegistrationRecord.setOrderNo(seckillActivityCode);
+                this.insert(seckillRegistrationRecord);
+                //根据秒杀订单新建客户
+                this.addCustomerForOrder(seckillRegistrationRecord);
+                //根据秒杀订单创建 待收单  交易单
+                this.addReceivingAndTradeOrderBySeckillActivity(seckillRegistrationRecord);
+            } catch (Exception e) {
+                //如果发生异常后 放上释放锁
+                storeRedisUtils.releaseLock(seckillActivityCode, obj.toString());
+                log.error("Repeat customerActivityOrderAdd error key: {}", seckillActivityCode, e);
+                throw new StoreSaasMarketingException(e.getMessage());
+            } finally {
+                //如果发生异常后 放上释放锁
+                storeRedisUtils.releaseLock(seckillActivityCode, obj.toString());
+            }
+        } else {
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.TOO_MANY_REQUEST.getDesc());
+        }
     }
 
     private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> phoneNewMap) {
@@ -276,4 +371,195 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         String decimal = DD.setScale(1, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString();
         System.out.println(decimal);
     }
+
+
+    /**
+     * 判断登录手机号在活动下是否有未收款状态的待收单
+     *
+     * @param request
+     */
+    private void checkHasUnpaidReceiving(SeckillRegistrationRecord request) {
+        List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(request));
+        if (CollectionUtils.isNotEmpty(seckillRegistrationRecordList)) {
+            List<String> orderNos = seckillRegistrationRecordList.stream().map(p -> p.getOrderNo()).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(orderNos)) {
+                return;
+            }
+            try {
+                BizBaseResponse<Boolean> resultObjectdata = storeReceivingClient.updateInitReceivingListByOrderNos(orderNos);
+                log.info("storeReceivingClient.updateInitReceivingListByOrderNos  return:{}", JSON.toJSONString(resultObjectdata));
+                if (null != resultObjectdata && resultObjectdata.isSuccess() && null != resultObjectdata.getData()) {
+                    Boolean result = resultObjectdata.getData();
+                    if (null == result || !result) {
+                        log.warn("storeReceivingClient.updateInitReceivingListByOrderNos error:更新待收单失败");
+                        throw new StoreSaasMarketingException("更新待收单失败");
+                    }
+                }
+            } catch (Exception e) {
+                log.error("storeReceivingClient.updateInitReceivingListByOrderNos error", e);
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * 组装查询条件
+     *
+     * @param req
+     * @return
+     */
+    private EntityWrapper<SeckillRegistrationRecord> buildSearchParams(SeckillRegistrationRecord req) {
+        EntityWrapper<SeckillRegistrationRecord> search = new EntityWrapper<>();
+        search.orderBy(SeckillRegistrationRecord.UPDATE_TIME, Boolean.FALSE);
+        if (Objects.nonNull(req.getStoreId())) {
+            search.eq(SeckillRegistrationRecord.STORE_ID, req.getStoreId());
+        }
+        if (Objects.nonNull(req.getTenantId())) {
+            search.eq(SeckillRegistrationRecord.TENANT_ID, req.getTenantId());
+        }
+        if (Objects.nonNull(req.getPayStatus())) {
+            search.eq(SeckillRegistrationRecord.PAY_STATUS, req.getPayStatus());
+        }
+        if (Objects.nonNull(req.getIsDelete())) {
+            search.eq(SeckillRegistrationRecord.IS_DELETE, req.getIsDelete());
+        }
+        return search;
+    }
+
+
+    /**
+     * 根据秒杀订单更新 待收单  交易单
+     *
+     * @param seckillRegistrationRecord
+     */
+    private void updateReceivingAndTradeOrderBySeckillActivity(SeckillRegistrationRecord seckillRegistrationRecord) {
+        AddReceivingVO addReceivingVO = new AddReceivingVO();
+        addReceivingVO.setOrderId(seckillRegistrationRecord.getId());
+        addReceivingVO.setOrderNo(seckillRegistrationRecord.getOrderNo());
+        addReceivingVO.setOrderDate(seckillRegistrationRecord.getCreateTime());
+        addReceivingVO.setBusinessCategoryCode("SECKILL_ACTIVITY_ORDER");
+        addReceivingVO.setBusinessCategoryName("秒杀活动单");
+        addReceivingVO.setPayerId(seckillRegistrationRecord.getCustomerId());
+        addReceivingVO.setPayerName(seckillRegistrationRecord.getCustomerName());
+        addReceivingVO.setPayerPhoneNumber(seckillRegistrationRecord.getBuyerPhoneNumber());
+        addReceivingVO.setAmount(seckillRegistrationRecord.getExpectAmount().multiply(new BigDecimal(100)).longValue());
+        addReceivingVO.setDiscountAmount(0L);
+        addReceivingVO.setActualAmount(addReceivingVO.getAmount());
+        addReceivingVO.setPayedAmount(0L);
+        addReceivingVO.setStatus("INIT");
+        addReceivingVO.setPaymentStatus("UNRECEIVABLE");
+        addReceivingVO.setStoreId(seckillRegistrationRecord.getStoreId());
+        addReceivingVO.setTenantId(seckillRegistrationRecord.getTenantId());
+        addReceivingVO.setCreateTime(new Date());
+        try {
+            //创建待收单
+            log.info("storeReceivingClient.addReceiving request:{}", JSONObject.toJSONString(addReceivingVO));
+            Boolean result = storeReceivingClient.addReceiving(addReceivingVO).getData();
+            log.info("storeReceivingClient.addReceiving response:{}", JSONObject.toJSONString(result));
+            if (Objects.isNull(result) || !result) {
+                throw new StoreSaasMarketingException("创建待收记录失败");
+            }
+        } catch (BizException e) {
+            log.error("storeReceivingClient.addReceiving error：调用参数{}，异常{}", JSONObject.toJSONString(addReceivingVO), e);
+            throw new StoreSaasMarketingException("创建待收记录异常");
+        }
+
+        try {
+            //创建交易单
+            log.info("tradeOrderClient.addTradeOrderBySeckillActivity request:{}", JSONObject.toJSONString(addReceivingVO));
+            String result = tradeOrderClient.addTradeOrderBySeckillActivity(addReceivingVO).getData();
+            log.info("tradeOrderClient.addTradeOrderBySeckillActivity response:{}", result);
+            if (StringUtils.isBlank(result)) {
+                throw new StoreSaasMarketingException("根据秒杀活动创建交易单失败");
+            }
+        } catch (BizException e) {
+            log.error("tradeOrderClient.addTradeOrderBySeckillActivity error：调用参数{}，异常{}", JSONObject.toJSONString(addReceivingVO), e);
+            throw new StoreSaasMarketingException("根据秒杀活动创建交易单异常");
+        }
+    }
+
+
+    /**
+     * 根据秒杀订单创建 待收单  交易单
+     *
+     * @param seckillRegistrationRecord
+     */
+    private void addReceivingAndTradeOrderBySeckillActivity(SeckillRegistrationRecord seckillRegistrationRecord) {
+        AddReceivingVO addReceivingVO = new AddReceivingVO();
+        addReceivingVO.setOrderId(seckillRegistrationRecord.getId());
+        addReceivingVO.setOrderNo(seckillRegistrationRecord.getOrderNo());
+        addReceivingVO.setOrderDate(seckillRegistrationRecord.getCreateTime());
+        addReceivingVO.setBusinessCategoryCode("SECKILL_ACTIVITY_ORDER");
+        addReceivingVO.setBusinessCategoryName("秒杀活动单");
+        addReceivingVO.setPayerId(seckillRegistrationRecord.getCustomerId());
+        addReceivingVO.setPayerName(seckillRegistrationRecord.getCustomerName());
+        addReceivingVO.setPayerPhoneNumber(seckillRegistrationRecord.getBuyerPhoneNumber());
+        addReceivingVO.setAmount(seckillRegistrationRecord.getExpectAmount().multiply(new BigDecimal(100)).longValue());
+        addReceivingVO.setDiscountAmount(0L);
+        addReceivingVO.setActualAmount(addReceivingVO.getAmount());
+        addReceivingVO.setPayedAmount(0L);
+        addReceivingVO.setStatus("INIT");
+        addReceivingVO.setPaymentStatus("UNRECEIVABLE");
+        addReceivingVO.setStoreId(seckillRegistrationRecord.getStoreId());
+        addReceivingVO.setTenantId(seckillRegistrationRecord.getTenantId());
+        addReceivingVO.setCreateTime(new Date());
+        try {
+            //创建待收单
+            log.info("storeReceivingClient.addReceiving request:{}", JSONObject.toJSONString(addReceivingVO));
+            Boolean result = storeReceivingClient.addReceiving(addReceivingVO).getData();
+            log.info("storeReceivingClient.addReceiving response:{}", JSONObject.toJSONString(result));
+            if (Objects.isNull(result) || !result) {
+                throw new StoreSaasMarketingException("创建待收记录失败");
+            }
+        } catch (BizException e) {
+            log.error("storeReceivingClient.addReceiving error：调用参数{}，异常{}", JSONObject.toJSONString(addReceivingVO), e);
+            throw new StoreSaasMarketingException("创建待收记录异常");
+        }
+
+        try {
+            //创建交易单
+            log.info("tradeOrderClient.addTradeOrderBySeckillActivity request:{}", JSONObject.toJSONString(addReceivingVO));
+            String result = tradeOrderClient.addTradeOrderBySeckillActivity(addReceivingVO).getData();
+            log.info("tradeOrderClient.addTradeOrderBySeckillActivity response:{}", result);
+            if (StringUtils.isBlank(result)) {
+                throw new StoreSaasMarketingException("根据秒杀活动创建交易单失败");
+            }
+        } catch (BizException e) {
+            log.error("tradeOrderClient.addTradeOrderBySeckillActivity error：调用参数{}，异常{}", JSONObject.toJSONString(addReceivingVO), e);
+            throw new StoreSaasMarketingException("根据秒杀活动创建交易单异常");
+        }
+    }
+
+
+    /**
+     * 根据秒杀订单创建 客户
+     *
+     * @param seckillRegistrationRecord
+     */
+    private void addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
+        if (seckillRegistrationRecord.getBuyerPhoneNumber().equals(seckillRegistrationRecord.getUserPhoneNumber())) {
+            this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+        } else {
+            this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            this.addCustomer(seckillRegistrationRecord.getUserPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+        }
+    }
+
+
+    private void addCustomer(String phoneNumber, Long storeId, Long tenantId) {
+        //添加客户
+        CustomerReq customerReq = new CustomerReq();
+        customerReq.setPhoneNumber(phoneNumber);
+        customerReq.setCustomerType("person");
+        customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
+        AddVehicleReq addVehicleReq = new AddVehicleReq();
+        addVehicleReq.setStoreId(storeId);
+        addVehicleReq.setTenantId(tenantId);
+        addVehicleReq.setCustomerReq(customerReq);
+        log.info("customerClient.addCustomerForOrder request:{}", JSONObject.toJSONString(addVehicleReq));
+        BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
+        log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
+
+    }
+
 }

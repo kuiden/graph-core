@@ -4,8 +4,13 @@ import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
-import com.tuhu.store.saas.marketing.response.seckill.*;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.user.dto.StoreDTO;
 
 import java.util.List;
 
@@ -65,6 +70,23 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
     boolean offShelf(String seckillActivityId);
 
     /**
+     * 活动海报
+     *
+     * @param request
+     * @return
+     */
+    SeckillActivityResp poster(SeckillActivityQrCodeReq request);
+
+
+    /**
+     * 活动二位码url
+     *
+     * @param request
+     * @return
+     */
+    String qrCodeUrl(SeckillActivityQrCodeReq request);
+
+    /**
      * 活动数据-已购客户、浏览未购买客户分页列表
      * @param req
      * @return
@@ -78,4 +100,10 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      * @return
      */
     SeckillActivity check(String seckillActivityId);
+
+    /**
+     * 获取门店信息
+     * @return
+     */
+    StoreDTO getStoreInfo();
 }

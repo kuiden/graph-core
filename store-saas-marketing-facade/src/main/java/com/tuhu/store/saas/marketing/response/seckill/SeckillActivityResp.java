@@ -59,6 +59,18 @@ public class SeckillActivityResp implements Serializable {
     private Integer soloSellNumberType;
     @ApiModelProperty(value = "单人销售数量 -1不限")
     private Integer soloSellNumber;
+    @ApiModelProperty(value = "微信活动二维码")
+    private String wxQrUrl;
+    @ApiModelProperty(value = "门店名称")
+    private String storeName;
+    @ApiModelProperty(value = "门店地址")
+    private String address;
+    @ApiModelProperty(value = "联系电话")
+    private String clientAppointPhone;
+    @ApiModelProperty(value = "营业时间起")
+    private Date openingEffectiveDate;
+    @ApiModelProperty(value = "营业时间止")
+    private Date openingExpiryDate;
     private String templateId;
     private String cadCardTemplateId;
 }
