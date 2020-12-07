@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Api(value = "SeckillActivityController", tags = "秒杀活动")
 @RestController
-@RequestMapping("/mini/seckill/activity")
+@RequestMapping("/seckill/activity")
 public class SeckillActivityController extends BaseApi {
     @Autowired
     private SeckillActivityService seckillActivityService;
