@@ -4,6 +4,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.remote.reponse.CardUseRecordDTO;
 import com.tuhu.store.saas.order.request.serviceorder.ListCustomerInfoReq;
 import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,5 +24,8 @@ public interface ServiceOrderClient {
 
     @GetMapping("/feign/card/getCardUseRecord")
     BizBaseResponse<List<CardUseRecordDTO>> getCardUseRecord(@RequestParam String cardId);
+
+    @PostMapping(value = "/feign/finance/receiving/updateReceivingAndTradeByOrderNos")
+    BizBaseResponse updateReceivingAndTradeByOrderNos(@RequestBody List<String> orderNos);
 
 }

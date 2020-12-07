@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import com.baomidou.mybatisplus.annotations.TableField;
 import com.baomidou.mybatisplus.annotations.TableName;
@@ -100,12 +101,12 @@ public class SeckillActivityItem implements Serializable {
      * 商品原单价
      */
     @TableField("original_price")
-    private Long originalPrice;
+    private BigDecimal originalPrice;
     /**
      * 商品实际单价
      */
     @TableField("new_price")
-    private Long newPrice;
+    private BigDecimal newPrice;
     /**
      * 展示名称
      */

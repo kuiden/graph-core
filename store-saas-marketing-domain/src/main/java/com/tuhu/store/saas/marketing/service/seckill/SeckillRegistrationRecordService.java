@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 
@@ -21,6 +22,7 @@ import java.util.Map;
 public interface SeckillRegistrationRecordService extends IService<SeckillRegistrationRecord> {
     /**
      * 活动id 对应的购买数量
+     *
      * @param activityIds
      * @return
      */
@@ -28,6 +30,7 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
 
     /**
      * 活动数据
+     *
      * @param activityId
      * @return
      */
@@ -35,6 +38,7 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
 
     /**
      * 参与详情
+     *
      * @param customersId
      * @return
      */
@@ -42,6 +46,7 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
 
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表
+     *
      * @param req
      * @return
      */
@@ -50,11 +55,26 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
 
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表
+     *
      * @param req
      * @return
      */
     PageInfo<SeckillRegistrationRecordResp> pageNoBuyBrowseList(SeckillActivityReq req);
 
+    /**
+     * 秒杀活动下单24小时未支付自动取消相关订单
+     * @return
+     */
+    void seckillActivity24AutoCancel();
+
+
+    /**
+     * 活动抢购
+     *
+     * @param req
+     * @return
+     */
+    void customerActivityOrderAdd(SeckillRecordAddReq req);
 
 
 }

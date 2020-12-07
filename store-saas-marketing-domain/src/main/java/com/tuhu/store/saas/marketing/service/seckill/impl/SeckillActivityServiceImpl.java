@@ -1,10 +1,12 @@
 package com.tuhu.store.saas.marketing.service.seckill.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
+import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
@@ -12,14 +14,22 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.service.ICardService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +54,34 @@ import java.util.stream.Collectors;
 public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMapper, SeckillActivity> implements SeckillActivityService {
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+    @Autowired
+    private ICardService cardService ;
+
+    public String saveSeckillActivity(SeckillActivityModel model) {
+        log.info("saveSeckillActivity-> start -> model -> {}", model);
+        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
+        SeckillActivityModel entity = isInsert ? null : super.selectById(model.getId()).toModel();
+        String checkResult = model.checkModel(entity, isInsert);
+        //如果检查信息为空的话则进入保存模式
+        if (!StringUtils.isNotBlank(checkResult)) {
+            log.info("数据保存失败 -> model ->{} entity -> {}", model, entity);
+            throw new StoreSaasMarketingException(checkResult);
+        }
+        if (isInsert) {
+            // 新增
+            //添加一张次卡模板
+
+
+            //保存商品和服务明显
+            //计算 商品/服务总价格
+        }
+
+        return "";
+
+    }
 
     @Override
     public int autoUpdateOffShelf() {
@@ -83,8 +121,17 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         List<SeckillActivityListResp> result = new ArrayList<>();
         List<SeckillActivity> activityList = new ArrayList<>();
         //查门店所有进行中和未开始的秒杀活动，优先展示进行中的活动，再展示未开始的活动
-        activityList.addAll(this.baseMapper.queryStart(storeId,tenantId));
-        activityList.addAll(this.baseMapper.queryNotStart(storeId,tenantId));
+        Date cDate = new Date();
+        //添加进行中的活动
+        activityList.addAll(this.baseMapper.selectList(new EntityWrapper<SeckillActivity>()
+                .eq("store_id",storeId).eq("tenant_id",tenantId)
+                .eq("is_delete",0).le("start_time",cDate)
+                .gt("end_time",cDate).ne("status",9).orderBy("end_time")));
+        //添加未开始的活动
+        activityList.addAll(this.baseMapper.selectList(new EntityWrapper<SeckillActivity>()
+                .eq("store_id",storeId).eq("tenant_id",tenantId)
+                .eq("is_delete",0).gt("start_time",cDate)
+                .ne("status",9).orderBy("start_time")));
         //查询活动对应的支付成功的订单数量
         List<String> activityIds = activityList.stream().map(x->x.getId()).collect(Collectors.toList());
         Map<String, Integer> activityIdNumMap = seckillRegistrationRecordService.activityIdNumMap(activityIds);
@@ -103,6 +150,31 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             }
             result.add(resp);
         }
+        return result;
+    }
+
+    @Override
+    public SeckillActivityDetailResp clientActivityDetail(SeckillActivityDetailReq req) {
+        SeckillActivityDetailResp result = new SeckillActivityDetailResp();
+        //查活动
+
+        //查活动项目
+
+        //查门店信息
+        StoreInfoVO storeInfoVO = new StoreInfoVO();
+        storeInfoVO.setStoreId(req.getStoreId());
+        storeInfoVO.setTanentId(req.getTenantId());
+        BizBaseResponse<StoreDTO> resultData = storeInfoClient.getStoreInfo(storeInfoVO);
+        if (null != resultData && null != resultData.getData()){
+            StoreDTO storeDTO = resultData.getData();
+            SeckillActivityDetailResp.StoreInfo storeInfo = new SeckillActivityDetailResp.StoreInfo();
+            BeanUtils.copyProperties(storeDTO,storeInfo);
+            //电话设置为c端预约电话
+            storeInfo.setMobilePhone(storeDTO.getClientAppointPhone());
+            //门店照片
+            String imagePaths = storeDTO.getImagePaths();
+        }
+
         return result;
     }
 
@@ -147,8 +219,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Override
     @Transactional
-    public boolean offShelf(String activityId) {
-        SeckillActivity activity = check(activityId);
+    public boolean offShelf(String seckillActivityId) {
+        SeckillActivity activity = check(seckillActivityId);
         activity.setStatus(SeckillActivityStatusEnum.XJ.getStatus());
         activity.setUpdateTime(new Date());
         activity.setUpdateUser(UserContextHolder.getStoreUserId());

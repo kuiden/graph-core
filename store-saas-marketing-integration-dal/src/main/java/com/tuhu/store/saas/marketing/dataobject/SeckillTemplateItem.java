@@ -16,8 +16,8 @@ import lombok.experimental.Accessors;
  * 秒杀活动基础模板表
  * </p>
  *
- * @author yangshengyong
- * @since 2020-12-02
+ * @author kudeng
+ * @since 2020-12-03
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -36,6 +36,26 @@ public class SeckillTemplateItem implements Serializable {
      */
     @TableField("tenant_id")
     private Long tenantId;
+    /**
+     * 秒杀模板id
+     */
+    @TableField("seckill_template_id")
+    private String seckillTemplateId;
+    /**
+     * 商品服务名称
+     */
+    @TableField("goods_name")
+    private String goodsName;
+    /**
+     * 项目类型，0-商品，1-服务
+     */
+    @TableField("goods_type")
+    private Integer goodsType;
+    /**
+     * 商品服务数量
+     */
+    @TableField("item_quantity")
+    private Integer itemQuantity;
     /**
      * 创建人
      */
@@ -61,16 +81,19 @@ public class SeckillTemplateItem implements Serializable {
      */
     @TableField("is_delete")
     private Integer isDelete;
-    /**
-     * 模板头id
-     */
-    @TableField("temp_id")
-    private String tempId;
 
 
     public static final String ID = "id";
 
     public static final String TENANT_ID = "tenant_id";
+
+    public static final String SECKILL_TEMPLATE_ID = "seckill_template_id";
+
+    public static final String GOODS_NAME = "goods_name";
+
+    public static final String GOODS_TYPE = "goods_type";
+
+    public static final String ITEM_QUANTITY = "item_quantity";
 
     public static final String CREATE_USER = "create_user";
 
@@ -81,7 +104,5 @@ public class SeckillTemplateItem implements Serializable {
     public static final String UPDATE_TIME = "update_time";
 
     public static final String IS_DELETE = "is_delete";
-
-    public static final String TEMP_ID = "temp_id";
 
 }

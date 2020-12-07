@@ -38,7 +38,7 @@ public class SeckillActivityController extends BaseApi {
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
 
     @PostMapping(value = "/pageList")
-    @ApiOperation(value = "秒杀活动列表 status 0未开始、1进行中、9已下架 , 全部状态-1")
+    @ApiOperation(value = "秒杀活动列表 status 0未开始、1进行中、9已下架 , 定向营销(未开始、进行中)-1")
     public BizBaseResponse<Page<SeckillActivityResp>> pageList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
@@ -66,17 +66,18 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillRegistrationRecordService.participateDetail(customersId));
     }
 
+    @GetMapping(value = "/offShelf")
+    @ApiOperation(value = "活动下架")
+    public BizBaseResponse<Boolean> offShelf(@Param("seckillActivityId") String seckillActivityId) {
+        return new BizBaseResponse(seckillActivityService.offShelf(seckillActivityId));
+    }
+
     @PostMapping(value = "/onShelf")
     @ApiOperation(value = "编辑上架")
     public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityReq req) {
         return new BizBaseResponse();
     }
 
-    @GetMapping(value = "/offShelf")
-    @ApiOperation(value = "活动下架")
-    public BizBaseResponse<Boolean> offShelf(@Param("activityId") String activityId) {
-        return new BizBaseResponse(seckillActivityService.offShelf(activityId));
-    }
     //TODO 活动海报
 }
 

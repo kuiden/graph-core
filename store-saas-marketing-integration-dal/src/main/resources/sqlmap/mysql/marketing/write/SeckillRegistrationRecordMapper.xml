@@ -67,12 +67,11 @@
             AND date_format(payment_time, '%Y-%m-%d') = date_format(now(), '%Y-%m-%d')
         </if>
         AND seckill_activity_id = #{seckillActivityId}
-
         GROUP BY store_id,tenant_id,seckill_activity_id
     </select>
     
     <select id="getAllUserCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
-        SELECT COUNT(1) FROM
+        SELECT COUNT(DISTINCT open_id) FROM
         client_event_record
         WHERE 1=1
         <if test="type != null and type == 0 ">
@@ -82,12 +81,11 @@
             AND content_type != 'registered'
         </if>
         AND content_value = #{seckillActivityId}
-        GROUP BY content_value
     </select>
 
 
     <select id="getBuyCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
-        SELECT COUNT(1)
+        SELECT COUNT(DISTINCT a.customer_id)
         FROM seckill_registration_record a
         WHERE
         1=1
@@ -105,23 +103,34 @@
                 AND b.content_type != 'registered'
             </if>
         )
-        GROUP BY a.seckill_activity_id
     </select>
 
     <select id="pageNoBuyBrowseList" resultMap="BaseResultMap">
-        SELECT max(create_time) as create_time, customer_id, '1212121212121' as buyer_phone_number
+        SELECT MIN(create_time) as create_time, customer_id, phone_number as buyer_phone_number
         FROM client_event_record a
         WHERE
         1=1
+        AND phone_number != '0'
+        AND customer_id IS NOT NULL
         AND content_value = #{seckillActivityId}
         AND NOT EXISTS (
             SELECT b.customer_id
             FROM seckill_registration_record b
-            WHERE a.content_value = b.seckill_activity_id
+            WHERE
+            a.content_value = b.seckill_activity_id
+            AND b.pay_status = 1
         )
         <if test="phone != null and phone != ''">
-            AND buyer_phone_number like CONCAT('%',#{phone},'%')
+            AND phone_number like CONCAT('%',#{phone},'%')
         </if>
-        GROUP BY customer_id,buyer_phone_number
+        GROUP BY customer_id,phone_number
+    </select>
+
+    <select id="seckillActivity24AutoCancel" resultMap="BaseResultMap">
+      SELECT
+      id,store_id,tenant_id,seckill_activity_id,order_no
+      FROM seckill_registration_record
+      WHERE 1=1
+      AND DATE_ADD(register_time, INTERVAL 24 HOUR) <![CDATA[<=]]> NOW()  limit #{num}
     </select>
 </mapper>

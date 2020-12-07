@@ -10,9 +10,11 @@ import java.io.Serializable;
 
 import com.baomidou.mybatisplus.annotations.Version;
 
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 /**
  * <p>
@@ -27,6 +29,12 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @TableName("seckill_activity")
 public class SeckillActivity implements Serializable {
+
+    public SeckillActivityModel toModel() {
+        SeckillActivityModel model = new SeckillActivityModel();
+        BeanUtils.copyProperties(this,model);
+        return model;
+    }
 
     private static final long serialVersionUID = 1L;
 
@@ -54,7 +62,7 @@ public class SeckillActivity implements Serializable {
      * 相关次卡有效天数
      */
     @TableField("cad_card_expiry_date_day")
-    private Date cadCardExpiryDateDay;
+    private Integer cadCardExpiryDateDay;
     /**
      * 销售数量类型
      */
