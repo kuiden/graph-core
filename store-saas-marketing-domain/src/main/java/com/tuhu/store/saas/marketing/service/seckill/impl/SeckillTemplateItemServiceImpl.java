@@ -2,8 +2,10 @@ package com.tuhu.store.saas.marketing.service.seckill.impl;
 
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
+import com.tuhu.store.saas.marketing.dataobject.SeckillTemplate;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplateItem;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillTemplateItemMapper;
+import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempItemReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSeckillTempItemReq;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateItemService;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
@@ -57,8 +59,8 @@ public class SeckillTemplateItemServiceImpl extends ServiceImpl<SeckillTemplateI
             SeckillTemplateItem updateItem = new SeckillTemplateItem();
             updateItem.setUpdateTime(new Date());
             updateItem.setUpdateUser(userId);
-            EntityWrapper<SeckillTemplateItem> updateWrapper = new EntityWrapper();
             updateItems.forEach(item->{
+                EntityWrapper<SeckillTemplateItem> updateWrapper = new EntityWrapper();
                 BeanUtils.copyProperties(item, updateItem);
                 updateWrapper.eq(SeckillTemplateItem.ID, item.getId());
                 this.update(updateItem, updateWrapper);
@@ -67,4 +69,26 @@ public class SeckillTemplateItemServiceImpl extends ServiceImpl<SeckillTemplateI
         return true;
     }
 
+    @Override
+    public List<SeckillTemplateItem> getSeckillTempItemList(String templateId, Long tenantId) {
+        EntityWrapper<SeckillTemplateItem> itemWrapper = new EntityWrapper<>();
+        itemWrapper.eq(SeckillTemplateItem.TENANT_ID, tenantId);
+        itemWrapper.eq(SeckillTemplateItem.SECKILL_TEMPLATE_ID, templateId);
+        itemWrapper.eq(SeckillTemplate.IS_DELETE, 0);
+        return this.selectList(itemWrapper);
+    }
+
+    @Override
+    public boolean addSeckillTempItem(List<AddSeckillTempItemReq> itemsReq, String templateId, Long tenantId, String userId) {
+        SeckillTemplateItem item = new SeckillTemplateItem();
+        item.setTenantId(tenantId);
+        item.setCreateUser(userId);
+        item.setSeckillTemplateId(templateId);
+        itemsReq.forEach(itemReq->{
+            BeanUtils.copyProperties(itemReq, item);
+            item.setId(idKeyGen.generateId(tenantId));
+            this.insert(item);
+        });
+        return true;
+    }
 }

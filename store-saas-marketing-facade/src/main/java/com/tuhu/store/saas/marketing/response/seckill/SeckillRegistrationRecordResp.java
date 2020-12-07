@@ -39,6 +39,9 @@ public class SeckillRegistrationRecordResp {
     @ApiModelProperty(value = "使用人手机号码")
     private String userPhoneNumber;
 
+    @ApiModelProperty(value = "使用人客户id")
+    private String userCustomerId;
+
     @ApiModelProperty(value = "购买数量")
     private Long quantity;
 

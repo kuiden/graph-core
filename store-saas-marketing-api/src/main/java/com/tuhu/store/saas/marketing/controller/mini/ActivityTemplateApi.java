@@ -13,6 +13,7 @@ import com.tuhu.store.saas.marketing.service.ImageUploadService;
 import com.tuhu.store.saas.marketing.util.ImageUtil;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -112,7 +113,9 @@ public class ActivityTemplateApi  extends BaseApi {
             log.info("图片上传接口异常", e);
             return BizBaseResponse.operationFailed("服务异常");
         }
-
+        if (StringUtils.isNotEmpty(url) && url.startsWith("http:")) {
+            url.replaceFirst("http:", "https:");
+        }
         return BizBaseResponse.success(url);
     }
 

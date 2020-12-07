@@ -11,14 +11,10 @@ import com.tuhu.store.saas.marketing.response.seckill.SeckillTempDetailResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -47,25 +43,28 @@ public class SeckillTemplateController extends BaseApi {
     @PostMapping("/add")
     @ApiOperation("添加秒杀活动模板")
     public BizResponse add(@Validated @RequestBody AddSeckillTempReq req) {
+        seckillTemplateService.addSeckillTemplate(req, this.getTenantId(), this.getTenantUserId());
         return BizResponse.success();
     }
 
     @PostMapping("/edit")
     @ApiOperation("编辑秒杀活动模板")
     public BizResponse edit(@Validated @RequestBody EditSecKillTempReq req) {
+        seckillTemplateService.editTemplate(req, this.getTenantId(), this.getTenantUserId());
         return BizResponse.success();
     }
 
     @PostMapping("/detail")
     @ApiOperation("查询秒杀活动模板详情")
     public BizResponse<SeckillTempDetailResp> detail(@RequestParam(value = "tempId") String tempId) {
-        return BizResponse.success();
+        SeckillTempDetailResp resp = seckillTemplateService.getTemplateDetail(tempId, this.getTenantId());
+        return BizResponse.success(resp);
     }
 
     @PostMapping("/sort")
     @ApiOperation("秒杀活动模板排序")
     public BizResponse sort(@Validated @RequestBody List<SortSeckillTempReq> req) {
-        seckillTemplateService.updateTemplateSort(req, this.getTenantId(), this.getUserId());
+        seckillTemplateService.updateTemplateSort(req, this.getTenantId(), this.getTenantUserId());
         return BizResponse.success();
     }
 
