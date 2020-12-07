@@ -1,7 +1,7 @@
 package com.tuhu.store.saas.marketing.controller.seckill;
 
 
-import com.baomidou.mybatisplus.plugins.Page;
+import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
@@ -40,7 +40,7 @@ public class SeckillActivityController extends BaseApi {
 
     @PostMapping(value = "/pageList")
     @ApiOperation(value = "秒杀活动列表 status 0未开始、1进行中、9已下架 , 定向营销(未开始、进行中)-1")
-    public BizBaseResponse<Page<SeckillActivityResp>> pageList(@RequestBody SeckillActivityReq req) {
+    public BizBaseResponse<PageInfo<SeckillActivityResp>> pageList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(seckillActivityService.pageList(req));
@@ -54,7 +54,7 @@ public class SeckillActivityController extends BaseApi {
 
     @PostMapping(value = "/pageBuyOrBrowseList")
     @ApiOperation(value = "活动数据-已购客户、浏览未购买客户分页列表 状态 0已购客户、1浏览未购买")
-    public BizBaseResponse<Page<SeckillActivityResp>> pageBuyOrBrowseList(@RequestBody SeckillActivityReq req) {
+    public BizBaseResponse<PageInfo<SeckillActivityResp>> pageBuyOrBrowseList(@RequestBody SeckillActivityReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         return new BizBaseResponse(seckillActivityService.pageBuyOrBrowseList(req));
