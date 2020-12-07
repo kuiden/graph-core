@@ -60,6 +60,14 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.pageBuyOrBrowseList(req));
     }
 
+    @PostMapping(value = "/pageBuyRecodeList")
+    @ApiOperation(value = "参与记录、活动购买记录")
+    public BizBaseResponse<PageInfo<SeckillRegistrationRecordResp>> pageBuyRecodeList(@RequestBody SeckillActivityReq req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        return new BizBaseResponse(seckillRegistrationRecordService.pageBuyRecodeList(req));
+    }
+
 
     @GetMapping(value = "/participateDetail")
     @ApiOperation(value = "参与详情")

@@ -170,6 +170,40 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
     @Override
+    public PageInfo<SeckillRegistrationRecordResp> pageBuyRecodeList(SeckillActivityReq req) {
+        log.info("pageBuyRecodeList{}", JSON.toJSONString(req));
+        seckillActivityService.check(req.getSeckillActivityId());
+        PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
+        EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
+        wrapper.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, req.getSeckillActivityId());
+        wrapper.eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_STATUS);
+        wrapper.eq(SeckillRegistrationRecord.STORE_ID, req.getStoreId());
+        wrapper.eq(SeckillRegistrationRecord.TENANT_ID, req.getTenantId());
+        wrapper.orderBy(SeckillRegistrationRecord.PAYMENT_TIME, Boolean.FALSE);
+        PageInfo<SeckillRegistrationRecord> pageInfo = new PageInfo<>(this.selectList(wrapper));
+        List<SeckillRegistrationRecord> list = pageInfo.getList();
+        List<SeckillRegistrationRecordResp> responseList = Lists.newArrayList();
+        if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
+            responseList = list.stream().map(o -> {
+                SeckillRegistrationRecordResp response = new SeckillRegistrationRecordResp();
+                BeanUtils.copyProperties(o, response);
+                //车牌号脱敏
+                if (StringUtils.isNotBlank(response.getVehicleNumber())) {
+                    int length = response.getVehicleNumber().length();
+                    String plateFlag = response.getVehicleNumber().substring(0, 1);
+                    String plateNumber = response.getVehicleNumber().substring(length - 1, length);
+                    response.setVehicleNumber(plateFlag + "******" + plateNumber);
+                }
+                return response;
+            }).collect(Collectors.toList());
+        }
+        BeanUtil.copyProperties(pageInfo, responsePageInfo);
+        responsePageInfo.setList(responseList);
+        return responsePageInfo;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @DistributedLock(key = "#req.seckillActivityId + #req.buyerPhoneNumber")
     public void customerActivityOrderAdd(SeckillRecordAddReq req) {

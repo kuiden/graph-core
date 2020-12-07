@@ -61,6 +61,14 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      */
     PageInfo<SeckillRegistrationRecordResp> pageNoBuyBrowseList(SeckillActivityReq req);
 
+
+    /**
+     * 购买记录
+     * @param req
+     * @return
+     */
+    PageInfo<SeckillRegistrationRecordResp> pageBuyRecodeList(SeckillActivityReq req);
+
     /**
      * 秒杀活动下单24小时未支付自动取消相关订单
      * @return
