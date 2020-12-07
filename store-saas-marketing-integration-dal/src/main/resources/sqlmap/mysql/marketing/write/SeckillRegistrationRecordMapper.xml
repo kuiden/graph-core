@@ -67,12 +67,11 @@
             AND date_format(payment_time, '%Y-%m-%d') = date_format(now(), '%Y-%m-%d')
         </if>
         AND seckill_activity_id = #{seckillActivityId}
-
         GROUP BY store_id,tenant_id,seckill_activity_id
     </select>
     
     <select id="getAllUserCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
-        SELECT COUNT(1) FROM
+        SELECT COUNT(DISTINCT open_id) FROM
         client_event_record
         WHERE 1=1
         <if test="type != null and type == 0 ">
@@ -82,12 +81,11 @@
             AND content_type != 'registered'
         </if>
         AND content_value = #{seckillActivityId}
-        GROUP BY content_value
     </select>
 
 
     <select id="getBuyCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
-        SELECT COUNT(1)
+        SELECT COUNT(DISTINCT a.customer_id)
         FROM seckill_registration_record a
         WHERE
         1=1
@@ -105,7 +103,6 @@
                 AND b.content_type != 'registered'
             </if>
         )
-        GROUP BY a.seckill_activity_id
     </select>
 
     <select id="pageNoBuyBrowseList" resultMap="BaseResultMap">
