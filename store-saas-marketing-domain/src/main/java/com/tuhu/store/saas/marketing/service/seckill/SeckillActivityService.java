@@ -2,12 +2,10 @@ package com.tuhu.store.saas.marketing.service.seckill;
 
 import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
-import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.*;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -48,6 +46,16 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      * 查询秒杀活动参与记录（分页） - C端
      */
     PageInfo<SeckillRecordListResp> clientActivityRecordList(SeckillActivityDetailReq req);
+
+    /*
+     * 查询客户活动订单列表 - C端
+     */
+    List<CustomerActivityOrderListResp> customerActivityOrderList(String customerId, Long storeId, Long tenantId);
+
+    /*
+     * 查询秒杀订单详情 - C端
+     */
+    CustomerActivityOrderDetailResp customerActivityOrderDetail(SeckillActivityDetailReq req);
 
     /**
      * 下架活动

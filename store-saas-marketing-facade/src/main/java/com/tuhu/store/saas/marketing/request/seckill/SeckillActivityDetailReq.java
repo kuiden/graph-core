@@ -19,7 +19,7 @@ public class SeckillActivityDetailReq implements Serializable {
 
     private Long tenantId;
 
-    private String costomerId;
+    private String customerId;
 
     //页码
     private Integer pageNum = 1;

@@ -112,7 +112,7 @@ public class SeckillActivityDetailResp implements Serializable {
         private Integer itemQuantity;
 
         @ApiModelProperty("商品原价格")
-        private Long originalPrice;
+        private BigDecimal originalPrice;
     }
 
     @Data
