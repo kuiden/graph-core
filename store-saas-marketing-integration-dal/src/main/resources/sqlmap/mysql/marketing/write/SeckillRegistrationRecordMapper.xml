@@ -106,22 +106,23 @@
     </select>
 
     <select id="pageNoBuyBrowseList" resultMap="BaseResultMap">
-        SELECT MIN(create_time) as create_time, customer_id
+        SELECT MIN(create_time) as create_time, customer_id, phone_number as buyer_phone_number
         FROM client_event_record a
         WHERE
         1=1
+        AND phone_number != '0'
         AND content_value = #{seckillActivityId}
         AND NOT EXISTS (
             SELECT b.customer_id
             FROM seckill_registration_record b
             WHERE
             a.content_value = b.seckill_activity_id
-            AND a.pay_status != 1
+            AND b.pay_status = 1
         )
         <if test="phone != null and phone != ''">
-            AND phone like CONCAT('%',#{phone},'%')
+            AND phone_number like CONCAT('%',#{phone},'%')
         </if>
-        GROUP BY customer_id
+        GROUP BY customer_id,phone_number
     </select>
 
     <select id="seckillActivity24AutoCancel" resultMap="BaseResultMap">

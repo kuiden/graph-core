@@ -106,20 +106,20 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         seckillActivityService.check(req.getSeckillActivityId());
         PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
-        //查询报名记录购买记录
+        //查询报名未购买浏览记录
         PageInfo<SeckillRegistrationRecord> pageInfo = new PageInfo<>(this.baseMapper.pageNoBuyBrowseList(req.getTenantId(), req.getStoreId(), req.getSeckillActivityId(), req.getPhone()));
         List<SeckillRegistrationRecord> list = pageInfo.getList();
         List<SeckillRegistrationRecordResp> responseList = Lists.newArrayList();
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
-            List<String> customerIds = new ArrayList<>();
+            List<String> phones = new ArrayList<>();
             for (SeckillRegistrationRecord record : list) {
-                customerIds.add(record.getCustomerId());
+                phones.add(record.getBuyerPhoneNumber());
             }
-            Map<String, Integer> customerIdNewMap = this.customerIdNewMap(customerIds, req.getSeckillActivityId());
+            Map<String, Integer> phoneNewMap = this.phoneNewMap(phones, req.getSeckillActivityId());
             responseList = list.stream().map(o -> {
                 SeckillRegistrationRecordResp response = new SeckillRegistrationRecordResp();
                 BeanUtils.copyProperties(o, response);
-                dataConversion(o, response, customerIdNewMap);
+                dataConversion(o, response, phoneNewMap);
                 return response;
             }).collect(Collectors.toList());
         }
@@ -128,21 +128,34 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         return responsePageInfo;
     }
 
-    private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> customerIdNewMap) {
+    private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> phoneNewMap) {
         //是否新用户
-        if (null != customerIdNewMap.get(o.getBuyerPhoneNumber())) {
+        if (null != phoneNewMap.get(o.getBuyerPhoneNumber())) {
             response.setIsNewCustomer(SeckillConstant.TYPE_1);
         }
     }
 
-    private Map<String, Integer> customerIdNewMap(List<String> customerIds,String seckillActivityId ) {
-        log.info("customerIdNewMap{}", JSON.toJSONString(customerIds));
+    /**
+     * 根据手机号和活动id 获取是否新用户
+     *
+     * @param phones
+     * @param seckillActivityId
+     * @return
+     */
+    private Map<String, Integer> phoneNewMap(List<String> phones, String seckillActivityId) {
+        log.info("phoneNewMap{}", JSON.toJSONString(phones));
         EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
+        wrapper.eq(SeckillRegistrationRecord.IS_NEW_CUSTOMER, SeckillConstant.TYPE_1);
+        wrapper.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, seckillActivityId);
+        wrapper.in(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, phones);
         List<SeckillRegistrationRecord> list = this.selectList(wrapper);
         if (CollectionUtils.isNotEmpty(list)) {
-            Map<String, Integer> customerIdNewMap = new HashMap<>();
-            //todo 获取用户对应的注册数据，算新用户
-            return customerIdNewMap;
+            Map<String, Integer> phoneNewMap = new HashMap<>();
+            Map<String, List<SeckillRegistrationRecord>> activityIdListMap = list.stream().collect(Collectors.groupingBy(SeckillRegistrationRecord::getBuyerPhoneNumber));
+            for (Map.Entry<String, List<SeckillRegistrationRecord>> entry : activityIdListMap.entrySet()) {
+                phoneNewMap.put(entry.getKey(), SeckillConstant.TYPE_1);
+            }
+            return phoneNewMap;
         }
         return Collections.EMPTY_MAP;
     }
