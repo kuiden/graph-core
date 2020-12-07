@@ -6,10 +6,7 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.response.seckill.*;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 
 import java.util.List;

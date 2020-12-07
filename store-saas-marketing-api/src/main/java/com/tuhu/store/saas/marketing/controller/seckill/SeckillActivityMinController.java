@@ -13,7 +13,6 @@ import com.tuhu.store.saas.marketing.response.seckill.*;
 import com.tuhu.store.saas.marketing.response.seckill.CustomerActivityOrderListResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.seckill.PayService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
