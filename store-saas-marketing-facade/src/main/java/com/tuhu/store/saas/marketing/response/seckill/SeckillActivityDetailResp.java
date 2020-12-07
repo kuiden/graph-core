@@ -66,6 +66,9 @@ public class SeckillActivityDetailResp implements Serializable {
     @ApiModelProperty("上下架状态 0:未上架 1:上架 9:下架")
     private Integer status;
 
+    @ApiModelProperty("活动状态")
+    private String statusName;
+
     @ApiModelProperty("活动开始时间")
     private Date startTime;
 
@@ -83,6 +86,12 @@ public class SeckillActivityDetailResp implements Serializable {
 
     @ApiModelProperty("活动规则")
     private String activityRule;
+
+    @ApiModelProperty("门店介绍")
+    private String storeIntroduction;
+
+    @ApiModelProperty("客户已购数量")
+    private Integer buyNumber = 0;
 
     @ApiModelProperty("活动项目")
     private List<ActivityDetailItem> items;
@@ -130,7 +139,7 @@ public class SeckillActivityDetailResp implements Serializable {
         private String mobilePhone;
 
         @ApiModelProperty("门店照片")
-        private List<String> imagePaths;
+        private String [] imagePaths;
     }
 
 

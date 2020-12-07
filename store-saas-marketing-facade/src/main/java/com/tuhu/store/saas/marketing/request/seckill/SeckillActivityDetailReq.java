@@ -19,4 +19,12 @@ public class SeckillActivityDetailReq implements Serializable {
 
     private Long tenantId;
 
+    private String costomerId;
+
+    //页码
+    private Integer pageNum = 1;
+
+    //页量
+    private Integer pageSize = 10;
+
 }
