@@ -3,10 +3,9 @@ package com.tuhu.store.saas.marketing.service.seckill;
 import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.response.seckill.*;
 
 import java.util.List;
 
@@ -33,12 +32,22 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      */
     PageInfo<SeckillActivityResp> pageList(SeckillActivityReq req);
 
+    /*
+     * 查询活动列表 - C端
+     */
+    List<SeckillActivityListResp> clientActivityList(Long storeId, Long tenantId);
+
+    /*
+     * 查询活动详情 - C端
+     */
+    SeckillActivityDetailResp clientActivityDetail(SeckillActivityDetailReq req);
+
     /**
      * 下架活动
-     * @param activityId
+     * @param seckillActivityId
      * @return
      */
-    boolean offShelf(String activityId);
+    boolean offShelf(String seckillActivityId);
 
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表
@@ -50,8 +59,8 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 校验活动id
-     * @param activityId
+     * @param seckillActivityId
      * @return
      */
-    SeckillActivity check(String activityId);
+    SeckillActivity check(String seckillActivityId);
 }

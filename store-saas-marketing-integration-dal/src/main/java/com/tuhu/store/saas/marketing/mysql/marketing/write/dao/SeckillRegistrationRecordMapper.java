@@ -15,7 +15,15 @@ import java.util.List;
  * @since 2020-12-02
  */
 public interface SeckillRegistrationRecordMapper extends BaseWriteMapper<SeckillRegistrationRecord> {
-    List<SeckillRegistrationRecord> pageBuyOrBrowseList(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("seckillActivityId") String seckillActivityId, @Param("phone") String phone);
+    List<SeckillRegistrationRecord> pageBuyList(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("seckillActivityId") String seckillActivityId, @Param("phone") String phone);
+
+    List<SeckillRegistrationRecord> pageNoBuyBrowseList(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("seckillActivityId") String seckillActivityId, @Param("phone") String phone);
 
     SeckillRegistrationRecord dataStatistics(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("seckillActivityId") String seckillActivityId, @Param("type") Integer type);
+
+    Integer getAllUserCountByTypeAndSeckillActivityId(@Param("seckillActivityId") String seckillActivityId, @Param("type") Integer type);
+
+    Integer getBuyCountByTypeAndSeckillActivityId(@Param("seckillActivityId") String seckillActivityId, @Param("type") Integer type);
+
+    List<SeckillRegistrationRecord> seckillActivity24AutoCancel(@Param("num") Integer num);
 }

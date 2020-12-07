@@ -24,22 +24,22 @@ public class SeckillActivityStatisticsResp {
     private String activityTitle;
 
     @ApiModelProperty(value = "今日成交，取当日成功支付购买的份数，注意不是支付笔数")
-    private Integer todayDeal = 0;
+    private Long todayDeal = 0L;
 
     @ApiModelProperty(value = "总成交，取当前活动成功支付购买的份数，注意不是支付笔数")
-    private Integer totalDeal = 0;
+    private Long totalDeal = 0L;
 
     @ApiModelProperty(value = "获取新客，通过此活动任意渠道页面登录且登录时在门店同步注册的手机号数量")
     private Integer newCustomers = 0;
 
     @ApiModelProperty(value = "新客转化率，此活动中有购买行为的新客手机号数除以新客手机号数，四舍五入最多保留一位小数")
-    private BigDecimal newCustomersConversionRate = BigDecimal.ZERO;
+    private String newCustomersConversionRate = "0";
 
     @ApiModelProperty(value = "唤醒老客，通过此活动任意渠道页面登录且登录时未在门店同步注册的手机号数量")
     private Integer oldCustomer = 0;
 
     @ApiModelProperty(value = "老客转化率，此活动中有购买行为的老客手机号数除以老客手机号数，四舍五入最多保留一位小数")
-    private BigDecimal oldCustomerConversionRate = BigDecimal.ZERO;
+    private String oldCustomerConversionRate = "0";
 
     @ApiModelProperty(value = "总收入（元）")
     private BigDecimal totalAmount = BigDecimal.ZERO;

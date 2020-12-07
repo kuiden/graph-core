@@ -32,7 +32,7 @@
         <result column="is_delete" property="isDelete" />
     </resultMap>
 
-    <select id="pageBuyOrBrowseList" resultMap="BaseResultMap">
+    <select id="pageBuyList" resultMap="BaseResultMap">
         SELECT
         store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number,
         count(1) as quantity,sum(expect_amount) as expect_amount,max(is_new_customer) as is_new_customer
@@ -48,7 +48,7 @@
             and buyer_phone_number like CONCAT('%',#{phone},'%')
         </if>
         group by store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number
-        order by create_time desc
+        order by payment_time desc
     </select>
 
     <select id="dataStatistics" resultMap="BaseResultMap">
@@ -63,10 +63,74 @@
         AND pay_status = 1
         AND store_id = #{storeId}
         AND tenant_id = #{tenantId}
-        AND seckill_activity_id = #{seckillActivityId}
         <if test="type != null and type == 0 ">
             AND date_format(payment_time, '%Y-%m-%d') = date_format(now(), '%Y-%m-%d')
         </if>
+        AND seckill_activity_id = #{seckillActivityId}
         GROUP BY store_id,tenant_id,seckill_activity_id
+    </select>
+    
+    <select id="getAllUserCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT open_id) FROM
+        client_event_record
+        WHERE 1=1
+        <if test="type != null and type == 0 ">
+           AND content_type = 'registered'
+        </if>
+        <if test="type != null and type == 1 ">
+            AND content_type != 'registered'
+        </if>
+        AND content_value = #{seckillActivityId}
+    </select>
+
+
+    <select id="getBuyCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT a.customer_id)
+        FROM seckill_registration_record a
+        WHERE
+        1=1
+        AND a.is_delete = 0
+        AND a.pay_status = 1
+        AND a.seckill_activity_id = #{seckillActivityId}
+        AND EXISTS (
+            SELECT content_value FROM client_event_record b
+            WHERE
+            a.seckill_activity_id = b.content_value
+            <if test="type != null and type == 0 ">
+                AND b.content_type = 'registered'
+            </if>
+            <if test="type != null and type == 1 ">
+                AND b.content_type != 'registered'
+            </if>
+        )
+    </select>
+
+    <select id="pageNoBuyBrowseList" resultMap="BaseResultMap">
+        SELECT MIN(create_time) as create_time, customer_id, phone_number as buyer_phone_number
+        FROM client_event_record a
+        WHERE
+        1=1
+        AND phone_number != '0'
+        AND customer_id IS NOT NULL
+        AND content_value = #{seckillActivityId}
+        AND NOT EXISTS (
+            SELECT b.customer_id
+            FROM seckill_registration_record b
+            WHERE
+            a.content_value = b.seckill_activity_id
+            AND b.pay_status = 1
+        )
+        <if test="phone != null and phone != ''">
+            AND phone_number like CONCAT('%',#{phone},'%')
+        </if>
+        GROUP BY customer_id,phone_number
+    </select>
+
+    <select id="seckillActivity24AutoCancel" resultMap="BaseResultMap">
+      SELECT
+      id,store_id,tenant_id,seckill_activity_id,order_no
+      FROM seckill_registration_record
+      WHERE 1=1
+      AND DATE_ADD(register_time, INTERVAL 24 HOUR) <![CDATA[<=]]> NOW()  limit #{num}
     </select>
 </mapper>
