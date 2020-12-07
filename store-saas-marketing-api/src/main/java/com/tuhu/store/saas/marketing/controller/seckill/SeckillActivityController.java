@@ -4,6 +4,7 @@ package com.tuhu.store.saas.marketing.controller.seckill;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
@@ -72,12 +73,22 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.offShelf(seckillActivityId));
     }
 
+    @GetMapping(value = "/poster")
+    @ApiOperation(value = "活动海报")
+    public BizBaseResponse<SeckillActivityResp> poster(@Validated @RequestBody SeckillActivityQrCodeReq request){
+        return new BizBaseResponse(seckillActivityService.poster(request));
+    }
+
+    @GetMapping(value = "/qrCodeUrl")
+    @ApiOperation(value = "活动二维码url")
+    public BizBaseResponse<String> qrCodeUrl(@Validated @RequestBody SeckillActivityQrCodeReq request){
+        return new BizBaseResponse(seckillActivityService.qrCodeUrl(request));
+    }
+
     @PostMapping(value = "/onShelf")
     @ApiOperation(value = "编辑上架")
     public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityReq req) {
         return new BizBaseResponse();
     }
-
-    //TODO 活动海报
 }
 

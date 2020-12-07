@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.service.seckill.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
@@ -17,12 +18,14 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMa
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.ICardService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import com.tuhu.store.saas.user.dto.StoreDTO;
@@ -35,10 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +54,9 @@ import java.util.stream.Collectors;
 public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMapper, SeckillActivity> implements SeckillActivityService {
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+    @Autowired
+    private MiniAppService miniAppService;
 
     @Autowired
     private StoreInfoClient storeInfoClient;
@@ -225,6 +228,79 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         activity.setUpdateTime(new Date());
         activity.setUpdateUser(UserContextHolder.getStoreUserId());
         return this.updateById(activity);
+    }
+
+    @Override
+    @Transactional
+    public SeckillActivityResp poster(SeckillActivityQrCodeReq request) {
+        log.info("poster{}", JSON.toJSONString(request));
+        SeckillActivity activity = check(request.getSeckillActivityId());
+        SeckillActivityResp resp = new SeckillActivityResp();
+        BeanUtils.copyProperties(activity, resp);
+        String wxQrUrl = activity.getWxQrUrl();
+        if (null != wxQrUrl) {
+            resp.setWxQrUrl(wxQrUrl);
+        } else {
+            wxQrUrl = getWxQrUrl(activity, request);
+            resp.setWxQrUrl(wxQrUrl);
+        }
+        StoreDTO dto = this.getStoreInfo();
+        resp.setStoreName(dto.getStoreName());//门店名称
+        resp.setAddress(dto.getAddress());    //门店地址
+        resp.setOpeningEffectiveDate(dto.getOpeningEffectiveDate()); //营业时间
+        resp.setOpeningExpiryDate(dto.getOpeningExpiryDate());//营业时间
+        resp.setClientAppointPhone(dto.getClientAppointPhone());//联系电话
+        return resp;
+    }
+
+    /**
+     * 获取登录门店的信息
+     * @return
+     */
+    public StoreDTO getStoreInfo() {
+        StoreInfoVO vo = new StoreInfoVO();
+        vo.setStoreId(UserContextHolder.getStoreId());
+        vo.setTanentId(UserContextHolder.getTenantId());
+        BizBaseResponse<StoreDTO> result = storeInfoClient.getStoreInfo(vo);
+        log.info("getStoreInfo返回参数为:{}", JSONObject.toJSONString(result));
+        if (result == null || !result.isSuccess()) {
+            throw new StoreSaasMarketingException("获取门店信息出错");
+        }
+        if (Objects.isNull(result.getData())) {
+            throw new StoreSaasMarketingException("获取门店信息为空");
+        }
+        return result.getData();
+    }
+
+    @Override
+    @Transactional
+    public String qrCodeUrl(SeckillActivityQrCodeReq request) {
+        log.info("qrCodeUrl{}", JSON.toJSONString(request));
+        SeckillActivity activity = check(request.getSeckillActivityId());
+        String wxQrUrl = activity.getWxQrUrl();
+        if (null != wxQrUrl) {
+            return wxQrUrl;
+        }
+        return getWxQrUrl(activity, request);
+    }
+
+    /**
+     * 获取微信二维码，并保存
+     * @param activity
+     * @param request
+     * @return
+     */
+    private String getWxQrUrl(SeckillActivity activity, SeckillActivityQrCodeReq request) {
+        String wxQrUrl = miniAppService.getQrCodeUrl(request.getScene(), request.getPath(), request.getWidth());
+        log.info("wxQrUrl{}", wxQrUrl);
+        if (org.apache.commons.lang.StringUtils.isBlank(wxQrUrl)) {
+            throw new StoreSaasMarketingException("获取二维码失败");
+        }
+        activity.setUpdateUser(UserContextHolder.getStoreUserId());
+        activity.setUpdateTime(new Date());
+        activity.setWxQrUrl(wxQrUrl);
+        this.updateById(activity);
+        return wxQrUrl;
     }
 
     public SeckillActivity check(String seckillActivityId) {
