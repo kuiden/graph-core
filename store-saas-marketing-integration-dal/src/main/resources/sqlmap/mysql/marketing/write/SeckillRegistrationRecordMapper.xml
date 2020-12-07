@@ -111,6 +111,7 @@
         WHERE
         1=1
         AND phone_number != '0'
+        AND customer_id IS NOT NULL
         AND content_value = #{seckillActivityId}
         AND NOT EXISTS (
             SELECT b.customer_id

@@ -1,13 +1,14 @@
 package com.tuhu.store.saas.marketing.dataobject;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import com.baomidou.mybatisplus.annotations.TableField;
 import com.baomidou.mybatisplus.annotations.TableName;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * <p>
@@ -79,6 +80,12 @@ public class SeckillRegistrationRecord implements Serializable {
      */
     @TableField("user_phone_number")
     private String userPhoneNumber;
+
+    /**
+     * 使用人客户id
+     */
+    @TableField("user_customer_id")
+    private String userCustomerId;
     /**
      * 车牌号
      */

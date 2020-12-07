@@ -133,6 +133,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         if (null != phoneNewMap.get(o.getBuyerPhoneNumber())) {
             response.setIsNewCustomer(SeckillConstant.TYPE_1);
         }
+        //浏览时间
+        response.setBrowseTime(o.getCreateTime());
     }
 
     /**
