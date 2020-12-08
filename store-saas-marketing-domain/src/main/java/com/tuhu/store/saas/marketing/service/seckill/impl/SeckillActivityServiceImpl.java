@@ -22,12 +22,10 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMa
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.seckill.*;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.response.seckill.*;
 import com.tuhu.store.saas.marketing.service.AttachedInfoService;
 import com.tuhu.store.saas.marketing.service.ICardService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
@@ -42,10 +40,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,51 +70,46 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Autowired
     private AttachedInfoService attachedInfoService;
-
- 
-
-	
 	@Autowired
     private ICardService cardService ;
     @Autowired
     private SeckillActivityItemService itemService;
-    @Autowired
-    private AttachedInfoService attachedInfoService;
+
 
     @Autowired
     IdKeyGen idKeyGen;
 
-    Function <SeckillActivityModel, Boolean> insertSeckillActivityItemFunc =(model)->{
+    private Function<SeckillActivityModel, Boolean> insertSeckillActivityItemFunc = (model) -> {
         List<SeckillActivityItem> items = new ArrayList<>();
         for (SeckillActivityItemModel itemModel : model.getItems()) {
             SeckillActivityItem item = new SeckillActivityItem();
             item.setSeckillActivityId(model.getId());
-            BeanUtils.copyProperties(itemModel,item);
+            BeanUtils.copyProperties(itemModel, item);
             item.setId(idKeyGen.generateId(model.getTenantId()));
             items.add(item);
         }
         return itemService.insertBatch(items);
     };
 
-    Function <SeckillActivityModel, Boolean> saveFuncAttachedInfoFunc = (model)->{
+    private Function<SeckillActivityModel, Boolean> saveFuncAttachedInfoFunc = (model) -> {
         //SeckillActivityRulesInfo
-        Wrapper<AttachedInfo> wrapper = new  EntityWrapper();
+        Wrapper<AttachedInfo> wrapper = new EntityWrapper();
         wrapper.eq(AttachedInfo.FOREIGN_KEY, model.getId())
-                .eq(AttachedInfo.STORE_ID, model.getStoreId()).eq(AttachedInfo.TENANT_ID,model.getTenantId())
-                .in(AttachedInfo.TYPE,Lists.newArrayList(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode()
-                        ,AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode()));
+                .eq(AttachedInfo.STORE_ID, model.getStoreId()).eq(AttachedInfo.TENANT_ID, model.getTenantId())
+                .in(AttachedInfo.TYPE, Lists.newArrayList(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode()
+                        , AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode()));
         List<AttachedInfo> attachedInfos = attachedInfoService.selectList(wrapper);
         Date now = new Date(System.currentTimeMillis());
-        if (CollectionUtils.isNotEmpty(attachedInfos)){
+        if (CollectionUtils.isNotEmpty(attachedInfos)) {
 
             for (AttachedInfo attachedInfo : attachedInfos) {
                 attachedInfo.setUpdateUser(model.getUpdateUser());
                 attachedInfo.setUpdateTime(now);
-                if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())){
+                if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())) {
                     //活动规则处理
                     attachedInfo.setContent(model.getRulesInfo());
                 }
-                if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())){
+                if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())) {
                     //门店信息处理
                     attachedInfo.setContent(model.getStoreInfo());
                 }
@@ -126,10 +117,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             }
             attachedInfoService.updateBatchById(attachedInfos);
 
-        }else
-        {
-        // 进入新增流程
-            AttachedInfo  attachedInfo = new AttachedInfo();
+        } else {
+            // 进入新增流程
+            AttachedInfo attachedInfo = new AttachedInfo();
             attachedInfo.setForeignKey(model.getId());
 
             attachedInfo.setCreateTime(now);
@@ -147,65 +137,13 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         return Boolean.TRUE;
     };
+
     public String saveSeckillActivity(SeckillActivityModel model) {
         log.info("saveSeckillActivity-> start -> model -> {}", model);
         String result ="";
         boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
         SeckillActivityModel entityModel = isInsert ? null : super.selectById(model.getId()).toModel();
-        String checkResult = model.checkModel(entityModel, isInsert);
-        //如果检查信息为空的话则进入保存模式
-        if (!StringUtils.isNotBlank(checkResult)) {
-            log.info("数据保存失败 -> model ->{} entity -> {}", model, entityModel);
-            throw new StoreSaasMarketingException(checkResult);
-        }
-        //更新保存信息
-        CardTemplateModel cardTemplateModel = model.toCardTemplateModel();
-        Long cardTemplateId = cardService.saveCardTemplate(cardTemplateModel, model.getUpdateUser());
-        model.setTemplateId(cardTemplateId.toString());
-
-        Date now = new Date();
-        model.setUpdateTime(now);
-        SeckillActivity entity = new SeckillActivity(model);
-        if (isInsert) {
-            entity.setCreateTime(now);
-            entity.setCreateUser(model.getUpdateUser());
-            entity.setId(idKeyGen.generateId(model.getTenantId()));
-            // 新增
-            //添加一张次卡模板
-            //保存商品和服务明显
-            //计算 商品/服务总价格
-            if (super.insert(entity)) {
-                result = entity.getId();
-                model.setId(entity.getId());
-                //初始化商品明细
-                insertSeckillActivityItemFunc.apply(model);
-                saveFuncAttachedInfoFunc.apply(model);
-                //添加活动规则
-                //添加门店信息
-
-            }else {
-                throw  new StoreSaasMarketingException("数据添加失败");
-            }
-        } else {
-            //删除关联活动的商品和服务item
-            itemService.deleteBatchIds(model.getItems().stream().map(x->x.getId()).collect(Collectors.toList()));
-             if(super.updateById(entity)){
-                 result = entity.getId();
-                 insertSeckillActivityItemFunc.apply(model);
-                 saveFuncAttachedInfoFunc.apply(model);
-             }else {
-                 throw  new StoreSaasMarketingException("数据修改失败");
-             }
-            //新增关联的服务和item
-        }
-        return result;
-		}
-    public String saveSeckillActivity(SeckillActivityModel model) {
-        log.info("saveSeckillActivity-> start -> model -> {}", model);
-        String result ="";
-        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
-        SeckillActivityModel entityModel = isInsert ? null : super.selectById(model.getId()).toModel();
-        String checkResult = model.checkModel(entityModel, isInsert);
+        String checkResult = model.init().checkModel(entityModel, isInsert);
         //如果检查信息为空的话则进入保存模式
         if (!StringUtils.isNotBlank(checkResult)) {
             log.info("数据保存失败 -> model ->{} entity -> {}", model, entityModel);
