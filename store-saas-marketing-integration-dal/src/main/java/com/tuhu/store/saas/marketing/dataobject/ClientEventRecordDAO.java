@@ -48,7 +48,8 @@ public class ClientEventRecordDAO implements Serializable {
     private Integer eventCount;
     @TableField("update_time")
     private Date updateTime;
-
+    @TableField("phone_number")
+    private String phoneNumber;
 
     public static final String ID = "id";
 
