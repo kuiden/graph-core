@@ -104,7 +104,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Transactional
     public String addCardOrder(AddCardOrderReq req) {
         log.info("开卡接口请求参数：{}", JSONObject.toJSON(req));
-
         //获取最新客户信息
         BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
         baseIdReqVO.setId(req.getCustomerId());
@@ -558,6 +557,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     }
 
     @Override
+    @Transactional
     public void addCardOrderBySeckillActivity(AddCardOrderReq req) {
         log.info("addCardOrderBySeckillActivity,request：{}", JSONObject.toJSON(req));
 

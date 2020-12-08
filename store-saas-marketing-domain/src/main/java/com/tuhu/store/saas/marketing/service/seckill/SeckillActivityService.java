@@ -28,12 +28,14 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 自动更新下架
+     *
      * @return
      */
     int autoUpdateOffShelf();
 
     /**
      * 分页查询活动列表
+     *
      * @param req
      * @return
      */
@@ -66,6 +68,7 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 下架活动
+     *
      * @param seckillActivityId
      * @return
      */
@@ -90,6 +93,7 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表
+     *
      * @param req
      * @return
      */
@@ -98,13 +102,16 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 校验活动id
+     *
      * @param seckillActivityId
+     * @param flag              ture:B端   false:C端
      * @return
      */
-    SeckillActivity check(String seckillActivityId);
+    SeckillActivity check(String seckillActivityId, Boolean flag);
 
     /**
      * 获取门店信息
+     *
      * @param flag true C端 false B端
      * @return
      */

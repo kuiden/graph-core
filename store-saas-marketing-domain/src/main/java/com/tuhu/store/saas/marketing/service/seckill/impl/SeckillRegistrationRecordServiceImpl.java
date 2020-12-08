@@ -13,7 +13,9 @@ import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.annotation.DistributedLock;
 import com.tuhu.springcloud.common.bean.BeanUtil;
+import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.AddVehicleVO;
+import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
@@ -25,14 +27,17 @@ import com.tuhu.store.saas.marketing.enums.SeckillRegistrationRecordPayStatusEnu
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.order.TradeOrderClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
+import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
@@ -40,6 +45,8 @@ import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import com.tuhu.store.saas.order.enums.FinancePaymentStatusEnum;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -88,6 +95,13 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Autowired
     private CustomerClient customerClient;
 
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+
+    @Autowired
+    private ICardOrderService cardOrderService;
+
+
     /**
      * 活动对应的支付成功的订单
      *
@@ -116,7 +130,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageBuyList(SeckillActivityReq req) {
         log.info("pageBuyList{}", JSON.toJSONString(req));
-        seckillActivityService.check(req.getSeckillActivityId());
+        seckillActivityService.check(req.getSeckillActivityId(), Boolean.TRUE);
         PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         //查询报名记录购买记录
@@ -138,7 +152,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageNoBuyBrowseList(SeckillActivityReq req) {
         log.info("pageNoBuyBrowseList{}", JSON.toJSONString(req));
-        seckillActivityService.check(req.getSeckillActivityId());
+        seckillActivityService.check(req.getSeckillActivityId(), Boolean.TRUE);
         PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         //查询报名未购买浏览记录
@@ -166,7 +180,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageBuyRecodeList(SeckillActivityReq req) {
         log.info("pageBuyRecodeList{}", JSON.toJSONString(req));
-        seckillActivityService.check(req.getSeckillActivityId());
+        seckillActivityService.check(req.getSeckillActivityId(), Boolean.TRUE);
         PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
@@ -203,7 +217,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     public void customerActivityOrderAdd(SeckillRecordAddReq req) {
         log.info("customerActivityOrderAdd：{}", JSON.toJSONString(req));
         //判断活动是否开启或者已结束
-        SeckillActivity seckillActivity = seckillActivityService.check(req.getSeckillActivityId());
+        SeckillActivity seckillActivity = seckillActivityService.check(req.getSeckillActivityId(), Boolean.FALSE);
         if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
             throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.WSJ.getStatusName());
         } else if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
@@ -288,6 +302,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                     seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
                     this.updateById(seckillRegistrationRecord);
                     this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.PAY_SUCCESS_STATUS);
+                    //生成开卡单
+                    cardOrderService.addCardOrder(this.generateAddCardOrderReq(seckillRegistrationRecord));
                 } else {
                     //支付失败
                     seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.SB.getStatus());
@@ -303,6 +319,50 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 throw e;
             }
         }
+    }
+
+    private AddCardOrderReq generateAddCardOrderReq(SeckillRegistrationRecord seckillRegistrationRecord) {
+        AddCardOrderReq addCardOrderReq = new AddCardOrderReq();
+        BeanUtils.copyProperties(seckillRegistrationRecord, addCardOrderReq);
+        SeckillActivity seckillActivity = seckillActivityService.selectById(seckillRegistrationRecord.getSeckillActivityId());
+        if (Objects.isNull(seckillActivity)) {
+            log.error("not found SeckillActivity  key: {}", seckillRegistrationRecord.getSeckillActivityId());
+            throw new StoreSaasMarketingException("没有找到秒杀活动！");
+        }
+        addCardOrderReq.setCardTemplateId(Long.parseLong(seckillActivity.getCadCardTemplateId()));
+        //开卡 填充使用人客户id
+        addCardOrderReq.setCustomerId(seckillRegistrationRecord.getUserCustomerId());
+        CustomerDTO customerDTO = null;
+        try {
+            BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
+            baseIdReqVO.setId(seckillRegistrationRecord.getUserCustomerId());
+            customerDTO = customerClient.getCustomerById(baseIdReqVO).getData();
+        } catch (Exception e) {
+            log.error("查询门店信息RPC接口异常,storeId=" + seckillRegistrationRecord.getStoreId(), e);
+        }
+        if (Objects.isNull(customerDTO)) {
+            throw new StoreSaasMarketingException("客户不存在");
+        }
+        addCardOrderReq.setCustomerName(customerDTO.getName());
+        addCardOrderReq.setCustomerPhoneNumber(customerDTO.getPhoneNumber());
+
+        if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_1)) {
+            addCardOrderReq.setForever(Boolean.TRUE);
+        } else {
+            addCardOrderReq.setForever(Boolean.FALSE);
+        }
+
+        try {
+            StoreInfoVO storeInfoVO = new StoreInfoVO();
+            storeInfoVO.setStoreId(seckillRegistrationRecord.getStoreId());
+            StoreDTO storeInfoDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+            if (Objects.nonNull(storeInfoDTO)) {
+                addCardOrderReq.setStoreNo(storeInfoDTO.getStoreNo());
+            }
+        } catch (Exception e) {
+            log.error("查询门店信息RPC接口异常,storeId=" + seckillRegistrationRecord.getStoreId(), e);
+        }
+        return addCardOrderReq;
     }
 
     private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> phoneNewMap) {
@@ -364,7 +424,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     @Override
     public SeckillActivityStatisticsResp dataStatistics(String seckillActivityId) {
-        SeckillActivity activity = seckillActivityService.check(seckillActivityId);
+        SeckillActivity activity = seckillActivityService.check(seckillActivityId, Boolean.TRUE);
         SeckillActivityStatisticsResp resp = new SeckillActivityStatisticsResp();
         resp.setActivityTitle(activity.getActivityTitle());
         resp.setSeckillActivityId(seckillActivityId);
@@ -432,11 +492,11 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      * 更新 待收单、交易单的状态
      *
      * @param orderNos
-     * @param flag     0 表示：已取消、已作废；    1 表示 ：已结清、回调(成功)   2 表示 ：已取消、回调(失败)
+     * @param num      0 表示：已取消、已作废；    1 表示 ：已结清、回调(成功)   2 表示 ：已取消、回调(失败)
      * @return
      */
     private boolean updateReceivingAndTradeOrderByOrderNos(List<String> orderNos, Integer num) {
-        log.info("updateReceivingAndTradeOrderByOrderNos orderNos:{};flag:{}", orderNos, num);
+        log.info("updateReceivingAndTradeOrderByOrderNos orderNos:{};num:{}", orderNos, num);
         boolean success = false;
         try {
             BizBaseResponse baseResponse = storeReceivingClient.updateReceivingAndTradeOrderByOrderNos(orderNos, num);
@@ -570,6 +630,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         //添加客户
         CustomerReq customerReq = new CustomerReq();
         customerReq.setPhoneNumber(phoneNumber);
+        customerReq.setName(phoneNumber);
         customerReq.setCustomerType("person");
         customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
         AddVehicleReq addVehicleReq = new AddVehicleReq();
