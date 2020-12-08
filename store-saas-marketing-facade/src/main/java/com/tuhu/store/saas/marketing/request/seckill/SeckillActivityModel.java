@@ -169,8 +169,9 @@ public class SeckillActivityModel implements Serializable {
         }
         BigDecimal totalOriginalPrice = BigDecimal.ZERO;
         for (SeckillActivityItemModel item : this.items) {
-
+            totalOriginalPrice.add(item.getOriginalPrice().multiply(new BigDecimal(item.getItemQuantity())));
         }
+        this.originalPrice  = totalOriginalPrice;
         return this;
     }
 

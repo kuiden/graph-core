@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.*;
 import com.tuhu.store.saas.user.dto.StoreDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +22,9 @@ import java.util.List;
  * @since 2020-12-02
  */
 public interface SeckillActivityService extends IService<SeckillActivity> {
+
+    @Transactional
+    String saveSeckillActivity(SeckillActivityModel model);
 
     /**
      * 自动更新下架

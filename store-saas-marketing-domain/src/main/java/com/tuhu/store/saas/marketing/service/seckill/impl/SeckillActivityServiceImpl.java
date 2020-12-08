@@ -137,11 +137,12 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         return Boolean.TRUE;
     };
-
+    @Transactional
+    @Override
     public String saveSeckillActivity(SeckillActivityModel model) {
         log.info("saveSeckillActivity-> start -> model -> {}", model);
-        String result ="";
-        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
+        String result;
+        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false ;
         SeckillActivityModel entityModel = isInsert ? null : super.selectById(model.getId()).toModel();
         String checkResult = model.init().checkModel(entityModel, isInsert);
         //如果检查信息为空的话则进入保存模式
@@ -153,7 +154,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         CardTemplateModel cardTemplateModel = model.toCardTemplateModel();
         Long cardTemplateId = cardService.saveCardTemplate(cardTemplateModel, model.getUpdateUser());
         model.setTemplateId(cardTemplateId.toString());
-
         Date now = new Date();
         model.setUpdateTime(now);
         SeckillActivity entity = new SeckillActivity(model);

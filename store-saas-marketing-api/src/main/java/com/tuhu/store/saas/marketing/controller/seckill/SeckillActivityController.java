@@ -4,6 +4,7 @@ package com.tuhu.store.saas.marketing.controller.seckill;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
@@ -36,6 +37,15 @@ public class SeckillActivityController extends BaseApi {
 
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+    @PostMapping(value = "/save")
+    @ApiOperation(value = "保存活动")
+    public BizBaseResponse<String> save(@RequestBody SeckillActivityModel req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        req.setUpdateUser(super.getUserId());
+        return new BizBaseResponse(seckillActivityService.saveSeckillActivity(req));
+    }
 
     @PostMapping(value = "/pageList")
     @ApiOperation(value = "秒杀活动列表 status 0未开始、1进行中、9已下架 , 定向营销(未开始、进行中)-1")
