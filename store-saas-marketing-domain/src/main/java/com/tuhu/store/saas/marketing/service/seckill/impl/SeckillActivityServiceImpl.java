@@ -23,15 +23,11 @@ import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.response.seckill.*;
 import com.tuhu.store.saas.marketing.service.ICardService;
+import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.service.seckill.AttachedInfoService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityItemService;
-import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import com.tuhu.store.saas.user.dto.StoreDTO;
@@ -45,10 +41,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -457,7 +449,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     private String getWxQrUrl(SeckillActivity activity, SeckillActivityQrCodeReq request) {
         String wxQrUrl = miniAppService.getQrCodeUrl(request.getScene(), request.getPath(), request.getWidth());
         log.info("wxQrUrl{}", wxQrUrl);
-        if (org.apache.commons.lang.StringUtils.isBlank(wxQrUrl)) {
+        if (StringUtils.isBlank(wxQrUrl)) {
             throw new StoreSaasMarketingException("获取二维码失败");
         }
         activity.setUpdateUser(UserContextHolder.getStoreUserId());
