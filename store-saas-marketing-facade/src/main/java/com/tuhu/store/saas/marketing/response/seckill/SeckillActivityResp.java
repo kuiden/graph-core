@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.response.seckill;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -21,7 +22,8 @@ import java.util.Date;
 @Data
 @ApiModel(value = "SeckillActivityResp", description = "秒杀活动记录")
 public class SeckillActivityResp implements Serializable {
-    @ApiModelProperty(value = "活动id")
+    @ApiModelProperty(value = "秒杀活动id")
+    @JsonProperty("seckillActivityId")
     private String id;
     @ApiModelProperty(value = "状态")
     private Integer status;
