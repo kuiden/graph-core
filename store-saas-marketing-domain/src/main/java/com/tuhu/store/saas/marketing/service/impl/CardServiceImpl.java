@@ -91,8 +91,8 @@ public class CardServiceImpl implements ICardService {
     @Transactional
     public Long saveCardTemplate(CardTemplateModel req, String userId) {
         log.info("CardServiceImpl-> addCardTemplate req={}", req);
-        if (cardTemplateMapper.checkCardTemplateName(req.getCardName().trim(), req.getId() == null ? 0 : req.getId(), req.getTenantId(), req.getStoreId()) > 0)
-            throw new StoreSaasMarketingException("卡名称不能重复");
+//        if (cardTemplateMapper.checkCardTemplateName(req.getCardName().trim(), req.getId() == null ? 0 : req.getId(), req.getTenantId(), req.getStoreId()) > 0)
+//            throw new StoreSaasMarketingException("卡名称不能重复");
         boolean isUpdate = req.getId() != null && req.getId() > 0 ? true : false;
         CardTemplate cardTemplate = this.convertorToCardTemplate(req);
         if (isUpdate) {
@@ -826,7 +826,8 @@ public class CardServiceImpl implements ICardService {
         cardTemplateModelReq.setDiscountAmount(cardTemplateModelReq.getActualAmount().subtract(cardTemplateModelReq.getFaceAmount()));
         List<CardTemplateItem> cardTemplateList = new ArrayList<>();
         cardTemplate.setDiscountAmount(BigDecimal.ZERO);
-        cardTemplate.setActualAmount(BigDecimal.ZERO);
+//        cardTemplate.setActualAmount(BigDecimal.ZERO);
+        cardTemplate.setActualAmount(cardTemplateModelReq.getActualAmount());
         cardTemplate.setFaceAmount(BigDecimal.ZERO);
         if (CollectionUtils.isNotEmpty(cardTemplateModelReq.getCardTemplateItemModelList())) {
             for (CardTemplateItemModel cardTemplateItemModel : cardTemplateModelReq.getCardTemplateItemModelList()) {
@@ -837,7 +838,7 @@ public class CardServiceImpl implements ICardService {
                 //计算单次项目 总单价
                 cardTemplateItem.setActualAmount(cardTemplateItem.getFaceAmount().multiply(quantity));
                 //计算总项实额
-                cardTemplate.setActualAmount(cardTemplate.getActualAmount().add(cardTemplateItem.getActualAmount()));
+//                cardTemplate.setActualAmount(cardTemplate.getActualAmount().add(cardTemplateItem.getActualAmount()));
                 //计算总项面值
                 cardTemplate.setFaceAmount(cardTemplate.getFaceAmount().add(cardTemplateItem.getPrice().multiply(quantity)));
                 //计算总优惠额度
