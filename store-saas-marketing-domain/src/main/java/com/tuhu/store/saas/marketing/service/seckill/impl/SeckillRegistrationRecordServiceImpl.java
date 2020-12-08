@@ -130,7 +130,6 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageBuyList(SeckillActivityReq req) {
         log.info("pageBuyList{}", JSON.toJSONString(req));
-        seckillActivityService.check(req.getSeckillActivityId(), Boolean.TRUE);
         PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         //查询报名记录购买记录
@@ -152,7 +151,6 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageNoBuyBrowseList(SeckillActivityReq req) {
         log.info("pageNoBuyBrowseList{}", JSON.toJSONString(req));
-        seckillActivityService.check(req.getSeckillActivityId(), Boolean.TRUE);
         PageInfo<SeckillRegistrationRecordResp> responsePageInfo = new PageInfo<>();
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         //查询报名未购买浏览记录
