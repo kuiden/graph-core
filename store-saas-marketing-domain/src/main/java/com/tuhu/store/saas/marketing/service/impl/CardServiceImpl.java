@@ -11,6 +11,7 @@ import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
+import com.tuhu.store.saas.marketing.enums.CardExpiryDateEnum;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
@@ -33,6 +34,7 @@ import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import com.tuhu.store.saas.request.product.GoodsForMarketReq;
 import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
 import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.scmc.arch.model.facade.rsp.BizRsp;
 import org.scmc.store.stk.qty.dto.StkQtyDto;
@@ -46,6 +48,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -117,12 +121,16 @@ public class CardServiceImpl implements ICardService {
         if (cardTemplateEntity != null) {
             BeanUtils.copyProperties(cardTemplateEntity, result);
             result.setCardTemplateItemModelList(itemService.getCardTemplateItemListByCardTemplateId(id));
-            if (!cardTemplateEntity.getForever()) {
-                //计算卡的优先期 时
-                Date now = new Date(System.currentTimeMillis());
-                Calendar cal = Calendar.getInstance();
-                cal.add(Calendar.MONTH, result.getExpiryPeriod());
-                result.setExpiryDate(cal.getTime());
+            if (CardExpiryDateEnum.EXPIRE_MONTH.getCode() == cardTemplateEntity.getExpiryType() && result.getExpiryPeriod() != null) {
+                //计算卡的截止日期
+//                Date now = new Date(System.currentTimeMillis());
+//                Calendar cal = Calendar.getInstance();
+//                cal.add(Calendar.MONTH, result.getExpiryPeriod());
+                LocalDateTime dateTime = LocalDateTime.now().plusMonths(result.getExpiryPeriod()).withHour(23).withMinute(59).withSecond(59);
+                result.setExpiryDate(Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant()));
+            }else if (CardExpiryDateEnum.EXPIRE_DAY.getCode() == cardTemplateEntity.getExpiryType() && result.getExpiryDay() != null) {
+                LocalDateTime dateTime = LocalDateTime.now().plusDays(result.getExpiryDay()).withHour(23).withMinute(59).withSecond(59);
+                result.setExpiryDate(Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant()));
             }
         }
 
