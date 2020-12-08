@@ -1,8 +1,8 @@
 package com.tuhu.store.saas.marketing.service.seckill.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -43,17 +43,13 @@ import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -109,7 +105,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             Map<String, Integer> activityIdNumMap = new HashMap<>();
             Map<String, List<SeckillRegistrationRecord>> activityIdListMap = list.stream().collect(Collectors.groupingBy(SeckillRegistrationRecord::getSeckillActivityId));
             for (Map.Entry<String, List<SeckillRegistrationRecord>> entry : activityIdListMap.entrySet()) {
-                activityIdNumMap.put(entry.getKey(), entry.getValue().size());
+                Long num = entry.getValue().stream().filter(x -> x.getQuantity() != null).mapToLong(SeckillRegistrationRecord::getQuantity).sum();
+                activityIdNumMap.put(entry.getKey(), null == num ? 0 : num.intValue());
             }
             return activityIdNumMap;
         }
