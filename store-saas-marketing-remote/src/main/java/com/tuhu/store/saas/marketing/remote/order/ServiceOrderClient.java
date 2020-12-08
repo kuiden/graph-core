@@ -25,7 +25,6 @@ public interface ServiceOrderClient {
     @GetMapping("/feign/card/getCardUseRecord")
     BizBaseResponse<List<CardUseRecordDTO>> getCardUseRecord(@RequestParam String cardId);
 
-    @PostMapping(value = "/feign/finance/receiving/updateReceivingAndTradeByOrderNos")
-    BizBaseResponse updateReceivingAndTradeByOrderNos(@RequestBody List<String> orderNos);
+
 
 }

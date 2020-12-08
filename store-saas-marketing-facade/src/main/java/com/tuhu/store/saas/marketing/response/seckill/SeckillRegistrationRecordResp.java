@@ -48,8 +48,8 @@ public class SeckillRegistrationRecordResp {
     @ApiModelProperty(value = "购买金额")
     private BigDecimal expectAmount;
 
-    @ApiModelProperty(value = "状态 购买N次")
-    private String statusName;
+    @ApiModelProperty(value = "车牌号")
+    private String vehicleNumber;
 
     @ApiModelProperty(value = "购买时间")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")

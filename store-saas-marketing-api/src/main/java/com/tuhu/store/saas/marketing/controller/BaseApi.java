@@ -41,6 +41,14 @@ public class BaseApi {
         }
     }
 
+    public String getTenantUserId() {
+        if (null != this.getUserCore()) {
+            return String.valueOf(this.getUserCore().getUserId());
+        } else {
+            return null;
+        }
+    }
+
     public Long getCompanyId() {
         return UserContextHolder.getCompanyId();
     }

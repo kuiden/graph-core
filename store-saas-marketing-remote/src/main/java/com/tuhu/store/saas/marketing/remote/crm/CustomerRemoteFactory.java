@@ -4,11 +4,8 @@ import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
-import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
-import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
-import com.tuhu.store.saas.crm.vo.CustomerSearchVO;
-import com.tuhu.store.saas.crm.vo.CustomerVO;
-import com.tuhu.store.saas.crm.vo.VehicleMaintenanceVo;
+import com.tuhu.store.saas.crm.vo.*;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.user.dto.UserDTO;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +77,11 @@ public class CustomerRemoteFactory implements FallbackFactory<CustomerClient> {
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 
+            @Override
+            public BizBaseResponse<AddVehicleVO> addCustomerForOrder(AddVehicleReq addVehicleReq) {
+                log.error("addCustomerForOrder error,request={},error={}", addVehicleReq, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
         };
     }
 }

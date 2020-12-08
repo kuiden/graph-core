@@ -3,12 +3,15 @@ package com.tuhu.store.saas.marketing.remote.order;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.order.dto.finance.receiving.ReceivingDTO;
 import com.tuhu.store.saas.order.vo.finance.nonpayment.AddNonpaymentVO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @Slf4j
@@ -35,6 +38,11 @@ public class StoreReceivingRemoteFactory implements FallbackFactory<StoreReceivi
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 
+            @Override
+            public BizBaseResponse updateReceivingAndTradeOrderByOrderNos(List<String> orderNos, Integer flag) {
+                log.error("updateReceivingAndTradeOrderByOrderNos error,error={}", "", ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
         };
     }
 }

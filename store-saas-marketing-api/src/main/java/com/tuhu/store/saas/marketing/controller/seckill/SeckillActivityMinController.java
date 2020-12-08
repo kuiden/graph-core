@@ -9,11 +9,13 @@ import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRemindAddReq;
+import com.tuhu.store.saas.marketing.response.seckill.*;
 import com.tuhu.store.saas.marketing.response.seckill.CustomerActivityOrderListResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.service.seckill.PayService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -38,12 +40,18 @@ public class SeckillActivityMinController extends BaseApi {
     @Autowired
     private SeckillActivityService seckillActivityService;
 
+    @Autowired
+    private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+    @Autowired
+    private PayService payService;
+
     @GetMapping("/list")
     @ApiOperation("秒杀活动列表")
     public BizBaseResponse<List<SeckillActivityListResp>> activityList(){
         EndUser endUser = EndUserContextHolder.getUser();
         if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
-            throw new StoreSaasMarketingException("未获取到门店信息");
+            throw new StoreSaasMarketingException("未获取到登录信息");
         }
         return new BizBaseResponse(seckillActivityService.clientActivityList(EndUserContextHolder.getStoreId(),EndUserContextHolder.getTenantId()));
     }
@@ -52,49 +60,84 @@ public class SeckillActivityMinController extends BaseApi {
     @ApiOperation("秒杀活动详情")
     public BizBaseResponse<SeckillActivityDetailResp> activityDetail(@RequestBody SeckillActivityDetailReq req){
         EndUser endUser = EndUserContextHolder.getUser();
+        if (StringUtils.isBlank(req.getSeckillActivityId())){
+            throw new StoreSaasMarketingException("未获取到活动");
+        }
         if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
-            throw new StoreSaasMarketingException("未获取到门店信息");
+            throw new StoreSaasMarketingException("未获取到登录信息");
         }
         req.setStoreId(EndUserContextHolder.getStoreId());
         req.setTenantId(EndUserContextHolder.getTenantId());
-        return new BizBaseResponse();
+        req.setCustomerId(EndUserContextHolder.getCustomerId());
+        return new BizBaseResponse(seckillActivityService.clientActivityDetail(req));
     }
 
     @PostMapping("/recordList")
     @ApiOperation("秒杀活动参与记录")
-    public BizBaseResponse<PageInfo<SeckillRegistrationRecordResp>> activityRecordList(@RequestBody SeckillActivityDetailReq req){
-
-        return new BizBaseResponse();
+    public BizBaseResponse<PageInfo<SeckillRecordListResp>> activityRecordList(@RequestBody SeckillActivityDetailReq req){
+        EndUser endUser = EndUserContextHolder.getUser();
+        if (StringUtils.isBlank(req.getSeckillActivityId())){
+            throw new StoreSaasMarketingException("未获取到活动");
+        }
+        if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
+            throw new StoreSaasMarketingException("未获取到登录信息");
+        }
+        req.setStoreId(EndUserContextHolder.getStoreId());
+        req.setTenantId(EndUserContextHolder.getTenantId());
+        req.setCustomerId(EndUserContextHolder.getUserId());
+        return new BizBaseResponse(seckillActivityService.clientActivityRecordList(req));
     }
 
-    @PostMapping("/customer/orderList")
+    @GetMapping("/customer/orderList")
     @ApiOperation("秒杀订单列表")
-    public BizBaseResponse<PageInfo<CustomerActivityOrderListResp>> CustomerActivityOrderList(){
-
-        return new BizBaseResponse();
+    public BizBaseResponse<List<CustomerActivityOrderListResp>> customerActivityOrderList(){
+        EndUser endUser = EndUserContextHolder.getUser();
+        if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
+            throw new StoreSaasMarketingException("未获取到登录信息");
+        }
+        return new BizBaseResponse(seckillActivityService.customerActivityOrderList(EndUserContextHolder.getUserId(), EndUserContextHolder.getStoreId(), EndUserContextHolder.getTenantId()));
     }
 
     @PostMapping("/customer/orderDetail")
     @ApiOperation("秒杀订单详情")
-    public BizBaseResponse CustomerActivityOrderDetail(){
-
-        return new BizBaseResponse();
+    public BizBaseResponse<CustomerActivityOrderDetailResp> customerActivityOrderDetail(@RequestBody SeckillActivityDetailReq req){
+        EndUser endUser = EndUserContextHolder.getUser();
+        if (StringUtils.isBlank(req.getSeckillActivityId())){
+            throw new StoreSaasMarketingException("未获取到活动");
+        }
+        if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
+            throw new StoreSaasMarketingException("未获取到登录信息");
+        }
+        req.setStoreId(EndUserContextHolder.getStoreId());
+        req.setTenantId(EndUserContextHolder.getTenantId());
+        req.setCustomerId(EndUserContextHolder.getUserId());
+        return new BizBaseResponse(seckillActivityService.customerActivityOrderDetail(req));
     }
 
     @PostMapping("/customer/orderAdd")
     @ApiOperation("创建秒杀订单")
-    public BizBaseResponse CustomerActivityOrderAdd(@RequestBody SeckillRecordAddReq req){
+    public BizBaseResponse customerActivityOrderAdd(@RequestBody SeckillRecordAddReq req){
         //创建活动订单、待收单
-
+        seckillRegistrationRecordService.customerActivityOrderAdd(req);
         return new BizBaseResponse();
     }
 
     @PostMapping("/customer/remindAdd")
     @ApiOperation("添加开抢提醒")
-    public BizBaseResponse<Boolean> CustomerActivityRemindAdd(@RequestBody SeckillRemindAddReq req){
+    public BizBaseResponse<Boolean> customerActivityRemindAdd(@RequestBody SeckillRemindAddReq req){
 
         return new BizBaseResponse();
     }
+
+
+    @GetMapping("/customer/test")
+    @ApiOperation("测试")
+    public BizBaseResponse getPayAuthTokenTest(){
+        payService.getPayAuthTokenTest();
+        return new BizBaseResponse();
+    }
+
+
 
 }
 

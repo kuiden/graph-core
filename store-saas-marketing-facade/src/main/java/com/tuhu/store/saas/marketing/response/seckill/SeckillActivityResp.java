@@ -51,14 +51,30 @@ public class SeckillActivityResp implements Serializable {
     private Date cadCardExpiryDateTime;
     @ApiModelProperty(value = "相关次卡有效天数")
     private Date cadCardExpiryDateDay;
-    @ApiModelProperty(value = "销售数量类型")
+    @ApiModelProperty(value = "销售数量类型 1限制数量 2不限制数量")
     private Integer sellNumberType;
-    @ApiModelProperty(value = "销售数量")
+    @ApiModelProperty(value = "销售数量限制 只有当销售数量为 限制数量时有效")
     private Integer sellNumber;
-    @ApiModelProperty(value = "单人销售数量类型")
+    @ApiModelProperty(value = "单人销售数量类型 1限制数量 2不限制数量")
     private Integer soloSellNumberType;
-    @ApiModelProperty(value = "单人销售数量 -1不限")
+    @ApiModelProperty(value = "单人销售数量 只有当单人销售数量类型为 限制数量时有效")
     private Integer soloSellNumber;
+    @ApiModelProperty(value = "微信活动二维码")
+    private String wxQrUrl;
+    @ApiModelProperty(value = "门店名称")
+    private String storeName;
+    @ApiModelProperty(value = "门店地址")
+    private String address;
+    @ApiModelProperty(value = "联系电话")
+    private String clientAppointPhone;
+    @DateTimeFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = "HH:mm")
+    @ApiModelProperty(value = "营业时间起")
+    private Date openingEffectiveDate;
+    @DateTimeFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = "HH:mm")
+    @ApiModelProperty(value = "营业时间止")
+    private Date openingExpiryDate;
     private String templateId;
     private String cadCardTemplateId;
 }

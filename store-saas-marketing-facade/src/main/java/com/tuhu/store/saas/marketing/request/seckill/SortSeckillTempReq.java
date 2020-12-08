@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
@@ -18,8 +19,8 @@ public class SortSeckillTempReq implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "活动模板id",required = true)
-    @NotNull(message = "模板id不能为空")
-    private Long tempId;
+    @NotBlank(message = "模板id不能为空")
+    private String tempId;
 
     @ApiModelProperty(value = "序号",required = true)
     @NotNull(message = "序号不能为空")

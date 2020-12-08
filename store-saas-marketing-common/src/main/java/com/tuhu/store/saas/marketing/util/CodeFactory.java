@@ -31,8 +31,16 @@ public class CodeFactory {
     //营销活动编码
     public static final String activityRedisPrefix = "ACTIVITY_CODE:";
 
+
     //营销活动编码序号前缀
     public static final String activityCodePrefix = "YXHD";
+
+
+    //秒杀活动编码
+    public static final String SECKILL_ACTIVITY_PREFIX_CODE = "SECKILL_ACTIVITY_CODE:";
+
+    //秒杀活动编码序号前缀
+    public static final String SECKILL_ACTIVITY_CODE_PREFIX = "MSHD";
 
     /**
      * 获取指定门店当天的活动数
@@ -93,6 +101,13 @@ public class CodeFactory {
     public String generateActivityCode(Long storeId, String codeNumber) {
         String storeIdStr = formatCodeWithZero(4, storeId);
         String activityCode = activityCodePrefix.concat(storeIdStr).concat(codeNumber);
+        log.info("redis生成序列:{},生成的营销活动编码:{}", codeNumber, activityCode);
+        return activityCode;
+    }
+
+    public String generateSeckillActivityCode(Long storeId, String codeNumber) {
+        String storeIdStr = formatCodeWithZero(4, storeId);
+        String activityCode = SECKILL_ACTIVITY_CODE_PREFIX.concat(storeIdStr).concat(codeNumber);
         log.info("redis生成序列:{},生成的营销活动编码:{}", codeNumber, activityCode);
         return activityCode;
     }
