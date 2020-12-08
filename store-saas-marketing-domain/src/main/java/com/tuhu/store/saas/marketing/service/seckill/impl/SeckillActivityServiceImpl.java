@@ -146,7 +146,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         SeckillActivityModel entityModel = isInsert ? null : super.selectById(model.getId()).toModel();
         String checkResult = model.init().checkModel(entityModel, isInsert);
         //如果检查信息为空的话则进入保存模式
-        if (!StringUtils.isNotBlank(checkResult)) {
+        if (StringUtils.isNotBlank(checkResult)) {
             log.info("数据保存失败 -> model ->{} entity -> {}", model, entityModel);
             throw new StoreSaasMarketingException(checkResult);
         }
@@ -187,7 +187,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
              }else {
                  throw  new StoreSaasMarketingException("数据修改失败");
              }
-            //新增关联的服务和item
         }
         return result;
 

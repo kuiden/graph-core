@@ -33,8 +33,16 @@ public class SeckillActivityModel implements Serializable {
             result = " 开始或者结束时间不能为空";
             return result;
         }
-        if (this.startTime.getTime() < this.endTime.getTime()) {
-            result = "开始时间不能小于结束时间";
+        if (this.startTime.getTime() > this.endTime.getTime()) {
+            result = "结束时间不能小于开始时间";
+            return result;
+        }
+        if (this.startTime.getTime() <= System.currentTimeMillis()) {
+            result = "开始时间不能小于当前时间";
+            return result;
+        }
+        if (this.endTime.getTime() <= System.currentTimeMillis()) {
+            result = "结束时间不小于当前时间";
             return result;
         }
         if (this.items == null || this.items.size() == 0) {
@@ -101,6 +109,8 @@ public class SeckillActivityModel implements Serializable {
         if (!StringUtils.isEmpty(this.getTemplateId())) {
             result.setId(Long.valueOf(this.getTemplateId()));
         }
+        result.setFaceAmount(this.originalPrice);
+        result.setActualAmount(this.newPrice);
         result.setStatus("ENABLE");
         result.setCardName(this.activityTitle);
         result.setStoreId(this.storeId);
@@ -112,21 +122,27 @@ public class SeckillActivityModel implements Serializable {
         result.setIsShow(b);
         switch (this.cadCardExpiryDateType) {
             case 1:
+                result.setExpiryType(this.cadCardExpiryDateType);
                 result.setForever(Boolean.TRUE);
                 result.setExpiryDate(null);
                 result.setExpiryPeriod(Integer.valueOf(0));
+                result.setExpiryDay(Integer.valueOf(0));
                 result.setCardTypeCode("COUNTING_CARD");
                 break;
             case 2:
+                result.setExpiryType(Integer.valueOf(3));
                 result.setForever(Boolean.FALSE);
                 result.setExpiryDate(this.cadCardExpiryDateTime);
                 result.setExpiryPeriod(Integer.valueOf(0));
+                result.setExpiryDay(Integer.valueOf(0));
                 result.setCardTypeCode("COUNTING_CARD");
                 break;
             case 3:
+                result.setExpiryType(Integer.valueOf(2));
                 result.setForever(Boolean.FALSE);
                 result.setExpiryDate(null);
                 result.setExpiryPeriod(Integer.valueOf(0));
+                result.setExpiryDay(this.cadCardExpiryDateDay);
                 result.setCardTypeCode("TIMIN_CARD");
                 break;
             default:
@@ -171,7 +187,10 @@ public class SeckillActivityModel implements Serializable {
         for (SeckillActivityItemModel item : this.items) {
             totalOriginalPrice.add(item.getOriginalPrice().multiply(new BigDecimal(item.getItemQuantity())));
         }
-        this.originalPrice  = totalOriginalPrice;
+        this.originalPrice = totalOriginalPrice;
+        if (this.status == null) {
+            this.status = 0;
+        }
         return this;
     }
 
