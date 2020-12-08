@@ -105,7 +105,8 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
 
     /**
      * 获取门店信息
+     * @param flag true C端 false B端
      * @return
      */
-    StoreDTO getStoreInfo();
+    StoreDTO getStoreInfo(boolean flag);
 }

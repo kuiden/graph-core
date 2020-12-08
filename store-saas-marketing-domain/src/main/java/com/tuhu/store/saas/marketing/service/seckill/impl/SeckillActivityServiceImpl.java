@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.AttachedInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
@@ -516,7 +517,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             wxQrUrl = getWxQrUrl(activity, request);
             resp.setWxQrUrl(wxQrUrl);
         }
-        StoreDTO dto = this.getStoreInfo();
+        StoreDTO dto = this.getStoreInfo(Boolean.FALSE);
         resp.setStoreName(dto.getStoreName());//门店名称
         resp.setAddress(dto.getAddress());    //门店地址
         resp.setOpeningEffectiveDate(dto.getOpeningEffectiveDate()); //营业时间
@@ -584,10 +585,14 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
      * 获取登录门店的信息
      * @return
      */
-    public StoreDTO getStoreInfo() {
+    public StoreDTO getStoreInfo(boolean flag) {
         StoreInfoVO vo = new StoreInfoVO();
         vo.setStoreId(UserContextHolder.getStoreId());
         vo.setTanentId(UserContextHolder.getTenantId());
+        if (flag) {
+            vo.setStoreId(EndUserContextHolder.getStoreId());
+            vo.setTanentId(EndUserContextHolder.getTenantId());
+        }
         BizBaseResponse<StoreDTO> result = storeInfoClient.getStoreInfo(vo);
         log.info("getStoreInfo返回参数为:{}", JSONObject.toJSONString(result));
         if (result == null || !result.isSuccess()) {
