@@ -53,29 +53,16 @@ public class SeckillActivityModel implements Serializable {
             result = "活动规则不能为空";
             return result;
         }
-        if (this.cadCardExpiryDateType == null || this.cadCardExpiryDateType < 0) {
-            this.cadCardExpiryDateType = 3;
-        }
-        if (this.cadCardExpiryDateType == 3 && (this.cadCardExpiryDateDay == null || this.cadCardExpiryDateDay <= 0)) {
-            this.cadCardExpiryDateDay = 365;
-        }
+
         if (this.cadCardExpiryDateType == 2 && (this.cadCardExpiryDateTime == null
                 || this.cadCardExpiryDateTime.getTime() < System.currentTimeMillis())) {
             result = "请输入有效的截至日期";
             return result;
         }
-        if (this.sellNumberType == null || this.sellNumberType <= 0) {
-            this.sellNumberType = 2;
-        }
+
         if (this.sellNumberType == 1 && (this.sellNumber == null || this.sellNumber <= 0)) {
             result = "限购数量输入错误";
             return result;
-        }
-        if (this.soloSellNumberType == null || this.soloSellNumberType <= 0) {
-            this.soloSellNumberType = 1;
-        }
-        if (this.soloSellNumberType == 1 && (this.soloSellNumber == null || this.soloSellNumber <= 0)) {
-            this.soloSellNumber = 1;
         }
         //在修改时需要检查当前是否能修改
         if (!isInsert) {
@@ -153,8 +140,38 @@ public class SeckillActivityModel implements Serializable {
             cardItem.setServiceItemName(item.getGoodsName());
             cardItem.setType(item.getGoodsType().getType());
             cardItem.setPrice(item.getOriginalPrice());
+            cardItem.setFaceAmount(item.getNewPrice());
+            cardItem.setMeasuredQuantity(item.getItemQuantity());
+            cardItems.add(cardItem);
         }
+        result.setCardTemplateItemModelList(cardItems);
         return result;
+    }
+
+    /**
+     * 初始化阶段
+     */
+    public SeckillActivityModel init() {
+        if (this.cadCardExpiryDateType == null || this.cadCardExpiryDateType < 0) {
+            this.cadCardExpiryDateType = 3;
+        }
+        if (this.cadCardExpiryDateType == 3 && (this.cadCardExpiryDateDay == null || this.cadCardExpiryDateDay <= 0)) {
+            this.cadCardExpiryDateDay = 365;
+        }
+        if (this.sellNumberType == null || this.sellNumberType <= 0) {
+            this.sellNumberType = 2;
+        }
+        if (this.soloSellNumberType == null || this.soloSellNumberType <= 0) {
+            this.soloSellNumberType = 1;
+        }
+        if (this.soloSellNumberType == 1 && (this.soloSellNumber == null || this.soloSellNumber <= 0)) {
+            this.soloSellNumber = 1;
+        }
+        BigDecimal totalOriginalPrice = BigDecimal.ZERO;
+        for (SeckillActivityItemModel item : this.items) {
+
+        }
+        return this;
     }
 
     /**

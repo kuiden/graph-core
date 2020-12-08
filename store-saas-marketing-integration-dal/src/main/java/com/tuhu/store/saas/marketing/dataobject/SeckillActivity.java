@@ -33,6 +33,13 @@ public class SeckillActivity implements Serializable {
         return model;
     }
 
+    public SeckillActivity() {
+    }
+
+    public SeckillActivity(SeckillActivityModel model) {
+        BeanUtils.copyProperties(model,this);
+    }
+
     private static final long serialVersionUID = 1L;
 
     /**
