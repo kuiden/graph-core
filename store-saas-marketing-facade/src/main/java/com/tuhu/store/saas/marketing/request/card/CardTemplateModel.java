@@ -34,6 +34,7 @@ public class CardTemplateModel {
 
     @ApiModelProperty(value = "卡分类编码", dataType = "String", required = false, example = "卡分类编码")
     private String cardCategoryCode;
+
     @NotBlank(message = "卡名称不能为空")
     @ApiModelProperty(value = "卡名称", dataType = "String", required = false, example = "卡名称")
     private String cardName;
@@ -44,9 +45,14 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "是否是永久", dataType = "Boolean", required = false, example = "false")
     private Boolean forever;
 
+    @ApiModelProperty(value = "有效期类型，0-有效月份，1-永久有效，2-有效天数，3-有效截止日期", dataType = "Integer")
+    private Integer expiryType;
+
+    @ApiModelProperty(value = "次卡有效天数", dataType = "Integer")
+    private Integer expiryDay;
+
     @ApiModelProperty(value = "模板状态", dataType = "String", required = false, example = "ENABLE")
     private String status;
-
 
     @Min(value = 0,message = "卡面值不能低于0元")
     @ApiModelProperty(value = "卡面值", dataType = "Long", required = false, example = "100")
