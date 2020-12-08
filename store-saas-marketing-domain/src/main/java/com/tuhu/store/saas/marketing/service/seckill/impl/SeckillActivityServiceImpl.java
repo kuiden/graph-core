@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.service.seckill.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -10,21 +11,25 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.dataobject.AttachedInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivityItem;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
+import com.tuhu.store.saas.marketing.request.seckill.*;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.service.AttachedInfoService;
 import com.tuhu.store.saas.marketing.service.ICardService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
+import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -59,27 +65,125 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     private StoreInfoClient storeInfoClient;
     @Autowired
     private ICardService cardService ;
+    @Autowired
+    private SeckillActivityItemService itemService;
+    @Autowired
+    private AttachedInfoService attachedInfoService;
 
+    @Autowired
+    IdKeyGen idKeyGen;
+
+    Function <SeckillActivityModel, Boolean> insertSeckillActivityItemFunc =(model)->{
+        List<SeckillActivityItem> items = new ArrayList<>();
+        for (SeckillActivityItemModel itemModel : model.getItems()) {
+            SeckillActivityItem item = new SeckillActivityItem();
+            item.setSeckillActivityId(model.getId());
+            BeanUtils.copyProperties(itemModel,item);
+            item.setId(idKeyGen.generateId(model.getTenantId()));
+            items.add(item);
+        }
+        return itemService.insertBatch(items);
+    };
+
+    Function <SeckillActivityModel, Boolean> saveFuncAttachedInfoFunc = (model)->{
+        //SeckillActivityRulesInfo
+        Wrapper<AttachedInfo> wrapper = new  EntityWrapper();
+        wrapper.eq(AttachedInfo.FOREIGN_KEY, model.getId())
+                .eq(AttachedInfo.STORE_ID, model.getStoreId()).eq(AttachedInfo.TENANT_ID,model.getTenantId())
+                .in(AttachedInfo.TYPE,Lists.newArrayList(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode()
+                        ,AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode()));
+        List<AttachedInfo> attachedInfos = attachedInfoService.selectList(wrapper);
+        Date now = new Date(System.currentTimeMillis());
+        if (CollectionUtils.isNotEmpty(attachedInfos)){
+
+            for (AttachedInfo attachedInfo : attachedInfos) {
+                attachedInfo.setUpdateUser(model.getUpdateUser());
+                attachedInfo.setUpdateTime(now);
+                if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())){
+                    //活动规则处理
+                    attachedInfo.setContent(model.getRulesInfo());
+                }
+                if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())){
+                    //门店信息处理
+                    attachedInfo.setContent(model.getStoreInfo());
+                }
+
+            }
+            attachedInfoService.updateBatchById(attachedInfos);
+
+        }else
+        {
+        // 进入新增流程
+            AttachedInfo  attachedInfo = new AttachedInfo();
+            attachedInfo.setForeignKey(model.getId());
+
+            attachedInfo.setCreateTime(now);
+            attachedInfo.setStoreId(model.getStoreId());
+            attachedInfo.setTenantId(model.getTenantId());
+            attachedInfo.setUpdateTime(now);
+            attachedInfo.setUpdateUser(model.getUpdateUser());
+            attachedInfo.setCreateUser(model.getUpdateUser());
+            attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode());
+            attachedInfo.setContent(model.getRulesInfo());
+            attachedInfoService.insert(attachedInfo);
+            attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode());
+            attachedInfo.setContent(model.getStoreInfo());
+            attachedInfoService.insert(attachedInfo);
+        }
+        return Boolean.TRUE;
+    };
     public String saveSeckillActivity(SeckillActivityModel model) {
         log.info("saveSeckillActivity-> start -> model -> {}", model);
+        String result ="";
         boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
-        SeckillActivityModel entity = isInsert ? null : super.selectById(model.getId()).toModel();
-        String checkResult = model.checkModel(entity, isInsert);
+        SeckillActivityModel entityModel = isInsert ? null : super.selectById(model.getId()).toModel();
+        String checkResult = model.checkModel(entityModel, isInsert);
         //如果检查信息为空的话则进入保存模式
         if (!StringUtils.isNotBlank(checkResult)) {
-            log.info("数据保存失败 -> model ->{} entity -> {}", model, entity);
+            log.info("数据保存失败 -> model ->{} entity -> {}", model, entityModel);
             throw new StoreSaasMarketingException(checkResult);
         }
+        //更新保存信息
+        CardTemplateModel cardTemplateModel = model.toCardTemplateModel();
+        Long cardTemplateId = cardService.saveCardTemplate(cardTemplateModel, model.getUpdateUser());
+        model.setTemplateId(cardTemplateId.toString());
+
+        Date now = new Date();
+        model.setUpdateTime(now);
+        SeckillActivity entity = new SeckillActivity(model);
         if (isInsert) {
+            entity.setCreateTime(now);
+            entity.setCreateUser(model.getUpdateUser());
+            entity.setId(idKeyGen.generateId(model.getTenantId()));
             // 新增
             //添加一张次卡模板
-
-
             //保存商品和服务明显
             //计算 商品/服务总价格
-        }
+            if (super.insert(entity)) {
+                result = entity.getId();
+                model.setId(entity.getId());
+                //初始化商品明细
+                insertSeckillActivityItemFunc.apply(model);
+                saveFuncAttachedInfoFunc.apply(model);
+                //添加活动规则
+                //添加门店信息
 
-        return "";
+            }else {
+                throw  new StoreSaasMarketingException("数据添加失败");
+            }
+        } else {
+            //删除关联活动的商品和服务item
+            itemService.deleteBatchIds(model.getItems().stream().map(x->x.getId()).collect(Collectors.toList()));
+             if(super.updateById(entity)){
+                 result = entity.getId();
+                 insertSeckillActivityItemFunc.apply(model);
+                 saveFuncAttachedInfoFunc.apply(model);
+             }else {
+                 throw  new StoreSaasMarketingException("数据修改失败");
+             }
+            //新增关联的服务和item
+        }
+        return result;
 
     }
 
