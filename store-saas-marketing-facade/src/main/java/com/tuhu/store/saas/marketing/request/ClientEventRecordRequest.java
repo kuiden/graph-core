@@ -19,4 +19,7 @@ public class ClientEventRecordRequest extends EndUserVistiedCouponRequest {
 
     @ApiModelProperty("客户ID")
     private String customerId;
+
+    @ApiModelProperty("客户手机号")
+    private String phoneNumber;
 }
