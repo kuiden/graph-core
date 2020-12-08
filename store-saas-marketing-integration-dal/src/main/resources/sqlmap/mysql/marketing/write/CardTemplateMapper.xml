@@ -40,7 +40,7 @@
             useGeneratedKeys="true">
     insert into crd_card_template ( card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period,
      expiry_type, expiry_date, expiry_day, card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time , `type`, is_show)
-    values (#{cardCategoryCode},#{cardName},#{faceAmount},#{actualAmount},#{discountAmount},#{forever},#{expiryPeriod},#{expiryType},#{expiryDate},#{expiry_day}
+    values (#{cardCategoryCode},#{cardName},#{faceAmount},#{actualAmount},#{discountAmount},#{forever},#{expiryPeriod},#{expiryType},#{expiryDate},#{expiryDay}
     ,#{cardTypeCode},#{status},#{description},#{storeId},#{tenantId},#{createUser},#{updateUser},#{createTime},#{updateTime},
     #{type},#{isShow}
     )
