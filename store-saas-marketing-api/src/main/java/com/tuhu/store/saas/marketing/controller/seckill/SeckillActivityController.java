@@ -102,9 +102,12 @@ public class SeckillActivityController extends BaseApi {
     }
 
     @PostMapping(value = "/onShelf")
-    @ApiOperation(value = "编辑上架")
-    public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityReq req) {
-        return new BizBaseResponse();
+    @ApiOperation(value = "编辑上架和保存活动一致")
+    public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityModel req) {
+        req.setStoreId(super.getStoreId());
+        req.setTenantId(super.getTenantId());
+        req.setUpdateUser(super.getUserId());
+        return new BizBaseResponse(seckillActivityService.saveSeckillActivity(req));
     }
 }
 

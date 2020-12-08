@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.AttachedInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
@@ -70,8 +71,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Autowired
     private AttachedInfoService attachedInfoService;
-	@Autowired
-    private ICardService cardService ;
+    @Autowired
+    private ICardService cardService;
     @Autowired
     private SeckillActivityItemService itemService;
 
@@ -137,12 +138,13 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         return Boolean.TRUE;
     };
+
     @Transactional
     @Override
     public String saveSeckillActivity(SeckillActivityModel model) {
         log.info("saveSeckillActivity-> start -> model -> {}", model);
         String result;
-        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false ;
+        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
         SeckillActivityModel entityModel = isInsert ? null : super.selectById(model.getId()).toModel();
         String checkResult = model.init().checkModel(entityModel, isInsert);
         //如果检查信息为空的话则进入保存模式
@@ -174,8 +176,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 //添加活动规则
                 //添加门店信息
 
-            }else {
-                throw  new StoreSaasMarketingException("数据添加失败");
+            } else {
+                throw new StoreSaasMarketingException("数据添加失败");
             }
         } else {
             //删除关联活动的商品和服务item
@@ -233,35 +235,35 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         Date now = new Date();
         //添加进行中的活动
         activityList.addAll(this.baseMapper.selectList(new EntityWrapper<SeckillActivity>()
-                .eq("store_id",storeId).eq("tenant_id",tenantId)
-                .eq("is_delete",0).le("start_time",now)
-                .ge("end_time",now).ne("status",9).orderBy("end_time")));
+                .eq("store_id", storeId).eq("tenant_id", tenantId)
+                .eq("is_delete", 0).le("start_time", now)
+                .ge("end_time", now).ne("status", 9).orderBy("end_time")));
         //添加未开始的活动
         activityList.addAll(this.baseMapper.selectList(new EntityWrapper<SeckillActivity>()
-                .eq("store_id",storeId).eq("tenant_id",tenantId)
-                .eq("is_delete",0).gt("start_time",now)
-                .ne("status",9).orderBy("start_time")));
-        List<String> activityIds = activityList.stream().map(x->x.getId()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(activityIds)){
+                .eq("store_id", storeId).eq("tenant_id", tenantId)
+                .eq("is_delete", 0).gt("start_time", now)
+                .ne("status", 9).orderBy("start_time")));
+        List<String> activityIds = activityList.stream().map(x -> x.getId()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(activityIds)) {
             //查询活动对应的支付成功的订单
             List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                    .in("seckill_activity_id",activityIds).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
-                    .eq("is_delete",0).eq("store_id",storeId).eq("tenant_id",tenantId));
-            Map<String,List<SeckillRegistrationRecord>> activityIdNumMap = seckillRegistrationRecords.stream().collect(Collectors.groupingBy(x->x.getSeckillActivityId()));
+                    .in("seckill_activity_id", activityIds).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
+                    .eq("is_delete", 0).eq("store_id", storeId).eq("tenant_id", tenantId));
+            Map<String, List<SeckillRegistrationRecord>> activityIdNumMap = seckillRegistrationRecords.stream().collect(Collectors.groupingBy(x -> x.getSeckillActivityId()));
             //组装返回数据
-            for (SeckillActivity seckillActivity : activityList){
+            for (SeckillActivity seckillActivity : activityList) {
                 SeckillActivityListResp resp = new SeckillActivityListResp();
-                BeanUtils.copyProperties(seckillActivity,resp);
-                if (resp.getStatus().equals(SeckillActivityStatusEnum.SJ.getStatus())){
+                BeanUtils.copyProperties(seckillActivity, resp);
+                if (resp.getStatus().equals(SeckillActivityStatusEnum.SJ.getStatus())) {
                     resp.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
-                } else if (resp.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())){
+                } else if (resp.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
                     resp.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
                 }
                 resp.setTotalNumber(seckillActivity.getSellNumber());
                 //计算已售出数量
-                if (activityIdNumMap.containsKey(seckillActivity.getId())){
+                if (activityIdNumMap.containsKey(seckillActivity.getId())) {
                     Integer salesNumber = 0;
-                    for (SeckillRegistrationRecord record : activityIdNumMap.get(seckillActivity.getId())){
+                    for (SeckillRegistrationRecord record : activityIdNumMap.get(seckillActivity.getId())) {
                         salesNumber += record.getQuantity().intValue();
                     }
                     resp.setSalesNumber(salesNumber);
@@ -278,22 +280,22 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         SeckillActivityDetailResp result = new SeckillActivityDetailResp();
         //查活动
         SeckillActivity seckillActivity = this.baseMapper.selectById(req.getSeckillActivityId());
-        if (null == seckillActivity){
-            log.error("秒杀活动id={}不存在",req.getSeckillActivityId());
+        if (null == seckillActivity) {
+            log.error("秒杀活动id={}不存在", req.getSeckillActivityId());
             throw new StoreSaasMarketingException("秒杀活动不存在");
         }
-        BeanUtils.copyProperties(seckillActivity,result);
+        BeanUtils.copyProperties(seckillActivity, result);
         result.setTotalNumber(seckillActivity.getSellNumber());
         //查询已售数量、当前客户已购数量
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                .eq("seckill_activity_id",req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
-                .eq("is_delete",0).eq("store_id",req.getStoreId()).eq("tenant_id",req.getTenantId()));
-        if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)){
+                .eq("seckill_activity_id", req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
+                .eq("is_delete", 0).eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId()));
+        if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)) {
             Integer salesNumber = 0;
             Integer hasBuyNumber = 0;
-            for (SeckillRegistrationRecord record : seckillRegistrationRecords){
+            for (SeckillRegistrationRecord record : seckillRegistrationRecords) {
                 salesNumber += record.getQuantity().intValue();
-                if (record.getCustomerId().equals(req.getCustomerId())){
+                if (record.getCustomerId().equals(req.getCustomerId())) {
                     hasBuyNumber += record.getQuantity().intValue();
                 }
             }
@@ -302,12 +304,12 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         //查询活动状态
         Date now = new Date();
-        if (seckillActivity.getStatus().equals(9)){
+        if (seckillActivity.getStatus().equals(9)) {
             result.setStatusName(SeckillActivityStatusEnum.XJ.getStatusName());
-        } else if (seckillActivity.getStartTime().compareTo(now) > 0){
+        } else if (seckillActivity.getStartTime().compareTo(now) > 0) {
             result.setStatus(0); //未开始
             result.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
-        } else if (seckillActivity.getEndTime().compareTo(now) >= 0){
+        } else if (seckillActivity.getEndTime().compareTo(now) >= 0) {
             result.setStatus(1);  //进行中
             result.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
         } else {
@@ -316,24 +318,24 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         //查活动规则、门店介绍
         List<AttachedInfo> ruleInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key",seckillActivity.getId()).eq("type","SECKILLACTIVITYRULESINFO")
-                .eq("store_id",req.getStoreId()).eq("tenant_id",req.getTenantId()));
-        if (CollectionUtils.isNotEmpty(ruleInfoList)){
+                .eq("foreign_key", seckillActivity.getId()).eq("type", "SECKILLACTIVITYRULESINFO")
+                .eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId()));
+        if (CollectionUtils.isNotEmpty(ruleInfoList)) {
             result.setActivityRule(ruleInfoList.get(0).getContent());
         }
         List<AttachedInfo> storeInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key",seckillActivity.getId()).eq("type","SECKILLACTIVITYSTOREINFO")
-                .eq("store_id",req.getStoreId()).eq("tenant_id",req.getTenantId()));
-        if (CollectionUtils.isNotEmpty(storeInfoList)){
+                .eq("foreign_key", seckillActivity.getId()).eq("type", "SECKILLACTIVITYSTOREINFO")
+                .eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId()));
+        if (CollectionUtils.isNotEmpty(storeInfoList)) {
             result.setStoreIntroduction(storeInfoList.get(0).getContent());
         }
         //查活动项目 按服务、商品排序
-        List<SeckillActivityItem> activityItems = seckillActivityItemService.queryItemsByActivityId(req.getSeckillActivityId(),req.getStoreId(),req.getTenantId());
-        if (CollectionUtils.isNotEmpty(activityItems)){
+        List<SeckillActivityItem> activityItems = seckillActivityItemService.queryItemsByActivityId(req.getSeckillActivityId(), req.getStoreId(), req.getTenantId());
+        if (CollectionUtils.isNotEmpty(activityItems)) {
             List<SeckillActivityDetailResp.ActivityDetailItem> activityDetailItems = new ArrayList<>();
-            for (SeckillActivityItem activityItem : activityItems){
+            for (SeckillActivityItem activityItem : activityItems) {
                 SeckillActivityDetailResp.ActivityDetailItem activityDetailItem = new SeckillActivityDetailResp.ActivityDetailItem();
-                BeanUtils.copyProperties(activityItem,activityDetailItem);
+                BeanUtils.copyProperties(activityItem, activityDetailItem);
                 activityDetailItems.add(activityDetailItem);
             }
             result.setItems(activityDetailItems);
@@ -343,15 +345,15 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         storeInfoVO.setStoreId(req.getStoreId());
         storeInfoVO.setTanentId(req.getTenantId());
         BizBaseResponse<StoreDTO> resultData = storeInfoClient.getStoreInfo(storeInfoVO);
-        if (null != resultData && null != resultData.getData()){
+        if (null != resultData && null != resultData.getData()) {
             StoreDTO storeDTO = resultData.getData();
             SeckillActivityDetailResp.StoreInfo storeInfo = new SeckillActivityDetailResp.StoreInfo();
-            BeanUtils.copyProperties(storeDTO,storeInfo);
+            BeanUtils.copyProperties(storeDTO, storeInfo);
             //电话设置为c端预约电话
             storeInfo.setMobilePhone(storeDTO.getClientAppointPhone());
             //门店照片
             String imagePathsString = storeDTO.getImagePaths();
-            String [] imagePaths = imagePathsString.split(",");
+            String[] imagePaths = imagePathsString.split(",");
             storeInfo.setImagePaths(imagePaths);
             result.setStoreInfo(storeInfo);
             //咨询热线设置为c端预约电话
@@ -364,20 +366,20 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     public PageInfo<SeckillRecordListResp> clientActivityRecordList(SeckillActivityDetailReq req) {
         log.info("clientActivityRecordList -> req:{}", req);
         PageInfo<SeckillRecordListResp> pageInfo = new PageInfo<>();
-        PageHelper.startPage(req.getPageNum(),req.getPageSize());
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
         //按照购买时间倒序排
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                .eq("seckill_activity_id",req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
-                .eq("is_delete",0).eq("store_id",req.getStoreId()).eq("tenant_id",req.getTenantId())
-                .orderBy("payment_time",false));
+                .eq("seckill_activity_id", req.getSeckillActivityId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
+                .eq("is_delete", 0).eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId())
+                .orderBy("payment_time", false));
         PageInfo<SeckillRegistrationRecord> recordPageInfo = new PageInfo<>(seckillRegistrationRecords);
         List<SeckillRecordListResp> respList = new ArrayList<>();
-        for (SeckillRegistrationRecord record : seckillRegistrationRecords){
+        for (SeckillRegistrationRecord record : seckillRegistrationRecords) {
             SeckillRecordListResp resp = new SeckillRecordListResp();
-            BeanUtils.copyProperties(record,resp);
+            BeanUtils.copyProperties(record, resp);
             respList.add(resp);
         }
-        BeanUtils.copyProperties(recordPageInfo,pageInfo);
+        BeanUtils.copyProperties(recordPageInfo, pageInfo);
         pageInfo.setList(respList);
         return pageInfo;
     }
@@ -388,21 +390,21 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         List<CustomerActivityOrderListResp> result = new ArrayList<>();
         //查询客户所有支付成功的订单,按支付时间倒序排
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                .eq("customer_id",customerId).eq("store_id",storeId).eq("tenant_id",tenantId)
-                .eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS).eq("is_delete",0).orderBy("payment_time",false));
-        if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)){
+                .eq("customer_id", customerId).eq("store_id", storeId).eq("tenant_id", tenantId)
+                .eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS).eq("is_delete", 0).orderBy("payment_time", false));
+        if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)) {
             //查询活动
-            List<String> activityIds = seckillRegistrationRecords.stream().map(x->x.getSeckillActivityId()).distinct().collect(Collectors.toList());
-            List<SeckillActivity> seckillActivityList = this.baseMapper.selectList(new EntityWrapper<SeckillActivity>().in("id",activityIds)
-                    .eq("store_id",storeId).eq("tenant_id",tenantId).eq("is_delete",0));
+            List<String> activityIds = seckillRegistrationRecords.stream().map(x -> x.getSeckillActivityId()).distinct().collect(Collectors.toList());
+            List<SeckillActivity> seckillActivityList = this.baseMapper.selectList(new EntityWrapper<SeckillActivity>().in("id", activityIds)
+                    .eq("store_id", storeId).eq("tenant_id", tenantId).eq("is_delete", 0));
             //聚合订单数据
-            Map<String, List<SeckillRegistrationRecord>> activityRecordMap = seckillRegistrationRecords.stream().collect(Collectors.groupingBy(x->x.getSeckillActivityId()));
-            for (SeckillActivity seckillActivity : seckillActivityList){
-                if (activityRecordMap.containsKey(seckillActivity.getId())){
+            Map<String, List<SeckillRegistrationRecord>> activityRecordMap = seckillRegistrationRecords.stream().collect(Collectors.groupingBy(x -> x.getSeckillActivityId()));
+            for (SeckillActivity seckillActivity : seckillActivityList) {
+                if (activityRecordMap.containsKey(seckillActivity.getId())) {
                     CustomerActivityOrderListResp customerActivityOrderListResp = new CustomerActivityOrderListResp();
-                    BeanUtils.copyProperties(seckillActivity,customerActivityOrderListResp);
+                    BeanUtils.copyProperties(seckillActivity, customerActivityOrderListResp);
                     BigDecimal amount = BigDecimal.ZERO;
-                    for (SeckillRegistrationRecord record : activityRecordMap.get(seckillActivity.getId())){
+                    for (SeckillRegistrationRecord record : activityRecordMap.get(seckillActivity.getId())) {
                         //取订单应付金额
                         amount = amount.add(record.getExpectAmount());
                     }
@@ -423,22 +425,22 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         result.setActivityInfo(activityDetailResp);
         //查询客户在某一个活动下的购买记录
         List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                .eq("seckill_activity_id",req.getSeckillActivityId()).eq("customer_id",req.getCustomerId()).eq("store_id",req.getStoreId())
-                .eq("tenant_id",req.getTenantId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS).eq("is_delete",0)
-                .orderBy("payment_time",false));
-        if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)){
+                .eq("seckill_activity_id", req.getSeckillActivityId()).eq("customer_id", req.getCustomerId()).eq("store_id", req.getStoreId())
+                .eq("tenant_id", req.getTenantId()).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS).eq("is_delete", 0)
+                .orderBy("payment_time", false));
+        if (CollectionUtils.isNotEmpty(seckillRegistrationRecords)) {
             Date now = new Date();
             List<CustomerActivityOrderDetailResp.PurchaseRecord> purchaseRecordList = new ArrayList<>();
-            for (SeckillRegistrationRecord record : seckillRegistrationRecords){
+            for (SeckillRegistrationRecord record : seckillRegistrationRecords) {
                 CustomerActivityOrderDetailResp.PurchaseRecord purchaseRecord = new CustomerActivityOrderDetailResp.PurchaseRecord();
-                BeanUtils.copyProperties(record,purchaseRecord);
+                BeanUtils.copyProperties(record, purchaseRecord);
                 //设置状态
-                if (null != record.getEffectiveTime() && record.getEffectiveTime().compareTo(now) < 0){
+                if (null != record.getEffectiveTime() && record.getEffectiveTime().compareTo(now) < 0) {
                     purchaseRecord.setStatusName("已过期");
                 } else {
                     purchaseRecord.setStatusName("使用中");
                     //购买人 = 使用人 且有次卡未过期 修改标识
-                    if (record.getBuyerPhoneNumber().equals(record.getUserPhoneNumber())){
+                    if (record.getBuyerPhoneNumber().equals(record.getUserPhoneNumber())) {
                         result.setHasCard(true);
                     }
                 }
@@ -476,7 +478,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                     // 未开始定义：当前时间小于活动开始时间，活动为进行中状态
                     response.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
                 } else if (startTime.before(now) && endTime.after(now)) {
-                    // 进行中定义：当前时间大于等于活动开始时间且小于结束时间，活动为进行中状态
+                    // 进行中定义：当前时间大于等于活动开始时间且小于结束时间，活动为进行中状态check
                     response.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
                 } else {
                     // 已结束定义：当前时间大于等于活动结束时间，活动为进行中状态
@@ -491,7 +493,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Override
     @Transactional
     public boolean offShelf(String seckillActivityId) {
-        SeckillActivity activity = check(seckillActivityId);
+        SeckillActivity activity = check(seckillActivityId,Boolean.TRUE);
         if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
             throw new StoreSaasMarketingException("活动已下架");
         }
@@ -505,7 +507,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Transactional
     public SeckillActivityResp poster(SeckillActivityQrCodeReq request) {
         log.info("poster{}", JSON.toJSONString(request));
-        SeckillActivity activity = check(request.getSeckillActivityId());
+        SeckillActivity activity = check(request.getSeckillActivityId(),Boolean.TRUE);
         SeckillActivityResp resp = new SeckillActivityResp();
         BeanUtils.copyProperties(activity, resp);
         String wxQrUrl = activity.getWxQrUrl();
@@ -515,7 +517,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             wxQrUrl = getWxQrUrl(activity, request);
             resp.setWxQrUrl(wxQrUrl);
         }
-        StoreDTO dto = this.getStoreInfo();
+        StoreDTO dto = this.getStoreInfo(Boolean.FALSE);
         resp.setStoreName(dto.getStoreName());//门店名称
         resp.setAddress(dto.getAddress());    //门店地址
         resp.setOpeningEffectiveDate(dto.getOpeningEffectiveDate()); //营业时间
@@ -528,7 +530,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Transactional
     public String qrCodeUrl(SeckillActivityQrCodeReq request) {
         log.info("qrCodeUrl{}", JSON.toJSONString(request));
-        SeckillActivity activity = check(request.getSeckillActivityId());
+        SeckillActivity activity = check(request.getSeckillActivityId(),Boolean.TRUE);
         String wxQrUrl = activity.getWxQrUrl();
         if (StringUtils.isNotBlank(wxQrUrl)) {
             return wxQrUrl;
@@ -538,6 +540,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     /**
      * 获取微信二维码，并保存
+     *
      * @param activity
      * @param request
      * @return
@@ -557,7 +560,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Override
     public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
-        check(req.getSeckillActivityId());
+        check(req.getSeckillActivityId(),Boolean.TRUE);
         if (req.getStatus().equals(0)) {//购买记录
             return seckillRegistrationRecordService.pageBuyList(req);
         } else {//浏览未购买
@@ -565,7 +568,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
     }
 
-    public SeckillActivity check(String seckillActivityId) {
+    public SeckillActivity check(String seckillActivityId, Boolean flag) {
         if (null == seckillActivityId) {
             throw new StoreSaasMarketingException("活动ID不能为空");
         }
@@ -573,20 +576,34 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (null == activity) {
             throw new StoreSaasMarketingException("活动不存在");
         }
-        if (!UserContextHolder.getStoreId().equals(activity.getStoreId())) {
-            throw new StoreSaasMarketingException("非本店活动");
+        if (flag) {
+            //B端
+            if (!UserContextHolder.getStoreId().equals(activity.getStoreId())) {
+                throw new StoreSaasMarketingException("非本店活动");
+            }
+        }
+        if (!flag) {
+            //C端
+            if (!EndUserContextHolder.getStoreId().equals(activity.getStoreId())) {
+                throw new StoreSaasMarketingException("非本店活动");
+            }
         }
         return activity;
     }
 
     /**
      * 获取登录门店的信息
+     *
      * @return
      */
-    public StoreDTO getStoreInfo() {
+    public StoreDTO getStoreInfo(boolean flag) {
         StoreInfoVO vo = new StoreInfoVO();
         vo.setStoreId(UserContextHolder.getStoreId());
         vo.setTanentId(UserContextHolder.getTenantId());
+        if (flag) {
+            vo.setStoreId(EndUserContextHolder.getStoreId());
+            vo.setTanentId(EndUserContextHolder.getTenantId());
+        }
         BizBaseResponse<StoreDTO> result = storeInfoClient.getStoreInfo(vo);
         log.info("getStoreInfo返回参数为:{}", JSONObject.toJSONString(result));
         if (result == null || !result.isSuccess()) {
