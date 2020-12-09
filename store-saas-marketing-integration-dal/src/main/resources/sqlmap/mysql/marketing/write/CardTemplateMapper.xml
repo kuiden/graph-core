@@ -118,6 +118,9 @@
         <if test="isShow != null">
             AND a.is_show = #{isShow,jdbcType=TINYINT}
         </if>
+        <if test="type != null">
+            AND a.type = #{type,jdbcType=TINYINT}
+        </if>
         order by update_time desc
     </select>
 

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@JobHandler("seckillActivity24AutoHandler")
+@JobHandler("seckillActivity24AutoCancelJob")
 public class SeckillActivity24AutoCancelJob extends IJobHandler {
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;

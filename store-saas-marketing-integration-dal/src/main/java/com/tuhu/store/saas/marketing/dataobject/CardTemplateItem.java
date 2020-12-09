@@ -42,6 +42,11 @@ public class CardTemplateItem implements Serializable {
     private String serviceItemName;
 
     /**
+     * 服务项展示名称
+     */
+    private String serviceShowName;
+
+    /**
      * 服务项名code
      */
     private String serviceItemCode;

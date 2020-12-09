@@ -42,7 +42,7 @@ public class ClientValueCardApi extends BaseApi {
         }
         req.setStoreId(EndUserContextHolder.getStoreId());
         req.setTenantId(EndUserContextHolder.getTenantId());
-        req.setCustomerId(EndUserContextHolder.getUserId());
+        req.setCustomerId(EndUserContextHolder.getCustomerId());
         return new BizBaseResponse(iValueCardService.customerValueCardAmount(req));
     }
 
@@ -56,7 +56,7 @@ public class ClientValueCardApi extends BaseApi {
         }
         req.setStoreId(EndUserContextHolder.getStoreId());
         req.setTenantId(EndUserContextHolder.getTenantId());
-        req.setCustomerId(EndUserContextHolder.getUserId());
+        req.setCustomerId(EndUserContextHolder.getCustomerId());
         return new BizBaseResponse(iValueCardService.rechargeRecord(req));
     }
 

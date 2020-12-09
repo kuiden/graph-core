@@ -14,17 +14,16 @@ public class BaseEndUserApi {
         return EndUserContextHolder.getCustomerId();
     }
 
-
-    public String getUserId() {
-        return EndUserContextHolder.getUserId();
-    }
-
     public Long getStoreId() {
         return EndUserContextHolder.getStoreId();
     }
 
     public Long getTenantId() {
         return EndUserContextHolder.getTenantId();
+    }
+
+    public String getName() {
+        return EndUserContextHolder.getName();
     }
 
 }

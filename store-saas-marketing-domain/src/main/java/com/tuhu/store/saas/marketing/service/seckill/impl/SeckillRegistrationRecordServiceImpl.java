@@ -19,12 +19,14 @@ import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.dataobject.ClientEventRecordDAO;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.enums.SeckillActivitySellTypeEnum;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.enums.SeckillRegistrationRecordPayStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ClientEventRecordMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
@@ -43,13 +45,16 @@ import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordSe
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
+import com.tuhu.store.saas.order.enums.BusinessCategoryEnum;
 import com.tuhu.store.saas.order.enums.FinancePaymentStatusEnum;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.shaded.com.google.common.collect.Maps;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,6 +106,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Autowired
     private ICardOrderService cardOrderService;
 
+    @Autowired
+    private ClientEventRecordMapper clientEventRecordMapper;
 
     /**
      * 活动对应的支付成功的订单
@@ -137,9 +144,15 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         List<SeckillRegistrationRecord> list = pageInfo.getList();
         List<SeckillRegistrationRecordResp> responseList = Lists.newArrayList();
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
+            List<String> customerIds = new ArrayList<>();
+            for (SeckillRegistrationRecord record : list) {
+                customerIds.add(record.getCustomerId());
+            }
+            Map<String, Integer> customerIdNewMap = this.customerIdNewMap(customerIds, req.getSeckillActivityId());
             responseList = list.stream().map(o -> {
                 SeckillRegistrationRecordResp response = new SeckillRegistrationRecordResp();
                 BeanUtils.copyProperties(o, response);
+                dataConversion(o, response, customerIdNewMap);
                 return response;
             }).collect(Collectors.toList());
         }
@@ -158,15 +171,15 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         List<SeckillRegistrationRecord> list = pageInfo.getList();
         List<SeckillRegistrationRecordResp> responseList = Lists.newArrayList();
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
-            List<String> phones = new ArrayList<>();
+            List<String> customerIds = new ArrayList<>();
             for (SeckillRegistrationRecord record : list) {
-                phones.add(record.getBuyerPhoneNumber());
+                customerIds.add(record.getCustomerId());
             }
-            Map<String, Integer> phoneNewMap = this.phoneNewMap(phones, req.getSeckillActivityId());
+            Map<String, Integer> customerIdNewMap = this.customerIdNewMap(customerIds, req.getSeckillActivityId());
             responseList = list.stream().map(o -> {
                 SeckillRegistrationRecordResp response = new SeckillRegistrationRecordResp();
                 BeanUtils.copyProperties(o, response);
-                dataConversion(o, response, phoneNewMap);
+                dataConversion(o, response, customerIdNewMap);
                 return response;
             }).collect(Collectors.toList());
         }
@@ -246,10 +259,13 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 seckillRegistrationRecord.setOrderNo(seckillActivityCode);
                 //将未收款的待收单+交易单作废
                 this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.CANCEL_STATUS);
-
-                this.insert(seckillRegistrationRecord);
                 //根据秒杀订单新建客户
-                this.addCustomerForOrder(seckillRegistrationRecord);
+                Map<String, String> maps = this.addCustomerForOrder(seckillRegistrationRecord);
+                if (MapUtils.isEmpty(maps) && StringUtils.isBlank(maps.get(seckillRegistrationRecord.getUserPhoneNumber()))) {
+                    throw new StoreSaasMarketingException("根据秒杀订单新建客户失败");
+                }
+                seckillRegistrationRecord.setUserCustomerId(maps.get(seckillRegistrationRecord.getUserPhoneNumber()));
+                this.insert(seckillRegistrationRecord);
                 //根据秒杀订单创建 待收单、交易单
                 this.addReceivingAndTradeOrderBySeckillActivity(seckillRegistrationRecord);
             } catch (Exception e) {
@@ -264,6 +280,21 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         } else {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.TOO_MANY_REQUEST.getDesc());
         }
+    }
+
+    public static void main(String[] args) {
+        Date st = new Date();
+        List<String> a = new ArrayList<>();
+        for(int i=0 ;i<2000;i++){
+            a.add("test123293344545344343"+i);
+        }
+        List<String> b = new ArrayList<>();
+        for(int i=500 ;i<10000;i++){
+            b.add("test123293344545344343"+i);
+        }
+        Collection<String> oldBuySubtract = CollectionUtils.subtract(b, a);//差集 = 老客户包含新用户 - 新用户
+        System.out.println(new Date().getTime() - st.getTime());
+        System.out.println(oldBuySubtract.size());
     }
 
     @Override
@@ -363,9 +394,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         return addCardOrderReq;
     }
 
-    private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> phoneNewMap) {
+    private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> customerIdNewMap) {
         //是否新用户
-        if (null != phoneNewMap.get(o.getBuyerPhoneNumber())) {
+        if (null != customerIdNewMap.get(o.getCustomerId())) {
             response.setIsNewCustomer(SeckillConstant.TYPE_1);
         }
         //浏览时间
@@ -375,24 +406,24 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     /**
      * 根据手机号和活动id 获取是否新用户
      *
-     * @param phones
+     * @param customerIds
      * @param seckillActivityId
      * @return
      */
-    private Map<String, Integer> phoneNewMap(List<String> phones, String seckillActivityId) {
-        log.info("phoneNewMap{}", JSON.toJSONString(phones));
-        EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
-        wrapper.eq(SeckillRegistrationRecord.IS_NEW_CUSTOMER, SeckillConstant.TYPE_1);
-        wrapper.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, seckillActivityId);
-        wrapper.in(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, phones);
-        List<SeckillRegistrationRecord> list = this.selectList(wrapper);
+    private Map<String, Integer> customerIdNewMap(List<String> customerIds, String seckillActivityId) {
+        log.info("customerIdNewMap{}", JSON.toJSONString(customerIds));
+        EntityWrapper<ClientEventRecordDAO> wrapper = new EntityWrapper<>();
+        wrapper.eq(ClientEventRecordDAO.CONTENT_VALUE, seckillActivityId);
+        wrapper.eq(ClientEventRecordDAO.CONTENT_TYPE, SeckillConstant.REGISTERED);
+        wrapper.in(SeckillRegistrationRecord.CUSTOMER_ID, customerIds);
+        List<ClientEventRecordDAO> list = clientEventRecordMapper.selectList(wrapper);
         if (CollectionUtils.isNotEmpty(list)) {
-            Map<String, Integer> phoneNewMap = new HashMap<>();
-            Map<String, List<SeckillRegistrationRecord>> activityIdListMap = list.stream().collect(Collectors.groupingBy(SeckillRegistrationRecord::getBuyerPhoneNumber));
-            for (Map.Entry<String, List<SeckillRegistrationRecord>> entry : activityIdListMap.entrySet()) {
-                phoneNewMap.put(entry.getKey(), SeckillConstant.TYPE_1);
+            Map<String, Integer> customerIdNewMap = new HashMap<>();
+            Map<String, List<ClientEventRecordDAO>> activityIdListMap = list.stream().collect(Collectors.groupingBy(ClientEventRecordDAO::getCustomerId));
+            for (Map.Entry<String, List<ClientEventRecordDAO>> entry : activityIdListMap.entrySet()) {
+                customerIdNewMap.put(entry.getKey(), SeckillConstant.TYPE_1);
             }
-            return phoneNewMap;
+            return customerIdNewMap;
         }
         return Collections.EMPTY_MAP;
     }
@@ -440,24 +471,36 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             resp.setTotalAmount(totalDealRecord.getExpectAmount());  //总收入（元）
         }
         //获取新客
-        Integer newUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
-        if (null != newUserCount && newUserCount > 0) {
-            resp.setNewCustomers(newUserCount);
-            Integer newBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
+        List<String> newUsers = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
+        log.info("newUsers{}", newUsers);
+        List<String> newBuys = null;
+        if (CollectionUtils.isNotEmpty(newUsers)) {
+            resp.setNewCustomers(newUsers.size());
+            newBuys = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
             //新客转化率
-            newBuyCount = null == newBuyCount ? 0 : newBuyCount;
-            BigDecimal rate = new BigDecimal(newBuyCount).divide(new BigDecimal(newUserCount), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            int newBuyCount = CollectionUtils.isEmpty(newBuys) ? 0 : newBuys.size();
+            BigDecimal rate = new BigDecimal(newBuyCount).divide(new BigDecimal(newUsers.size()), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
             resp.setNewCustomersConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
         }
+        log.info("newBuys{}", newBuys);
         //唤醒老客
-        Integer oldUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
-        if (null != oldUserCount && oldUserCount > 0) {
-            resp.setOldCustomer(oldUserCount);
-            Integer oldBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
-            //老客转化率
-            oldBuyCount = null == oldBuyCount ? 0 : oldBuyCount;
-            BigDecimal rate = new BigDecimal(oldBuyCount).divide(new BigDecimal(oldUserCount), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-            resp.setOldCustomerConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
+        List<String> oldUsers = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
+        log.info("oldUsers{}", oldUsers);
+        if (CollectionUtils.isNotEmpty(oldUsers)) {
+            Collection<String> oldCustomerSubtract = CollectionUtils.subtract(oldUsers, newUsers);//差集 = 老客户包含新用户 - 新用户
+            log.info("oldCustomerSubtract{}", oldCustomerSubtract);
+            if (CollectionUtils.isNotEmpty(oldCustomerSubtract)) {
+                resp.setOldCustomer(oldCustomerSubtract.size());
+                List<String> oldBuys = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
+                log.info("oldBuys{}", oldBuys);
+                newBuys = CollectionUtils.isEmpty(newBuys) ? new ArrayList<>() : newBuys;
+                Collection<String> oldBuySubtract = CollectionUtils.subtract(oldBuys, newBuys);//差集 = 老客户包含新用户 - 新用户
+                log.info("oldBuySubtract{}", oldBuySubtract);
+                //老客转化率
+                int oldBuyCount = CollectionUtils.isEmpty(oldBuySubtract) ? 0 : oldBuySubtract.size();
+                BigDecimal rate = new BigDecimal(oldBuyCount).divide(new BigDecimal(oldCustomerSubtract.size()), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                resp.setOldCustomerConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
+            }
         }
         return resp;
     }
@@ -567,7 +610,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         addReceivingVO.setOrderId(seckillRegistrationRecord.getId());
         addReceivingVO.setOrderNo(seckillRegistrationRecord.getOrderNo());
         addReceivingVO.setOrderDate(seckillRegistrationRecord.getCreateTime());
-        addReceivingVO.setBusinessCategoryCode("SECKILL_ACTIVITY_ORDER");
+        addReceivingVO.setBusinessCategoryCode(BusinessCategoryEnum.SECKILL_ACTIVITY_ORDER.name());
         addReceivingVO.setBusinessCategoryName("秒杀活动单");
         addReceivingVO.setPayerId(seckillRegistrationRecord.getCustomerId());
         addReceivingVO.setPayerName(seckillRegistrationRecord.getCustomerName());
@@ -614,22 +657,29 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      *
      * @param seckillRegistrationRecord
      */
-    private void addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
+    private Map<String, String> addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
+        Map<String, String> maps = Maps.newHashMap();
         if (seckillRegistrationRecord.getBuyerPhoneNumber().equals(seckillRegistrationRecord.getUserPhoneNumber())) {
-            this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            CustomerReq customerReq = this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
         } else {
-            this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
-            this.addCustomer(seckillRegistrationRecord.getUserPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            CustomerReq customerReq = null;
+            customerReq = this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
+            customerReq = this.addCustomer(seckillRegistrationRecord.getUserPhoneNumber(), "空", seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            maps.put(seckillRegistrationRecord.getUserPhoneNumber(), customerReq.getId());
         }
+        return maps;
     }
 
 
-    private void addCustomer(String phoneNumber, Long storeId, Long tenantId) {
+    private CustomerReq addCustomer(String phoneNumber, String name, Long storeId, Long tenantId) {
         //添加客户
         CustomerReq customerReq = new CustomerReq();
         customerReq.setPhoneNumber(phoneNumber);
-        customerReq.setName(phoneNumber);
+        customerReq.setName(name);
         customerReq.setCustomerType("person");
+        customerReq.setGender("");
         customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
         AddVehicleReq addVehicleReq = new AddVehicleReq();
         addVehicleReq.setStoreId(storeId);
@@ -638,7 +688,10 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         log.info("customerClient.addCustomerForOrder request:{}", JSONObject.toJSONString(addVehicleReq));
         BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
         log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
-
+        if (Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
+            customerReq.setId(resultObject.getData().getCustomerReq().getId());
+        }
+        return customerReq;
     }
 
 }

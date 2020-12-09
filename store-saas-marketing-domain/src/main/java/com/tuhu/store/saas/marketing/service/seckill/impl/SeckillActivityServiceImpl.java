@@ -404,8 +404,10 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             storeInfo.setMobilePhone(storeDTO.getClientAppointPhone());
             //门店照片
             String imagePathsString = storeDTO.getImagePaths();
-            String[] imagePaths = imagePathsString.split(",");
-            storeInfo.setImagePaths(imagePaths);
+            if (StringUtils.isNotBlank(imagePathsString)){
+                String[] imagePaths = imagePathsString.split(",");
+                storeInfo.setImagePaths(imagePaths);
+            }
             result.setStoreInfo(storeInfo);
             //咨询热线设置为c端预约电话
             result.setPhoneNumber(storeDTO.getClientAppointPhone());

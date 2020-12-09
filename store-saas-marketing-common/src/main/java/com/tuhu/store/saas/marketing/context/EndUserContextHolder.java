@@ -59,7 +59,6 @@ public class EndUserContextHolder {
         }
         return null;
     }
-
     /**
      * 获取门店用户ID
      *
@@ -74,18 +73,18 @@ public class EndUserContextHolder {
     }
 
 
-    public static String getUserId() {
-        EndUser EndUser = EndUserContextHolder.getUser();
-        if (null != EndUser) {
-            return EndUser.getUserId();
-        }
-        return null;
-    }
-
     public static String getTelephone(){
         EndUser EndUser = EndUserContextHolder.getUser();
         if (null != EndUser) {
             return EndUser.getPhone();
+        }
+        return null;
+    }
+
+    public static String getName(){
+        EndUser EndUser = EndUserContextHolder.getUser();
+        if (null != EndUser) {
+            return EndUser.getName();
         }
         return null;
     }

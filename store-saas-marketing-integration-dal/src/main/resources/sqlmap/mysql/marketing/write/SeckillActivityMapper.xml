@@ -44,7 +44,9 @@
 
     <select id="pageList" resultMap="BaseResultMap">
         select
-        id,tenant_id,store_id,create_user,update_user,update_time,is_delete,end_time,start_time,status,activity_title
+        id,tenant_id,store_id,create_user,update_user,update_time,is_delete,end_time,start_time,status,activity_title,
+        head_image,cad_card_expiry_date_type,cad_card_expiry_date_time,cad_card_expiry_date_day,sell_number_type,
+        sell_number,solo_sell_number_type,solo_sell_number,original_price,new_price,template_id,cad_card_template_id
         from seckill_activity
         where
         1=1

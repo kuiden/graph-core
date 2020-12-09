@@ -42,10 +42,10 @@ public class SeckillRegistrationRecordResp {
     @ApiModelProperty(value = "使用人客户id")
     private String userCustomerId;
 
-    @ApiModelProperty(value = "购买数量")
+    @ApiModelProperty(value = "购买数量或次数")
     private Long quantity;
 
-    @ApiModelProperty(value = "购买金额")
+    @ApiModelProperty(value = "购买金额或消费总金额")
     private BigDecimal expectAmount;
 
     @ApiModelProperty(value = "车牌号")
@@ -57,8 +57,8 @@ public class SeckillRegistrationRecordResp {
     private Date paymentTime;
 
     @ApiModelProperty(value = "浏览时间")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private Date browseTime;
 
 }

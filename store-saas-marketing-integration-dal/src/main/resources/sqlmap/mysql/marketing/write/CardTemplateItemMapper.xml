@@ -10,6 +10,7 @@
         <result column="PID" property="pid"/>
         <result column="service_item_code" property="serviceItemCode"/>
         <result column="service_item_name" property="serviceItemName"/>
+        <result column="service_show_name" property="serviceShowName"/>
         <result column="business_category" property="businessCategory"/>
         <result column="business_category_code" property="businessCategoryCode"/>
         <result column="business_category_name" property="businessCategoryName"/>
@@ -32,13 +33,13 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id, card_template_id, goods_id, PID, service_item_code,
-         service_item_name,business_category,business_category_code,business_category_name, labor_hour,
+         service_item_name,service_show_name,business_category,business_category_code,business_category_name, labor_hour,
           measured_quantity, price, face_amount, discount_amount, actual_amount, description, type,
            store_id, tenant_id, create_user, update_user, create_time, update_time, is_delete
     </sql>
 
     <insert id="insertCardTemplateItemList" parameterType="java.util.List">
-        insert into crd_card_template_item (id, card_template_id, goods_id, PID, service_item_code,service_item_name
+        insert into crd_card_template_item (id, card_template_id, goods_id, PID, service_item_code,service_item_name,service_show_name
         , business_category,business_category_code,business_category_name,labor_hour, measured_quantity, price
         , face_amount, discount_amount, actual_amount, description, store_id, tenant_id, create_user
         , update_user, create_time, update_time,type)
@@ -51,6 +52,7 @@
             #{item.pid},
             #{item.serviceItemCode},
             #{item.serviceItemName},
+            #{item.serviceShowName},
             #{item.businessCategory},
             #{item.businessCategoryCode},
             #{item.businessCategoryName},

@@ -146,7 +146,7 @@ public class MiniReservationApi extends EndUserApi {
     //新增预约单公共校验
     private void validParam(NewReservationReq req){
         req.setTenantId(this.getTenantId());
-        req.setUserId(this.getUserId());
+        //req.setUserId(this.getUserId());
         req.setCustomerId(this.getCustomerId());
         if(req.getEstimatedArriveTime() == null){
             throw new StoreSaasMarketingException("请选择到店时间");

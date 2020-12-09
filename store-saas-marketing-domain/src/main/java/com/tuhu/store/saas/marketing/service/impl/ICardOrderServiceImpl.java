@@ -115,7 +115,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         }
         req.setCustomerName(customerDTO.getName());
         req.setCustomerPhoneNumber(customerDTO.getPhoneNumber());
-
+        if (req.getExpiryDate() != null) {
+            req.setExpiryDate(DateUtils.getDateEndTime(req.getExpiryDate()));
+        }
         //新增次卡
         CrdCard crdCard = new CrdCard();
         BeanUtils.copyProperties(req, crdCard);
