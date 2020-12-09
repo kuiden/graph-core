@@ -57,8 +57,8 @@ public class SeckillRegistrationRecordResp {
     private Date paymentTime;
 
     @ApiModelProperty(value = "浏览时间")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private Date browseTime;
 
 }
