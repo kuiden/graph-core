@@ -89,6 +89,12 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.offShelf(seckillActivityId));
     }
 
+    @PostMapping(value = "/onShelf")
+    @ApiOperation(value = "活动上架")
+    public BizBaseResponse<SeckillActivityResp> onShelf(@RequestParam("seckillActivityId") String seckillActivityId){
+        return new BizBaseResponse(seckillActivityService.onShelf(seckillActivityId));
+    }
+
     @PostMapping(value = "/poster")
     @ApiOperation(value = "活动海报")
     public BizBaseResponse<SeckillActivityResp> poster(@Validated @RequestBody SeckillActivityQrCodeReq request){

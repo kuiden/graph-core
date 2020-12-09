@@ -74,6 +74,15 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      */
     boolean offShelf(String seckillActivityId);
 
+
+    /**
+     * 上架活动
+     *
+     * @param seckillActivityId
+     * @return
+     */
+    boolean onShelf(String seckillActivityId);
+
     /**
      * 活动海报
      *

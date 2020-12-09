@@ -508,6 +508,19 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Override
     @Transactional
+    public boolean onShelf(String seckillActivityId) {
+        SeckillActivity activity = check(seckillActivityId,Boolean.TRUE);
+        if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
+            throw new StoreSaasMarketingException("活动已下架");
+        }
+        activity.setStatus(SeckillActivityStatusEnum.SJ.getStatus());
+        activity.setUpdateTime(new Date());
+        activity.setUpdateUser(UserContextHolder.getStoreUserId());
+        return this.updateById(activity);
+    }
+
+    @Override
+    @Transactional
     public SeckillActivityResp poster(SeckillActivityQrCodeReq request) {
         log.info("poster{}", JSON.toJSONString(request));
         SeckillActivity activity = check(request.getSeckillActivityId(),Boolean.TRUE);
