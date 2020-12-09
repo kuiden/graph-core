@@ -28,5 +28,6 @@ public class SeckillConstant {
 
     public static final Integer CARD_EXPIRY_DATE_TYPE_1 = 1;//有效期类型   1永久有效
 
+    public static final String REGISTERED = "registered";//注册标识
 
 }

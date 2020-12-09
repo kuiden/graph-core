@@ -129,6 +129,7 @@
             AND phone_number like CONCAT('%',#{phone},'%')
         </if>
         GROUP BY customer_id,phone_number
+        ORDER BY create_time DESC
     </select>
 
     <select id="seckillActivity24AutoCancel" resultMap="BaseResultMap">

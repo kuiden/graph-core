@@ -19,12 +19,14 @@ import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
+import com.tuhu.store.saas.marketing.dataobject.ClientEventRecordDAO;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.enums.SeckillActivitySellTypeEnum;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.enums.SeckillRegistrationRecordPayStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ClientEventRecordMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
@@ -104,6 +106,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Autowired
     private ICardOrderService cardOrderService;
 
+    @Autowired
+    private ClientEventRecordMapper clientEventRecordMapper;
 
     /**
      * 活动对应的支付成功的订单
@@ -402,15 +406,15 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      */
     private Map<String, Integer> phoneNewMap(List<String> phones, String seckillActivityId) {
         log.info("phoneNewMap{}", JSON.toJSONString(phones));
-        EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
-        wrapper.eq(SeckillRegistrationRecord.IS_NEW_CUSTOMER, SeckillConstant.TYPE_1);
-        wrapper.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, seckillActivityId);
+        EntityWrapper<ClientEventRecordDAO> wrapper = new EntityWrapper<>();
+        wrapper.eq(ClientEventRecordDAO.CONTENT_VALUE, seckillActivityId);
+        wrapper.eq(ClientEventRecordDAO.CONTENT_TYPE, SeckillConstant.REGISTERED);
         wrapper.in(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, phones);
-        List<SeckillRegistrationRecord> list = this.selectList(wrapper);
+        List<ClientEventRecordDAO> list = clientEventRecordMapper.selectList(wrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, Integer> phoneNewMap = new HashMap<>();
-            Map<String, List<SeckillRegistrationRecord>> activityIdListMap = list.stream().collect(Collectors.groupingBy(SeckillRegistrationRecord::getBuyerPhoneNumber));
-            for (Map.Entry<String, List<SeckillRegistrationRecord>> entry : activityIdListMap.entrySet()) {
+            Map<String, List<ClientEventRecordDAO>> activityIdListMap = list.stream().collect(Collectors.groupingBy(ClientEventRecordDAO::getPhoneNumber));
+            for (Map.Entry<String, List<ClientEventRecordDAO>> entry : activityIdListMap.entrySet()) {
                 phoneNewMap.put(entry.getKey(), SeckillConstant.TYPE_1);
             }
             return phoneNewMap;
