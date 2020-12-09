@@ -43,13 +43,16 @@ import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordSe
 import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
+import com.tuhu.store.saas.order.enums.BusinessCategoryEnum;
 import com.tuhu.store.saas.order.enums.FinancePaymentStatusEnum;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.shaded.com.google.common.collect.Maps;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -246,10 +249,13 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 seckillRegistrationRecord.setOrderNo(seckillActivityCode);
                 //将未收款的待收单+交易单作废
                 this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.CANCEL_STATUS);
-
-                this.insert(seckillRegistrationRecord);
                 //根据秒杀订单新建客户
-                this.addCustomerForOrder(seckillRegistrationRecord);
+                Map<String, String> maps = this.addCustomerForOrder(seckillRegistrationRecord);
+                if (MapUtils.isEmpty(maps) && StringUtils.isBlank(maps.get(seckillRegistrationRecord.getUserPhoneNumber()))) {
+                    throw new StoreSaasMarketingException("根据秒杀订单新建客户失败");
+                }
+                seckillRegistrationRecord.setUserCustomerId(maps.get(seckillRegistrationRecord.getUserPhoneNumber()));
+                this.insert(seckillRegistrationRecord);
                 //根据秒杀订单创建 待收单、交易单
                 this.addReceivingAndTradeOrderBySeckillActivity(seckillRegistrationRecord);
             } catch (Exception e) {
@@ -567,7 +573,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         addReceivingVO.setOrderId(seckillRegistrationRecord.getId());
         addReceivingVO.setOrderNo(seckillRegistrationRecord.getOrderNo());
         addReceivingVO.setOrderDate(seckillRegistrationRecord.getCreateTime());
-        addReceivingVO.setBusinessCategoryCode("SECKILL_ACTIVITY_ORDER");
+        addReceivingVO.setBusinessCategoryCode(BusinessCategoryEnum.SECKILL_ACTIVITY_ORDER.name());
         addReceivingVO.setBusinessCategoryName("秒杀活动单");
         addReceivingVO.setPayerId(seckillRegistrationRecord.getCustomerId());
         addReceivingVO.setPayerName(seckillRegistrationRecord.getCustomerName());
@@ -614,22 +620,29 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      *
      * @param seckillRegistrationRecord
      */
-    private void addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
+    private Map<String, String> addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
+        Map<String, String> maps = Maps.newHashMap();
         if (seckillRegistrationRecord.getBuyerPhoneNumber().equals(seckillRegistrationRecord.getUserPhoneNumber())) {
-            this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            CustomerReq customerReq = this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
         } else {
-            this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
-            this.addCustomer(seckillRegistrationRecord.getUserPhoneNumber(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            CustomerReq customerReq = null;
+            customerReq = this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
+            customerReq = this.addCustomer(seckillRegistrationRecord.getUserPhoneNumber(), "空", seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            maps.put(seckillRegistrationRecord.getUserPhoneNumber(), customerReq.getId());
         }
+        return maps;
     }
 
 
-    private void addCustomer(String phoneNumber, Long storeId, Long tenantId) {
+    private CustomerReq addCustomer(String phoneNumber, String name, Long storeId, Long tenantId) {
         //添加客户
         CustomerReq customerReq = new CustomerReq();
         customerReq.setPhoneNumber(phoneNumber);
-        customerReq.setName(phoneNumber);
+        customerReq.setName(name);
         customerReq.setCustomerType("person");
+        customerReq.setGender("");
         customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
         AddVehicleReq addVehicleReq = new AddVehicleReq();
         addVehicleReq.setStoreId(storeId);
@@ -638,7 +651,10 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         log.info("customerClient.addCustomerForOrder request:{}", JSONObject.toJSONString(addVehicleReq));
         BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
         log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
-
+        if (Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
+            customerReq.setId(resultObject.getData().getCustomerReq().getId());
+        }
+        return customerReq;
     }
 
 }

@@ -3,7 +3,6 @@ package com.tuhu.store.saas.marketing.remote.order;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.order.dto.finance.receiving.ReceivingDTO;
 import com.tuhu.store.saas.order.vo.finance.nonpayment.AddNonpaymentVO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import feign.hystrix.FallbackFactory;
