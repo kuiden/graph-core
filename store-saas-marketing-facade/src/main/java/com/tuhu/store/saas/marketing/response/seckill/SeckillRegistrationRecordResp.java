@@ -45,7 +45,7 @@ public class SeckillRegistrationRecordResp {
     @ApiModelProperty(value = "购买数量或次数")
     private Long quantity;
 
-    @ApiModelProperty(value = "购买金额或总金额")
+    @ApiModelProperty(value = "购买金额或消费总金额")
     private BigDecimal expectAmount;
 
     @ApiModelProperty(value = "车牌号")
