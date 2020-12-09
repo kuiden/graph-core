@@ -2,8 +2,8 @@ package com.tuhu.store.saas.marketing.request.seckill;
 
 public enum SeckillActivityItemTypeEnum {
 
-    WAIT_OPENED_CARD("GOODS", "商品", 2),
-    OPENED_CARD("SERVICE", "服务", 1);
+    GOODS("GOODS", "商品", 2),
+    SERVICE("SERVICE", "服务", 1);
 
 
     private String enumCode;
@@ -30,7 +30,7 @@ public enum SeckillActivityItemTypeEnum {
     }
 
 
-    public byte getType() {
+    public Byte getType() {
         return type;
     }
 

@@ -23,8 +23,21 @@ import java.util.List;
  */
 public interface SeckillActivityService extends IService<SeckillActivity> {
 
+    /**
+     * 保存秒杀活动
+     * @param model
+     * @return
+     */
     @Transactional
     String saveSeckillActivity(SeckillActivityModel model);
+
+    /**
+     * 获取活动详情by ID
+     * @param id
+     * @param storeId
+     * @return
+     */
+    SeckillActivityModel getSeckillActivityModelById(String id, Long storeId);
 
     /**
      * 自动更新下架

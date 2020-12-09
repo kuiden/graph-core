@@ -47,6 +47,12 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.saveSeckillActivity(req));
     }
 
+    @GetMapping(value = "/getModelById")
+    @ApiOperation(value = "获取活动详情")
+    public BizBaseResponse<SeckillActivityModel> getModelById(@RequestParam String id) {
+        return new BizBaseResponse(seckillActivityService.getSeckillActivityModelById(id, super.getStoreId()));
+    }
+
     @PostMapping(value = "/pageList")
     @ApiOperation(value = "秒杀活动列表 status 0未开始、1进行中、9已下架 , 定向营销(未开始、进行中)-1")
     public BizBaseResponse<PageInfo<SeckillActivityResp>> pageList(@RequestBody SeckillActivityReq req) {

@@ -81,14 +81,24 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     IdKeyGen idKeyGen;
 
     private Function<SeckillActivityModel, Boolean> insertSeckillActivityItemFunc = (model) -> {
+        log.info("添加商品或服务明细开始-> model{}",model);
         List<SeckillActivityItem> items = new ArrayList<>();
+        Date now = new Date();
         for (SeckillActivityItemModel itemModel : model.getItems()) {
             SeckillActivityItem item = new SeckillActivityItem();
-            item.setSeckillActivityId(model.getId());
             BeanUtils.copyProperties(itemModel, item);
+            item.setSeckillActivityId(model.getId());
+            item.setUpdateTime(now);
+            item.setCreateTime(now);
+            item.setStoreId(model.getStoreId());
+            item.setTenantId(model.getTenantId());
+            item.setCreateUser(model.getUpdateUser());
+            item.setUpdateUser(model.getUpdateUser());
+            item.setGoodsType(itemModel.getGoodsType().getType().intValue());
             item.setId(idKeyGen.generateId(model.getTenantId()));
             items.add(item);
         }
+        log.info("准备添加 items ->{}",items);
         return itemService.insertBatch(items);
     };
 
@@ -129,9 +139,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             attachedInfo.setUpdateTime(now);
             attachedInfo.setUpdateUser(model.getUpdateUser());
             attachedInfo.setCreateUser(model.getUpdateUser());
+            attachedInfo.setId(idKeyGen.generateId(model.getTenantId()));
             attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode());
             attachedInfo.setContent(model.getRulesInfo());
             attachedInfoService.insert(attachedInfo);
+            attachedInfo.setId(idKeyGen.generateId(model.getTenantId()));
             attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode());
             attachedInfo.setContent(model.getStoreInfo());
             attachedInfoService.insert(attachedInfo);
@@ -144,7 +156,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     public String saveSeckillActivity(SeckillActivityModel model) {
         log.info("saveSeckillActivity-> start -> model -> {}", model);
         String result;
-        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? true : false;
+        boolean isInsert = StringUtils.isNotBlank(model.getId()) ? false : true;
         SeckillActivityModel entityModel = isInsert ? null : super.selectById(model.getId()).toModel();
         String checkResult = model.init().checkModel(entityModel, isInsert);
         //如果检查信息为空的话则进入保存模式
@@ -155,7 +167,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         //更新保存信息
         CardTemplateModel cardTemplateModel = model.toCardTemplateModel();
         Long cardTemplateId = cardService.saveCardTemplate(cardTemplateModel, model.getUpdateUser());
-        model.setTemplateId(cardTemplateId.toString());
+        model.setCadCardTemplateId(cardTemplateId.toString());
         Date now = new Date();
         model.setUpdateTime(now);
         SeckillActivity entity = new SeckillActivity(model);
@@ -192,6 +204,45 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         return result;
 
+    }
+
+
+    @Override
+    public SeckillActivityModel getSeckillActivityModelById(String id, Long storeId) {
+        log.info("getSeckillActivityModelById-> id{} storeId->{}", id, storeId);
+        SeckillActivity seckillActivity = super.selectById(id);
+        if (seckillActivity == null || !seckillActivity.getStoreId().equals(storeId)) {
+            throw new StoreSaasMarketingException("数据不存在或者数据越权");
+        }
+        SeckillActivityModel seckillActivityModel = seckillActivity.toModel();
+
+        List<AttachedInfo> attachedInfos = attachedInfoService.selectList(new EntityWrapper().eq(AttachedInfo.FOREIGN_KEY, seckillActivityModel.getId())
+                .eq(AttachedInfo.STORE_ID, seckillActivityModel.getStoreId()).eq(AttachedInfo.TENANT_ID, seckillActivityModel.getTenantId())
+                .in(AttachedInfo.TYPE, Lists.newArrayList(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode()
+                        , AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())));
+        for (AttachedInfo attachedInfo : attachedInfos) {
+
+            if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())) {
+                //活动规则处理
+                seckillActivityModel.setRulesInfo(attachedInfo.getContent());
+            }
+            if (attachedInfo.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())) {
+                //门店信息处理
+                seckillActivityModel.setStoreInfo(attachedInfo.getContent());
+            }
+        }
+
+        List<SeckillActivityItem> list = itemService.selectList(new EntityWrapper().eq(SeckillActivityItem.SECKILL_ACTIVITY_ID, seckillActivityModel.getId())
+                .eq(SeckillActivityItem.STORE_ID, seckillActivityModel.getStoreId()).eq(SeckillActivityItem.TENANT_ID, seckillActivityModel.getTenantId())
+                .eq(SeckillActivityItem.IS_DELETE, Integer.valueOf(0)));
+        seckillActivityModel.setItems(new ArrayList<>());
+        for (SeckillActivityItem seckillActivityItem : list) {
+            SeckillActivityItemModel itemModel = new SeckillActivityItemModel();
+            BeanUtils.copyProperties(seckillActivityItem, itemModel);
+            itemModel.setGoodsType(SeckillActivityItemTypeEnum.getEnumByCode(seckillActivityItem.getGoodsType().byteValue()));
+            seckillActivityModel.getItems().add(itemModel);
+        }
+        return seckillActivityModel;
     }
 
     @Override

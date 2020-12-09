@@ -49,6 +49,19 @@ public class SeckillActivityModel implements Serializable {
             result = "请完善商品/服务信息";
             return result;
         }
+        for (SeckillActivityItemModel item : this.items) {
+            if (StringUtils.isEmpty(item.getGoodsId()) || StringUtils.isEmpty(item.getGoodsCode()) ||
+                    StringUtils.isEmpty(item.getGoodsName()) || StringUtils.isEmpty(item.getShowName())) {
+                result = "商品信息不能为空";
+                return result;
+
+            }
+            if (item.getItemQuantity() <= Integer.valueOf(0)) {
+                result = "单个商品/ 服务数量不能小于0";
+                return result;
+            }
+
+        }
         if (this.originalPrice == null) {
             result = "原价不能为空";
             return result;
@@ -78,20 +91,20 @@ public class SeckillActivityModel implements Serializable {
                 result = "数据查询失败";
                 return result;
             }
-            if (this.storeId != entity.getStoreId() || this.tenantId != entity.getTenantId()) {
+            if (!this.storeId.equals(entity.getStoreId()) || !this.tenantId.equals(entity.getTenantId())) {
                 result = "数据越权";
                 return result;
             }
-            if (entity.getStartTime().getTime() > System.currentTimeMillis()) {
+            if (entity.getStartTime().getTime() < System.currentTimeMillis()) {
                 //开始时间大于当前时间不能修改 表示活动已经开始或者已经结束
                 result = "当前活动已经开始或者结束 不能修改";
                 return result;
             }
-            if (entity.getStatus() != Integer.valueOf(0)) {
+            if (!entity.getStatus().equals(Integer.valueOf(0))) {
                 result = "当前活动不是处于未上架状态 无法修改";
                 return result;
             }
-            if (entity.getIsDelete() == Integer.valueOf(1)) {
+            if (entity.getIsDelete().equals(Integer.valueOf(1))) {
                 result = "当前活动处于已经删除状态 不允许修改";
                 return result;
             }
@@ -185,7 +198,7 @@ public class SeckillActivityModel implements Serializable {
         }
         BigDecimal totalOriginalPrice = BigDecimal.ZERO;
         for (SeckillActivityItemModel item : this.items) {
-            totalOriginalPrice.add(item.getOriginalPrice().multiply(new BigDecimal(item.getItemQuantity())));
+            totalOriginalPrice = totalOriginalPrice.add(item.getOriginalPrice().multiply(new BigDecimal(item.getItemQuantity())));
         }
         this.originalPrice = totalOriginalPrice;
         if (this.status == null) {
@@ -247,7 +260,7 @@ public class SeckillActivityModel implements Serializable {
     /**
      * 现价
      */
-    @ApiModelProperty(value = "现价", dataType = "BigDecimal", example = "222.222")
+    @ApiModelProperty(value = "现价", dataType = "BigDecimal",required =true,example = "222.222")
     private BigDecimal newPrice;
     /**
      * 租户id
@@ -323,15 +336,7 @@ public class SeckillActivityModel implements Serializable {
     @ApiModelProperty(value = "门店描述", dataType = "String", example = "门店描述")
     private String storeInfo;
 
-    /**
-     * 模板信息
-     */
-    private Object templateInfo;
 
-    /**
-     * 次卡信息
-     */
-    private Object cadCardTemplateInfo;
 
 
 }

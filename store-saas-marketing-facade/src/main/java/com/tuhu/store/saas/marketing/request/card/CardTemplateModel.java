@@ -62,7 +62,7 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "卡实额", dataType = "Long", required = false, example = "90")
     private BigDecimal actualAmount;
 
-    @ApiModelProperty(value = "卡优惠金额", dataType = "Long", required = false, example = "10")
+    @ApiModelProperty(value = " 卡优惠金额", dataType = "Long", required = false, example = "10")
     private BigDecimal discountAmount;
 
     @ApiModelProperty(value = "卡种类编码  COUNTING_CARD : 计次卡    TIMIN_CARD : 计时卡 MONTHLY_CARD : 月卡 ANNUAL_CARD : 年卡 ", dataType = "String", required = false, example = "COUNTING_CARD")
@@ -82,7 +82,7 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "创建时间", dataType = "Date", required = false, example = "1")
     private Date createTime;
 
-    @ApiModelProperty(value = "用户名", dataType = "String", required = false, example = "用户名")
+    @ApiModelProperty(value = "用户   名", dataType = "String", required = false, example = "用户名")
     private String userName;
 
     @ApiModelProperty(value = "更新时间", dataType = "Date", required = false, example = "111")
