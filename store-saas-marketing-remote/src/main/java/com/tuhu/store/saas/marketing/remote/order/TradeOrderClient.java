@@ -1,9 +1,7 @@
 package com.tuhu.store.saas.marketing.remote.order;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.store.saas.marketing.remote.reponse.CardUseRecordDTO;
-import com.tuhu.store.saas.order.request.serviceorder.ListCustomerInfoReq;
-import com.tuhu.store.saas.order.response.serviceorder.ListCustomerInfoResp;
+import com.tuhu.store.saas.order.dto.finance.receiving.TradeOrderDTO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
 
 /**
  * @author wangxiang2
@@ -28,4 +25,12 @@ public interface TradeOrderClient {
     @PostMapping("/feign/finance/trade/addTradeOrderBySeckillActivity")
     BizBaseResponse<String> addTradeOrderBySeckillActivity(@RequestBody AddReceivingVO addReceivingVO);
 
+
+    /**
+     * 根据交易单获取交易单详情
+     * @param tradeOrderId
+     * @return
+     */
+    @GetMapping("/feign/finance/trade/getTradeOrderById")
+    BizBaseResponse<TradeOrderDTO> getTradeOrderById(@RequestParam String tradeOrderId);
 }
