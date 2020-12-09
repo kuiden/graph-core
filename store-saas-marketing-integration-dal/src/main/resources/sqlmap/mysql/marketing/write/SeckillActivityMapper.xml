@@ -55,7 +55,7 @@
         and tenant_id = #{tenantId}
         <if test="status != null and status == 0 ">
             and status != 9
-            and start_time > now()
+            and start_time > date_format(now(), '%Y-%m-%d')
         </if>
         <if test="status != null and status == 1 ">
             and status != 9
@@ -65,7 +65,7 @@
             and (end_time <![CDATA[<]]> now() OR status = 9)
         </if>
         <if test="status != null and status == -1 ">
-            and ((start_time <![CDATA[<=]]> now() and end_time > now() and status != 9 ) OR (start_time > now() and status != 9))
+            and ((start_time <![CDATA[<=]]> now() and end_time > now() and status != 9 ) OR (start_time > date_format(now(), '%Y-%m-%d') and status != 9))
         </if>
         <if test="activityTitle != null">
             and activity_title like CONCAT('%',#{activityTitle},'%')
