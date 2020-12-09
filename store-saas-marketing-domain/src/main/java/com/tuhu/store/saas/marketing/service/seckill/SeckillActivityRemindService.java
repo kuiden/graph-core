@@ -16,4 +16,6 @@ public interface SeckillActivityRemindService extends IService<SeckillActivityRe
 
     void customerActivityRemindAdd(SeckillRemindAddReq req);
 
+    void autoSendRemind();
+
 }

@@ -1,5 +1,7 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivityRemind;
 import com.tuhu.store.saas.marketing.request.MiniProgramNotifyReq;
 
 /**
@@ -57,4 +59,9 @@ public interface IWechatService {
      * @return
      */
     Object miniProgramNotify(String openId, MiniProgramNotifyReq miniProgramNotifyReq);
+
+    /**
+     * 发送小程序模板消息通知 -- 秒杀活动开抢提醒
+     */
+    String miniSeckillProgramNotify(SeckillActivityRemind remind, SeckillActivity seckillActivity);
 }

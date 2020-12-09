@@ -6,6 +6,8 @@ import com.mengfan.common.util.GatewayClient;
 import com.tuhu.store.saas.marketing.constant.AuthConstant;
 import com.tuhu.store.saas.marketing.constant.MiniNotifyConstant;
 import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivityRemind;
 import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.exception.SaasAuthException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
@@ -280,6 +282,89 @@ public class WechatServiceImpl implements IWechatService {
             return jsonObject;
         } catch (Exception e) {
             log.error("miniProgramNotify error:", e);
+        }
+        return null;
+    }
+
+    @Override
+    public String miniSeckillProgramNotify(SeckillActivityRemind remind, SeckillActivity seckillActivity) {
+        ResultDTO<String> accessTokenData = this.getWechatAccessTokenByClientTypeNoCache("end_user_client");
+        String sendUrl = templateMessageSendUrl.concat(accessTokenData.getData());
+        Map<String, Object> param = new HashMap();
+        param.put("touser", remind.getOpenId());
+        String templateId = remind.getTemplateId();
+        if (null == templateId) {
+            templateId = "lGjfnRqXoHaUN_G0wFFkaEHxp2gB1xu0YVchA_zb-xw";
+        }
+        param.put("template_id", templateId);
+        param.put("page", remind.getPage());
+
+        HashMap data = Maps.newHashMap();
+        //活动名称
+        HashMap thing4 = Maps.newHashMap();
+        String activityName = "";
+        if (!StringUtils.isEmpty(seckillActivity.getActivityTitle())) {
+            activityName = seckillActivity.getActivityTitle();
+            if (activityName.length() > 20) {
+                activityName = activityName.substring(0, 17);
+                activityName = activityName + "...";
+            }
+        }
+        thing4.put("value", activityName);
+        data.put("thing4", thing4);
+        //活动时间
+        HashMap thing2 = Maps.newHashMap();
+        if (Objects.nonNull(seckillActivity.getStartTime()) && Objects.nonNull(seckillActivity.getEndTime())) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MM月dd日");
+            String activityTime = dateFormat.format(seckillActivity.getStartTime()) + "至" + dateFormat.format(seckillActivity.getEndTime());
+            thing2.put("value", activityTime);
+        } else {
+            thing2.put("value", null);
+        }
+        data.put("thing2", thing2);
+        //门店地址
+        HashMap thing5 = Maps.newHashMap();
+        String address = null;
+        if (!StringUtils.isEmpty(remind.getStoreAddress())) {
+            address = remind.getStoreAddress();
+            if (address.length() > 20) {
+                address = address.substring(0, 17);
+                address = address + "...";
+            }
+        } else {
+            address = MiniNotifyConstant.ADDRESS;
+        }
+        thing5.put("value", address);
+        data.put("thing5", thing5);
+        //门店名称
+        HashMap thing7 = Maps.newHashMap();
+        String storeName = null;
+        if (!StringUtils.isEmpty(remind.getStoreName())) {
+            storeName = remind.getStoreName();
+            if (storeName.length() > 20) {
+                storeName = storeName.substring(0, 17);
+                storeName = storeName + "...";
+            }
+        } else {
+            storeName = MiniNotifyConstant.STORENAME;
+        }
+        thing7.put("value", storeName);
+        data.put("thing7", thing7);
+        //门店电话
+        HashMap phone_number6 = Maps.newHashMap();
+        String phoneNumber = StringUtils.isEmpty(remind.getStorePhone()) ? "无" : remind.getStorePhone();
+        phone_number6.put("value", phoneNumber);
+        data.put("phone_number6", phone_number6);
+        param.put("data", data);
+        //param.put("emphasis_keyword", miniProgramNotifyReq.getEmphasisKeyword());
+
+        try {
+            log.info("发送小程序模板消息通知，request={}", JSONObject.toJSONString(param));
+            String result = restTemplate.postForObject(sendUrl, param, String.class);
+            log.info("发送小程序模板消息通知，response={}", result);
+            return result;
+        } catch (Exception e) {
+            log.error("miniSeckillProgramNotify error:", e);
         }
         return null;
     }
