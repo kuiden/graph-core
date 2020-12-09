@@ -37,6 +37,9 @@ public class CardTemplateItemModel {
     @ApiModelProperty(value = "服务项名称", dataType = "String", required = false, example = "服务项名称")
     private String serviceItemName;
 
+    @ApiModelProperty(value = "服务项展示名称", dataType = "String", required = false, example = "服务项展示名称")
+    private String serviceShowName;
+
     @ApiModelProperty(value = "服务项编码", dataType = "String", required = false, example = "sdgsdfg")
     private String serviceItemCode;
 
