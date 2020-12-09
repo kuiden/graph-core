@@ -144,9 +144,15 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         List<SeckillRegistrationRecord> list = pageInfo.getList();
         List<SeckillRegistrationRecordResp> responseList = Lists.newArrayList();
         if (null != pageInfo && CollectionUtils.isNotEmpty(list)) {
+            List<String> customerIds = new ArrayList<>();
+            for (SeckillRegistrationRecord record : list) {
+                customerIds.add(record.getCustomerId());
+            }
+            Map<String, Integer> customerIdNewMap = this.customerIdNewMap(customerIds, req.getSeckillActivityId());
             responseList = list.stream().map(o -> {
                 SeckillRegistrationRecordResp response = new SeckillRegistrationRecordResp();
                 BeanUtils.copyProperties(o, response);
+                dataConversion(o, response, customerIdNewMap);
                 return response;
             }).collect(Collectors.toList());
         }
