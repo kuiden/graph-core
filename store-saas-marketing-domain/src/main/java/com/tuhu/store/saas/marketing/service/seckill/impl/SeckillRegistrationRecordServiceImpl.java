@@ -272,6 +272,21 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
     }
 
+    public static void main(String[] args) {
+        Date st = new Date();
+        List<String> a = new ArrayList<>();
+        for(int i=0 ;i<2000;i++){
+            a.add("test123293344545344343"+i);
+        }
+        List<String> b = new ArrayList<>();
+        for(int i=500 ;i<10000;i++){
+            b.add("test123293344545344343"+i);
+        }
+        Collection<String> oldBuySubtract = CollectionUtils.subtract(b, a);//差集 = 老客户包含新用户 - 新用户
+        System.out.println(new Date().getTime() - st.getTime());
+        System.out.println(oldBuySubtract.size());
+    }
+
     @Override
     @Transactional
     public void callBack(PaymentResponse paymentResponse) {
@@ -446,24 +461,36 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             resp.setTotalAmount(totalDealRecord.getExpectAmount());  //总收入（元）
         }
         //获取新客
-        Integer newUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
-        if (null != newUserCount && newUserCount > 0) {
-            resp.setNewCustomers(newUserCount);
-            Integer newBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
+        List<String> newUsers = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
+        log.info("newUsers{}", newUsers);
+        List<String> newBuys = null;
+        if (CollectionUtils.isNotEmpty(newUsers)) {
+            resp.setNewCustomers(newUsers.size());
+            newBuys = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE);
             //新客转化率
-            newBuyCount = null == newBuyCount ? 0 : newBuyCount;
-            BigDecimal rate = new BigDecimal(newBuyCount).divide(new BigDecimal(newUserCount), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            int newBuyCount = CollectionUtils.isEmpty(newBuys) ? 0 : newBuys.size();
+            BigDecimal rate = new BigDecimal(newBuyCount).divide(new BigDecimal(newUsers.size()), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
             resp.setNewCustomersConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
         }
+        log.info("newBuys{}", newBuys);
         //唤醒老客
-        Integer oldUserCount = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
-        if (null != oldUserCount && oldUserCount > 0) {
-            resp.setOldCustomer(oldUserCount);
-            Integer oldBuyCount = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
-            //老客转化率
-            oldBuyCount = null == oldBuyCount ? 0 : oldBuyCount;
-            BigDecimal rate = new BigDecimal(oldBuyCount).divide(new BigDecimal(oldUserCount), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-            resp.setOldCustomerConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
+        List<String> oldUsers = this.baseMapper.getAllUserCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
+        log.info("oldUsers{}", oldUsers);
+        if (CollectionUtils.isNotEmpty(oldUsers)) {
+            Collection<String> oldCustomerSubtract = CollectionUtils.subtract(oldUsers, newUsers);//差集 = 老客户包含新用户 - 新用户
+            log.info("oldCustomerSubtract{}", oldCustomerSubtract);
+            if (CollectionUtils.isNotEmpty(oldCustomerSubtract)) {
+                resp.setOldCustomer(oldCustomerSubtract.size());
+                List<String> oldBuys = this.baseMapper.getBuyCountByTypeAndSeckillActivityId(seckillActivityId, SeckillConstant.TYPE_1);
+                log.info("oldBuys{}", oldBuys);
+                newBuys = CollectionUtils.isEmpty(newBuys) ? new ArrayList<>() : newBuys;
+                Collection<String> oldBuySubtract = CollectionUtils.subtract(oldBuys, newBuys);//差集 = 老客户包含新用户 - 新用户
+                log.info("oldBuySubtract{}", oldBuySubtract);
+                //老客转化率
+                int oldBuyCount = CollectionUtils.isEmpty(oldBuySubtract) ? 0 : oldBuySubtract.size();
+                BigDecimal rate = new BigDecimal(oldBuyCount).divide(new BigDecimal(oldCustomerSubtract.size()), SeckillConstant.SCALE, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                resp.setOldCustomerConversionRate(rate.setScale(SeckillConstant.NEW_SCALE, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString());
+            }
         }
         return resp;
     }

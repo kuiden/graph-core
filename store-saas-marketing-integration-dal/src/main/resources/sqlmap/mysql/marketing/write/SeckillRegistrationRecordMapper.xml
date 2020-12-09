@@ -70,22 +70,24 @@
         GROUP BY store_id,tenant_id,seckill_activity_id
     </select>
     
-    <select id="getAllUserCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
-        SELECT COUNT(DISTINCT open_id) FROM
+    <select id="getAllUserCountByTypeAndSeckillActivityId" resultType="java.lang.String">
+        SELECT DISTINCT customer_id FROM
         client_event_record
         WHERE 1=1
+        AND phone_number != '0'
+        AND customer_id IS NOT NULL
+        AND content_value = #{seckillActivityId}
         <if test="type != null and type == 0 ">
-           AND content_type = 'registered'
+            AND content_type = 'registered'
         </if>
         <if test="type != null and type == 1 ">
             AND content_type != 'registered'
         </if>
-        AND content_value = #{seckillActivityId}
     </select>
 
 
-    <select id="getBuyCountByTypeAndSeckillActivityId" resultType="java.lang.Integer">
-        SELECT COUNT(DISTINCT a.customer_id)
+    <select id="getBuyCountByTypeAndSeckillActivityId" resultType="java.lang.String">
+        SELECT DISTINCT a.customer_id
         FROM seckill_registration_record a
         WHERE
         1=1
@@ -93,9 +95,12 @@
         AND a.pay_status = 1
         AND a.seckill_activity_id = #{seckillActivityId}
         AND EXISTS (
-            SELECT content_value FROM client_event_record b
-            WHERE
-            a.seckill_activity_id = b.content_value
+            SELECT customer_id FROM client_event_record b
+            WHERE 1=1
+            AND a.seckill_activity_id = b.content_value
+            AND a.customer_id = b.customer_id
+            AND phone_number != '0'
+            AND customer_id IS NOT NULL
             <if test="type != null and type == 0 ">
                 AND b.content_type = 'registered'
             </if>
