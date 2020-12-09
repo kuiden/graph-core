@@ -69,13 +69,13 @@ public class SeckillActivityResp implements Serializable {
     private String address;
     @ApiModelProperty(value = "联系电话")
     private String clientAppointPhone;
-    @DateTimeFormat(pattern = "HH:mm")
-    @JsonFormat(pattern = "HH:mm")
-    @ApiModelProperty(value = "营业时间起")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "营业时间起取HH:mm")
     private Date openingEffectiveDate;
-    @DateTimeFormat(pattern = "HH:mm")
-    @JsonFormat(pattern = "HH:mm")
-    @ApiModelProperty(value = "营业时间止")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @ApiModelProperty(value = "营业时间止取HH:mm")
     private Date openingExpiryDate;
     private String templateId;
     private String cadCardTemplateId;
