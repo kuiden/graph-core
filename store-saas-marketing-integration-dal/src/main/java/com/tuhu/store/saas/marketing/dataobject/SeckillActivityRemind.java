@@ -66,6 +66,15 @@ public class SeckillActivityRemind implements Serializable {
     private Date updateTime;
     @TableField("is_delete")
     private Integer isDelete;
+    /**
+     * 发送状态 0未发送 1成功 2失败
+     */
+    private Integer status;
+    /**
+     * 返回消息
+     */
+    @TableField("return_message")
+    private String returnMessage;
 
 
     public Long getId() {
@@ -172,22 +181,40 @@ public class SeckillActivityRemind implements Serializable {
         this.isDelete = isDelete;
     }
 
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public String getReturnMessage() {
+        return returnMessage;
+    }
+
+    public void setReturnMessage(String returnMessage) {
+        this.returnMessage = returnMessage;
+    }
+
     @Override
     public String toString() {
-        return "SeckillActivityRemind{" +
-        "id=" + id +
-        ", openId=" + openId +
-        ", templateId=" + templateId +
-        ", page=" + page +
-        ", seckillActivityId=" + seckillActivityId +
-        ", storeAddress=" + storeAddress +
-        ", storeName=" + storeName +
-        ", storePhone=" + storePhone +
-        ", storeId=" + storeId +
-        ", tenantId=" + tenantId +
-        ", createTime=" + createTime +
-        ", updateTime=" + updateTime +
-        ", isDelete=" + isDelete +
-        "}";
+        return "SeckillActivityRemindDAO{" +
+                "id=" + id +
+                ", openId=" + openId +
+                ", templateId=" + templateId +
+                ", page=" + page +
+                ", seckillActivityId=" + seckillActivityId +
+                ", storeAddress=" + storeAddress +
+                ", storeName=" + storeName +
+                ", storePhone=" + storePhone +
+                ", storeId=" + storeId +
+                ", tenantId=" + tenantId +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
+                ", isDelete=" + isDelete +
+                ", status=" + status +
+                ", returnMessage=" + returnMessage +
+                "}";
     }
 }

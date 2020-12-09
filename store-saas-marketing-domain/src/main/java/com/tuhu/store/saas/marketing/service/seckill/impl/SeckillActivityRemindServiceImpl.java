@@ -1,15 +1,20 @@
 package com.tuhu.store.saas.marketing.service.seckill.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivityRemind;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityRemindMapper;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRemindAddReq;
+import com.tuhu.store.saas.marketing.service.IWechatService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityRemindService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -27,13 +35,25 @@ import java.util.List;
  * @since 2020-12-08
  */
 @Service
+@Slf4j
 public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivityRemindMapper, SeckillActivityRemind> implements SeckillActivityRemindService {
 
     @Autowired
     private StoreInfoClient storeInfoClient;
 
+    @Autowired
+    private SeckillActivityService seckillActivityService;
+
+    @Autowired
+    private Executor taskExecutor;
+
+    @Autowired
+    private IWechatService iWechatService;
+
+
     @Override
     public void customerActivityRemindAdd(SeckillRemindAddReq req) {
+        log.info("customerActivityRemindAdd -> req:{}",req);
         //查询是否已添加过
         List<SeckillActivityRemind> remindList = this.baseMapper.selectList(new EntityWrapper<SeckillActivityRemind>()
                 .eq("open_id", req.getOpenId())
@@ -58,5 +78,42 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
             this.baseMapper.insert(seckillActivityRemind);
         }
     }
+
+    @Override
+    public void autoSendRemind() {
+        log.info("autoSendRemind -> start");
+        List<SeckillActivityRemind> remindList = this.baseMapper.selectList(new EntityWrapper<SeckillActivityRemind>().eq("is_delete", 0));
+        List<String> activityIds = remindList.stream().map(x->x.getSeckillActivityId()).distinct().collect(Collectors.toList());
+        //查进行中的活动
+        Date now = new Date();
+        List<SeckillActivity> seckillActivityList = seckillActivityService.selectList(new EntityWrapper<SeckillActivity>()
+                .in("id",activityIds).eq("is_delete", 0).le("start_time", now)
+                .ge("end_time", now).ne("status", 9));
+        Map<String,List<SeckillActivityRemind>> remindMap = remindList.stream().collect(Collectors.groupingBy(x->x.getSeckillActivityId()));
+        for (SeckillActivity seckillActivity : seckillActivityList){
+            if (remindMap.containsKey(seckillActivity.getId())){
+                for (SeckillActivityRemind seckillActivityRemind : remindMap.get(seckillActivity.getId())){
+                    //发送服务通知，更新
+                    taskExecutor.execute(() -> {
+                        String result = iWechatService.miniSeckillProgramNotify(seckillActivityRemind,seckillActivity);
+                        if (result != null){
+                            JSONObject jsonObject = (JSONObject) JSONObject.parse(result);
+                            //发送成功
+                            if (jsonObject.getInteger("errcode").equals(0)){
+                                seckillActivityRemind.setStatus(1);  //成功
+                                seckillActivityRemind.setIsDelete(1); //已提醒 删除
+                            } else {
+                                seckillActivityRemind.setStatus(2);  //失败
+                            }
+                        }
+                        seckillActivityRemind.setReturnMessage(result);
+                        seckillActivityRemind.setUpdateTime(new Date());
+                        this.baseMapper.updateById(seckillActivityRemind);
+                    });
+                }
+            }
+        }
+    }
+
 
 }
