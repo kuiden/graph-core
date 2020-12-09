@@ -562,7 +562,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Transactional
     public void addCardOrderBySeckillActivity(AddCardOrderReq req) {
         log.info("addCardOrderBySeckillActivity,request：{}", JSONObject.toJSON(req));
-
         //新增次卡
         CrdCard crdCard = new CrdCard();
         BeanUtils.copyProperties(req, crdCard);
@@ -579,7 +578,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
         crdCard.setCardCategoryCode(cardTemplate.getCardCategoryCode());
         crdCard.setCardTypeCode(cardTemplate.getCardTypeCode());
-        crdCard.setStatus(CardStatusEnum.INACTIVATED.getEnumCode());
+        crdCard.setStatus(CardStatusEnum.ACTIVATED.getEnumCode());
         crdCard.setDescription(cardTemplate.getDescription());
         crdCard.setCardName(cardTemplate.getCardName());
         crdCard.setActualAmount(cardTemplate.getActualAmount());
@@ -591,10 +590,10 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         for (CardTemplateItem item : cardTemplateItems) {
             CrdCardItem crdCardItem = new CrdCardItem();
             BeanUtils.copyProperties(item, crdCardItem);
+            crdCardItem.setId(null);
             crdCardItem.setAmount(item.getFaceAmount());
             crdCardItem.setCardId(crdCard.getId());
             crdCardItem.setCardName(crdCard.getCardName());
-            crdCardItem.setId(null);
             crdCardItemMapper.insertSelective(crdCardItem);
         }
 
@@ -606,9 +605,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCardOrder.setAmount(cardTemplate.getFaceAmount());
         crdCardOrder.setActualAmount(cardTemplate.getActualAmount());
         crdCardOrder.setDiscountAmount(cardTemplate.getDiscountAmount());
-        crdCardOrder.setStatus(CardOrderStatusEnum.OPENED_CARD.getEnumCode());
-        crdCardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_NOT.getEnumCode());
-        crdCardOrder.setCardStatus(CardStatusEnum.INACTIVATED.getEnumCode());
+        crdCardOrder.setStatus(CardOrderStatusEnum.SETTLE_CARD.getEnumCode());
+        crdCardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_OK.getEnumCode());
+        crdCardOrder.setCardStatus(CardStatusEnum.ACTIVATED.getEnumCode());
         //生成开卡单号
         String code = cardOrderRedisCache.getCode(cardOrderRedisPrefix, req.getStoreId());
         if (null == req.getStoreNo()) {
