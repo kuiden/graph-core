@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service.activity.execute;
 
+import com.alibaba.fastjson.JSON;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.dataobject.Coupon;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
@@ -45,6 +46,7 @@ public class CouponHandler extends AbstractMarketingHandler {
 
     @Override
     public void execute(MarketingAddReq addReq, List<String> customerIds) {
+        log.info("CouponHandler{},{}", JSON.toJSONString(addReq), customerIds);
         MarketingResult result = new MarketingResult();
         Long couponId = Long.valueOf(addReq.getCouponOrActiveId());
         CouponResp coupon = couponService.getCouponDetailById(couponId);
@@ -66,6 +68,7 @@ public class CouponHandler extends AbstractMarketingHandler {
         result.setCoupon(coupon);
         result.setCustomerList(customerList);
         CustomerMarketing customerMarketing = this.buildCustomerMarketing(addReq, coupon);
+        log.info("CouponHandler.customerMarketing{},{}", JSON.toJSONString(customerMarketing));
         result.setCustomerMarketing(customerMarketing);
         this.handler(addReq, result);
         //如果是优惠券定向营销，需要占用优惠券额度

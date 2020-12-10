@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service.activity.execute;
 
+import com.alibaba.fastjson.JSON;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocal;
@@ -42,6 +43,7 @@ public class SecKillHandler extends AbstractMarketingHandler {
 
     @Override
     public void execute(MarketingAddReq addReq, List<String> customerIds) {
+        log.info("SecKillHandler{},{}", JSON.toJSONString(addReq), customerIds);
         MarketingResult result = new MarketingResult();
         SeckillActivityModel secKill = seckillActivityService.getSeckillActivityModelById(addReq.getCouponOrActiveId(), Long.valueOf(addReq.getStoreId()));
         if (null == secKill || !addReq.getStoreId().equals(secKill.getStoreId())) {
@@ -68,6 +70,7 @@ public class SecKillHandler extends AbstractMarketingHandler {
         result.setCustomerList(customerList);
         result.setSecKill(secKill);
         CustomerMarketing customerMarketing = this.buildCustomerMarketing(addReq, secKill);
+        log.info("SecKillHandler.customerMarketing{},{}", JSON.toJSONString(customerMarketing));
         result.setCustomerMarketing(customerMarketing);
         this.handler(addReq, result);
     }

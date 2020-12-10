@@ -142,6 +142,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         } else {
             //TODO 重构一时爽，bug火葬场
             String marketingMethod = addReq.getMarketingMethod().toString();
+            log.info("marketingMethod{}", marketingMethod);
             MarketingFactory.getMarketingComHandler(marketingMethod).execute(addReq, customerIds);
         }
         return true;

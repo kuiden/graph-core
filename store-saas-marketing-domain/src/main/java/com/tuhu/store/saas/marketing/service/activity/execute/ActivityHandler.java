@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service.activity.execute;
 
+import com.alibaba.fastjson.JSON;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocal;
@@ -44,6 +45,7 @@ public class ActivityHandler extends AbstractMarketingHandler {
     }
 
     public void execute(MarketingAddReq addReq, List<String> customerIds) {
+        log.info("ActivityHandler{},{}", JSON.toJSONString(addReq), customerIds);
         MarketingResult result = new MarketingResult();
         Long activityId = Long.valueOf(addReq.getCouponOrActiveId());
         ActivityResponse activity = activityService.getActivityById(activityId, Long.valueOf(addReq.getStoreId()));
@@ -71,6 +73,7 @@ public class ActivityHandler extends AbstractMarketingHandler {
         result.setActivity(activity);
         result.setCustomerList(customerList);
         CustomerMarketing customerMarketing = this.buildCustomerMarketing(addReq, activity);
+        log.info("ActivityHandler.customerMarketing{},{}", JSON.toJSONString(customerMarketing));
         result.setCustomerMarketing(customerMarketing);
         this.handler(addReq, result);
     }
