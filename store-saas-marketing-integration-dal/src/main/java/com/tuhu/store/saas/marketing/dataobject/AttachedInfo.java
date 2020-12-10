@@ -39,11 +39,19 @@ public class AttachedInfo implements Serializable {
     /**
      * 内容
      */
+    @TableField("content")
     private String content;
     /**
      * 类型
      */
+    @TableField("type")
     private String type;
+
+    /**
+     * 标题
+     */
+    @TableField("title")
+    private String title;
     /**
      * 租户id
      */
@@ -95,5 +103,8 @@ public class AttachedInfo implements Serializable {
     public static final String CREATE_TIME = "create_time";
 
     public static final String UPDATE_TIME = "update_time";
+
+    public static final String TITLE = "title";
+
 
 }

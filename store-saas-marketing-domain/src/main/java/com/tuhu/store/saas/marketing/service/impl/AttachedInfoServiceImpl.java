@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.AttachedInfo;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.AttachedInfoMapper;
@@ -14,10 +15,12 @@ import com.tuhu.store.saas.marketing.request.AttachedInfoPageReq;
 import com.tuhu.store.saas.marketing.request.seckill.AttachedInfoTypeEnum;
 import com.tuhu.store.saas.marketing.response.AttachedInfoResp;
 import com.tuhu.store.saas.marketing.service.AttachedInfoService;
+import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -36,16 +39,20 @@ import java.util.List;
 @Slf4j
 public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, AttachedInfo> implements AttachedInfoService {
 
+    @Autowired
+    IdKeyGen idKeyGen;
     @Override
     public String add(AttachedInfoAddReq req, Long storeId, Long tenantId, String userId) {
         log.info("AttachedInfoServiceImpl-> add -> req -> {}", req);
         AttachedInfo enetity = new AttachedInfo();
         enetity.setTenantId(tenantId);
         enetity.setStoreId(storeId);
+        enetity.setTitle(req.getTitle());
         enetity.setUpdateTime(new Date());
         enetity.setUpdateUser(userId);
         enetity.setCreateUser(userId);
         enetity.setContent(req.getContent());
+        enetity.setId(idKeyGen.generateId(tenantId));
         enetity.setType(req.getType().getEnumCode());
         if (!super.insert(enetity)) {
             throw new StoreSaasMarketingException("添加失败");
@@ -65,6 +72,7 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
         if (StringUtils.isNotBlank(req.getForeignKey())) {
             wrapper.eq(AttachedInfo.FOREIGN_KEY, req.getForeignKey());
         }
+        wrapper.orderDesc(Lists.newArrayList(AttachedInfo.UPDATE_TIME));
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         List<AttachedInfo> attachedInfos = super.selectList(wrapper);
         PageInfo<AttachedInfo> pageInfo = new PageInfo<>(attachedInfos);
@@ -83,8 +91,8 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
     @Override
     public AttachedInfoResp getAttachedInfoById(String id, Long storeId) {
         log.info("getAttachedInfoById-> req -> id {} storeId {}", id, storeId);
-        AttachedInfoResp result = new AttachedInfoResp();
-        AttachedInfo o = (AttachedInfo) super.selectObj(new EntityWrapper<AttachedInfo>().eq(AttachedInfo.ID, id)
+        AttachedInfoResp result =  null ;
+        AttachedInfo o = super.selectOne(new EntityWrapper<AttachedInfo>().eq(AttachedInfo.ID, id)
                 .eq(AttachedInfo.STORE_ID, storeId));
         if (o != null) {
             BeanUtils.copyProperties(o, result);

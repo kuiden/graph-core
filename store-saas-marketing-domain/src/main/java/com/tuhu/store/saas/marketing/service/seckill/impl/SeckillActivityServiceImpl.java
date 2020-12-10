@@ -103,7 +103,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     };
 
     private Function<SeckillActivityModel, Boolean> saveFuncAttachedInfoFunc = (model) -> {
-        //SeckillActivityRulesInfo
+        log.info("saveFuncAttachedInfoFunc -> model-> {}", model);
         Wrapper<AttachedInfo> wrapper = new EntityWrapper();
         wrapper.eq(AttachedInfo.FOREIGN_KEY, model.getId())
                 .eq(AttachedInfo.STORE_ID, model.getStoreId()).eq(AttachedInfo.TENANT_ID, model.getTenantId())
@@ -132,7 +132,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             // 进入新增流程
             AttachedInfo attachedInfo = new AttachedInfo();
             attachedInfo.setForeignKey(model.getId());
-
+            attachedInfo.setTitle(model.getActivityTitle());
             attachedInfo.setCreateTime(now);
             attachedInfo.setStoreId(model.getStoreId());
             attachedInfo.setTenantId(model.getTenantId());

@@ -28,6 +28,9 @@ public class AttachedInfoResp implements Serializable {
      */
     @ApiModelProperty("内容")
     private String content;
+
+    @ApiModelProperty("标题")
+    private String title;
     /**
      * 类型
      */

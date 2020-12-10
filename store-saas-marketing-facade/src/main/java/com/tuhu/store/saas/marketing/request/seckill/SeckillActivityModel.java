@@ -100,8 +100,8 @@ public class SeckillActivityModel implements Serializable {
                 result = "当前活动已经开始或者结束 不能修改";
                 return result;
             }
-            if (!entity.getStatus().equals(Integer.valueOf(0))) {
-                result = "当前活动不是处于未上架状态 无法修改";
+            if (!entity.getStatus().equals(Integer.valueOf(9))) {
+                result = "当前活动不是处于下架架状态 无法修改";
                 return result;
             }
             if (entity.getIsDelete().equals(Integer.valueOf(1))) {
@@ -171,6 +171,7 @@ public class SeckillActivityModel implements Serializable {
             cardItem.setPrice(item.getOriginalPrice());
             cardItem.setFaceAmount(item.getNewPrice());
             cardItem.setMeasuredQuantity(item.getItemQuantity());
+            cardItem.setServiceShowName(item.getShowName());
             cardItems.add(cardItem);
         }
         result.setCardTemplateItemModelList(cardItems);
@@ -202,7 +203,7 @@ public class SeckillActivityModel implements Serializable {
         }
         this.originalPrice = totalOriginalPrice;
         if (this.status == null) {
-            this.status = 0;
+            this.status = 1;
         }
         return this;
     }
