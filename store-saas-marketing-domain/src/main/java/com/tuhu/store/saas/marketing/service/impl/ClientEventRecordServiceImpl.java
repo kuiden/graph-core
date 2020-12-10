@@ -183,6 +183,10 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             if (StringUtils.isEmpty(clientEventRecordRequest.getEncryptedCode()) && StringUtils.isEmpty(clientEventRecordRequest.getContentValue())) {
                 return "活动编码不能为空";
             }
+        } else if (EventContentTypeEnum.SEC_KILL.getCode().equals(clientEventRecordRequest.getContentType())) {
+            if (StringUtils.isEmpty(clientEventRecordRequest.getEncryptedCode()) && StringUtils.isEmpty(clientEventRecordRequest.getContentValue())) {
+                return "秒杀活动编码不能为空";
+            }
         }
         return null;
     }
