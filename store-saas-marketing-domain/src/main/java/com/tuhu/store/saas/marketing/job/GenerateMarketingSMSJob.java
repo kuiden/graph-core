@@ -8,10 +8,12 @@ import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.request.SendCouponReq;
 import com.tuhu.store.saas.marketing.request.SendRemindReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.CommonResp;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.service.*;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.GsonTool;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -58,6 +60,11 @@ public class GenerateMarketingSMSJob extends IJobHandler {
     @Value("${marketing.customer.message.coupon.url:http://store-dev.yunquecloud.com/store-h5-marketing/coupon/}")
     private String couponUrl;
 
+    /**
+     * 秒杀活动短信链接长链
+     */
+    @Value("${marketing.customer.message.seckill.url:http://store-dev.yunquecloud.com/store-h5-marketing/seckill/}")
+    private String seckillUrl;
 
     @Autowired
     private IRemindService remindService;
@@ -82,6 +89,9 @@ public class GenerateMarketingSMSJob extends IJobHandler {
 
     @Autowired
     private IMessageQuantityService messageQuantityService;
+
+    @Autowired
+    private SeckillActivityService seckillActivityService;
 
     @Override
     public ReturnT<String> execute(String param) throws Exception {
@@ -110,7 +120,7 @@ public class GenerateMarketingSMSJob extends IJobHandler {
                     //TODO .根据优惠卷模板生成短链，发送短信，给用户发送卷入库，占用减配额（发送失败取消占用），更新发送记录和任务状态
                     //TODO .发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
                     doSendSMS4Coupon(customerMarketing);
-                }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))){
+                }else if(customerMarketing.getMarketingMethod().equals(Byte.valueOf("1")) || customerMarketing.getMarketingMethod().equals(Byte.valueOf("2"))){
                     //活动营销，只是根据模板发送短信，更新发送记录和任务状态，发送短信发送到IRemindService中,IRemindService统一处理减少短信数量
                     doSendSMS4Activity(customerMarketing);
                 }
@@ -127,13 +137,18 @@ public class GenerateMarketingSMSJob extends IJobHandler {
      * @param customerMarketing
      */
     private void doSendSMS4Activity(CustomerMarketing customerMarketing){
-
-        ActivityResp activity = iActivityService.getActivityDetailById(Long.valueOf(customerMarketing.getCouponId()), customerMarketing.getStoreId());
+        String url = "";
+        if (customerMarketing.getMarketingMethod().equals(Byte.valueOf("1"))) {
+            ActivityResp activity = iActivityService.getActivityDetailById(Long.valueOf(customerMarketing.getCouponId()), customerMarketing.getStoreId());
+            //生成统一的短链
+            url = iUtilityService.getShortUrl(activityUrl + activity.getEncryptedCode());
+        }else if (customerMarketing.getMarketingMethod().equals(Byte.valueOf("2"))) {
+            SeckillActivityModel seckillActivityModel = seckillActivityService.getSeckillActivityModelById(customerMarketing.getCouponId(), customerMarketing.getStoreId());
+            url = iUtilityService.getShortUrl(seckillUrl +seckillActivityModel.getId());
+        }
         List<Byte> sendTypes = Lists.newArrayList();
         sendTypes.add(Byte.valueOf("0"));
         List<MarketingSendRecord> marketingSendRecords = sendRecordService.listMarketingSendRecord(customerMarketing.getId()+"",sendTypes);
-        //生成统一的短链
-        String url = iUtilityService.getShortUrl(activityUrl + activity.getEncryptedCode());
 
         for(MarketingSendRecord marketingSendRecord : marketingSendRecords){
             //发送记录一条一条发送
