@@ -575,6 +575,18 @@ public class DateUtils {
         return new Timestamp(calendar.getTimeInMillis());
     }
 
+    /**
+     * 获取时间到分没有秒 yyyy-MM-dd HH:mm:00
+     * @param d
+     * @return
+     */
+    public static Date getNoSecondOfDate(Date d) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(d);
+        calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR), calendar.get(Calendar.MINUTE), 0);
+        return calendar.getTime();
+    }
+
     public static void main(String[] args){
 //        //昨天
 //        System.out.println(DateUtils.getBeginDayOfYesterday());
