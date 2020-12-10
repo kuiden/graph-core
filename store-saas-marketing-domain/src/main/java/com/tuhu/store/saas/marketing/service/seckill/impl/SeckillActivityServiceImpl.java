@@ -279,12 +279,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     public SeckillActivityDetailResp clientActivityDetail(SeckillActivityDetailReq req) {
         log.info("clientActivityDetail -> req:{}", req);
         SeckillActivityDetailResp result = new SeckillActivityDetailResp();
-        //查活动
-        SeckillActivity seckillActivity = this.baseMapper.selectById(req.getSeckillActivityId());
-        if (null == seckillActivity) {
-            log.error("秒杀活动id={}不存在", req.getSeckillActivityId());
-            throw new StoreSaasMarketingException("秒杀活动不存在");
-        }
+        //查询活动
+        SeckillActivity seckillActivity = this.check(req.getSeckillActivityId(),false);
         BeanUtils.copyProperties(seckillActivity, result);
         result.setTotalNumber(seckillActivity.getSellNumber());
         //查询已售数量、当前客户已购数量
@@ -319,13 +315,13 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         //查活动规则、门店介绍
         List<AttachedInfo> ruleInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key", seckillActivity.getId()).eq("type", "SECKILLACTIVITYRULESINFO")
+                .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())
                 .eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId()));
         if (CollectionUtils.isNotEmpty(ruleInfoList)) {
             result.setActivityRule(ruleInfoList.get(0).getContent());
         }
         List<AttachedInfo> storeInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key", seckillActivity.getId()).eq("type", "SECKILLACTIVITYSTOREINFO")
+                .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())
                 .eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId()));
         if (CollectionUtils.isNotEmpty(storeInfoList)) {
             result.setStoreIntroduction(storeInfoList.get(0).getContent());
