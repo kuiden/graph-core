@@ -6,6 +6,7 @@ import com.tuhu.store.saas.marketing.request.card.CardTemplateItemModel;
 import com.tuhu.store.saas.marketing.service.ICardTemplateItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,9 @@ public class CardTemplateItemServiceImpl implements ICardTemplateItemService {
             for (CardTemplateItem x : cardTemplateItems) {
                 CardTemplateItemModel item = new CardTemplateItemModel();
                 BeanUtils.copyProperties(x, item);
+                if (StringUtils.isEmpty(x.getServiceShowName())) {
+                    item.setServiceShowName(x.getServiceItemName());
+                }
                 result.add(item);
             }
         }

@@ -70,6 +70,12 @@ public class WechatServiceImpl implements IWechatService {
     @Value("${wechat.access.token.address}")
     private String accessTokenUrl;
 
+    @Value("${wechat.seckill.miniprogram.message.client.type}")
+    private String seckillClientType;
+
+    @Value("${wechat.seckill.miniprogram.message.template.id}")
+    private String seckillTemplateId;
+
     private String tokenUrl = "https://api.yunquecloud.com/auth/wechat/accessToken";
 
     @Override
@@ -288,13 +294,13 @@ public class WechatServiceImpl implements IWechatService {
 
     @Override
     public String miniSeckillProgramNotify(SeckillActivityRemind remind, SeckillActivity seckillActivity) {
-        ResultDTO<String> accessTokenData = this.getWechatAccessTokenByClientTypeNoCache("end_user_client");
+        ResultDTO<String> accessTokenData = this.getWechatAccessTokenByClientTypeNoCache(this.seckillClientType);
         String sendUrl = templateMessageSendUrl.concat(accessTokenData.getData());
         Map<String, Object> param = new HashMap();
         param.put("touser", remind.getOpenId());
         String templateId = remind.getTemplateId();
         if (null == templateId) {
-            templateId = "lGjfnRqXoHaUN_G0wFFkaEHxp2gB1xu0YVchA_zb-xw";
+            templateId = this.seckillTemplateId;
         }
         param.put("template_id", templateId);
         param.put("page", remind.getPage());
@@ -314,13 +320,12 @@ public class WechatServiceImpl implements IWechatService {
         data.put("thing4", thing4);
         //活动时间
         HashMap thing2 = Maps.newHashMap();
+        String activityTime = "";
         if (Objects.nonNull(seckillActivity.getStartTime()) && Objects.nonNull(seckillActivity.getEndTime())) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("MM月dd日");
-            String activityTime = dateFormat.format(seckillActivity.getStartTime()) + "至" + dateFormat.format(seckillActivity.getEndTime());
-            thing2.put("value", activityTime);
-        } else {
-            thing2.put("value", null);
+            activityTime = dateFormat.format(seckillActivity.getStartTime()) + "至" + dateFormat.format(seckillActivity.getEndTime());
         }
+        thing2.put("value", activityTime);
         data.put("thing2", thing2);
         //门店地址
         HashMap thing5 = Maps.newHashMap();
