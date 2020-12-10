@@ -23,6 +23,7 @@ import com.tuhu.store.saas.marketing.response.ActivityResponse;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.service.*;
+import com.tuhu.store.saas.marketing.service.activity.MarketingFactory;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.user.dto.StoreDTO;
@@ -32,6 +33,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +90,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     /* @Value("${.url.pre}")
     private String domainUrlPre;*/
 
+    @Value("${add.marketing.restructure.switch:false}")
+    private Boolean RESTRUCTURE_SWITCH;
+
     @Override
     public PageInfo<CustomerMarketing> customerMarketingList(MarketingReq req) {
         String funName = "定向营销任务列表显示";
@@ -132,7 +137,13 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
         String funName = "定向营销任务新增";
         log.info("{} -> 请求参数: {}", funName, JSONObject.toJSONString(addReq));
         List<String> customerIds = checkCommonParams(addReq);
-        addMarketing(addReq,customerIds);
+        if (RESTRUCTURE_SWITCH) {
+            addMarketing(addReq, customerIds);
+        } else {
+            //TODO 重构一时爽，bug火葬场
+            String marketingMethod = addReq.getMarketingMethod().toString();
+            MarketingFactory.getMarketingComHandler(marketingMethod).execute(addReq, customerIds);
+        }
         return true;
     }
 
