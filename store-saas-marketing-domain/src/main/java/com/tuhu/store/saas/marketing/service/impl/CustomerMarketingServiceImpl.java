@@ -191,7 +191,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
             template = messageTemplateLocal.getTemplateContent();
 
-        }else if(req.getMarketingMethod().equals(Byte.valueOf("1"))){
+        }else if(req.getMarketingMethod().equals(Byte.valueOf("1")) || req.getMarketingMethod().equals(Byte.valueOf("2"))){
 
             MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),req.getStoreId());
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
