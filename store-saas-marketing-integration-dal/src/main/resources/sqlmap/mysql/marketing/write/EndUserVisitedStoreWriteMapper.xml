@@ -25,7 +25,7 @@
         where
         open_id = #{openId}
         and store_id = #{storeId}
-        order by update_time desc
+        order by update_time desc limit 1
     </select>
 
     <select id="findAllByOpenId" resultType="com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity">

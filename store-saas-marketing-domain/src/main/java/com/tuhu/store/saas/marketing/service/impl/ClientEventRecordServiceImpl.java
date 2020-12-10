@@ -123,20 +123,20 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId());
         }
         //如果是访问门店或优惠券
-//        if (EventTypeEnum.VISIT.getCode().equals(clientEventRecordRequest.getEventType())) {
-//            if (EventContentTypeEnum.STORE.getCode().equals(clientEventRecordRequest.getContentType())) {
-//                EndUserVisitedStoreEntity endUserVisitedStoreEntity = new EndUserVisitedStoreEntity();
-//                endUserVisitedStoreEntity.setOpenId(openId);
-//                endUserVisitedStoreEntity.setStoreId(storeId);
-//                iEndUserVisitedStoreService.recordEndUserVistiedStore(endUserVisitedStoreEntity);
-//            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType()) && sourceType == 0
-//                    && StringUtils.isNotBlank(clientEventRecordRequest.getCustomerId()) && StringUtils.isNotBlank(storeId)) {
-//                EndUserVisitedCouponEntity endUserVisitedCouponEntity = new EndUserVisitedCouponEntity();
-//                endUserVisitedCouponEntity.setOpenId(openId);
-//                endUserVisitedCouponEntity.setStoreId(storeId);
-//                endUserVisitedCouponEntity.setCouponCode(contentValue);
-//                iEndUserVisitedCouponService.recordEndUserVistiedCoupon(endUserVisitedCouponEntity);
-//            }
+        if (EventTypeEnum.VISIT.getCode().equals(clientEventRecordRequest.getEventType())) {
+            if (EventContentTypeEnum.STORE.getCode().equals(clientEventRecordRequest.getContentType())) {
+                EndUserVisitedStoreEntity endUserVisitedStoreEntity = new EndUserVisitedStoreEntity();
+                endUserVisitedStoreEntity.setOpenId(openId);
+                endUserVisitedStoreEntity.setStoreId(storeId);
+                iEndUserVisitedStoreService.recordEndUserVistiedStore(endUserVisitedStoreEntity);
+            } else if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType()) && sourceType == 0
+                    && StringUtils.isNotBlank(clientEventRecordRequest.getCustomerId()) && StringUtils.isNotBlank(storeId)) {
+                EndUserVisitedCouponEntity endUserVisitedCouponEntity = new EndUserVisitedCouponEntity();
+                endUserVisitedCouponEntity.setOpenId(openId);
+                endUserVisitedCouponEntity.setStoreId(storeId);
+                endUserVisitedCouponEntity.setCouponCode(contentValue);
+                iEndUserVisitedCouponService.recordEndUserVistiedCoupon(endUserVisitedCouponEntity);
+            }
 //        } else if (EventTypeEnum.LOGIN.getCode().equals(clientEventRecordRequest.getEventType()) || EventTypeEnum.REGISTERED.getCode().equals(clientEventRecordRequest.getEventType())) {
 //            if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())
 //                    && StringUtils.isNotBlank(clientEventRecordRequest.getCustomerId()) && StringUtils.isNotBlank(storeId)) {
@@ -146,7 +146,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
 //                endUserVistiedCouponRequest.setStoreId(storeId);
 //                iEndUserVisitedCouponService.recordNewCustomerByVistiedCoupon(endUserVistiedCouponRequest, clientEventRecordRequest.getCustomerId());
 //            }
-//        }
+        }
     }
 
     /**
