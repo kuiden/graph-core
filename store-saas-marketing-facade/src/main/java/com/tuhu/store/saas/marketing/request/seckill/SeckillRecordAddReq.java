@@ -50,6 +50,9 @@ public class SeckillRecordAddReq implements Serializable {
     @ApiModelProperty("支付方式")
     private String paymentModeCode;
 
+    @ApiModelProperty("微信openId")
+    private String openId;
+
     private Long storeId;
 
     private Long tenantId;

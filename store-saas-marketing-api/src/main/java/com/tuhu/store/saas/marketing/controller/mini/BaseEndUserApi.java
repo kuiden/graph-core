@@ -26,4 +26,8 @@ public class BaseEndUserApi {
         return EndUserContextHolder.getName();
     }
 
+    public String getOpenId() {
+        return EndUserContextHolder.getOpenId();
+    }
+
 }

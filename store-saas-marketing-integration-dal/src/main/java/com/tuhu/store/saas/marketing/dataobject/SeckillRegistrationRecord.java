@@ -161,6 +161,12 @@ public class SeckillRegistrationRecord implements Serializable {
     @TableField("is_delete")
     private Integer isDelete;
 
+    /**
+     * 微信openId
+     */
+    @TableField("open_id")
+    private String openId;
+
 
     public static final String ID = "id";
 
@@ -214,4 +220,5 @@ public class SeckillRegistrationRecord implements Serializable {
 
     public static final String IS_DELETE = "is_delete";
 
+    public static final String OPEN_ID = "open_id";
 }

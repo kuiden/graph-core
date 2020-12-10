@@ -89,4 +89,12 @@ public class EndUserContextHolder {
         return null;
     }
 
+    public static String getOpenId(){
+        EndUser EndUser = EndUserContextHolder.getUser();
+        if (null != EndUser) {
+            return EndUser.getOpenId();
+        }
+        return null;
+    }
+
 }

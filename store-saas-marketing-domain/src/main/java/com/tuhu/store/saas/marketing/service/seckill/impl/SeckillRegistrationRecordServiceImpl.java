@@ -40,6 +40,7 @@ import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
+import com.tuhu.store.saas.marketing.service.seckill.PayService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import com.tuhu.store.saas.marketing.util.CodeFactory;
@@ -67,6 +68,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -112,6 +115,11 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     @Autowired
     private ClientEventRecordMapper clientEventRecordMapper;
+
+    @Autowired
+    private PayService payService;
+
+    private Lock lock = new ReentrantLock();
 
     /**
      * 活动对应的支付成功的订单
@@ -242,6 +250,10 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             if (req.getQuantity() > seckillActivity.getSellNumber()) {
                 throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
             }
+            Integer hasBuyNum = StringUtils.isBlank(storeRedisUtils.redisGet(seckillActivity.getId())) ? 0 : Integer.parseInt(storeRedisUtils.redisGet(seckillActivity.getId()));
+            if (hasBuyNum > seckillActivity.getSellNumber()) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+            }
         }
         if (seckillActivity.getSoloSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
             if (req.getQuantity() > seckillActivity.getSoloSellNumber()) {
@@ -275,6 +287,10 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 this.insert(seckillRegistrationRecord);
                 //根据秒杀订单创建 待收单、交易单
                 this.addReceivingAndTradeOrderBySeckillActivity(seckillRegistrationRecord);
+
+
+                //支付
+                payService.getPayAuthToken(seckillRegistrationRecord,null);
             } catch (Exception e) {
                 //如果发生异常后 放上释放锁
                 storeRedisUtils.releaseLock(seckillActivityCode, obj.toString());
@@ -313,7 +329,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     private void processUpdateSeckillRegistrationRecord(PaymentResponse paymentResponse, SeckillRegistrationRecord seckillRegistrationRecord) {
         String key = seckillRegistrationRecord.getId() + seckillRegistrationRecord.getStoreId() + seckillRegistrationRecord.getTenantId();
-        Object obj = storeRedisUtils.getAtomLock(key, 3);
+        Object obj = storeRedisUtils.getAtomLock(key, 2);
         log.info("processUpdateSeckillRegistrationRecord tryLock key = {}", key);
         if (obj != null) {
             log.info("processUpdateSeckillRegistrationRecord tryLock success, key ={}", key);
@@ -321,11 +337,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 seckillRegistrationRecord.setUpdateTime(new Date());
                 if (StringUtils.isNotBlank(paymentResponse.getPaymentStatus()) && paymentResponse.getPaymentStatus().equals(FinancePaymentStatusEnum.SUCCESS.getStatus())) {
                     //支付成功
-                    seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
-                    this.updateById(seckillRegistrationRecord);
-                    this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.PAY_SUCCESS_STATUS);
-                    //生成开卡单
-                    cardOrderService.addCardOrderBySeckillActivity(this.generateAddCardOrderReq(seckillRegistrationRecord));
+                    this.paySuccess(seckillRegistrationRecord);
                 } else {
                     //支付失败
                     seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.SB.getStatus());
@@ -340,6 +352,25 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 storeRedisUtils.releaseLock(key, obj.toString());
                 throw e;
             }
+        }
+    }
+
+
+    private void paySuccess(SeckillRegistrationRecord seckillRegistrationRecord) {
+        try {
+            lock.lock();
+            seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
+            this.updateById(seckillRegistrationRecord);
+            this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.PAY_SUCCESS_STATUS);
+            //生成开卡单
+            cardOrderService.addCardOrderBySeckillActivity(this.generateAddCardOrderReq(seckillRegistrationRecord));
+            Long counter = storeRedisUtils.increment(seckillRegistrationRecord.getSeckillActivityId());
+            log.info("paySuccess  key={}, counter = {}", seckillRegistrationRecord.getSeckillActivityId(), counter);
+        } catch (Exception e1) {
+            e1.printStackTrace();
+            log.error("lock error", e1);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -360,7 +391,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             baseIdReqVO.setId(seckillRegistrationRecord.getUserCustomerId());
             customerDTO = customerClient.getCustomerById(baseIdReqVO).getData();
         } catch (Exception e) {
-            log.error("查询门店信息RPC接口异常,storeId=" + seckillRegistrationRecord.getStoreId(), e);
+            log.error("customerClient.getCustomerById error,storeId=" + seckillRegistrationRecord.getStoreId(), e);
         }
         if (Objects.isNull(customerDTO)) {
             throw new StoreSaasMarketingException("客户不存在");

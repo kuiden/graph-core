@@ -2,6 +2,7 @@ package com.tuhu.store.saas.marketing.controller.seckill;
 
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.annotation.EndUserApiIdempotent;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.mini.EndUserApi;
 import com.tuhu.store.saas.marketing.remote.EndUser;
@@ -53,18 +54,18 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @GetMapping("/list")
     @ApiOperation("秒杀活动列表")
-    public BizBaseResponse<List<SeckillActivityListResp>> activityList(){
+    public BizBaseResponse<List<SeckillActivityListResp>> activityList() {
         EndUser endUser = EndUserContextHolder.getUser();
-        if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
+        if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())) {
             log.error("参数校验失败");
             return new BizBaseResponse<>();
         }
-        return new BizBaseResponse(seckillActivityService.clientActivityList(super.getStoreId(),super.getTenantId()));
+        return new BizBaseResponse(seckillActivityService.clientActivityList(super.getStoreId(), super.getTenantId()));
     }
 
     @PostMapping("/detail")
     @ApiOperation("秒杀活动详情")
-    public BizBaseResponse<SeckillActivityDetailResp> activityDetail(@RequestBody SeckillActivityDetailReq req){
+    public BizBaseResponse<SeckillActivityDetailResp> activityDetail(@RequestBody SeckillActivityDetailReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setCustomerId(super.getCustomerId());
@@ -73,7 +74,7 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @PostMapping("/recordList")
     @ApiOperation("秒杀活动参与记录")
-    public BizBaseResponse<PageInfo<SeckillRecordListResp>> activityRecordList(@RequestBody SeckillActivityDetailReq req){
+    public BizBaseResponse<PageInfo<SeckillRecordListResp>> activityRecordList(@RequestBody SeckillActivityDetailReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setCustomerId(super.getCustomerId());
@@ -82,9 +83,9 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @GetMapping("/customer/orderList")
     @ApiOperation("秒杀订单列表")
-    public BizBaseResponse<List<CustomerActivityOrderListResp>> customerActivityOrderList(){
+    public BizBaseResponse<List<CustomerActivityOrderListResp>> customerActivityOrderList() {
         EndUser endUser = EndUserContextHolder.getUser();
-        if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
+        if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())) {
             log.error("参数校验失败");
             return new BizBaseResponse<>();
         }
@@ -93,7 +94,7 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @PostMapping("/customer/orderDetail")
     @ApiOperation("秒杀订单详情")
-    public BizBaseResponse<CustomerActivityOrderDetailResp> customerActivityOrderDetail(@RequestBody SeckillActivityDetailReq req){
+    public BizBaseResponse<CustomerActivityOrderDetailResp> customerActivityOrderDetail(@RequestBody SeckillActivityDetailReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setCustomerId(super.getCustomerId());
@@ -102,11 +103,13 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @PostMapping("/customer/orderAdd")
     @ApiOperation("创建秒杀订单")
-    public BizBaseResponse customerActivityOrderAdd(@RequestBody SeckillRecordAddReq req){
+    @EndUserApiIdempotent(lockTime = 2)
+    public BizBaseResponse customerActivityOrderAdd(@RequestBody SeckillRecordAddReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setCustomerId(super.getCustomerId());
         req.setCustomerName(super.getName());
+        req.setOpenId(super.getOpenId());
         //创建活动订单、待收单
         seckillRegistrationRecordService.customerActivityOrderAdd(req);
         return new BizBaseResponse();
@@ -114,7 +117,7 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @PostMapping("/customer/remindAdd")
     @ApiOperation("添加开抢提醒")
-    public BizBaseResponse customerActivityRemindAdd(@RequestBody SeckillRemindAddReq req){
+    public BizBaseResponse customerActivityRemindAdd(@RequestBody SeckillRemindAddReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         seckillActivityRemindService.customerActivityRemindAdd(req);
@@ -123,7 +126,7 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @GetMapping("/customer/test")
     @ApiOperation("测试")
-    public BizBaseResponse getPayAuthTokenTest(){
+    public BizBaseResponse getPayAuthTokenTest() {
         payService.getPayAuthTokenTest();
         return new BizBaseResponse();
     }
