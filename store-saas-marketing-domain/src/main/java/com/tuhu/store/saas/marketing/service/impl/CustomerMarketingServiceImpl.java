@@ -16,12 +16,14 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGrou
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.response.ActivityItemResp;
 import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.ActivityResponse;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.dto.CustomerGroupDto;
 import com.tuhu.store.saas.marketing.service.*;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
@@ -79,6 +81,9 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
     private StoreCustomerGroupRelationMapper storeCustomerGroupRelationMapper;
    @Autowired
     private IUtilityService iUtilityService;
+
+    @Autowired
+    private SeckillActivityService seckillActivityService;
 
     /* @Value("${.url.pre}")
     private String domainUrlPre;*/
@@ -284,6 +289,46 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
                 params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
 
             }
+        }else if (marketingMethod.equals(Byte.valueOf("2"))) {
+            //秒杀活动营销
+            SeckillActivityModel seckillActivityModel = seckillActivityService.getSeckillActivityModelById(couponOrActiveId,storeId);
+            if (null == seckillActivityModel) {
+                //禁止查询非本门店的秒杀活动
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动不存在");
+            }
+
+            //算出活动价和原价
+//            BigDecimal activityPrice = activityResp.getActivityPrice().divide(BigDecimal.valueOf(100),2 ,RoundingMode.HALF_UP);
+//            BigDecimal srcPrice = new BigDecimal(0);
+//            List<ActivityItemResp> activityItemResps = activityResp.getItems();
+//            for(ActivityItemResp activityItemResp : activityItemResps){
+////                if(activityItemResp.getGoodsType()){
+//                //服务(价格/100)*(时长/100)
+//                BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
+//                BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity());
+//                srcPrice = srcPrice.add(itemSiglePrice.multiply(exeTime));
+////
+////                }else{
+////                    //商品 (价格/100)*个数
+////                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
+////                    srcPrice = srcPrice.add(itemPrice);
+////                }
+//            }
+            BigDecimal activityPrice = seckillActivityModel.getNewPrice() != null ? seckillActivityModel.getNewPrice():new BigDecimal("0");
+            BigDecimal srcPrice = seckillActivityModel.getOriginalPrice() != null ? seckillActivityModel.getOriginalPrice():new BigDecimal("0");
+            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
+            //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
+            params.add(activityPrice.toString()+"抵"+srcPrice.toString());
+            params.add(storeDTO.getClientAppointPhone());
+            params.add(seckillActivityModel.getActivityTitle());
+            //生成短连接
+          /*  StringBuffer url = new StringBuffer();
+            url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
+            params.add( iUtilityService.getShortUrl(url.toString()));*/
+            if(StringUtils.isNotBlank(orginUrl)){
+                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
+
+            }
         }
 
         return StringUtils.join(params,",");
@@ -370,6 +415,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 
         CouponResp coupon = null;
         ActivityResponse activity = null;
+        SeckillActivityModel secKill = new SeckillActivityModel();
         if("0".equals(addReq.getMarketingMethod().toString())){
             Long couponId = Long.valueOf(addReq.getCouponOrActiveId());
             coupon = couponService.getCouponDetailById(couponId);
@@ -390,7 +436,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
                 //发送时间小于当前时间
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
             }
-        }else {
+        }else if ("1".equals(addReq.getMarketingMethod().toString())){
             Long activityId = Long.valueOf(addReq.getCouponOrActiveId());
             activity = activityService.getActivityById(activityId, Long.valueOf(addReq.getStoreId()));
             if (null == activity || !addReq.getStoreId().equals(activity.getStoreId())) {
@@ -412,6 +458,28 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             if(addReq.getSendTime().before(activity.getStartTime())){
                 //活动还没有开始
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间不能小于活动开始时间");
+            }
+        }else if ("2".equals(addReq.getMarketingMethod().toString())){
+            secKill = seckillActivityService.getSeckillActivityModelById(addReq.getCouponOrActiveId(), Long.valueOf(addReq.getStoreId()));
+            if (null == secKill || !addReq.getStoreId().equals(secKill.getStoreId())) {
+                //禁止查询非本门店的营销活动
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"秒杀活动不存在或者不属于本店");
+            }
+            if(secKill.getStatus() == 9){
+                //活动下架了
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"请将秒杀活动上架");
+            }
+            if(addReq.getSendTime().after(secKill.getEndTime())){
+                //活动结束了
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"秒杀活动已结束，不能做营销");
+            }
+            if(addReq.getSendTime().before(DateUtils.now())){
+                //发送时间小于当前时间
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
+            }
+            if(addReq.getSendTime().before(activity.getStartTime())){
+                //活动还没有开始
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间不能小于秒杀活动开始时间");
             }
         }
 
@@ -503,6 +571,19 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             customerMarketing.setCouponId(activity.getId().toString());
             customerMarketing.setCouponCode(activity.getActivityCode());
             customerMarketing.setCouponTitle(activity.getActivityTitle());
+        }else if (secKill != null) {
+            //营销活动模板配置 https://www.yuntongxun.com/member/smsCount/getSmsConfigInfo，存入在message_template_local表
+            //秒杀活动模板复用报名活动模板
+            MessageTemplateLocal messageTemplateLocal = messageTemplateLocalService.getTemplateLocalById(SMSTypeEnum.MARKETING_ACTIVITY.templateCode(),addReq.getStoreId());
+            if(messageTemplateLocal==null){
+                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"不存在秒杀活动营销短信模板");
+            }
+            customerMarketing.setMessageTemplate(messageTemplateLocal.getTemplateName());
+            //存的是本地的message模板，发送短信时需要单独查询
+            customerMarketing.setMessageTemplateId(messageTemplateLocal.getId());
+            customerMarketing.setCouponId(secKill.getId());
+//            customerMarketing.setCouponCode(activity.getActivityCode());
+            customerMarketing.setCouponTitle(secKill.getActivityTitle());
         }
 
         //messageData
