@@ -107,9 +107,9 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.qrCodeUrl(request));
     }
 
-    @PostMapping(value = "/onShelf")
+    @PostMapping(value = "/editOnShelf")
     @ApiOperation(value = "编辑上架")
-    public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityModel req) {
+    public BizBaseResponse editOnShelf(@Validated @RequestBody SeckillActivityModel req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setUpdateUser(super.getUserId());
