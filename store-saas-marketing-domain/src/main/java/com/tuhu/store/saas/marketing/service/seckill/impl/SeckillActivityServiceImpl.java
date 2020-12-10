@@ -30,6 +30,7 @@ import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
+import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
@@ -329,12 +330,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     public SeckillActivityDetailResp clientActivityDetail(SeckillActivityDetailReq req) {
         log.info("clientActivityDetail -> req:{}", req);
         SeckillActivityDetailResp result = new SeckillActivityDetailResp();
-        //查活动
-        SeckillActivity seckillActivity = this.baseMapper.selectById(req.getSeckillActivityId());
-        if (null == seckillActivity) {
-            log.error("秒杀活动id={}不存在", req.getSeckillActivityId());
-            throw new StoreSaasMarketingException("秒杀活动不存在");
-        }
+        //查询活动
+        SeckillActivity seckillActivity = this.check(req.getSeckillActivityId(),false);
         BeanUtils.copyProperties(seckillActivity, result);
         result.setTotalNumber(seckillActivity.getSellNumber());
         //查询已售数量、当前客户已购数量
@@ -369,13 +366,13 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         //查活动规则、门店介绍
         List<AttachedInfo> ruleInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key", seckillActivity.getId()).eq("type", "SECKILLACTIVITYRULESINFO")
+                .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())
                 .eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId()));
         if (CollectionUtils.isNotEmpty(ruleInfoList)) {
             result.setActivityRule(ruleInfoList.get(0).getContent());
         }
         List<AttachedInfo> storeInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key", seckillActivity.getId()).eq("type", "SECKILLACTIVITYSTOREINFO")
+                .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())
                 .eq("store_id", req.getStoreId()).eq("tenant_id", req.getTenantId()));
         if (CollectionUtils.isNotEmpty(storeInfoList)) {
             result.setStoreIntroduction(storeInfoList.get(0).getContent());
@@ -527,10 +524,10 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 Date startTime = o.getStartTime();
                 Date endTime = o.getEndTime();
                 Date now = new Date();
-                if (startTime.after(now)) {
-                    // 未开始定义：当前时间小于活动开始时间，活动为进行中状态
+                if (startTime.compareTo(now) > 0) {
+                    // 未开始定义：开始时间大于当前时间，活动为未上架状态
                     response.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
-                } else if (startTime.before(now) && endTime.after(now)) {
+                } else if (now.compareTo(startTime) >= 0 && endTime.after(now)) {
                     // 进行中定义：当前时间大于等于活动开始时间且小于结束时间，活动为进行中状态check
                     response.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
                 } else {
@@ -551,6 +548,19 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             throw new StoreSaasMarketingException("活动已下架");
         }
         activity.setStatus(SeckillActivityStatusEnum.XJ.getStatus());
+        activity.setUpdateTime(new Date());
+        activity.setUpdateUser(UserContextHolder.getStoreUserId());
+        return this.updateById(activity);
+    }
+
+    @Override
+    @Transactional
+    public boolean onShelf(String seckillActivityId) {
+        SeckillActivity activity = check(seckillActivityId,Boolean.TRUE);
+        if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
+            throw new StoreSaasMarketingException("活动已下架");
+        }
+        activity.setStatus(SeckillActivityStatusEnum.SJ.getStatus());
         activity.setUpdateTime(new Date());
         activity.setUpdateUser(UserContextHolder.getStoreUserId());
         return this.updateById(activity);

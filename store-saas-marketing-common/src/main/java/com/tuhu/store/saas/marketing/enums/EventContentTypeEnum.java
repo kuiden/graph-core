@@ -4,6 +4,7 @@ public enum EventContentTypeEnum {
     STORE("store", "门店"),
     COUPON("coupon", "优惠券"),
     ACTIVITY("activity", "营销活动"),
+    SEC_KILL("seckill", "秒杀活动"),
     OTHER("other", "其他");
 
     EventContentTypeEnum(String code, String desc) {

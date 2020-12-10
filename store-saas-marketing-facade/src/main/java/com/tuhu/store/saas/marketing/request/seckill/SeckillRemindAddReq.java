@@ -12,11 +12,11 @@ import java.io.Serializable;
 @Data
 public class SeckillRemindAddReq implements Serializable {
 
-//    @ApiModelProperty("客户端类型")
-//    private String clientType;
+    @ApiModelProperty("客户端类型")
+    private String clientType;
 
-//    @ApiModelProperty("用户小程序code")
-//    private String openIdCode;
+    @ApiModelProperty("用户小程序code")
+    private String openIdCode;
 
     @ApiModelProperty("小程序openId")
     private String openId;

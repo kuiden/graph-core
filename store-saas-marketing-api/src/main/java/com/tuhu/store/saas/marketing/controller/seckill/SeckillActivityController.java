@@ -95,6 +95,12 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.offShelf(seckillActivityId));
     }
 
+    @PostMapping(value = "/onShelf")
+    @ApiOperation(value = "活动上架")
+    public BizBaseResponse<SeckillActivityResp> onShelf(@RequestParam("seckillActivityId") String seckillActivityId){
+        return new BizBaseResponse(seckillActivityService.onShelf(seckillActivityId));
+    }
+
     @PostMapping(value = "/poster")
     @ApiOperation(value = "活动海报")
     public BizBaseResponse<SeckillActivityResp> poster(@Validated @RequestBody SeckillActivityQrCodeReq request){
@@ -107,9 +113,9 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.qrCodeUrl(request));
     }
 
-    @PostMapping(value = "/onShelf")
+    @PostMapping(value = "/editOnShelf")
     @ApiOperation(value = "编辑上架")
-    public BizBaseResponse onShelf(@Validated @RequestBody SeckillActivityModel req) {
+    public BizBaseResponse editOnShelf(@Validated @RequestBody SeckillActivityModel req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setUpdateUser(super.getUserId());

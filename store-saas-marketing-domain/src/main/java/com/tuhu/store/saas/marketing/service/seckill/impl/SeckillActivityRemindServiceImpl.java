@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivityRemind;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityRemindMapper;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRemindAddReq;
+import com.tuhu.store.saas.marketing.service.IOauthClientDetailsService;
 import com.tuhu.store.saas.marketing.service.IWechatService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityRemindService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
@@ -16,6 +18,7 @@ import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,11 +53,22 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
     @Autowired
     private IWechatService iWechatService;
 
+    @Autowired
+    private IOauthClientDetailsService iOauthClientDetailsService;
+
 
     @Override
     public void customerActivityRemindAdd(SeckillRemindAddReq req) {
         log.info("customerActivityRemindAdd -> req:{}",req);
-        //查询是否已添加过
+        if (StringUtils.isBlank(req.getOpenId())){
+            //获取openId
+            String clientType = req.getClientType();
+            OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
+            String openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid(),
+                    oauthClientDetails.getWxSecret(), req.getOpenIdCode(), oauthClientDetails.getWxOpenidUrl());
+            req.setOpenId(openId);
+        }
+        //查询是否已添加过提醒
         List<SeckillActivityRemind> remindList = this.baseMapper.selectList(new EntityWrapper<SeckillActivityRemind>()
                 .eq("open_id", req.getOpenId())
                 .eq("seckill_activity_id", req.getSeckillActivityId())
@@ -101,10 +115,10 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
                             //发送成功
                             if (jsonObject.getInteger("errcode").equals(0)){
                                 seckillActivityRemind.setStatus(1);  //成功
-                                seckillActivityRemind.setIsDelete(1); //已提醒 删除
                             } else {
                                 seckillActivityRemind.setStatus(2);  //失败
                             }
+                            seckillActivityRemind.setIsDelete(1); //已提醒 删除
                         }
                         seckillActivityRemind.setReturnMessage(result);
                         seckillActivityRemind.setUpdateTime(new Date());
