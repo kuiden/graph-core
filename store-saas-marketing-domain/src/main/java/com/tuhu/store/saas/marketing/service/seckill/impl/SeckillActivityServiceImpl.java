@@ -474,8 +474,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 Date startTime = o.getStartTime();
                 Date endTime = o.getEndTime();
                 Date now = DateUtils.getNoSecondOfDate(new Date()); //时间没有秒
-                if (startTime.compareTo(now) >= 0) {
-                    // 未开始定义：开始时间大于 = 当前时间，活动为未上架状态
+                if (startTime.compareTo(now) > 0) {
+                    // 未开始定义：开始时间大于当前时间，活动为未上架状态
                     response.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
                 } else if (now.compareTo(startTime) >= 0 && endTime.after(now)) {
                     // 进行中定义：当前时间大于等于活动开始时间且小于结束时间，活动为进行中状态check
