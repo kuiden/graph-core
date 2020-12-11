@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -90,6 +91,7 @@ public abstract class AbstractMarketingHandler implements MarketingComHandler {
      * @param addReq
      * @param result
      */
+    @Transactional(rollbackFor = Exception.class)
     public void handler(MarketingAddReq addReq, MarketingResult result) {
         String currentUser = UserContextHolder.getUser() == null ? "system" : UserContextHolder.getUserName();
         List<CustomerAndVehicleReq> customerList = result.getCustomerList();
