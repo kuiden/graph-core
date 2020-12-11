@@ -47,5 +47,12 @@ public class AttachedInfoApi extends BaseApi {
 
         return new BizBaseResponse<AttachedInfoResp>(service.getAttachedInfoById(id, super.getStoreId()));
     }
+    @GetMapping(value = "/del")
+    @ApiOperation(value = "删除")
+    public BizBaseResponse<Boolean> del(@Validated @RequestParam String id) {
+
+        return new BizBaseResponse<Boolean>(service.del(id, super.getStoreId()));
+    }
+
 
 }

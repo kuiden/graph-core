@@ -113,7 +113,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         List<AttachedInfo> attachedInfos = attachedInfoService.selectList(wrapper);
         Date now = new Date(System.currentTimeMillis());
         if (CollectionUtils.isNotEmpty(attachedInfos)) {
-
             for (AttachedInfo attachedInfo : attachedInfos) {
                 attachedInfo.setUpdateUser(model.getUpdateUser());
                 attachedInfo.setUpdateTime(now);
@@ -140,6 +139,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             attachedInfo.setStoreId(model.getStoreId());
             attachedInfo.setTenantId(model.getTenantId());
             attachedInfo.setUpdateTime(now);
+            attachedInfo.setIsDelete(Integer.valueOf(0));
             attachedInfo.setUpdateUser(model.getUpdateUser());
             attachedInfo.setCreateUser(model.getUpdateUser());
             attachedInfo.setId(idKeyGen.generateId(model.getTenantId()));

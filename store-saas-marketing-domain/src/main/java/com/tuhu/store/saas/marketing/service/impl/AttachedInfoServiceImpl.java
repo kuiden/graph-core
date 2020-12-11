@@ -53,6 +53,7 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
         enetity.setCreateUser(userId);
         enetity.setContent(req.getContent());
         enetity.setId(idKeyGen.generateId(tenantId));
+        enetity.setIsDelete(Integer.valueOf(0));
         enetity.setType(req.getType().getEnumCode());
         if (!super.insert(enetity)) {
             throw new StoreSaasMarketingException("添加失败");
@@ -65,7 +66,8 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
         log.info("getListByQuery-> req -> {}", req);
         PageInfo<AttachedInfoResp> result = new PageInfo<>();
         Wrapper<AttachedInfo> wrapper = new EntityWrapper<AttachedInfo>().eq(AttachedInfo.STORE_ID, req.getStoreId())
-                .eq(AttachedInfo.TENANT_ID, req.getTenantId());
+                .eq(AttachedInfo.TENANT_ID, req.getTenantId())
+                .eq(AttachedInfo.ISDELETE,Integer.valueOf(0));
         if (req.getType() != null) {
             wrapper.eq(AttachedInfo.TYPE, req.getType().getEnumCode());
         }
@@ -93,12 +95,24 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
         log.info("getAttachedInfoById-> req -> id {} storeId {}", id, storeId);
         AttachedInfoResp result =  null ;
         AttachedInfo o = super.selectOne(new EntityWrapper<AttachedInfo>().eq(AttachedInfo.ID, id)
-                .eq(AttachedInfo.STORE_ID, storeId));
+                .eq(AttachedInfo.STORE_ID, storeId)
+                .eq(AttachedInfo.ISDELETE,Integer.valueOf(0)));
         if (o != null) {
+            result = new AttachedInfoResp();
             BeanUtils.copyProperties(o, result);
             result.setType(AttachedInfoTypeEnum.getEnumByCode(o.getType()));
         }
         return result;
+    }
+
+    @Override
+    public Boolean del(String id, Long storeId) {
+        log.info("del-> req -> id {} storeId {}", id, storeId);
+        AttachedInfoResp result =  null ;
+        AttachedInfo o = super.selectOne(new EntityWrapper<AttachedInfo>().eq(AttachedInfo.ID, id)
+                .eq(AttachedInfo.STORE_ID, storeId));
+        o.setIsDelete(Integer.valueOf(1));
+        return super.updateById(o);
     }
 
 

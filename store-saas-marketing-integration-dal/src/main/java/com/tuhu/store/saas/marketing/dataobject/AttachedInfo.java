@@ -83,6 +83,12 @@ public class AttachedInfo implements Serializable {
     @TableField("update_time")
     private Date updateTime;
 
+    /**
+     * 是否删除
+     */
+    @TableField("is_delete")
+    private Integer isDelete;
+
 
     public static final String ID = "id";
 
@@ -106,5 +112,6 @@ public class AttachedInfo implements Serializable {
 
     public static final String TITLE = "title";
 
+    public static final String ISDELETE = "is_delete";
 
 }

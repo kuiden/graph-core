@@ -22,4 +22,6 @@ public interface AttachedInfoService extends IService<AttachedInfo> {
     PageInfo<AttachedInfoResp> getListByQuery(AttachedInfoPageReq req);
 
     AttachedInfoResp getAttachedInfoById(String id, Long storeId);
+
+    Boolean del(String id, Long storeId);
 }
