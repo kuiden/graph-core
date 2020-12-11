@@ -3,10 +3,7 @@ package com.tuhu.store.saas.marketing.service.seckill;
 import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
+import com.tuhu.store.saas.marketing.request.seckill.*;
 import com.tuhu.store.saas.marketing.response.seckill.*;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import org.springframework.transaction.annotation.Transactional;
@@ -138,4 +135,11 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      * @return
      */
     StoreDTO getStoreInfo(boolean flag);
+
+    /**
+     * 获取活动预售数量
+     * @param seckillActivityBuy
+     * @return
+     */
+    Integer getPreNum(SeckillActivityBuy seckillActivityBuy);
 }

@@ -30,15 +30,17 @@ import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
-import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +78,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     private ICardService cardService;
     @Autowired
     private SeckillActivityItemService itemService;
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
+    @Value("${seckill.activity.expire.time:10}")
+    private int SECKILL_ACTIVITY_EXPIRE_TIME; //秒杀活动，预占时间
 
     @Autowired
     IdKeyGen idKeyGen;
@@ -689,5 +695,43 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             throw new StoreSaasMarketingException("获取门店信息为空");
         }
         return result.getData();
+    }
+
+    @Override
+    public Integer getPreNum(SeckillActivityBuy seckillActivityBuy) {
+        log.info("getPreNum{}", JSON.toJSONString(seckillActivityBuy));
+        int preNum = 0;
+        List<String> expireDelKeys = new ArrayList<>();
+        Long st = new Date().getTime();
+        Date date = new Date();
+        seckillActivityBuy.setStartTime(date);
+        seckillActivityBuy.setEndTime(DateUtils.addSeconds(date, SECKILL_ACTIVITY_EXPIRE_TIME));//结束时间+1s 动态配置
+        String activityId = "seckill_activity:" + seckillActivityBuy.getActivityId();
+        String customerId = seckillActivityBuy.getCustomerId();
+        String hk = activityId + "_" + customerId;
+        redisTemplate.opsForHash().put(activityId, hk, JSON.toJSONString(seckillActivityBuy));
+        Map<Object, Object> entriesMap = redisTemplate.opsForHash().entries(activityId);
+        for (Map.Entry<Object, Object> entry : entriesMap.entrySet()) {
+            String key = entry.getKey().toString();
+            String value = entry.getValue().toString();
+            SeckillActivityBuy buy = JSON.parseObject(value, SeckillActivityBuy.class);
+            if (buy.getEndTime().compareTo(date) > 0) {//结束时间和当前时间对比
+                preNum += buy.getNum(); // 预占
+            } else {
+                expireDelKeys.add(key);
+            }
+        }
+        //异步删除
+        if (CollectionUtils.isNotEmpty(expireDelKeys)) {
+            new Thread(() -> redisTemplate.opsForHash().delete(activityId, expireDelKeys.toArray())).start();
+        }
+        Long end = new Date().getTime() - st;
+        log.info("getPreNumms{},{}", end, preNum);
+        //如果预占 + 购买数量 > 可售 不加入
+        if (preNum + seckillActivityBuy.getNum() > seckillActivityBuy.getSaleNum()) {
+            redisTemplate.opsForHash().delete(activityId, hk);
+            preNum = preNum - seckillActivityBuy.getNum();
+        }
+        return preNum;
     }
 }
