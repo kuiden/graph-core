@@ -794,8 +794,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
                 List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(seckillRegistrationRecord));
                 stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecordList.size());//秒杀活动真实库存
+                stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yxdku)) * (-1));//秒杀活动总库存-已下单库存=剩余总库存
             }
-            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yxdku)) * (-1));//秒杀活动总库存-已下单库存=剩余总库存
             if (seckillRecordAddReq.getQuantity() > Long.parseLong(stringRedisTemplate.opsForValue().get(zku))) {
                 throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
             }
@@ -813,8 +813,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
                 List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(seckillRegistrationRecord));
                 stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecordList.size());//秒杀活动真实库存
+                stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yxdku)) * (-1));//秒杀活动总库存-已下单库存=剩余总库存
             }
-            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yxdku)) * (-1));//秒杀活动总库存-已下单库存=剩余总库存
             if (seckillRecordAddReq.getQuantity() > Long.parseLong(stringRedisTemplate.opsForValue().get(zku))) {
                 throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
             }
