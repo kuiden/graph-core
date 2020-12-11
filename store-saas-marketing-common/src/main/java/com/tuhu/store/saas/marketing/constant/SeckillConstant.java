@@ -30,4 +30,13 @@ public class SeckillConstant {
 
     public static final String REGISTERED = "registered";//注册标识
 
+
+    //秒杀活动总库存
+    public static final String SECKILL_ACTIVITY_ZKC = "seckill_activity_zkc:";
+
+    //秒杀活动预占库存
+    public static final String SECKILL_ACTIVITY_YZKC = "seckill_activity_yzkc:";
+
+    //秒杀活动已下单库存
+    public static final String SECKILL_ACTIVITY_YXDKC = "seckill_activity_yxdkc:";
 }

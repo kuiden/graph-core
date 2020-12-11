@@ -63,11 +63,13 @@ import org.apache.curator.shaded.com.google.common.collect.Maps;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -97,6 +99,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     @Autowired
     private StoreRedisUtils storeRedisUtils;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private CodeFactory codeFactory;
@@ -235,7 +240,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
     //校验活动销售数量
-    private void checkActivitySellNumber(SeckillActivity seckillActivity, SeckillRecordAddReq req){
+    private void checkActivitySellNumber(SeckillActivity seckillActivity, SeckillRecordAddReq req) {
         if (seckillActivity.getSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
             if (req.getQuantity() > seckillActivity.getSellNumber()) {
                 throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
@@ -247,8 +252,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
         if (seckillActivity.getSoloSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
             //获取客户已购数量
-            Long customerHasBuyNum = this.baseMapper.getCustomerBuyNumber(seckillActivity.getId(),req.getCustomerId());
-            if (customerHasBuyNum != null){
+            Long customerHasBuyNum = this.baseMapper.getCustomerBuyNumber(seckillActivity.getId(), req.getCustomerId());
+            if (customerHasBuyNum != null) {
                 seckillActivity.setSoloSellNumber(seckillActivity.getSoloSellNumber() - customerHasBuyNum.intValue());
             }
             if (req.getQuantity() > seckillActivity.getSoloSellNumber()) {
@@ -262,15 +267,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @DistributedLock(key = "#req.seckillActivityId + #req.buyerPhoneNumber")
     public void customerActivityOrderAdd(SeckillRecordAddReq req) {
         log.info("customerActivityOrderAdd：{}", JSON.toJSONString(req));
-        //判断活动是否开启或者已结束
-        SeckillActivity seckillActivity = seckillActivityService.check(req.getSeckillActivityId(), Boolean.FALSE);
-        if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
-            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.WSJ.getStatusName());
-        } else if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
-            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.XJ.getStatusName());
-        }
-        //校验活动销售数量
-        this.checkActivitySellNumber(seckillActivity,req);
+        //校验
+        this.checkSeckillRecordAddReqParam(req);
+
         Long storeId = req.getStoreId();
         //生成秒杀活动编码
         String codeNumber = codeFactory.getCodeNumber(CodeFactory.SECKILL_ACTIVITY_PREFIX_CODE, storeId);
@@ -296,11 +295,12 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 seckillRegistrationRecord.setPaymentModeCode(PaymentModeConverEnum.WX_BARCODE.getModel());
                 this.insert(seckillRegistrationRecord);
                 //根据秒杀订单创建 待收单、交易单
-                this.addReceivingAndTradeOrderBySeckillActivity(seckillRegistrationRecord);
-                //校验活动销售数量
-                this.checkActivitySellNumber(seckillActivity,req);
+                String tradeOrderId = this.addReceivingAndTradeOrderBySeckillActivity(seckillRegistrationRecord);
+                if (StringUtils.isBlank(tradeOrderId)) {
+                    throw new StoreSaasMarketingException("根据秒杀订单新建交易单失败");
+                }
                 //支付
-                payService.getPayAuthToken(seckillRegistrationRecord,null);
+                payService.getPayAuthToken(seckillRegistrationRecord, tradeOrderId);
             } catch (Exception e) {
                 //如果发生异常后 放上释放锁
                 storeRedisUtils.releaseLock(seckillActivityCode, obj.toString());
@@ -312,6 +312,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
     }
 
+
     @Override
     @Transactional
     public void callBack(PaymentResponse paymentResponse) {
@@ -322,7 +323,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
         TradeOrderDTO tradeOrderDTO = this.remoteGetTradeOrder(outBizNo.trim());
         if (Objects.isNull(tradeOrderDTO) || StringUtils.isBlank(tradeOrderDTO.getOrderId())) {
-            log.error("not found TradeOrderDTO  key: {}", outBizNo);
+            log.warn("not found TradeOrderDTO  key: {}", outBizNo);
         }
         SeckillRegistrationRecord seckillRegistrationRecord = this.selectById(tradeOrderDTO.getOrderId());
         log.info("callback，paymentResponse,seckillRegistrationRecord:{}", JSONObject.toJSONString(seckillRegistrationRecord));
@@ -330,14 +331,14 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             log.warn("callBack,没有找到秒杀活动抢购单：" + outBizNo.trim());
         }
         if (seckillRegistrationRecord.getPayStatus().equals(SeckillRegistrationRecordPayStatusEnum.CG.getStatus())) {
-            storeRedisUtils.redisDelete(seckillRegistrationRecord.getId());
             log.warn("秒杀活动抢购单已支付");
         } else {
             this.processUpdateSeckillRegistrationRecord(paymentResponse, seckillRegistrationRecord);
         }
     }
 
-    private void processUpdateSeckillRegistrationRecord(PaymentResponse paymentResponse, SeckillRegistrationRecord seckillRegistrationRecord) {
+    private void processUpdateSeckillRegistrationRecord(PaymentResponse paymentResponse, SeckillRegistrationRecord
+            seckillRegistrationRecord) {
         String key = seckillRegistrationRecord.getId() + seckillRegistrationRecord.getStoreId() + seckillRegistrationRecord.getTenantId();
         Object obj = storeRedisUtils.getAtomLock(key, 2);
         log.info("processUpdateSeckillRegistrationRecord tryLock key = {}", key);
@@ -374,8 +375,11 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.PAY_SUCCESS_STATUS);
             //生成开卡单
             cardOrderService.addCardOrderBySeckillActivity(this.generateAddCardOrderReq(seckillRegistrationRecord));
-            Long counter = storeRedisUtils.increment(seckillRegistrationRecord.getSeckillActivityId());
-            log.info("paySuccess  key={}, counter = {}", seckillRegistrationRecord.getSeckillActivityId(), counter);
+            String yxdku = SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRegistrationRecord.getSeckillActivityId();
+            if (stringRedisTemplate.hasKey(yxdku)) {
+                stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecord.getQuantity());//秒杀活动已下单库存
+            }
+            log.info("paySuccess  key={}, counter = {}", seckillRegistrationRecord.getSeckillActivityId(), seckillRegistrationRecord.getQuantity());
         } catch (Exception e1) {
             e1.printStackTrace();
             log.error("lock error", e1);
@@ -421,7 +425,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         return addCardOrderReq;
     }
 
-    private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp response, Map<String, Integer> customerIdNewMap) {
+    private void dataConversion(SeckillRegistrationRecord o, SeckillRegistrationRecordResp
+            response, Map<String, Integer> customerIdNewMap) {
         //是否新用户
         if (null != customerIdNewMap.get(o.getCustomerId())) {
             response.setIsNewCustomer(SeckillConstant.TYPE_1);
@@ -583,7 +588,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      * 将未收款的待收单+交易单作废
      *
      * @param seckillRegistrationRecord
-     * @param num
+     * @param num                       0 表示：已取消、已作废；    1 表示 ：已结清、回调(成功)   2 表示 ：已取消、回调(失败)
      */
     private void updateReceivingAndTradeOrder(SeckillRegistrationRecord seckillRegistrationRecord, Integer num) {
         List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(seckillRegistrationRecord));
@@ -632,7 +637,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      *
      * @param seckillRegistrationRecord
      */
-    private void addReceivingAndTradeOrderBySeckillActivity(SeckillRegistrationRecord seckillRegistrationRecord) {
+    private String addReceivingAndTradeOrderBySeckillActivity(SeckillRegistrationRecord seckillRegistrationRecord) {
         AddReceivingVO addReceivingVO = new AddReceivingVO();
         addReceivingVO.setOrderId(seckillRegistrationRecord.getId());
         addReceivingVO.setOrderNo(seckillRegistrationRecord.getOrderNo());
@@ -654,7 +659,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         addReceivingVO.setPaySource(1);//1:客户车主端支付
 
         this.remoteAddReceiving(addReceivingVO);
-        this.remoteAddTradeOrder(addReceivingVO);
+        return this.remoteAddTradeOrder(addReceivingVO);
     }
 
 
@@ -732,6 +737,97 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         return storeDTO;
     }
 
+
+    private void checkSeckillRecordAddReqParam(SeckillRecordAddReq req) {
+        if (Objects.isNull(req.getQuantity()) || req.getQuantity() < 1) {
+            throw new StoreSaasMarketingException("抢购数量不能小于1！");
+        }
+        //判断活动是否开启或者已结束
+        SeckillActivity seckillActivity = seckillActivityService.check(req.getSeckillActivityId(), Boolean.FALSE);
+        if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
+            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.WSJ.getStatusName());
+        } else if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
+            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.XJ.getStatusName());
+        }
+        if (Objects.nonNull(seckillActivity.getStartTime())) {
+            if (com.tuhu.springcloud.common.util.DateUtils.compareTime(seckillActivity.getStartTime(), DateUtils.now()) > 0) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + "活动未开始");
+            }
+        }
+        if (seckillActivity.getSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
+            if (req.getQuantity() > seckillActivity.getSellNumber()) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+            }
+            //校验预占库存
+            this.checkHasStock(req, seckillActivity);
+        }
+        if (seckillActivity.getSoloSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
+            //获取客户已购数量
+            Long customerHasBuyNum = this.baseMapper.getCustomerBuyNumber(seckillActivity.getId(), req.getCustomerId());
+            customerHasBuyNum = Objects.isNull(customerHasBuyNum) ? 0L : customerHasBuyNum;
+            if (customerHasBuyNum + req.getQuantity() > seckillActivity.getSoloSellNumber()) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",单人销售数量不能大于" + seckillActivity.getSoloSellNumber());
+            }
+        }
+    }
+
+    /**
+     * 检验库存(预占)
+     *
+     * @param seckillRecordAddReq
+     * @param seckillActivity
+     */
+    private void checkHasStock(SeckillRecordAddReq seckillRecordAddReq, SeckillActivity seckillActivity) {
+        String zku = SeckillConstant.SECKILL_ACTIVITY_ZKC + seckillRecordAddReq.getSeckillActivityId();
+        String yxdku = SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRecordAddReq.getSeckillActivityId();
+
+        String yzku = SeckillConstant.SECKILL_ACTIVITY_YZKC + seckillRecordAddReq.getSeckillActivityId();
+        if (!stringRedisTemplate.hasKey(zku)) {
+            stringRedisTemplate.boundValueOps(zku).increment(seckillActivity.getSellNumber());//秒杀活动总库存
+        }
+
+        if (!stringRedisTemplate.hasKey(yzku)) {
+            if (!stringRedisTemplate.hasKey(yxdku)) {
+                //查询支付成的单据
+                SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
+                BeanUtils.copyProperties(seckillRecordAddReq, seckillRegistrationRecord);
+                seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
+                List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(seckillRegistrationRecord));
+                stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecordList.size());//秒杀活动真实库存
+            }
+            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yxdku)) * (-1));//秒杀活动总库存-已下单库存=剩余总库存
+            if (seckillRecordAddReq.getQuantity() > Long.parseLong(stringRedisTemplate.opsForValue().get(zku))) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+            }
+            if ((Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku)) + seckillRecordAddReq.getQuantity()) > seckillActivity.getSellNumber()) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+            }
+
+            stringRedisTemplate.opsForValue().set(yzku, seckillRecordAddReq.getQuantity().toString(), 3, TimeUnit.MINUTES);
+            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yzku)) * (-1));//剩余总库存=总库存-预占库存
+        } else {
+            if (!stringRedisTemplate.hasKey(yxdku)) {
+                //查询支付成的单据
+                SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
+                BeanUtils.copyProperties(seckillRecordAddReq, seckillRegistrationRecord);
+                seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
+                List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(seckillRegistrationRecord));
+                stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecordList.size());//秒杀活动真实库存
+            }
+            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yxdku)) * (-1));//秒杀活动总库存-已下单库存=剩余总库存
+            if (seckillRecordAddReq.getQuantity() > Long.parseLong(stringRedisTemplate.opsForValue().get(zku))) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+            }
+            if ((Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku)) + seckillRecordAddReq.getQuantity()) > seckillActivity.getSellNumber()) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+            }
+
+            stringRedisTemplate.boundValueOps(yzku).increment(seckillRecordAddReq.getQuantity());//预占库存累加
+            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yzku)) * (-1));//剩余总库存=总库存-预占库存
+        }
+
+    }
+
     /**
      * 根据秒杀订单创建 客户
      *
@@ -740,20 +836,20 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     private Map<String, String> addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
         Map<String, String> maps = Maps.newHashMap();
         if (seckillRegistrationRecord.getBuyerPhoneNumber().equals(seckillRegistrationRecord.getUserPhoneNumber())) {
-            CustomerReq customerReq = this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            CustomerReq customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
         } else {
             CustomerReq customerReq = null;
-            customerReq = this.addCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
-            customerReq = this.addCustomer(seckillRegistrationRecord.getUserPhoneNumber(), "空", seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getUserPhoneNumber(), "空", seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getUserPhoneNumber(), customerReq.getId());
         }
         return maps;
     }
 
 
-    private CustomerReq addCustomer(String phoneNumber, String name, Long storeId, Long tenantId) {
+    private CustomerReq remoteAddCustomer(String phoneNumber, String name, Long storeId, Long tenantId) {
         //添加客户
         CustomerReq customerReq = new CustomerReq();
         customerReq.setPhoneNumber(phoneNumber);

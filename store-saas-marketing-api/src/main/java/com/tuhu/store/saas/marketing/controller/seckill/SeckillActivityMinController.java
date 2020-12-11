@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -104,7 +105,7 @@ public class SeckillActivityMinController extends EndUserApi {
     @PostMapping("/customer/orderAdd")
     @ApiOperation("创建秒杀订单")
     @EndUserApiIdempotent(lockTime = 2)
-    public BizBaseResponse customerActivityOrderAdd(@RequestBody SeckillRecordAddReq req) {
+    public BizBaseResponse customerActivityOrderAdd(@Validated @RequestBody SeckillRecordAddReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
         req.setCustomerId(super.getCustomerId());

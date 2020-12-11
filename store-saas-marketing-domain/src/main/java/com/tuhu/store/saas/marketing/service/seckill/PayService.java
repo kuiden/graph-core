@@ -90,9 +90,9 @@ public class PayService {
         return tokenResult;
     }
 
-    public Object getPayAuthToken(SeckillRegistrationRecord seckillRegistrationRecord, OnlineReceiveReq onlineReceiveReq) {
+    public Object getPayAuthToken(SeckillRegistrationRecord seckillRegistrationRecord, String tradeOrderId) {
         OpenApiReq openApiReq = this.getAuthTokenOpenApi();
-        String tokenRequest = this.getRequestParameter(seckillRegistrationRecord, onlineReceiveReq);
+        String tokenRequest = this.getRequestParameter(seckillRegistrationRecord, tradeOrderId);
         log.info("getPayAuthToken, request:" + tokenRequest);
         Map<String, Object> tokenRequestMap = JSONObject.parseObject(tokenRequest);
         //调用获取收银台token
@@ -113,7 +113,7 @@ public class PayService {
     }
 
 
-    private String getRequestParameter(SeckillRegistrationRecord seckillRegistrationRecord, OnlineReceiveReq onlineReceiveReq) {
+    private String getRequestParameter(SeckillRegistrationRecord seckillRegistrationRecord, String tradeOrderId) {
         String outBizNo = seckillRegistrationRecord.getId();
         Long amount = seckillRegistrationRecord.getExpectAmount().multiply(new BigDecimal(100)).longValue();
         long payTime = System.currentTimeMillis();
@@ -142,6 +142,7 @@ public class PayService {
         cashierRequestVO.setNotifyUrl(callbackUrl);
         //cashierRequestVO.setReturnUrl(onlineReceiveReq.getReturnUrl() + "/" + outBizNo);
         cashierRequestVO.setVirtual("false");
+        cashierRequestVO.setSupportedPay("WX_BARCODE");
         //设置途虎企业id
 //        StoreInfoVO storeInfoVO = new StoreInfoVO();
 //        storeInfoVO.setStoreId(seckillRegistrationRecord.getStoreId());
