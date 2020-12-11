@@ -21,6 +21,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -56,13 +57,21 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
     @Autowired
     private IOauthClientDetailsService iOauthClientDetailsService;
 
+    @Value("${wechat.seckill.miniprogram.message.client.type}")
+    private String seckillClientType;
+
+    @Value("${wechat.seckill.miniprogram.message.template.id}")
+    private String seckillTemplateId;
 
     @Override
     public void customerActivityRemindAdd(SeckillRemindAddReq req) {
         log.info("customerActivityRemindAdd -> req:{}",req);
+        if (null == req.getTemplateId()){
+            req.setTemplateId(this.seckillTemplateId);
+        }
         if (StringUtils.isBlank(req.getOpenId())){
             //获取openId
-            String clientType = req.getClientType();
+            String clientType = req.getClientType() == null ? this.seckillClientType : req.getClientType();
             OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
             String openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid(),
                     oauthClientDetails.getWxSecret(), req.getOpenIdCode(), oauthClientDetails.getWxOpenidUrl());

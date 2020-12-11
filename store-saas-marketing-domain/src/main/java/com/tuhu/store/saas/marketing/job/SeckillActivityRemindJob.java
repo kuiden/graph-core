@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * 秒杀活动开抢提醒  （每天十点执行）
+ * 秒杀活动开抢提醒
  *
  * @author wangyuqing
  * @since 2020/12/8 16:16
