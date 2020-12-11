@@ -194,7 +194,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 saveFuncAttachedInfoFunc.apply(model);
                 //添加活动规则
                 //添加门店信息
-
             } else {
                 throw new StoreSaasMarketingException("数据添加失败");
             }
@@ -242,12 +241,20 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         List<SeckillActivityItem> list = itemService.selectList(new EntityWrapper().eq(SeckillActivityItem.SECKILL_ACTIVITY_ID, seckillActivityModel.getId())
                 .eq(SeckillActivityItem.STORE_ID, seckillActivityModel.getStoreId()).eq(SeckillActivityItem.TENANT_ID, seckillActivityModel.getTenantId())
                 .eq(SeckillActivityItem.IS_DELETE, Integer.valueOf(0)));
-        seckillActivityModel.setItems(new ArrayList<>());
-        for (SeckillActivityItem seckillActivityItem : list) {
-            SeckillActivityItemModel itemModel = new SeckillActivityItemModel();
-            BeanUtils.copyProperties(seckillActivityItem, itemModel);
-            itemModel.setGoodsType(SeckillActivityItemTypeEnum.getEnumByCode(seckillActivityItem.getGoodsType().byteValue()));
-            seckillActivityModel.getItems().add(itemModel);
+        if (CollectionUtils.isNotEmpty(list)) {
+            seckillActivityModel.setGoodsItems(new ArrayList<>());
+            seckillActivityModel.setServiceItems(new ArrayList<>());
+            for (SeckillActivityItem seckillActivityItem : list) {
+                SeckillActivityItemModel itemModel = new SeckillActivityItemModel();
+                BeanUtils.copyProperties(seckillActivityItem, itemModel);
+                itemModel.setGoodsType(SeckillActivityItemTypeEnum.getEnumByCode(seckillActivityItem.getGoodsType().byteValue()));
+                if (itemModel.getGoodsType().equals(SeckillActivityItemTypeEnum.GOODS)) {
+                    seckillActivityModel.getGoodsItems().add(itemModel);
+                } else if (itemModel.getGoodsType().equals(SeckillActivityItemTypeEnum.SERVICE)) {
+                    seckillActivityModel.getServiceItems().add(itemModel);
+                }
+                // seckillActivityModel.getItems().add(itemModel);
+            }
         }
         return seckillActivityModel;
     }

@@ -5,6 +5,7 @@ import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -198,6 +199,13 @@ public class SeckillActivityModel implements Serializable {
             this.soloSellNumber = 1;
         }
         BigDecimal totalOriginalPrice = BigDecimal.ZERO;
+        if (CollectionUtils.isEmpty(this.items)) {
+            this.items = new ArrayList<>();
+            if (this.goodsItems != null)
+                this.items.addAll(this.goodsItems);
+            if (this.serviceItems != null)
+                this.items.addAll(this.serviceItems);
+        }
         for (SeckillActivityItemModel item : this.items) {
             totalOriginalPrice = totalOriginalPrice.add(item.getOriginalPrice().multiply(new BigDecimal(item.getItemQuantity())));
         }
@@ -205,6 +213,7 @@ public class SeckillActivityModel implements Serializable {
         if (this.status == null) {
             this.status = 1;
         }
+
         return this;
     }
 
@@ -330,6 +339,20 @@ public class SeckillActivityModel implements Serializable {
      */
     @ApiModelProperty(value = "活动商品/服务详情", dataType = "[]")
     private List<SeckillActivityItemModel> items;
+
+    /**
+     * 商品列表
+     */
+    @ApiModelProperty(value = "活动商品", dataType = "[]")
+    private List<SeckillActivityItemModel> goodsItems;
+
+    /**
+     * 商品列表
+     */
+    @ApiModelProperty(value = "服务列表", dataType = "[]")
+    private List<SeckillActivityItemModel> serviceItems;
+
+
 
     @ApiModelProperty(value = "规则信息", dataType = "String", example = "规则信息")
     private String rulesInfo;

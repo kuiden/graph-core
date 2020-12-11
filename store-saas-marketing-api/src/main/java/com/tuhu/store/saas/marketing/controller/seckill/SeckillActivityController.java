@@ -4,6 +4,7 @@ package com.tuhu.store.saas.marketing.controller.seckill;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
@@ -14,6 +15,7 @@ import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +52,9 @@ public class SeckillActivityController extends BaseApi {
     @GetMapping(value = "/getModelById")
     @ApiOperation(value = "获取活动详情")
     public BizBaseResponse<SeckillActivityModel> getModelById(@RequestParam String id) {
+        if(StringUtils.isBlank(id)){
+            throw  new StoreSaasMarketingException("参数验证失败");
+        }
         return new BizBaseResponse(seckillActivityService.getSeckillActivityModelById(id, super.getStoreId()));
     }
 

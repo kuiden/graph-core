@@ -59,7 +59,7 @@ public class SeckillActivityItemModel implements Serializable {
     /**
      * 商品ID
      */
-    @ApiModelProperty(value = "秒杀活动id", required = true, example = "123312")
+    @ApiModelProperty(value = "商品ID", required = true, example = "123312")
     private String goodsId;
     /**
      * 商品编码code
