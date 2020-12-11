@@ -1,8 +1,10 @@
 package com.tuhu.store.saas.marketing.request.seckill;
 
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -12,12 +14,15 @@ import java.util.Date;
  * @since 2020/12/3 15:55
  */
 @Data
+@ApiModel("秒杀活动抢购对象")
 public class SeckillRecordAddReq implements Serializable {
 
     @ApiModelProperty("活动id")
+    @NotNull(message = "活动id不能为空")
     private String seckillActivityId;
 
     @ApiModelProperty("活动名称")
+    @NotNull(message = "活动名称不能为空")
     private String seckillActivityName;
 
     @ApiModelProperty("报名客户id")
@@ -30,9 +35,11 @@ public class SeckillRecordAddReq implements Serializable {
     private Integer isNewCustomer;
 
     @ApiModelProperty("购买人手机号")
+    @NotNull(message = "购买人手机号不能为空")
     private String buyerPhoneNumber;
 
     @ApiModelProperty("使用人手机号码")
+    @NotNull(message = "使用人手机号不能为空")
     private String userPhoneNumber;
 
     @ApiModelProperty("车牌号")
