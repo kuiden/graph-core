@@ -127,7 +127,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 }
 
             }
-            attachedInfoService.updateBatchById(attachedInfos);
+            if (!attachedInfoService.updateBatchById(attachedInfos)){
+                    throw  new StoreSaasMarketingException("活动附属信息保存失败");
+            }
 
         } else {
             // 进入新增流程
@@ -143,11 +145,15 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             attachedInfo.setId(idKeyGen.generateId(model.getTenantId()));
             attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode());
             attachedInfo.setContent(model.getRulesInfo());
-            attachedInfoService.insert(attachedInfo);
+            if (!attachedInfoService.insert(attachedInfo)){
+                throw  new StoreSaasMarketingException("活动附属信息保存失败");
+            }
             attachedInfo.setId(idKeyGen.generateId(model.getTenantId()));
             attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode());
             attachedInfo.setContent(model.getStoreInfo());
-            attachedInfoService.insert(attachedInfo);
+            if (!attachedInfoService.insert(attachedInfo)){
+                throw  new StoreSaasMarketingException("活动附属信息保存失败");
+            }
         }
         return Boolean.TRUE;
     };
