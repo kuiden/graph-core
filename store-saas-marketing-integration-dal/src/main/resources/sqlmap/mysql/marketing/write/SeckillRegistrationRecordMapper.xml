@@ -142,4 +142,15 @@
       AND pay_status = 0 <!--未支付-->
       AND DATE_ADD(register_time, INTERVAL 24 HOUR) <![CDATA[<=]]> NOW()  limit #{num}
     </select>
+
+    <select id="getCustomerBuyNumber" resultType="Long">
+        SELECT
+        SUM(quantity)
+        FROM seckill_registration_record
+        WHERE 1=1
+        AND seckill_activity_id = #{seckillActivityId}
+        ANd customer_id = #{customerId}
+        AND pay_status = 1
+        AND is_delete = 0
+    </select>
 </mapper>
