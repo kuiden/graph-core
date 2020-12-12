@@ -10,6 +10,7 @@ import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.bean.BeanUtil;
+import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
@@ -83,6 +84,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Value("${seckill.activity.expire.time:10}")
     private int SECKILL_ACTIVITY_EXPIRE_TIME; //秒杀活动，预占时间
+
+    private final static String REDIS_PREFIX = RedisUtils.initInstance().getRedisPrefix();
 
     @Autowired
     IdKeyGen idKeyGen;
@@ -706,7 +709,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         Date date = new Date();
         seckillActivityBuy.setStartTime(date);
         seckillActivityBuy.setEndTime(DateUtils.addSeconds(date, SECKILL_ACTIVITY_EXPIRE_TIME));//结束时间+1s 动态配置
-        String activityId = "seckill_activity:" + seckillActivityBuy.getActivityId();
+        String activityId = REDIS_PREFIX + "seckill_activity:" + seckillActivityBuy.getActivityId();
         String customerId = seckillActivityBuy.getCustomerId();
         String hk = activityId + "_" + customerId;
         redisTemplate.opsForHash().put(activityId, hk, JSON.toJSONString(seckillActivityBuy));
