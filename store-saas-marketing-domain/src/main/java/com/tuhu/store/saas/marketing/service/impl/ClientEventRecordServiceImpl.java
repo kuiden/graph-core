@@ -110,6 +110,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             clientEventRecordEntity.setUpdateTime(date);
             clientEventRecordEntity.setEventCount(1);
             clientEventRecordEntity.setSourceType(sourceType);
+            clientEventRecordEntity.setCustomerId(clientEventRecordRequest.getCustomerId());
             clientEventRecordEntity.setPhoneNumber(clientEventRecordRequest.getPhoneNumber());
             try {
                 this.addNewClientEventRecord(clientEventRecordEntity);
