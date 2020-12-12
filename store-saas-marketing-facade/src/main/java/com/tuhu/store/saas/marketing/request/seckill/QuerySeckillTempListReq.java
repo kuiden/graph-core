@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @time 2020-12-04
@@ -21,5 +22,8 @@ public class QuerySeckillTempListReq implements Serializable {
 
     @ApiModelProperty("模板状态，0：禁用，1：启用")
     private Integer status;
+
+    @ApiModelProperty("活动分类id")
+    private List<String> classificationIdList;
 
 }

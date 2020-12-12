@@ -10,6 +10,7 @@ import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSecKillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.QuerySeckillTempListReq;
 import com.tuhu.store.saas.marketing.request.seckill.SortSeckillTempReq;
+import com.tuhu.store.saas.marketing.response.ClassificationReferNum;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempItemResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateItemService;
@@ -73,6 +74,9 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         wrapper.eq(SeckillTemplate.IS_DELETE, 0);
         if (StringUtils.isNotEmpty(req.getActivityTitle())) {
             wrapper.like(SeckillTemplate.ACTIVITY_TITLE, req.getActivityTitle());
+        }
+        if (CollectionUtils.isNotEmpty(req.getClassificationIdList())) {
+            wrapper.in("classification_id", req.getClassificationIdList());
         }
         if (req.getStatus() != null) {
             wrapper.eq(SeckillTemplate.STATUS, req.getStatus());
@@ -146,6 +150,33 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
             resp.setTempItemList(itemResps);
         }
         return resp;
+    }
+
+    /**
+     * 累加秒杀活动模板引用次数
+     * @param tempId
+     * @param tenantId
+     * @return
+     */
+    @Override
+    public Boolean increseTemplateRefer(String tempId, Long tenantId) {
+        EntityWrapper<SeckillTemplate> tempWrapper = new EntityWrapper<>();
+        tempWrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
+        tempWrapper.eq(SeckillTemplate.ID, tempId);
+        tempWrapper.eq(SeckillTemplate.IS_DELETE, 0);
+        SeckillTemplate temp = this.selectOne(tempWrapper);
+        if (temp == null) {
+            return false;
+        }
+        Integer referNum = temp.getSort() + 1;
+        temp.setSort(referNum);
+        this.update(temp, tempWrapper);
+        return true;
+    }
+
+    @Override
+    public List<ClassificationReferNum> getClassificaReferNum(List<String> ids, Long tenantId) {
+        return baseMapper.getClassificaReferNum(tenantId, ids);
     }
 
 }

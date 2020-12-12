@@ -6,6 +6,7 @@ import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSecKillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.QuerySeckillTempListReq;
 import com.tuhu.store.saas.marketing.request.seckill.SortSeckillTempReq;
+import com.tuhu.store.saas.marketing.response.ClassificationReferNum;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempDetailResp;
 
 import java.util.List;
@@ -29,4 +30,8 @@ public interface SeckillTemplateService extends IService<SeckillTemplate> {
     boolean editTemplate(EditSecKillTempReq req, Long tenantId, String userId);
 
     SeckillTempDetailResp getTemplateDetail(String tempId, Long tenantId);
+
+    Boolean increseTemplateRefer(String tempId, Long tenantId);
+
+    List<ClassificationReferNum> getClassificaReferNum(List<String> ids, Long tenantId);
 }
