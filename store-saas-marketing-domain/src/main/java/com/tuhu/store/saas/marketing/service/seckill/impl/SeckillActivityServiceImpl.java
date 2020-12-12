@@ -82,7 +82,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @Value("${seckill.activity.expire.time:10}")
+    @Value("${seckill.activity.expire.time:300}")
     private int SECKILL_ACTIVITY_EXPIRE_TIME; //秒杀活动，预占时间
 
     private final static String REDIS_PREFIX = RedisUtils.initInstance().getRedisPrefix();

@@ -4,6 +4,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.*;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.request.product.Vehicle;
 import com.tuhu.store.saas.user.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,5 +47,10 @@ public interface CustomerClient {
 
     @PostMapping(value = "/feign/crm/Customer/addCustomerForOrder")
     BizBaseResponse<AddVehicleVO> addCustomerForOrder(AddVehicleReq addVehicleReq);
+
+
+    @PostMapping(value = "/feign/crm/Vehicle/addVehicleBySeckillActivity")
+    BizBaseResponse addVehicleBySeckillActivity(AddVehicleVO addVehicleVO);
+
 
 }

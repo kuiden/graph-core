@@ -82,6 +82,12 @@ public class CustomerRemoteFactory implements FallbackFactory<CustomerClient> {
                 log.error("addCustomerForOrder error,request={},error={}", addVehicleReq, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
+
+            @Override
+            public BizBaseResponse addVehicleBySeckillActivity(AddVehicleVO addVehicleVO) {
+                log.error("addVehicleBySeckillActivity error,request={},error={}", addVehicleVO, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
         };
     }
 }

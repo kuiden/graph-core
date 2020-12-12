@@ -14,9 +14,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.annotation.DistributedLock;
 import com.tuhu.springcloud.common.bean.BeanUtil;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
-import com.tuhu.store.saas.crm.vo.AddVehicleVO;
-import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
-import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
+import com.tuhu.store.saas.crm.vo.*;
 import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.ClientEventRecordDAO;
@@ -35,6 +33,7 @@ import com.tuhu.store.saas.marketing.remote.order.TradeOrderClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityBuy;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
@@ -274,7 +273,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         //生成秒杀活动编码
         String codeNumber = codeFactory.getCodeNumber(CodeFactory.SECKILL_ACTIVITY_PREFIX_CODE, storeId);
         String seckillActivityCode = codeFactory.generateSeckillActivityCode(storeId, codeNumber);
-        Object obj = storeRedisUtils.getAtomLock(seckillActivityCode, 2);
+        Object obj = storeRedisUtils.getAtomLock(seckillActivityCode, 3);
         if (Objects.nonNull(obj)) {
             try {
                 //写入抢购报名（订单）表数据
@@ -284,11 +283,15 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.CANCEL_STATUS);
                 //根据秒杀订单新建客户
                 Map<String, String> maps = this.addCustomerForOrder(seckillRegistrationRecord);
-                if (MapUtils.isEmpty(maps) && StringUtils.isBlank(maps.get(seckillRegistrationRecord.getUserPhoneNumber()))) {
+                if (MapUtils.isEmpty(maps) || StringUtils.isBlank(maps.get(seckillRegistrationRecord.getUserPhoneNumber())) || StringUtils.isBlank(maps.get(seckillRegistrationRecord.getBuyerPhoneNumber()))) {
                     throw new StoreSaasMarketingException("根据秒杀订单新建客户失败");
+                }
+                if (!maps.get(seckillRegistrationRecord.getBuyerPhoneNumber()).equals(req.getCustomerId())) {
+                    log.warn("秒杀订单,购买人客户id不一致: {}，{}", maps.get(seckillRegistrationRecord.getBuyerPhoneNumber()), req.getCustomerId());
                 }
                 seckillRegistrationRecord.setId(idKeyGen.generateId(req.getTenantId()));
                 seckillRegistrationRecord.setOrderNo(seckillActivityCode);
+                seckillRegistrationRecord.setCustomerId(maps.get(seckillRegistrationRecord.getBuyerPhoneNumber()));
                 seckillRegistrationRecord.setUserCustomerId(maps.get(seckillRegistrationRecord.getUserPhoneNumber()));
                 seckillRegistrationRecord.setRegisterTime(DateUtils.now());
                 seckillRegistrationRecord.setCreateTime(DateUtils.now());
@@ -375,6 +378,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.PAY_SUCCESS_STATUS);
             //生成开卡单
             cardOrderService.addCardOrderBySeckillActivity(this.generateAddCardOrderReq(seckillRegistrationRecord));
+            //通过秒杀活动成功后,车辆绑定或变更
+            this.remoteAddVehicleBySeckillActivity(seckillRegistrationRecord);
+            //更新已下单缓存
             String yxdku = SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRegistrationRecord.getSeckillActivityId();
             if (stringRedisTemplate.hasKey(yxdku)) {
                 stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecord.getQuantity());//秒杀活动已下单库存
@@ -759,7 +765,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
             }
             //校验预占库存
-            this.checkHasStock(req, seckillActivity);
+            this.checkHasStock2(req, seckillActivity);
         }
         if (seckillActivity.getSoloSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
             //获取客户已购数量
@@ -804,7 +810,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             }
 
             stringRedisTemplate.opsForValue().set(yzku, seckillRecordAddReq.getQuantity().toString(), 3, TimeUnit.MINUTES);
-            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yzku)) * (-1));//剩余总库存=总库存-预占库存
+            stringRedisTemplate.boundValueOps(zku).increment(seckillRecordAddReq.getQuantity() * (-1));//剩余总库存=总库存-每次请求数量
         } else {
             if (!stringRedisTemplate.hasKey(yxdku)) {
                 //查询支付成的单据
@@ -813,7 +819,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
                 List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(seckillRegistrationRecord));
                 stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecordList.size());//秒杀活动真实库存
-                stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yxdku)) * (-1));//秒杀活动总库存-已下单库存=剩余总库存
+                stringRedisTemplate.boundValueOps(zku).increment(seckillRecordAddReq.getQuantity() * (-1));//秒杀活动总库存-已下单库存=剩余总库存
             }
             if (seckillRecordAddReq.getQuantity() > Long.parseLong(stringRedisTemplate.opsForValue().get(zku))) {
                 throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
@@ -823,10 +829,50 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             }
 
             stringRedisTemplate.boundValueOps(yzku).increment(seckillRecordAddReq.getQuantity());//预占库存累加
-            stringRedisTemplate.boundValueOps(zku).increment(Long.parseLong(stringRedisTemplate.opsForValue().get(yzku)) * (-1));//剩余总库存=总库存-预占库存
+            stringRedisTemplate.boundValueOps(zku).increment(seckillRecordAddReq.getQuantity() * (-1));//剩余总库存=总库存-每次请求数量
         }
 
     }
+
+
+    private void checkHasStock2(SeckillRecordAddReq seckillRecordAddReq, SeckillActivity seckillActivity) {
+        String zku = SeckillConstant.SECKILL_ACTIVITY_ZKC + seckillRecordAddReq.getSeckillActivityId();
+        String yxdku = SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRecordAddReq.getSeckillActivityId();
+
+        String yzku = SeckillConstant.SECKILL_ACTIVITY_YZKC + seckillRecordAddReq.getSeckillActivityId();
+        if (!stringRedisTemplate.hasKey(zku)) {
+            stringRedisTemplate.boundValueOps(zku).increment(seckillActivity.getSellNumber());//秒杀活动总库存
+        }
+        if (!stringRedisTemplate.hasKey(yxdku)) {
+            //查询支付成的单据
+            SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
+            BeanUtils.copyProperties(seckillRecordAddReq, seckillRegistrationRecord);
+            seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
+            List<SeckillRegistrationRecord> seckillRegistrationRecordList = this.selectList(this.buildSearchParams(seckillRegistrationRecord));
+            stringRedisTemplate.boundValueOps(yxdku).increment(seckillRegistrationRecordList.size());//秒杀活动真实库存
+            stringRedisTemplate.boundValueOps(zku).increment(seckillRecordAddReq.getQuantity() * (-1));//秒杀活动总库存-已下单库存=剩余总库存
+        }
+        if (seckillRecordAddReq.getQuantity() > Long.parseLong(stringRedisTemplate.opsForValue().get(zku))) {
+            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+        }
+        if ((Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku)) + seckillRecordAddReq.getQuantity()) > seckillActivity.getSellNumber()) {
+            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+        }
+        SeckillActivityBuy seckillActivityBuy = new SeckillActivityBuy();
+        seckillActivityBuy.setActivityId(seckillRecordAddReq.getSeckillActivityId());
+        seckillActivityBuy.setCustomerId(seckillRecordAddReq.getCustomerId());
+        seckillActivityBuy.setNum(seckillRecordAddReq.getQuantity().intValue());
+        seckillActivityBuy.setTotalNum(seckillActivity.getSellNumber());
+        seckillActivityBuy.setBuyNum(Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku)));
+        seckillActivityBuy.setSaleNum(seckillActivityBuy.getTotalNum() - seckillActivityBuy.getBuyNum());
+        Integer preNum = seckillActivityService.getPreNum(seckillActivityBuy);
+        stringRedisTemplate.opsForValue().set(yzku, preNum.toString());
+        if (preNum + seckillRecordAddReq.getQuantity() > seckillActivity.getSellNumber()) {
+            throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
+        }
+
+    }
+
 
     /**
      * 根据秒杀订单创建 客户
@@ -868,6 +914,32 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             customerReq.setId(resultObject.getData().getCustomerReq().getId());
         }
         return customerReq;
+    }
+
+
+    private void remoteAddVehicleBySeckillActivity(SeckillRegistrationRecord seckillRegistrationRecord) {
+        try {
+            AddVehicleVO addVehicleVO = new AddVehicleVO();
+            addVehicleVO.setStoreId(seckillRegistrationRecord.getStoreId());
+            addVehicleVO.setTenantId(seckillRegistrationRecord.getTenantId());
+
+            CustomerReqVO customerReqVO = new CustomerReqVO();
+            customerReqVO.setPhoneNumber(seckillRegistrationRecord.getUserPhoneNumber());
+            customerReqVO.setId(seckillRegistrationRecord.getUserCustomerId());
+            addVehicleVO.setCustomerReq(customerReqVO);
+
+            VehicleReqVO vehicleReqVO = new VehicleReqVO();
+            vehicleReqVO.setLicensePlateFlag(seckillRegistrationRecord.getVehicleNumber().substring(0, 1));
+            vehicleReqVO.setLicensePlateNumber(seckillRegistrationRecord.getVehicleNumber().substring(1, seckillRegistrationRecord.getVehicleNumber().length()));
+            addVehicleVO.setVehicleReq(vehicleReqVO);
+            log.info("customerClient.addVehicleBySeckillActivity request:{}", JSONObject.toJSONString(addVehicleVO));
+            BizBaseResponse resultObject = customerClient.addVehicleBySeckillActivity(addVehicleVO);
+            log.info("customerClient.addVehicleBySeckillActivity response:{}", JSONObject.toJSONString(resultObject));
+        } catch (BizException e) {
+            log.error("customerClient.addVehicleBySeckillActivity error：调用参数{}，异常{}", JSONObject.toJSONString(seckillRegistrationRecord), e);
+            throw new StoreSaasMarketingException("车主绑定、变更异常");
+        }
+
     }
 
 }

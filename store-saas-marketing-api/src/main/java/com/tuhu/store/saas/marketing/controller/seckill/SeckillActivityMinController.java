@@ -125,12 +125,5 @@ public class SeckillActivityMinController extends EndUserApi {
         return new BizBaseResponse();
     }
 
-    @GetMapping("/customer/test")
-    @ApiOperation("测试")
-    public BizBaseResponse getPayAuthTokenTest() {
-        payService.getPayAuthTokenTest();
-        return new BizBaseResponse();
-    }
-
 }
 
