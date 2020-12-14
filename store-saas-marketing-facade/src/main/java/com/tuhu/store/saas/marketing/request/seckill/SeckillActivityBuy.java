@@ -8,6 +8,7 @@ import java.util.Date;
 public class SeckillActivityBuy {
     private String activityId;
     private String customerId;
+    private String phone;
     private Integer num = 0;
     private Date startTime;
     private Date endTime;

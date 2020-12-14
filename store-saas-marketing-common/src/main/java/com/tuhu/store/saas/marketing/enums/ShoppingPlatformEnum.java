@@ -11,7 +11,7 @@ import lombok.Getter;
 
 @Getter
 public enum ShoppingPlatformEnum {
-    H5("H5", "H5 页面抢购"),
+    H5("H5", "H5页面抢购"),
     WECHAT_APPLET("WECHAT_APPLET", "微信小程序抢购");
 
     private String code;

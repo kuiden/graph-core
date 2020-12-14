@@ -71,7 +71,7 @@ public class RedisTemplateController {
 
     @GetMapping(value = "/like/get/{key}")
     @ApiOperation(value = "redis 模糊匹配")
-    public Object redisLikeGet(@PathVariable("key") String key) {
+    public Object likeGet(@PathVariable("key") String key) {
         List<Object> objectList = Lists.newArrayList();
         Set<String> keys = stringRedisTemplate.keys("*" + key + "*");
         if (CollectionUtils.isNotEmpty(keys)) {
@@ -87,7 +87,7 @@ public class RedisTemplateController {
 
     @GetMapping(value = "/delete/{key}")
     @ApiOperation(value = "redis 删除")
-    public Object redisTemplatDelete(@PathVariable("key") String key) {
+    public Object delete(@PathVariable("key") String key) {
         if (stringRedisTemplate.hasKey(key)) {
             stringRedisTemplate.delete(key);
         } else {
@@ -97,6 +97,18 @@ public class RedisTemplateController {
             } else {
                 return "找不到key,请重试！";
             }
+        }
+        return "success";
+    }
+
+
+    @GetMapping(value = "/like/delete/{key}")
+    @ApiOperation(value = "redis 模糊删除")
+    public Object likeDelete(@PathVariable("key") String key) {
+        List<Object> objectList = Lists.newArrayList();
+        Set<String> keys = stringRedisTemplate.keys("*" + key + "*");
+        if (CollectionUtils.isNotEmpty(keys)) {
+            stringRedisTemplate.delete(keys);
         }
         return "success";
     }

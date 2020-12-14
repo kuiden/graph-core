@@ -39,4 +39,8 @@ public class SeckillConstant {
 
     //秒杀活动已下单库存
     public static final String SECKILL_ACTIVITY_YXDKC = "seckill_activity_yxdkc:";
+
+
+    //秒杀活动
+    public static final String SECKILL_ACTIVITY = "seckill_activity:";
 }

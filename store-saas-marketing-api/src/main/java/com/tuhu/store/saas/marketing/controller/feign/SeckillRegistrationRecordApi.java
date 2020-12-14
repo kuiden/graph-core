@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.controller.feign;
 import com.alibaba.fastjson.JSONObject;
 import com.mengfan.common.response.fianace.PaymentResponse;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.springcloud.common.annotation.DistributedLock;
 import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
@@ -37,6 +38,7 @@ public class SeckillRegistrationRecordApi {
 
     @PostMapping("/orderAdd")
     @ApiOperation("H5、创建秒杀订单")
+    @DistributedLock(timeout = 5, key = "#req.seckillActivityId + #req.buyerPhoneNumber")
     public BizBaseResponse<Map<String, Object>> customerActivityOrderAdd(@Validated @RequestBody SeckillRecordAddReq req) {
         //创建活动订单、待收单
         if (Objects.isNull(req.getStoreId()) || Objects.isNull(req.getTenantId())) {
