@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.service.IService;
 import com.github.pagehelper.PageInfo;
 import com.mengfan.common.response.fianace.PaymentResponse;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
@@ -84,6 +85,11 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      * @return
      */
     void customerActivityOrderAdd(SeckillRecordAddReq req);
+
+    /*
+     * 查询客户在某一个活动下的购买记录
+     */
+    List<SeckillRegistrationRecord> customerBuyRecordList(SeckillActivityDetailReq req);
 
 
 

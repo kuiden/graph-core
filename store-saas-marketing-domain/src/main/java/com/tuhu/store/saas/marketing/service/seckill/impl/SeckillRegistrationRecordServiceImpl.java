@@ -34,6 +34,7 @@ import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityBuy;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
@@ -313,6 +314,17 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         } else {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.TOO_MANY_REQUEST.getDesc());
         }
+    }
+
+    @Override
+    public List<SeckillRegistrationRecord> customerBuyRecordList(SeckillActivityDetailReq req) {
+        SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
+        BeanUtils.copyProperties(req,seckillRegistrationRecord);
+        seckillRegistrationRecord.setBuyerPhoneNumber(req.getCustomerPhoneNumber());
+        seckillRegistrationRecord.setIsDelete(0);
+        seckillRegistrationRecord.setPayStatus(SeckillConstant.PAY_SUCCESS_STATUS);
+        List<SeckillRegistrationRecord> seckillRegistrationRecords = this.selectList(this.buildSearchParams(seckillRegistrationRecord).orderBy("payment_time", false));
+        return seckillRegistrationRecords;
     }
 
 
@@ -627,6 +639,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
         if (Objects.nonNull(req.getSeckillActivityId())) {
             search.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, req.getSeckillActivityId());
+        }
+        if (Objects.nonNull(req.getCustomerId())) {
+            search.eq(SeckillRegistrationRecord.CUSTOMER_ID, req.getCustomerId());
         }
         if (Objects.nonNull(req.getBuyerPhoneNumber())) {
             search.eq(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, req.getBuyerPhoneNumber());

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/feign/seckill/registrationRecord")
-@Api(tags = "C端秒杀活动对外API")
+@Api(tags = "C端秒杀活动报名对外API")
 public class SeckillRegistrationRecordApi {
 
 
