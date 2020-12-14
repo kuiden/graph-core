@@ -48,8 +48,11 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
             if (arrayListWeakReference != null) {
                 cache.put(key, arrayListWeakReference);
             }
-        } else if (cache.get(key) == null) {
-            cache.put(key, buildCache(key));
+        } else if (cache.get(key) == null || cache.get(key).get() == null) {
+            WeakReference<ArrayList<SeckillClassificationModel>> arrayListWeakReference = buildCache(key);
+            if (arrayListWeakReference != null) {
+                cache.put(key, arrayListWeakReference);
+            }
         }
         return cache.get(key) == null ? null : cache.get(key).get();
     };
