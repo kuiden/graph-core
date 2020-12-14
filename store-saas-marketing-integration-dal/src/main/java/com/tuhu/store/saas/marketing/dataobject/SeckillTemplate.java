@@ -55,7 +55,7 @@ public class SeckillTemplate implements Serializable {
      * 活动分类id
      */
     @TableField("classification_id")
-    private String classificationId;
+    private Integer classificationId;
     /**
      * 模板引用次数
      */

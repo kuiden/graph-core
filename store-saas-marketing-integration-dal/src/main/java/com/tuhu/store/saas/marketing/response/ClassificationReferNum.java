@@ -16,7 +16,7 @@ public class ClassificationReferNum implements Serializable {
     /**
      * 秒杀活动模板分类id
      */
-    private String classificationId;
+    private Integer classificationId;
 
     private Integer num;
 

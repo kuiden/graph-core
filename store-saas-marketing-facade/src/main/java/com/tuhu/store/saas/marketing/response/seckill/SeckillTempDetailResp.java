@@ -31,7 +31,7 @@ public class SeckillTempDetailResp implements Serializable {
     private String activityIntroduce;
 
     @ApiModelProperty("活动分类id")
-    private String classificationId;
+    private Integer classificationId;
 
     @ApiModelProperty("活动分类名称")
     private String classificationName;
