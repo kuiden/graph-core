@@ -31,6 +31,9 @@ public class SeckillClassificationModel {
      */
     @ApiModelProperty(value = "租户id",dataType ="int64",example="2010")
     private Long tenantId;
+
+    @ApiModelProperty(value = "秒杀活动引用数目", dataType = "int32", example = "1")
+    private Integer classificaReferNum;
     /**
      * 创建人
      */

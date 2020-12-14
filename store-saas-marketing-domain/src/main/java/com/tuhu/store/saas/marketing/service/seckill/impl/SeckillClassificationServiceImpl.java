@@ -8,8 +8,12 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillClassification;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillClassificationMapper;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillClassificationModel;
+import com.tuhu.store.saas.marketing.response.ClassificationReferNum;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillClassificationService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +21,7 @@ import java.lang.ref.WeakReference;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -29,6 +34,9 @@ import java.util.function.Function;
 @Service
 @Slf4j
 public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassificationMapper, SeckillClassification> implements SeckillClassificationService {
+
+    @Autowired
+    private SeckillTemplateService seckillTemplateService;
     /**
      * 缓冲
      */
@@ -36,7 +44,10 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
 
     private Function<Long, ArrayList<SeckillClassificationModel>> getAndSetCache = (key) -> {
         if (!cache.containsKey(key)) {
-            cache.put(key, buildCache(key));
+            WeakReference<ArrayList<SeckillClassificationModel>> arrayListWeakReference = buildCache(key);
+            if (arrayListWeakReference != null) {
+                cache.put(key, arrayListWeakReference);
+            }
         } else if (cache.get(key) == null) {
             cache.put(key, buildCache(key));
         }
@@ -50,13 +61,20 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
         wrapper.eq(SeckillClassification.IS_DELETE, 0);
         wrapper.eq(SeckillClassification.TENANT_ID, key);
         wrapper.orderAsc(Lists.newArrayList(SeckillClassification.PRIORITY));
-        List entities = super.selectList(wrapper);
+        List<SeckillClassification> entities = super.selectList(wrapper);
         if (entities != null && entities.size() > 0) {
+
+            List<ClassificationReferNum> classificaReferNum =
+                    seckillTemplateService.getClassificaReferNum(entities.stream().map(x -> x.getId().toString()).collect(Collectors.toList()), key);
+            Map<String, Integer> referMap = CollectionUtils.isNotEmpty(classificaReferNum) ? classificaReferNum.stream()
+                    .collect(Collectors.toMap(k -> k.getClassificationId(), v -> v.getNum(), (i, j) -> i)) : new HashMap<>(0);
             result = new ArrayList<>();
-            for (Object entity : entities) {
-                if (entity instanceof SeckillClassification) {
-                    result.add(((SeckillClassification) entity).toModel());
+            for (SeckillClassification entity : entities) {
+                SeckillClassificationModel seckillClassificationModel = entity.toModel();
+                if (referMap.containsKey(seckillClassificationModel.getId())) {
+                    seckillClassificationModel.setClassificaReferNum(referMap.get(seckillClassificationModel.getId()));
                 }
+                result.add(seckillClassificationModel);
             }
         }
         return result == null ? null : new WeakReference(result);

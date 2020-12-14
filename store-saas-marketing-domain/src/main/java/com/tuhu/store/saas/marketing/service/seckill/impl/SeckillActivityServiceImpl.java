@@ -31,6 +31,7 @@ import com.tuhu.store.saas.marketing.service.MiniAppService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateService;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
@@ -72,6 +73,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Autowired
     private SeckillActivityItemService seckillActivityItemService;
+
+    @Autowired
+    private SeckillTemplateService seckillTemplateService;
 
     @Autowired
     private AttachedInfoService attachedInfoService;
@@ -201,6 +205,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 //初始化商品明细
                 insertSeckillActivityItemFunc.apply(model);
                 saveFuncAttachedInfoFunc.apply(model);
+                if (StringUtils.isNotBlank(entity.getTemplateId())){
+                    seckillTemplateService.increseTemplateRefer(entity.getTemplateId(),entity.getTenantId());
+                }
                 //添加活动规则
                 //添加门店信息
             } else {
