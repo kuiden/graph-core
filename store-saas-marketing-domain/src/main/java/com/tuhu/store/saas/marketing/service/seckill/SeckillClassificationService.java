@@ -6,6 +6,7 @@ import com.tuhu.store.saas.marketing.request.seckill.SeckillClassificationModel;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -20,6 +21,8 @@ public interface SeckillClassificationService extends IService<SeckillClassifica
     Integer save(SeckillClassificationModel req);
 
     ArrayList<SeckillClassificationModel> getList(Long tenantId);
+
+    List<SeckillClassification> getListByIdList(List<Long> idList, Long tenantId);
 
     @Transactional
     Boolean del(Integer id,Long tenantId);

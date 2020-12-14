@@ -128,6 +128,20 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
     }
 
     @Override
+    public List<SeckillClassification> getListByIdList(List<Long> idList, Long tenantId) {
+        List<SeckillClassification> result = null;
+        if (CollectionUtils.isNotEmpty(idList) && tenantId != null) {
+            Wrapper<SeckillClassification> wrapper = new EntityWrapper<SeckillClassification>();
+            wrapper.eq(SeckillClassification.IS_DELETE, 0);
+            wrapper.eq(SeckillClassification.TENANT_ID, tenantId);
+            wrapper.in(SeckillClassification.ID, idList);
+            wrapper.orderAsc(Lists.newArrayList(SeckillClassification.PRIORITY));
+            result = super.selectList(wrapper);
+        }
+        return result;
+    }
+
+    @Override
     @Transactional
     public Boolean del(Integer id, Long tenantId) {
         log.info("del -> req -> {}", id);
