@@ -69,7 +69,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
 
             List<ClassificationReferNum> classificaReferNum =
                     seckillTemplateService.getClassificaReferNum(entities.stream().map(x -> x.getId().toString()).collect(Collectors.toList()), key);
-            Map<String, Integer> referMap = CollectionUtils.isNotEmpty(classificaReferNum) ? classificaReferNum.stream()
+            Map<Integer, Integer> referMap = CollectionUtils.isNotEmpty(classificaReferNum) ? classificaReferNum.stream()
                     .collect(Collectors.toMap(k -> k.getClassificationId(), v -> v.getNum(), (i, j) -> i)) : new HashMap<>(0);
             result = new ArrayList<>();
             for (SeckillClassification entity : entities) {
@@ -128,7 +128,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
     }
 
     @Override
-    public List<SeckillClassification> getListByIdList(List<Long> idList, Long tenantId) {
+    public List<SeckillClassification> getListByIdList(List<Integer> idList, Long tenantId) {
         List<SeckillClassification> result = null;
         if (CollectionUtils.isNotEmpty(idList) && tenantId != null) {
             Wrapper<SeckillClassification> wrapper = new EntityWrapper<SeckillClassification>();

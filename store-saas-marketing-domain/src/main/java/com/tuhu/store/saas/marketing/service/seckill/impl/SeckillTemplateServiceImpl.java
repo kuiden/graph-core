@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.seckill.impl;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
+import com.tuhu.store.saas.marketing.dataobject.SeckillClassification;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplate;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplateItem;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillTemplateMapper;
@@ -13,6 +14,7 @@ import com.tuhu.store.saas.marketing.request.seckill.SortSeckillTempReq;
 import com.tuhu.store.saas.marketing.response.ClassificationReferNum;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempItemResp;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillClassificationService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateService;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
@@ -23,9 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +41,9 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
 
     @Autowired
     private SeckillTemplateItemService seckillTemplateItemService;
+
+    @Autowired
+    private SeckillClassificationService seckillClassificationService;
 
     @Autowired
     private IdKeyGen idKeyGen;
@@ -87,13 +90,21 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         if (CollectionUtils.isEmpty(tempList)) {
             return respList;
         }
-        List<String> classficationIds = tempList.stream().map(SeckillTemplate::getClassificationId).collect(Collectors.toList());
-        //todo 获取活动分类名称
-        tempList.forEach(temp->{
+        List<Integer> classficationIds = tempList.stream().map(SeckillTemplate::getClassificationId).collect(Collectors.toList());
+        List<SeckillClassification> classificationList = seckillClassificationService.getListByIdList(classficationIds, tenantId);
+        Map<Integer, SeckillClassification> classficationMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(classificationList)) {
+            classficationMap = classificationList.parallelStream().collect(Collectors.toMap(SeckillClassification::getId, SeckillClassification->SeckillClassification, (ov,nv)->nv));
+        }
+        for (SeckillTemplate temp : tempList) {
             SeckillTempDetailResp detail = new SeckillTempDetailResp();
             BeanUtils.copyProperties(temp, detail);
+            SeckillClassification classfication = classficationMap.get(temp.getClassificationId());
+            if (classfication != null) {
+                detail.setClassificationName(classfication.getName());
+            }
             respList.add(detail);
-        });
+        }
         return respList;
     }
 

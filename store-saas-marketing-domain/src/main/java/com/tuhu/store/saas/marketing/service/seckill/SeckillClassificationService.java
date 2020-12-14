@@ -22,7 +22,7 @@ public interface SeckillClassificationService extends IService<SeckillClassifica
 
     ArrayList<SeckillClassificationModel> getList(Long tenantId);
 
-    List<SeckillClassification> getListByIdList(List<Long> idList, Long tenantId);
+    List<SeckillClassification> getListByIdList(List<Integer> idList, Long tenantId);
 
     @Transactional
     Boolean del(Integer id,Long tenantId);

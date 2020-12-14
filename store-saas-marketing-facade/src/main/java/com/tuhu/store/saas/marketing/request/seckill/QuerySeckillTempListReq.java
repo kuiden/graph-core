@@ -24,6 +24,6 @@ public class QuerySeckillTempListReq implements Serializable {
     private Integer status;
 
     @ApiModelProperty("活动分类id")
-    private List<String> classificationIdList;
+    private List<Long> classificationIdList;
 
 }

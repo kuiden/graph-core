@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.controller.seckill;
 
 
+import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.response.BizResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempReq;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
