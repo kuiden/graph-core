@@ -179,6 +179,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
         if (!super.updateBatchById(Lists.newArrayList(fromEntity, toEntity))) {
             throw new StoreSaasMarketingException("更新排序失败");
         }
+        this.cache.remove(tenantId);
         result = this.getAndSetCache.apply(tenantId);
         return result;
     }
