@@ -4,12 +4,15 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.Feature;
+import com.google.common.collect.Maps;
 import com.tuhu.boot.common.enums.BizErrorCodeEnum;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.finance.auth.common.dto.ExtParameter;
 import com.tuhu.finance.auth.common.dto.GetAuthTokenReq;
 import com.tuhu.springcloud.common.util.Money;
+import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
+import com.tuhu.store.saas.marketing.enums.SeckillRegistrationRecordPayStatusEnum;
 import com.tuhu.store.saas.marketing.openapi.OpenApiInvoke;
 import com.tuhu.store.saas.marketing.remote.request.CashierRequestVO;
 import com.tuhu.store.saas.marketing.util.AuthSignUtil;
@@ -74,7 +77,7 @@ public class PayService {
 
 
     public Object getPayAuthTokenTest() {
-        SeckillRegistrationRecord seckillRegistrationRecord =new SeckillRegistrationRecord();
+        SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
         seckillRegistrationRecord.setId("170385269714700144643");
         seckillRegistrationRecord.setExpectAmount(new BigDecimal("1.00"));
         seckillRegistrationRecord.setStoreId(1521L);
@@ -90,16 +93,30 @@ public class PayService {
         return tokenResult;
     }
 
-    public Object getPayAuthToken(SeckillRegistrationRecord seckillRegistrationRecord, String tradeOrderId) {
-        OpenApiReq openApiReq = this.getAuthTokenOpenApi();
-        String tokenRequest = this.getRequestParameter(seckillRegistrationRecord, tradeOrderId);
-        log.info("getPayAuthToken, request:" + tokenRequest);
-        Map<String, Object> tokenRequestMap = JSONObject.parseObject(tokenRequest);
-        //调用获取收银台token
-        Object tokenResult = openApiInvoke.sendOpenApiInvoke(openApiReq, tokenRequestMap);
-        //解析参数获取token
-        log.info("getPayAuthToken, response:" + JSON.toJSONString(tokenResult));
-        return tokenResult;
+    public Map<String, Object> getPayAuthToken(SeckillRegistrationRecord seckillRegistrationRecord, String tradeOrderId) {
+        Map<String, Object> returnMap = Maps.newHashMap();
+        try {
+            OpenApiReq openApiReq = this.getAuthTokenOpenApi();
+            String tokenRequest = this.getRequestParameter(seckillRegistrationRecord, tradeOrderId);
+
+            Map<String, Object> tokenRequestMap = JSONObject.parseObject(tokenRequest);
+            log.info("getPayAuthToken, request:" + tokenRequest);
+            //调用获取收银台token
+            Object tokenResult = openApiInvoke.sendOpenApiInvoke(openApiReq, tokenRequestMap);
+            //解析参数获取token
+            log.info("getPayAuthToken, response:" + JSON.toJSONString(tokenResult));
+            JSONObject out = JSONObject.parseObject(JSON.toJSONString(tokenResult));
+            String inString = out.getString("data");
+            JSONObject indata = JSONObject.parseObject(inString);
+            //String returnCode = indata.getString("returnCode");
+            String dataStr = indata.getString("data");
+            JSONObject innerdata = JSONObject.parseObject(dataStr);
+            returnMap = (Map<String, Object>) innerdata;
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("lock error", e);
+        }
+        return returnMap;
     }
 
 

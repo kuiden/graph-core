@@ -5,6 +5,7 @@ import com.github.pagehelper.PageInfo;
 import com.mengfan.common.response.fianace.PaymentResponse;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
+import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
@@ -66,6 +67,7 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
 
     /**
      * 购买记录
+     *
      * @param req
      * @return
      */
@@ -73,6 +75,7 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
 
     /**
      * 秒杀活动下单24小时未支付自动取消相关订单
+     *
      * @return
      */
     void seckillActivity24AutoCancel();
@@ -84,13 +87,15 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      * @param req
      * @return
      */
-    void customerActivityOrderAdd(SeckillRecordAddReq req);
+    Map<String, Object> customerActivityOrderAdd(SeckillRecordAddReq req, ShoppingPlatformEnum shoppingPlatformEnum);
 
-    /*
+    /**
      * 查询客户在某一个活动下的购买记录
+     *
+     * @param req
+     * @return
      */
     List<SeckillRegistrationRecord> customerBuyRecordList(SeckillActivityDetailReq req);
-
 
 
     /**

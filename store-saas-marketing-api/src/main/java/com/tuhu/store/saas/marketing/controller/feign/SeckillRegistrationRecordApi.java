@@ -3,15 +3,22 @@ package com.tuhu.store.saas.marketing.controller.feign;
 import com.alibaba.fastjson.JSONObject;
 import com.mengfan.common.response.fianace.PaymentResponse;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -26,6 +33,18 @@ public class SeckillRegistrationRecordApi {
 
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+
+    @PostMapping("/orderAdd")
+    @ApiOperation("H5、创建秒杀订单")
+    public BizBaseResponse<Map<String, Object>> customerActivityOrderAdd(@Validated @RequestBody SeckillRecordAddReq req) {
+        //创建活动订单、待收单
+        if (Objects.isNull(req.getStoreId()) || Objects.isNull(req.getTenantId())) {
+            throw new StoreSaasMarketingException("请求参数异常！");
+        }
+        Map<String, Object> mapResult = seckillRegistrationRecordService.customerActivityOrderAdd(req, ShoppingPlatformEnum.H5);
+        return new BizBaseResponse(mapResult);
+    }
 
 
     /**

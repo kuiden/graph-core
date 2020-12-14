@@ -5,6 +5,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.annotation.EndUserApiIdempotent;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.controller.mini.EndUserApi;
+import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
@@ -26,6 +27,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -103,7 +105,7 @@ public class SeckillActivityMinController extends EndUserApi {
     }
 
     @PostMapping("/customer/orderAdd")
-    @ApiOperation("创建秒杀订单")
+    @ApiOperation("小程序抢购、创建秒杀订单")
     @EndUserApiIdempotent(lockTime = 2)
     public BizBaseResponse customerActivityOrderAdd(@Validated @RequestBody SeckillRecordAddReq req) {
         req.setStoreId(super.getStoreId());
@@ -112,8 +114,8 @@ public class SeckillActivityMinController extends EndUserApi {
         req.setCustomerName(super.getName());
         req.setOpenId(super.getOpenId());
         //创建活动订单、待收单
-        seckillRegistrationRecordService.customerActivityOrderAdd(req);
-        return new BizBaseResponse();
+        Map<String, Object> mapResult =seckillRegistrationRecordService.customerActivityOrderAdd(req, ShoppingPlatformEnum.WECHAT_APPLET);
+        return new BizBaseResponse(mapResult);
     }
 
     @PostMapping("/customer/remindAdd")

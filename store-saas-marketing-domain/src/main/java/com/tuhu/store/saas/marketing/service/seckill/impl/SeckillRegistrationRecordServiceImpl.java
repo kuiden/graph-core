@@ -23,6 +23,7 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
 import com.tuhu.store.saas.marketing.enums.SeckillActivitySellTypeEnum;
 import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.enums.SeckillRegistrationRecordPayStatusEnum;
+import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ClientEventRecordMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillRegistrationRecordMapper;
@@ -265,10 +266,11 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     @Transactional(rollbackFor = Exception.class)
     @DistributedLock(key = "#req.seckillActivityId + #req.buyerPhoneNumber")
-    public void customerActivityOrderAdd(SeckillRecordAddReq req) {
+    public Map<String, Object> customerActivityOrderAdd(SeckillRecordAddReq req, ShoppingPlatformEnum shoppingPlatformEnum) {
+        Map<String, Object> returnMap = com.google.common.collect.Maps.newHashMap();
         log.info("customerActivityOrderAdd：{}", JSON.toJSONString(req));
         //校验
-        this.checkSeckillRecordAddReqParam(req);
+        this.checkSeckillRecordAddReqParam(req, shoppingPlatformEnum);
 
         Long storeId = req.getStoreId();
         //生成秒杀活动编码
@@ -304,7 +306,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                     throw new StoreSaasMarketingException("根据秒杀订单新建交易单失败");
                 }
                 //支付
-                payService.getPayAuthToken(seckillRegistrationRecord, tradeOrderId);
+                returnMap = payService.getPayAuthToken(seckillRegistrationRecord, tradeOrderId);
             } catch (Exception e) {
                 //如果发生异常后 放上释放锁
                 storeRedisUtils.releaseLock(seckillActivityCode, obj.toString());
@@ -314,6 +316,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         } else {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.TOO_MANY_REQUEST.getDesc());
         }
+        return returnMap;
     }
 
     @Override
@@ -759,12 +762,24 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
 
-    private void checkSeckillRecordAddReqParam(SeckillRecordAddReq req) {
+    private void checkSeckillRecordAddReqParam(SeckillRecordAddReq req, ShoppingPlatformEnum shoppingPlatformEnum) {
         if (Objects.isNull(req.getQuantity()) || req.getQuantity() < 1) {
             throw new StoreSaasMarketingException("抢购数量不能小于1！");
         }
-        //判断活动是否开启或者已结束
-        SeckillActivity seckillActivity = seckillActivityService.check(req.getSeckillActivityId(), Boolean.FALSE);
+        if (StringUtils.isBlank(req.getSeckillActivityId())) {
+            throw new StoreSaasMarketingException("活动ID不能为空");
+        }
+        SeckillActivity seckillActivity = null;
+        if (shoppingPlatformEnum == ShoppingPlatformEnum.WECHAT_APPLET) {
+            //判断活动是否开启或者已结束
+            seckillActivity = seckillActivityService.check(req.getSeckillActivityId(), Boolean.FALSE);
+        } else {
+            seckillActivity = seckillActivityService.selectById(req.getSeckillActivityId());
+            if (Objects.isNull(seckillActivity)) {
+                throw new StoreSaasMarketingException("活动不存在");
+            }
+        }
+
         if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
             throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.WSJ.getStatusName());
         } else if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
@@ -897,11 +912,13 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     private Map<String, String> addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
         Map<String, String> maps = Maps.newHashMap();
         if (seckillRegistrationRecord.getBuyerPhoneNumber().equals(seckillRegistrationRecord.getUserPhoneNumber())) {
-            CustomerReq customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            String customerName = StringUtils.isBlank(seckillRegistrationRecord.getCustomerName()) ? "空" : seckillRegistrationRecord.getCustomerName();
+            CustomerReq customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), customerName, seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
         } else {
             CustomerReq customerReq = null;
-            customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), seckillRegistrationRecord.getCustomerName(), seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            String customerName = StringUtils.isBlank(seckillRegistrationRecord.getCustomerName()) ? "空" : seckillRegistrationRecord.getCustomerName();
+            customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), customerName, seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), customerReq.getId());
             customerReq = this.remoteAddCustomer(seckillRegistrationRecord.getUserPhoneNumber(), "空", seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getUserPhoneNumber(), customerReq.getId());
