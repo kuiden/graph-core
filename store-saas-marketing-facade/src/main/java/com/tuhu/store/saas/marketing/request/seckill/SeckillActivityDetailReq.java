@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.request.seckill;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -13,6 +14,7 @@ import java.io.Serializable;
 public class SeckillActivityDetailReq implements Serializable {
 
     @ApiModelProperty("活动id")
+    @NotNull(message = "活动id不能为空")
     private String seckillActivityId;
 
     private Long storeId;
@@ -20,6 +22,8 @@ public class SeckillActivityDetailReq implements Serializable {
     private Long tenantId;
 
     private String customerId;
+
+    private String customerPhoneNumber;
 
     //页码
     private Integer pageNum = 1;
