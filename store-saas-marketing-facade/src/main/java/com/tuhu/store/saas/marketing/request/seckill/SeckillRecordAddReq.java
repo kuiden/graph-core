@@ -60,8 +60,10 @@ public class SeckillRecordAddReq implements Serializable {
     @ApiModelProperty("微信openId")
     private String openId;
 
+    @ApiModelProperty("门店id")
     private Long storeId;
 
+    @ApiModelProperty("企业id")
     private Long tenantId;
 
 }

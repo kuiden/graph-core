@@ -677,7 +677,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         }
         if (!flag) {
             //C端
-            if (!EndUserContextHolder.getStoreId().equals(activity.getStoreId())) {
+            if (null != EndUserContextHolder.getStoreId() && !EndUserContextHolder.getStoreId().equals(activity.getStoreId())) {
                 throw new StoreSaasMarketingException("非本店活动");
             }
         }
