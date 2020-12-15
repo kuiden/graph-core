@@ -335,11 +335,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             for (SeckillActivity seckillActivity : activityList) {
                 SeckillActivityListResp resp = new SeckillActivityListResp();
                 BeanUtils.copyProperties(seckillActivity, resp);
-                if (resp.getStatus().equals(SeckillActivityStatusEnum.SJ.getStatus())) {
-                    resp.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
-                } else if (resp.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
-                    resp.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
-                }
+                SeckillActivityStatusEnum seckillActivityStatusEnum = this.getSeckillActivityStatus(seckillActivity);
+                resp.setStatus(seckillActivityStatusEnum.getStatus());
+                resp.setStatusName(seckillActivityStatusEnum.getStatusName());
                 resp.setTotalNumber(seckillActivity.getSellNumber());
                 //计算已售出数量
                 if (activityIdNumMap.containsKey(seckillActivity.getId())) {
@@ -351,6 +349,26 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 }
                 result.add(resp);
             }
+        }
+        return result;
+    }
+
+    //获取当前活动状态
+    private SeckillActivityStatusEnum getSeckillActivityStatus(SeckillActivity seckillActivity){
+        SeckillActivityStatusEnum result;
+        Date now = new Date();
+        if (seckillActivity.getStatus().equals(9)) {
+            //手动下架
+            result = SeckillActivityStatusEnum.XJ;
+        } else if (seckillActivity.getStartTime().compareTo(now) > 0) {
+            //未开始
+            result = SeckillActivityStatusEnum.WSJ;
+        } else if (seckillActivity.getEndTime().compareTo(now) >= 0) {
+            //进行中
+            result = SeckillActivityStatusEnum.SJ;
+        } else {
+            //已结束
+            result = SeckillActivityStatusEnum.XJ;
         }
         return result;
     }
@@ -383,19 +401,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             result.setBuyNumber(hasBuyNumber);
         }
         //查询活动状态
-        Date now = new Date();
-        if (seckillActivity.getStatus().equals(9)) {
-            result.setStatusName(SeckillActivityStatusEnum.XJ.getStatusName());
-        } else if (seckillActivity.getStartTime().compareTo(now) > 0) {
-            result.setStatus(0); //未开始
-            result.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
-        } else if (seckillActivity.getEndTime().compareTo(now) >= 0) {
-            result.setStatus(1);  //进行中
-            result.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
-        } else {
-            result.setStatus(9); //已结束
-            result.setStatusName(SeckillActivityStatusEnum.XJ.getStatusName());
-        }
+        SeckillActivityStatusEnum seckillActivityStatusEnum = this.getSeckillActivityStatus(seckillActivity);
+        result.setStatus(seckillActivityStatusEnum.getStatus());
+        result.setStatusName(seckillActivityStatusEnum.getStatusName());
         //查活动规则、门店介绍
         List<AttachedInfo> ruleInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
                 .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())
@@ -500,6 +508,10 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Override
     public CustomerActivityOrderDetailResp customerActivityOrderDetail(SeckillActivityDetailReq req) {
         log.info("customerActivityOrderDetail -> req:{}", req);
+        if (null == req.getCustomerId() && null == req.getCustomerPhoneNumber()){
+            log.error("参数校验失败");
+            throw new StoreSaasMarketingException("未登录");
+        }
         CustomerActivityOrderDetailResp result = new CustomerActivityOrderDetailResp();
         //查询活动详情
         SeckillActivityDetailResp activityDetailResp = this.clientActivityDetail(req);

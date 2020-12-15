@@ -321,12 +321,20 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     @Override
     public List<SeckillRegistrationRecord> customerBuyRecordList(SeckillActivityDetailReq req) {
-        SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
-        BeanUtils.copyProperties(req,seckillRegistrationRecord);
-        seckillRegistrationRecord.setBuyerPhoneNumber(req.getCustomerPhoneNumber());
-        seckillRegistrationRecord.setIsDelete(0);
-        seckillRegistrationRecord.setPayStatus(SeckillConstant.PAY_SUCCESS_STATUS);
-        List<SeckillRegistrationRecord> seckillRegistrationRecords = this.selectList(this.buildSearchParams(seckillRegistrationRecord).orderBy("payment_time", false));
+        EntityWrapper<SeckillRegistrationRecord> search = new EntityWrapper<>();
+        if (Objects.nonNull(req.getCustomerId())) {
+            search.eq(SeckillRegistrationRecord.CUSTOMER_ID, req.getCustomerId());
+        }
+        if (Objects.nonNull(req.getCustomerPhoneNumber())) {
+            search.eq(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, req.getCustomerPhoneNumber());
+        }
+        search.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, req.getSeckillActivityId())
+                .eq(SeckillRegistrationRecord.STORE_ID, req.getStoreId())
+                .eq(SeckillRegistrationRecord.TENANT_ID, req.getTenantId())
+                .eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_SUCCESS_STATUS)
+                .eq(SeckillRegistrationRecord.IS_DELETE, 0)
+                .orderBy(SeckillRegistrationRecord.PAYMENT_TIME, false);
+        List<SeckillRegistrationRecord> seckillRegistrationRecords = this.selectList(search);
         return seckillRegistrationRecords;
     }
 
