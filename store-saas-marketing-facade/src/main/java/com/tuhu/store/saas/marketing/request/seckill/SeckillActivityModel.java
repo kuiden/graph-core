@@ -170,7 +170,7 @@ public class SeckillActivityModel implements Serializable {
             cardItem.setServiceItemName(item.getGoodsName());
             cardItem.setType(item.getGoodsType().getType());
             cardItem.setPrice(item.getOriginalPrice());
-            cardItem.setFaceAmount(item.getNewPrice());
+            cardItem.setFaceAmount(item.getOriginalPrice());
             cardItem.setMeasuredQuantity(item.getItemQuantity());
             cardItem.setServiceShowName(item.getShowName());
             cardItems.add(cardItem);
