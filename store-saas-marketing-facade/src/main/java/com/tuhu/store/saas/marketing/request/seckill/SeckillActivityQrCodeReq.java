@@ -16,13 +16,10 @@ public class SeckillActivityQrCodeReq implements Serializable {
     @ApiModelProperty("秒杀活动id")
     @NotNull(message = "秒杀活动id不能为空")
     private String seckillActivityId;
-    /**
-     * 参数"activityId=222"
-     */
+    @ApiModelProperty("参数 例如: id = 111")
     private String scene;
     @ApiModelProperty("页面路径")
     private String path;
-
     @ApiModelProperty("二维码宽度")
     private Long width;
 }
