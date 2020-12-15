@@ -25,7 +25,7 @@ public class SeckillActivityResp implements Serializable {
     @ApiModelProperty(value = "秒杀活动id")
     @JsonProperty("seckillActivityId")
     private String id;
-    @ApiModelProperty(value = "状态")
+    @ApiModelProperty(value = "状态 0未开始、1进行中、9已下架")
     private Integer status;
     @ApiModelProperty(value = "状态名称")
     private String statusName;
