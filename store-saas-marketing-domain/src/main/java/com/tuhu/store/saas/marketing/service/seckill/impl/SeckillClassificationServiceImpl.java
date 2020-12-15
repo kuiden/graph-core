@@ -69,7 +69,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
 
             List<ClassificationReferNum> classificaReferNum =
                     seckillTemplateService.getClassificaReferNum(entities.stream().map(x -> x.getId().toString()).collect(Collectors.toList()), key);
-            Map<String, Integer> referMap = CollectionUtils.isNotEmpty(classificaReferNum) ? classificaReferNum.stream()
+            Map<Integer, Integer> referMap = CollectionUtils.isNotEmpty(classificaReferNum) ? classificaReferNum.stream()
                     .collect(Collectors.toMap(k -> k.getClassificationId(), v -> v.getNum(), (i, j) -> i)) : new HashMap<>(0);
             result = new ArrayList<>();
             for (SeckillClassification entity : entities) {
@@ -128,6 +128,20 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
     }
 
     @Override
+    public List<SeckillClassification> getListByIdList(List<Integer> idList, Long tenantId) {
+        List<SeckillClassification> result = null;
+        if (CollectionUtils.isNotEmpty(idList) && tenantId != null) {
+            Wrapper<SeckillClassification> wrapper = new EntityWrapper<SeckillClassification>();
+            wrapper.eq(SeckillClassification.IS_DELETE, 0);
+            wrapper.eq(SeckillClassification.TENANT_ID, tenantId);
+            wrapper.in(SeckillClassification.ID, idList);
+            wrapper.orderAsc(Lists.newArrayList(SeckillClassification.PRIORITY));
+            result = super.selectList(wrapper);
+        }
+        return result;
+    }
+
+    @Override
     @Transactional
     public Boolean del(Integer id, Long tenantId) {
         log.info("del -> req -> {}", id);
@@ -165,6 +179,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
         if (!super.updateBatchById(Lists.newArrayList(fromEntity, toEntity))) {
             throw new StoreSaasMarketingException("更新排序失败");
         }
+        this.cache.remove(tenantId);
         result = this.getAndSetCache.apply(tenantId);
         return result;
     }

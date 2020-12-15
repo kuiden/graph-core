@@ -37,7 +37,7 @@ public class AddSeckillTempReq implements Serializable {
     private String activityIntroduce;
 
     @ApiModelProperty("活动分类id")
-    private String classificationId;
+    private Integer classificationId;
 
     @ApiModelProperty("模板状态，0：禁用，1：启用")
     private Integer status = 1;
