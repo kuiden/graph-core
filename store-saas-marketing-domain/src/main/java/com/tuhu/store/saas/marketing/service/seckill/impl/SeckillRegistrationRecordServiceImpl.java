@@ -124,8 +124,6 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Autowired
     private PayService payService;
 
-    private final static String REDIS_PREFIX = RedisUtils.initInstance().getRedisPrefix();
-
     private Lock lock = new ReentrantLock();
 
     /**
@@ -580,7 +578,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      * 将未收款的待收单+交易单作废
      *
      * @param seckillRegistrationRecord
-     * @param num                       0 表示：已取消、已作废；    1 表示 ：已结清、回调(成功)   2 表示 ：已取消、回调(失败)
+     * @param state                       0 表示：已取消、已作废；    1 表示 ：已结清、回调(成功)   2 表示 ：已取消、回调(失败)
      */
     private void updateReceivingAndTradeOrder(SeckillRegistrationRecord seckillRegistrationRecord, Integer state) {
         //只有成功的时候才更新总库存、和已下单库存
@@ -789,8 +787,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      * @param seckillActivity
      */
     private void checkHasStock(SeckillRecordAddReq seckillRecordAddReq, SeckillActivity seckillActivity) {
-        String zku = REDIS_PREFIX + SeckillConstant.SECKILL_ACTIVITY_ZKC + seckillRecordAddReq.getSeckillActivityId();
-        String yxdku = REDIS_PREFIX + SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRecordAddReq.getSeckillActivityId();
+        String zku = RedisUtils.initInstance().getRedisPrefix() + SeckillConstant.SECKILL_ACTIVITY_ZKC + seckillRecordAddReq.getSeckillActivityId();
+        String yxdku = RedisUtils.initInstance().getRedisPrefix() + SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRecordAddReq.getSeckillActivityId();
 
         if (!stringRedisTemplate.hasKey(zku)) {
             stringRedisTemplate.boundValueOps(zku).increment(seckillActivity.getSellNumber());//秒杀活动总库存
@@ -834,10 +832,10 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      * @param seckillRegistrationRecord
      */
     private void updatePreNum(SeckillRegistrationRecord seckillRegistrationRecord, Integer state) {
-        String zku = REDIS_PREFIX + SeckillConstant.SECKILL_ACTIVITY_ZKC + seckillRegistrationRecord.getSeckillActivityId();
-        String yxdku = REDIS_PREFIX + SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRegistrationRecord.getSeckillActivityId();
+        String zku = RedisUtils.initInstance().getRedisPrefix() + SeckillConstant.SECKILL_ACTIVITY_ZKC + seckillRegistrationRecord.getSeckillActivityId();
+        String yxdku = RedisUtils.initInstance().getRedisPrefix() + SeckillConstant.SECKILL_ACTIVITY_YXDKC + seckillRegistrationRecord.getSeckillActivityId();
 
-        String activityId = REDIS_PREFIX + SeckillConstant.SECKILL_ACTIVITY + seckillRegistrationRecord.getSeckillActivityId();
+        String activityId = RedisUtils.initInstance().getRedisPrefix() + SeckillConstant.SECKILL_ACTIVITY + seckillRegistrationRecord.getSeckillActivityId();
         if (SeckillConstant.PAY_SUCCESS_STATUS.equals(state)) {
             List<String> delKeys = new ArrayList<>();
             Map<Object, Object> entriesMap = stringRedisTemplate.opsForHash().entries(activityId);
