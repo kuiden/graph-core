@@ -65,6 +65,12 @@ public class SeckillRegistrationRecord implements Serializable {
      */
     @TableField("customer_name")
     private String customerName;
+
+    /**
+     * 使用人客户名称
+     */
+    @TableField("user_customer_name")
+    private String userCustomerName;
     /**
      * 是否新客户 0:否 1:是
      */
@@ -86,6 +92,7 @@ public class SeckillRegistrationRecord implements Serializable {
      */
     @TableField("user_customer_id")
     private String userCustomerId;
+
     /**
      * 车牌号
      */
@@ -167,6 +174,12 @@ public class SeckillRegistrationRecord implements Serializable {
     @TableField("open_id")
     private String openId;
 
+    /**
+     * 抢购单来源  H5，WECHAT_APPLET
+     */
+    @TableField("plat_form")
+    private String platForm;
+
 
     public static final String ID = "id";
 
@@ -183,6 +196,8 @@ public class SeckillRegistrationRecord implements Serializable {
     public static final String CUSTOMER_ID = "customer_id";
 
     public static final String CUSTOMER_NAME = "customer_name";
+
+    public static final String USER_CUSTOMER_NAME = "user_customer_name";
 
     public static final String IS_NEW_CUSTOMER = "is_new_customer";
 
@@ -221,4 +236,6 @@ public class SeckillRegistrationRecord implements Serializable {
     public static final String IS_DELETE = "is_delete";
 
     public static final String OPEN_ID = "open_id";
+
+    public static final String PLAT_FORM = "plat_form";
 }

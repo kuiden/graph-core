@@ -56,7 +56,7 @@ public class SeckillTemplateController extends BaseApi {
         return BizResponse.success();
     }
 
-    @PostMapping("/detail")
+    @GetMapping("/detail")
     @ApiOperation("查询秒杀活动模板详情")
     public BizResponse<SeckillTempDetailResp> detail(@RequestParam(value = "tempId") String tempId) {
         SeckillTempDetailResp resp = seckillTemplateService.getTemplateDetail(tempId, this.getTenantId());

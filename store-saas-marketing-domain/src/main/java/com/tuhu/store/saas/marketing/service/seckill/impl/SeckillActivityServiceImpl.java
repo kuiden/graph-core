@@ -89,8 +89,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Value("${seckill.activity.expire.time:300}")
     private int SECKILL_ACTIVITY_EXPIRE_TIME; //秒杀活动，预占时间
 
-    private final static String REDIS_PREFIX = RedisUtils.initInstance().getRedisPrefix();
-
     @Autowired
     IdKeyGen idKeyGen;
 
@@ -569,9 +567,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 if (startTime.compareTo(now) > 0) {
                     // 未开始定义：开始时间大于当前时间，活动为未上架状态
                     response.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
-                } else if (now.compareTo(startTime) >= 0 && endTime.after(now)) {
+                    response.setStatus(SeckillActivityStatusEnum.WSJ.getStatus());
+                } else if (now.compareTo(startTime) >= 0 && endTime.compareTo(now) > 0) {
                     // 进行中定义：当前时间大于等于活动开始时间且小于结束时间，活动为进行中状态check
                     response.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
+                    response.setStatus(SeckillActivityStatusEnum.SJ.getStatus());
                 } else {
                     // 已结束定义：当前时间大于等于活动结束时间，活动为进行中状态
                     response.setStatusName(SeckillActivityStatusEnum.XJ.getStatusName());
@@ -589,6 +589,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
             throw new StoreSaasMarketingException("活动已下架");
         }
+        Date endTime = activity.getEndTime();
+        Date now = new Date();
+        if (endTime.compareTo(now) <= 0) {
+            throw new StoreSaasMarketingException("活动已结束");
+        }
         activity.setStatus(SeckillActivityStatusEnum.XJ.getStatus());
         activity.setUpdateTime(new Date());
         activity.setUpdateUser(UserContextHolder.getStoreUserId());
@@ -601,6 +606,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         SeckillActivity activity = check(seckillActivityId,Boolean.TRUE);
         if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
             throw new StoreSaasMarketingException("活动已下架");
+        }
+        Date endTime = activity.getEndTime();
+        Date now = new Date();
+        if (endTime.compareTo(now) <= 0) {
+            throw new StoreSaasMarketingException("活动已结束");
         }
         activity.setStatus(SeckillActivityStatusEnum.SJ.getStatus());
         activity.setUpdateTime(new Date());
@@ -729,7 +739,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         Date date = new Date();
         seckillActivityBuy.setStartTime(date);
         seckillActivityBuy.setEndTime(DateUtils.addSeconds(date, SECKILL_ACTIVITY_EXPIRE_TIME));//结束时间+1s 动态配置
-        String activityId = REDIS_PREFIX + "seckill_activity:" + seckillActivityBuy.getActivityId();
+        String activityId = RedisUtils.initInstance().getRedisPrefix() + SeckillConstant.SECKILL_ACTIVITY + seckillActivityBuy.getActivityId();
         String customerId = seckillActivityBuy.getCustomerId();
         String hk = activityId + "_" + customerId;
         redisTemplate.opsForHash().put(activityId, hk, JSON.toJSONString(seckillActivityBuy));
