@@ -89,8 +89,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Value("${seckill.activity.expire.time:300}")
     private int SECKILL_ACTIVITY_EXPIRE_TIME; //秒杀活动，预占时间
 
-    private final static String REDIS_PREFIX = RedisUtils.initInstance().getRedisPrefix();
-
     @Autowired
     IdKeyGen idKeyGen;
 
@@ -729,7 +727,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         Date date = new Date();
         seckillActivityBuy.setStartTime(date);
         seckillActivityBuy.setEndTime(DateUtils.addSeconds(date, SECKILL_ACTIVITY_EXPIRE_TIME));//结束时间+1s 动态配置
-        String activityId = REDIS_PREFIX + SeckillConstant.SECKILL_ACTIVITY + seckillActivityBuy.getActivityId();
+        String activityId = RedisUtils.initInstance().getRedisPrefix() + SeckillConstant.SECKILL_ACTIVITY + seckillActivityBuy.getActivityId();
         String customerId = seckillActivityBuy.getCustomerId();
         String hk = activityId + "_" + customerId;
         redisTemplate.opsForHash().put(activityId, hk, JSON.toJSONString(seckillActivityBuy));
