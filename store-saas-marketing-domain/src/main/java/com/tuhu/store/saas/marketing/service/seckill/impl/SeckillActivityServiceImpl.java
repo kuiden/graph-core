@@ -582,7 +582,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         Date endTime = activity.getEndTime();
         Date now = new Date();
         if (endTime.compareTo(now) <= 0) {
-            throw new StoreSaasMarketingException("活动已下架");
+            throw new StoreSaasMarketingException("活动已结束");
         }
         activity.setStatus(SeckillActivityStatusEnum.XJ.getStatus());
         activity.setUpdateTime(new Date());
@@ -600,7 +600,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         Date endTime = activity.getEndTime();
         Date now = new Date();
         if (endTime.compareTo(now) <= 0) {
-            throw new StoreSaasMarketingException("活动已下架");
+            throw new StoreSaasMarketingException("活动已结束");
         }
         activity.setStatus(SeckillActivityStatusEnum.SJ.getStatus());
         activity.setUpdateTime(new Date());
