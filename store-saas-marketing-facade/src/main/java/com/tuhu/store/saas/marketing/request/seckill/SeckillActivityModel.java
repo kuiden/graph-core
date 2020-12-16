@@ -101,10 +101,10 @@ public class SeckillActivityModel implements Serializable {
                 result = "当前活动已经开始或者结束 不能修改";
                 return result;
             }
-            if (!entity.getStatus().equals(Integer.valueOf(9))) {
+            /*if (!entity.getStatus().equals(Integer.valueOf(9))) {
                 result = "当前活动不是处于下架架状态 无法修改";
                 return result;
-            }
+            }*/
             if (entity.getIsDelete().equals(Integer.valueOf(1))) {
                 result = "当前活动处于已经删除状态 不允许修改";
                 return result;
