@@ -666,6 +666,36 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     }
 
     @Override
+    public String qrCodeUrlMin(SeckillActivityQrCodeReq request) {
+        log.info("qrCodeUrlMin{}", JSON.toJSONString(request));
+        if (null == request || StringUtils.isBlank(request.getSeckillActivityId())) {
+            throw new StoreSaasMarketingException("活动id不能为空");
+        }
+        SeckillActivity activity = this.selectById(request.getSeckillActivityId());
+        String wxQrUrl = activity.getWxQrUrl();
+        if (StringUtils.isNotBlank(wxQrUrl)) {
+            return wxQrUrl;
+        }
+        return getWxQrUrlMin(request);
+    }
+
+    /**
+     * 获取微信二维码
+     *
+     * @param request
+     * @return
+     */
+    private String getWxQrUrlMin(SeckillActivityQrCodeReq request) {
+        String wxQrUrlMin = miniAppService.getQrCodeUrl(request.getScene(), request.getPath(), request.getWidth());
+        log.info("getWxQrUrlMin{}", wxQrUrlMin);
+        if (StringUtils.isBlank(wxQrUrlMin)) {
+            throw new StoreSaasMarketingException("获取二维码失败");
+        }
+        return wxQrUrlMin;
+    }
+
+
+    @Override
     public PageInfo<SeckillRegistrationRecordResp> pageBuyOrBrowseList(SeckillActivityReq req) {
         check(req.getSeckillActivityId(),Boolean.TRUE);
         if (req.getStatus().equals(0)) {//购买记录

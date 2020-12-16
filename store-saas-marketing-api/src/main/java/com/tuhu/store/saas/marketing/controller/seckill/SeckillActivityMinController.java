@@ -8,12 +8,10 @@ import com.tuhu.store.saas.marketing.controller.mini.EndUserApi;
 import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRemindAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.*;
-import com.tuhu.store.saas.marketing.response.seckill.CustomerActivityOrderListResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
-import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityListResp;
 import com.tuhu.store.saas.marketing.service.seckill.PayService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityRemindService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
@@ -126,6 +124,13 @@ public class SeckillActivityMinController extends EndUserApi {
         seckillActivityRemindService.customerActivityRemindAdd(req);
         return new BizBaseResponse();
     }
+
+    @PostMapping(value = "/customer/qrCodeUrl")
+    @ApiOperation(value = "活动二维码url")
+    public BizBaseResponse<String> qrCodeUrl(@Validated @RequestBody SeckillActivityQrCodeReq request){
+        return new BizBaseResponse(seckillActivityService.qrCodeUrlMin(request));
+    }
+
 
 }
 
