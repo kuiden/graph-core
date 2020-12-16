@@ -672,6 +672,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             throw new StoreSaasMarketingException("活动id不能为空");
         }
         SeckillActivity activity = this.selectById(request.getSeckillActivityId());
+        if (null == activity) {
+            throw new StoreSaasMarketingException("活动不存在");
+        }
         String wxQrUrl = activity.getWxQrUrl();
         if (StringUtils.isNotBlank(wxQrUrl)) {
             return wxQrUrl;
