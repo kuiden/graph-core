@@ -125,12 +125,6 @@ public class SeckillActivityMinController extends EndUserApi {
         return new BizBaseResponse();
     }
 
-    @PostMapping(value = "/customer/qrCodeUrl")
-    @ApiOperation(value = "活动二维码url")
-    public BizBaseResponse<String> qrCodeUrl(@Validated @RequestBody SeckillActivityQrCodeReq request){
-        return new BizBaseResponse(seckillActivityService.qrCodeUrlMin(request));
-    }
-
 
 }
 

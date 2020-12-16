@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.controller.feign;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.response.seckill.CustomerActivityOrderDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRecordListResp;
@@ -12,6 +13,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,6 +47,14 @@ public class SeckillFeignApi {
     @ApiOperation("秒杀订单详情")
     public BizBaseResponse<CustomerActivityOrderDetailResp> customerActivityOrderDetail(@RequestBody SeckillActivityDetailReq req) {
         return new BizBaseResponse(seckillActivityService.customerActivityOrderDetail(req));
+    }
+
+
+
+    @PostMapping(value = "/customer/qrCodeUrl")
+    @ApiOperation(value = "活动二维码url")
+    public BizBaseResponse<String> qrCodeUrl(@Validated @RequestBody SeckillActivityQrCodeReq request){
+        return new BizBaseResponse(seckillActivityService.qrCodeUrlMin(request));
     }
 
 }
