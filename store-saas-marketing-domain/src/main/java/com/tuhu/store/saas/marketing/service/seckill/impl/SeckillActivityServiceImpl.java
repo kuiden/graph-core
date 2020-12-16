@@ -589,11 +589,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
             throw new StoreSaasMarketingException("活动已下架");
         }
-        Date endTime = activity.getEndTime();
-        Date now = new Date();
-        if (endTime.compareTo(now) <= 0) {
-            throw new StoreSaasMarketingException("活动已结束");
-        }
         activity.setStatus(SeckillActivityStatusEnum.XJ.getStatus());
         activity.setUpdateTime(new Date());
         activity.setUpdateUser(UserContextHolder.getStoreUserId());
@@ -604,9 +599,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Transactional
     public boolean onShelf(String seckillActivityId) {
         SeckillActivity activity = check(seckillActivityId,Boolean.TRUE);
-        if (SeckillActivityStatusEnum.XJ.getStatus().equals(activity.getStatus())) {
-            throw new StoreSaasMarketingException("活动已下架");
-        }
         Date endTime = activity.getEndTime();
         Date now = new Date();
         if (endTime.compareTo(now) <= 0) {
