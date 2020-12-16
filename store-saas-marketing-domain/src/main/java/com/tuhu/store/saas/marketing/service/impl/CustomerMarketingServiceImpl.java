@@ -326,8 +326,8 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
 ////                    srcPrice = srcPrice.add(itemPrice);
 ////                }
 //            }
-            BigDecimal activityPrice = seckillActivityModel.getNewPrice() != null ? seckillActivityModel.getNewPrice():new BigDecimal("0");
-            BigDecimal srcPrice = seckillActivityModel.getOriginalPrice() != null ? seckillActivityModel.getOriginalPrice():new BigDecimal("0");
+            BigDecimal activityPrice = seckillActivityModel.getNewPrice() != null ? seckillActivityModel.getNewPrice():new BigDecimal("0").setScale(2);
+            BigDecimal srcPrice = seckillActivityModel.getOriginalPrice() != null ? seckillActivityModel.getOriginalPrice():new BigDecimal("0").setScale(2);
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
             params.add(activityPrice.toString()+"抵"+srcPrice.toString());
