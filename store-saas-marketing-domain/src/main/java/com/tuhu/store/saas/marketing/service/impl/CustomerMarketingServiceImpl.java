@@ -330,7 +330,7 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
             BigDecimal srcPrice = seckillActivityModel.getOriginalPrice() != null ? seckillActivityModel.getOriginalPrice():new BigDecimal("0").setScale(2);
             //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
             //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
-            params.add(activityPrice.toString()+"抵"+srcPrice.toString());
+            params.add(activityPrice.setScale(2, BigDecimal.ROUND_DOWN).toString()+"抵"+srcPrice.setScale(2, BigDecimal.ROUND_DOWN).toString());
             params.add(storeDTO.getClientAppointPhone());
             params.add(seckillActivityModel.getActivityTitle());
             //生成短连接
