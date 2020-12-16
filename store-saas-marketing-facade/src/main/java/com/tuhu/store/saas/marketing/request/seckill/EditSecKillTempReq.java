@@ -20,7 +20,7 @@ public class EditSecKillTempReq implements Serializable {
 
     private static final long serialVersionUID = 1l;
 
-    @ApiModelProperty("秒杀活动模板id")
+    @ApiModelProperty(value = "秒杀活动模板id", required = true)
     @NotBlank(message = "模板id不能为空")
     private String id;
 
@@ -47,7 +47,8 @@ public class EditSecKillTempReq implements Serializable {
     @ApiModelProperty("手动排序字段")
     private Integer sort;
 
-    @ApiModelProperty("删除标识 0未删除 1删除")
+    @ApiModelProperty(value = "删除标识 0未删除 1删除", required = true)
+    @NotNull(message = "删除标志不能为空")
     private Integer isDelete;
 
     @ApiModelProperty(value = "秒杀活动模板明细", required = true)
