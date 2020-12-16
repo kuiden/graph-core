@@ -62,10 +62,10 @@ public class SecKillHandler extends AbstractMarketingHandler {
             //发送时间小于当前时间
             throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "发送时间小于当前时间");
         }
-        if (addReq.getSendTime().before(secKill.getStartTime())) {
-            //活动还没有开始
-            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "发送时间不能小于秒杀活动开始时间");
-        }
+//        if (addReq.getSendTime().before(secKill.getStartTime())) {
+//            //活动还没有开始
+//            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "发送时间不能小于秒杀活动开始时间");
+//        }
         List<CustomerAndVehicleReq> customerList = getCustomerAndVehicleReqList(addReq, customerIds);
         result.setCustomerList(customerList);
         result.setSecKill(secKill);

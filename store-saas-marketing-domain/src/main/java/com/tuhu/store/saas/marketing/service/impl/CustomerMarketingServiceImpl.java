@@ -489,10 +489,10 @@ public class CustomerMarketingServiceImpl implements ICustomerMarketingService {
                 //发送时间小于当前时间
                 throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间小于当前时间");
             }
-            if(addReq.getSendTime().before(activity.getStartTime())){
-                //活动还没有开始
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间不能小于秒杀活动开始时间");
-            }
+//            if(addReq.getSendTime().before(secKill.getStartTime())){
+//                //活动还没有开始
+//                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"发送时间不能小于秒杀活动开始时间");
+//            }
         }
 
         //根据任务中记录的发送对象信息查询出客户列表
