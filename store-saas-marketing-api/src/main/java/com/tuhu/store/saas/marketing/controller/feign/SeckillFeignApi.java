@@ -11,6 +11,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,5 +52,12 @@ public class SeckillFeignApi {
         return new BizBaseResponse<>(seckillActivityService.activityDetailPreview(id));
     }
 
+
+    @PostMapping(value = "/customer/qrCodeImage",produces = MediaType.IMAGE_JPEG_VALUE)
+    @ApiOperation(value = "活动二维码图片流")
+    @ResponseBody
+    public byte[] qrCodeByte(@Validated @RequestBody SeckillActivityQrCodeReq request){
+        return seckillActivityService.qrCodeImage(request);
+    }
 
 }

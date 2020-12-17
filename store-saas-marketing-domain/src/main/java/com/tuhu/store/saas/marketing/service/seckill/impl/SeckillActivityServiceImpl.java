@@ -732,6 +732,19 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     }
 
     @Override
+    public byte[] qrCodeImage(SeckillActivityQrCodeReq request) {
+        log.info("qrCodeUrlMin{}", JSON.toJSONString(request));
+        if (null == request || StringUtils.isBlank(request.getSeckillActivityId())) {
+            throw new StoreSaasMarketingException("活动id不能为空");
+        }
+        SeckillActivity activity = this.selectById(request.getSeckillActivityId());
+        if (null == activity) {
+            throw new StoreSaasMarketingException("活动不存在");
+        }
+        return miniAppService.getQrCodeByte(request.getScene(), request.getPath(), request.getWidth());
+    }
+
+    @Override
     public String qrCodeUrlMin(SeckillActivityQrCodeReq request) {
         log.info("qrCodeUrlMin{}", JSON.toJSONString(request));
         if (null == request || StringUtils.isBlank(request.getSeckillActivityId())) {

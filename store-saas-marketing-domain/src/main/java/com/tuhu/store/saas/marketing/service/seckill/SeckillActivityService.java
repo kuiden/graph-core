@@ -122,6 +122,15 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      */
     String qrCodeUrlMin(SeckillActivityQrCodeReq request);
 
+
+    /**
+     * 活动二位码url
+     *
+     * @param request
+     * @return
+     */
+    byte[]  qrCodeImage(SeckillActivityQrCodeReq request);
+
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表
      *

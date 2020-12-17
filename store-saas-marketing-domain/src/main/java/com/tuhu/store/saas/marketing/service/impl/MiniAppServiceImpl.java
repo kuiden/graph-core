@@ -65,6 +65,31 @@ public class MiniAppServiceImpl implements MiniAppService {
     @Autowired
     private IEndUserService iEndUserService;
 
+
+    /**
+     * 获取小程序码图片
+     *
+     * @param scene
+     * @param path
+     * @param width
+     * @return
+     */
+    @Override
+    public byte[] getQrCodeByte(String scene, String path, Long width) {
+        String  accessTokenUrl=  "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s";
+        accessTokenUrl = String.format(accessTokenUrl, appid, appSecret);
+        URI url = UriComponentsBuilder.fromUriString(accessTokenUrl).build().toUri();
+        String  wechatRespon = restTemplate.getForEntity(url, String.class).getBody();
+        JSONObject  wechatResponJson = JSONObject.parseObject(wechatRespon);
+        String token= wechatResponJson.getString("access_token");
+        log.info("c端小程序token:{}",token);
+        /*
+         * 2、调微信api,根据当前各参数生成二维码图片buffer,并转base64编码
+         */
+        byte[] result = WxUtil.getQrCode(token, scene, path, width);
+        return result;
+    }
+
     /**
      * 获取小程序码图片
      *
