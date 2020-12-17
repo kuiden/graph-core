@@ -79,6 +79,12 @@ public class LogRecordAspect {
             response.setCode(4000);
             response.setMessage(e.getErrorMessage());
             result = response;
+        } catch (MarketingException e){
+            log.error(request.getRequestURI(), e);
+            BizBaseResponse response = new BizBaseResponse();
+            response.setCode(4000);
+            response.setMessage(e.getMessage());
+            result = response;
         } catch (Exception e){
             log.error(request.getRequestURI(),e);
             BizBaseResponse response = new BizBaseResponse();
