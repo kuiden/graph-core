@@ -17,4 +17,7 @@ public class SeckillTempPicResp implements Serializable {
 
     @ApiModelProperty("活动模板图片")
     private String picUrl;
+
+    @ApiModelProperty("活动名称")
+    private String activityTitle;
 }

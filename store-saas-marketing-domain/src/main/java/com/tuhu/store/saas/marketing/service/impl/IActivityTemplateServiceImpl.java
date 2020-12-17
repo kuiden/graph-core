@@ -135,6 +135,7 @@ public class IActivityTemplateServiceImpl implements IActivityTemplateService {
                 SeckillTempPicResp pic = new SeckillTempPicResp();
                 pic.setTempId(l.getId().toString());
                 pic.setPicUrl(l.getPicUrl());
+                pic.setActivityTitle(l.getActivityTitle());
                 if (StringUtils.isNotBlank(l.getPicUrl())) {
                     picRespList.add(pic);
                 }
