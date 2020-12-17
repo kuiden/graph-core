@@ -3,9 +3,9 @@ package com.tuhu.store.saas.marketing.config.log;
 import com.alibaba.fastjson.JSON;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
-import com.tuhu.springcloud.common.constant.ApiCommonConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SysReqLog;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.remote.CoreUser;
 import com.tuhu.store.saas.marketing.sys.SysReqLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,6 @@ import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -79,6 +78,12 @@ public class LogRecordAspect {
             BizBaseResponse response = new BizBaseResponse();
             response.setCode(4000);
             response.setMessage(e.getErrorMessage());
+            result = response;
+        } catch (MarketingException e){
+            log.error(request.getRequestURI(), e);
+            BizBaseResponse response = new BizBaseResponse();
+            response.setCode(4000);
+            response.setMessage(e.getMessage());
             result = response;
         } catch (Exception e){
             log.error(request.getRequestURI(),e);
