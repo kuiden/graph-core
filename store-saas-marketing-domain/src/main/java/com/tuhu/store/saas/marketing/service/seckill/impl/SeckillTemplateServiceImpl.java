@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.SeckillClassification;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplate;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplateItem;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillTemplateMapper;
 import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSecKillTempReq;
@@ -59,11 +60,15 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         EntityWrapper<SeckillTemplate> wrapper = new EntityWrapper<>();
         wrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
         wrapper.orderBy(SeckillTemplate.SORT, false);
-        SeckillTemplate template = this.selectOne(wrapper);
-        if (template == null) {
+        List<SeckillTemplate> templateList = this.selectList(wrapper);
+        if (CollectionUtils.isEmpty(templateList)) {
             seckillTemplate.setSort(1);
         }else {
-            seckillTemplate.setSort(template.getSort() + 1);
+            seckillTemplate.setSort(templateList.get(0).getSort() + 1);
+            if (CollectionUtils.isNotEmpty(templateList.parallelStream().filter(t->t.getActivityTitle().equals(req.getActivityTitle()))
+                .collect(Collectors.toList()))) {
+                throw new MarketingException("已存在同名称模板");
+            }
         }
         this.insert(seckillTemplate);
         seckillTemplateItemService.addSeckillTempItem(req.getAddTempItemList(), seckillTemplate.getId(), tenantId, userId);
@@ -127,6 +132,14 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
     @Override
     @Transactional
     public boolean editTemplate(EditSecKillTempReq req, Long tenantId, String userId) {
+        EntityWrapper<SeckillTemplate> wra = new EntityWrapper<>();
+        wra.eq(SeckillTemplate.TENANT_ID, tenantId);
+        wra.orderBy(SeckillTemplate.SORT, false);
+        List<SeckillTemplate> templateList = this.selectList(wra);
+        if (CollectionUtils.isNotEmpty(templateList) && CollectionUtils.isNotEmpty(templateList.parallelStream().filter(t->t.getActivityTitle().equals(req.getActivityTitle()))
+                .collect(Collectors.toList()))) {
+            throw new MarketingException("已存在同名称模板");
+        }
         EntityWrapper<SeckillTemplate> wrapper = new EntityWrapper<>();
         wrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
         wrapper.eq(SeckillTemplate.ID, req.getId());
