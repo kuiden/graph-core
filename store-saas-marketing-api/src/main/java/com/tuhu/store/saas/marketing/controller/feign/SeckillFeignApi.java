@@ -45,9 +45,9 @@ public class SeckillFeignApi {
         return new BizBaseResponse(seckillActivityService.qrCodeUrlMin(request));
     }
 
-    @PostMapping(value = "/getCache")
+    @GetMapping(value = "/getCache")
     @ApiOperation(value = "活动预览")
-    public BizBaseResponse<SeckillActivityDetailResp> getCache(@RequestBody String id) {
+    public BizBaseResponse<SeckillActivityDetailResp> getCache(@RequestParam String id) {
         return new BizBaseResponse<>(seckillActivityService.activityDetailPreview(id));
     }
 

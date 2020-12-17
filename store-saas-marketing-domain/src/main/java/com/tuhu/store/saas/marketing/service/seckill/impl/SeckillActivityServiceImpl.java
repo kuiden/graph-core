@@ -390,8 +390,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 salesNumber += record.getQuantity().intValue();
                 if (null != req.getCustomerId() && record.getCustomerId().equals(req.getCustomerId())) {
                     hasBuyNumber += record.getQuantity().intValue();
-                }
-                if (null != req.getCustomerPhoneNumber() && record.getBuyerPhoneNumber().equals(req.getCustomerPhoneNumber())){
+                } else if (null != req.getCustomerPhoneNumber() && record.getBuyerPhoneNumber().equals(req.getCustomerPhoneNumber())){
                     hasBuyNumber += record.getQuantity().intValue();
                 }
             }
