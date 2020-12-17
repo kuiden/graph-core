@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.dataobject.SeckillTemplate;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplateItem;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillTemplateMapper;
+import com.tuhu.store.saas.marketing.po.ActivityTemplate;
 import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSecKillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.QuerySeckillTempListReq;
@@ -15,6 +16,8 @@ import com.tuhu.store.saas.marketing.request.seckill.SortSeckillTempReq;
 import com.tuhu.store.saas.marketing.response.ClassificationReferNum;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempItemResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillTempPicResp;
+import com.tuhu.store.saas.marketing.service.IActivityTemplateService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillClassificationService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateService;
@@ -47,6 +50,9 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
     private SeckillClassificationService seckillClassificationService;
 
     @Autowired
+    private IActivityTemplateService activityTemplateService;
+
+    @Autowired
     private IdKeyGen idKeyGen;
 
     @Override
@@ -59,6 +65,8 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         seckillTemplate.setId(idKeyGen.generateId(tenantId));
         EntityWrapper<SeckillTemplate> wrapper = new EntityWrapper<>();
         wrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
+        wrapper.eq(SeckillTemplate.IS_DELETE, 0);
+        wrapper.eq(SeckillTemplate.STATUS, 1);
         wrapper.orderBy(SeckillTemplate.SORT, false);
         List<SeckillTemplate> templateList = this.selectList(wrapper);
         if (CollectionUtils.isEmpty(templateList)) {
@@ -134,6 +142,8 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
     public boolean editTemplate(EditSecKillTempReq req, Long tenantId, String userId) {
         EntityWrapper<SeckillTemplate> wra = new EntityWrapper<>();
         wra.eq(SeckillTemplate.TENANT_ID, tenantId);
+        wra.eq(SeckillTemplate.IS_DELETE, 0);
+        wra.eq(SeckillTemplate.STATUS, 1);
         wra.orderBy(SeckillTemplate.SORT, false);
         List<SeckillTemplate> templateList = this.selectList(wra);
         if (CollectionUtils.isNotEmpty(templateList) && CollectionUtils.isNotEmpty(templateList.parallelStream().filter(t->t.getActivityTitle().equals(req.getActivityTitle()))
@@ -201,6 +211,32 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
     @Override
     public List<ClassificationReferNum> getClassificaReferNum(List<String> ids, Long tenantId) {
         return baseMapper.getClassificaReferNum(tenantId, ids);
+    }
+
+    @Override
+    public List<SeckillTempPicResp> getTempPicUrlList(Long tenantId) {
+        EntityWrapper<SeckillTemplate> wrapper = new EntityWrapper<>();
+        wrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
+        wrapper.eq(SeckillTemplate.STATUS, 1);
+        wrapper.eq(SeckillTemplate.IS_DELETE, 0);
+        wrapper.orderBy(SeckillTemplate.SORT, false);
+        List<SeckillTemplate> list = this.selectList(wrapper);
+        List<SeckillTempPicResp> picRespList = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(l->{
+                SeckillTempPicResp pic = new SeckillTempPicResp();
+                pic.setTempId(l.getId().toString());
+                pic.setPicUrl(l.getPicUrl());
+                if (StringUtils.isNotBlank(l.getPicUrl())) {
+                    picRespList.add(pic);
+                }
+            });
+        }
+        List<SeckillTempPicResp> activityPicList = activityTemplateService.getTempPicUrlList();
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(activityPicList)) {
+            picRespList.addAll(activityPicList);
+        }
+        return picRespList;
     }
 
 }

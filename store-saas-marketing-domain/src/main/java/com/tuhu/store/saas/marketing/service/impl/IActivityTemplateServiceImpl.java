@@ -1,15 +1,18 @@
 package com.tuhu.store.saas.marketing.service.impl;
 
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.beust.jcommander.internal.Lists;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ActivityTemplateMapper;
 import com.tuhu.store.saas.marketing.po.ActivityTemplate;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateAdd;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateRequest;
 import com.tuhu.store.saas.marketing.request.ChangeSortAcTemplateReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillTempPicResp;
 import com.tuhu.store.saas.marketing.service.IActivityTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -118,5 +121,25 @@ public class IActivityTemplateServiceImpl implements IActivityTemplateService {
         curTemplate.setSort(temp);
         activityTemplateMapper.updateById(swapTemplate);
         activityTemplateMapper.updateById(curTemplate);
+    }
+
+    @Override
+    public List<SeckillTempPicResp> getTempPicUrlList() {
+        EntityWrapper<ActivityTemplate> wrapper = new EntityWrapper<>();
+        wrapper.eq("status", 1);
+        wrapper.orderBy("sort",false);
+        List<ActivityTemplate> list = activityTemplateMapper.selectList(wrapper);
+        List<SeckillTempPicResp> picRespList = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(l->{
+                SeckillTempPicResp pic = new SeckillTempPicResp();
+                pic.setTempId(l.getId().toString());
+                pic.setPicUrl(l.getPicUrl());
+                if (StringUtils.isNotBlank(l.getPicUrl())) {
+                    picRespList.add(pic);
+                }
+            });
+        }
+        return picRespList;
     }
 }
