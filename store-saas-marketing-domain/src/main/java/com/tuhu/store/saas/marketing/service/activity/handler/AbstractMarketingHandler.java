@@ -11,19 +11,12 @@ import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerMarketingMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.StoreCustomerGroupRelationMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
-import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.CustomerAndVehicleReq;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
-import com.tuhu.store.saas.marketing.response.ActivityItemResp;
-import com.tuhu.store.saas.marketing.response.ActivityResp;
-import com.tuhu.store.saas.marketing.response.CouponResp;
-import com.tuhu.store.saas.marketing.service.*;
+import com.tuhu.store.saas.marketing.service.IMarketingSendRecordService;
+import com.tuhu.store.saas.marketing.service.IMessageQuantityService;
 import com.tuhu.store.saas.marketing.service.activity.MarketingResult;
-import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.util.DateUtils;
-import com.tuhu.store.saas.user.dto.StoreDTO;
-import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -32,8 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -58,28 +49,14 @@ public abstract class AbstractMarketingHandler implements MarketingComHandler {
     private IMarketingSendRecordService iMarketingSendRecordService;
 
     @Autowired
-    private IActivityService activityService;
-
-    @Autowired
-    private ICouponService couponService;
-
-    @Autowired
     private IMessageQuantityService iMessageQuantityService;
-
-    @Autowired
-    private StoreInfoClient storeInfoClient;
 
     @Autowired
     private StoreCustomerGroupRelationMapper storeCustomerGroupRelationMapper;
 
     @Autowired
-    private IUtilityService iUtilityService;
-
-    @Autowired
     private CustomerClient customerClient;
 
-    @Autowired
-    private SeckillActivityService seckillActivityService;
 
     //根据任务中记录的发送对象信息查询出客户列表
     public List<CustomerAndVehicleReq> getCustomerAndVehicleReqList(MarketingAddReq addReq, List<String> customerIds) {
@@ -102,8 +79,9 @@ public abstract class AbstractMarketingHandler implements MarketingComHandler {
         List<CustomerAndVehicleReq> customerList = result.getCustomerList();
         //构造发送任务和发送记录
         CustomerMarketing customerMarketing = result.getCustomerMarketing();
+        String messageData = result.getMessageData();
         //messageData
-        customerMarketing.setMessageDatas(getMessageData(addReq.getStoreId(), addReq.getMarketingMethod(), addReq.getCouponOrActiveId(), addReq.getOriginUrl()));
+        customerMarketing.setMessageDatas(messageData);
         insert(customerMarketing);
         //写入记录表并将状态设为未发送
         List<MarketingSendRecord> records = new ArrayList();
@@ -173,122 +151,7 @@ public abstract class AbstractMarketingHandler implements MarketingComHandler {
         return sendObject;
     }
 
-    /**
-     * 获取短信参数信息
-     *
-     * @param storeId
-     * @param marketingMethod
-     * @param couponOrActiveId
-     * @return
-     */
-    private String getMessageData(Long storeId, Byte marketingMethod, String couponOrActiveId, String orginUrl) {
-        List<String> params = new ArrayList<>();
-        //查询门店信息
-        StoreInfoVO storeInfoVO = new StoreInfoVO();
-        storeInfoVO.setStoreId(storeId);
-        StoreDTO storeDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
-
-        if (marketingMethod.equals(Byte.valueOf("0"))) {
-            //优惠券营销
-            CouponResp coupon = couponService.getCouponDetailById(Long.valueOf(couponOrActiveId));
-            if (null == coupon || coupon.getId() == null) {
-                //禁止查询非本门店的优惠券
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "优惠券不存在");
-            }
-
-            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
-            //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
-            params.add("价值" + coupon.getContentValue().intValue() + "元" + coupon.getTitle());
-            params.add(storeDTO.getClientAppointPhone());
-            if (StringUtils.isNotBlank(orginUrl)) {
-                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
-            }
-
-
-        } else if (marketingMethod.equals(Byte.valueOf("1"))) {
-            //活动营销
-            ActivityResp activityResp = activityService.getActivityDetailById(Long.valueOf(couponOrActiveId), storeId);
-            if (null == activityResp) {
-                //禁止查询非本门店的营销活动
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "活动不存在");
-            }
-
-            //算出活动价和原价
-            BigDecimal activityPrice = activityResp.getActivityPrice().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal srcPrice = new BigDecimal(0);
-            List<ActivityItemResp> activityItemResps = activityResp.getItems();
-            for (ActivityItemResp activityItemResp : activityItemResps) {
-//                if(activityItemResp.getGoodsType()){
-                //服务(价格/100)*(时长/100)
-                BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity());
-                srcPrice = srcPrice.add(itemSiglePrice.multiply(exeTime));
-//
-//                }else{
-//                    //商品 (价格/100)*个数
-//                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
-//                    srcPrice = srcPrice.add(itemPrice);
-//                }
-            }
-            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
-            //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
-            params.add(activityPrice.toString() + "抵" + srcPrice.toString());
-            params.add(storeDTO.getClientAppointPhone());
-            params.add(activityResp.getActivityTitle());
-            //生成短连接
-          /*  StringBuffer url = new StringBuffer();
-            url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
-            params.add( iUtilityService.getShortUrl(url.toString()));*/
-            if (StringUtils.isNotBlank(orginUrl)) {
-                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
-
-            }
-        }else if (marketingMethod.equals(Byte.valueOf("2"))) {
-            //秒杀活动营销
-            SeckillActivityModel seckillActivityModel = seckillActivityService.getSeckillActivityModelById(couponOrActiveId,storeId);
-            if (null == seckillActivityModel) {
-                //禁止查询非本门店的秒杀活动
-                throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED,"活动不存在");
-            }
-
-            //算出活动价和原价
-//            BigDecimal activityPrice = activityResp.getActivityPrice().divide(BigDecimal.valueOf(100),2 ,RoundingMode.HALF_UP);
-//            BigDecimal srcPrice = new BigDecimal(0);
-//            List<ActivityItemResp> activityItemResps = activityResp.getItems();
-//            for(ActivityItemResp activityItemResp : activityItemResps){
-////                if(activityItemResp.getGoodsType()){
-//                //服务(价格/100)*(时长/100)
-//                BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
-//                BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity());
-//                srcPrice = srcPrice.add(itemSiglePrice.multiply(exeTime));
-////
-////                }else{
-////                    //商品 (价格/100)*个数
-////                    BigDecimal itemPrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(activityItemResp.getItemQuantity()));
-////                    srcPrice = srcPrice.add(itemPrice);
-////                }
-//            }
-            BigDecimal activityPrice = seckillActivityModel.getNewPrice() != null ? seckillActivityModel.getNewPrice():new BigDecimal("0");
-            BigDecimal srcPrice = seckillActivityModel.getOriginalPrice() != null ? seckillActivityModel.getOriginalPrice():new BigDecimal("0");
-            //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
-            //【云雀智修】车主您好，{1}，本店{2}邀请您参加{3}活动，点击查看详情：{4},退订回N
-            params.add(activityPrice.setScale(2, BigDecimal.ROUND_DOWN).toString()+"抵"+srcPrice.setScale(2, BigDecimal.ROUND_DOWN).toString());
-            params.add(storeDTO.getClientAppointPhone());
-            params.add(seckillActivityModel.getActivityTitle());
-            //生成短连接
-          /*  StringBuffer url = new StringBuffer();
-            url.append(domainUrlPre).append("/").append("client/activity/detail?storeId=").append(activityResp.getStoreId()).append("&activityId=").append(activityResp.getId());
-            params.add( iUtilityService.getShortUrl(url.toString()));*/
-            if(StringUtils.isNotBlank(orginUrl)){
-                params.add(setALabel(iUtilityService.getShortUrl(orginUrl)));
-
-            }
-        }
-
-        return StringUtils.join(params, ",");
-    }
-
-    private String setALabel(String shortUrl) {
+    public String setALabel(String shortUrl) {
         return "<a href=\"javascript:void(0);\" style=\"color:#1b88ee\">" + shortUrl + "</a>";
     }
 
@@ -328,16 +191,6 @@ public abstract class AbstractMarketingHandler implements MarketingComHandler {
         List<String> customerIds = new ArrayList<>();
         //客群客户
         if (StringUtils.isNotBlank(addReq.getCustomerGroupIds())){
-           /* String[] groupIds = addReq.getCustomerGroupIds().split(",");
-            List<Long> groupList = new ArrayList<>();
-            for(int i=0; i<groupIds.length ;i++){
-                groupList.add(Long.valueOf(groupIds[i]));
-            }
-            CalculateCustomerCountReq req = new CalculateCustomerCountReq();
-            req.setGroupList(groupList);
-            req.setStoreId(addReq.getStoreId());
-            req.setTenantId(addReq.getTenantId());
-            customerIds = customerGroupService.calculateCustomerCount(req);*/
             customerIds  = customerIdList;
             if(CollectionUtils.isEmpty(customerIds)) {
                 return customeList;
