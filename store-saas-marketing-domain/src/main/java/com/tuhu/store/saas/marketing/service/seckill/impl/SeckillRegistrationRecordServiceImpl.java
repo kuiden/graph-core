@@ -298,8 +298,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         EntityWrapper<SeckillRegistrationRecord> search = new EntityWrapper<>();
         if (Objects.nonNull(req.getCustomerId())) {
             search.eq(SeckillRegistrationRecord.CUSTOMER_ID, req.getCustomerId());
-        }
-        if (Objects.nonNull(req.getCustomerPhoneNumber())) {
+        }else if (Objects.nonNull(req.getCustomerPhoneNumber())) {
             search.eq(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, req.getCustomerPhoneNumber());
         }
         search.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, req.getSeckillActivityId())
