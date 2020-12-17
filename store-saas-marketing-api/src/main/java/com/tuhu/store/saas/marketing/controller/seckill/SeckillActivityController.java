@@ -1,7 +1,9 @@
 package com.tuhu.store.saas.marketing.controller.seckill;
 
 
+import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.PageInfo;
+import com.tuhu.boot.common.facade.BizBasePageResponse;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
@@ -16,11 +18,14 @@ import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordSe
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.cms.PasswordRecipientId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * <p>
@@ -47,6 +52,18 @@ public class SeckillActivityController extends BaseApi {
         req.setTenantId(super.getTenantId());
         req.setUpdateUser(super.getUserId());
         return new BizBaseResponse(seckillActivityService.saveSeckillActivity(req));
+    }
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+    @PostMapping(value = "/setCache")
+    @ApiOperation(value = "保持预览")
+    public BizBaseResponse<String> setCache(@RequestBody SeckillActivityModel req) {
+        String result = UUID.randomUUID().toString();
+        if (req != null) {
+            stringRedisTemplate.opsForValue().set(result, JSON.toJSONString(req));
+        }
+        return new BizBaseResponse<String>(result);
     }
 
     @GetMapping(value = "/getModelById")

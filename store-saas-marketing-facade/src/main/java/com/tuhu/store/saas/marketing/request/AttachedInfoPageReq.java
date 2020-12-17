@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+
 @Data
 @ApiModel("查询实体")
 public class AttachedInfoPageReq extends BaseReq implements Serializable {
@@ -13,8 +14,8 @@ public class AttachedInfoPageReq extends BaseReq implements Serializable {
     @ApiModelProperty("外键ID")
     private String foreignKey;
     @ApiModelProperty(value = "类型 SECKILLACTIVITYRULESINFO：秒杀活动规则 SECKILLACTIVITYSTOREINFO 秒杀活动门店类型 ",
-            required = true,example = "类型 SECKILLACTIVITYRULESINFO：秒杀活动规则 SECKILLACTIVITYSTOREINFO 秒杀活动门店类型")
-    private AttachedInfoTypeEnum type ;
+            required = true, example = "类型 SECKILLACTIVITYRULESINFO：秒杀活动规则 SECKILLACTIVITYSTOREINFO 秒杀活动门店类型")
+    private AttachedInfoTypeEnum type;
 
     /**
      * 当前页码，默认当前页
@@ -27,4 +28,7 @@ public class AttachedInfoPageReq extends BaseReq implements Serializable {
      */
     @ApiModelProperty(value = "分页长度,默认10", example = "10")
     private Integer pageSize = 10;
+
+    @ApiModelProperty(value = "查询类容")
+    private String query;
 }
