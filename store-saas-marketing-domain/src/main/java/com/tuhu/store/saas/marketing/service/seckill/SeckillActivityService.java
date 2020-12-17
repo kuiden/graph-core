@@ -61,6 +61,9 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      */
     SeckillActivityDetailResp clientActivityDetail(SeckillActivityDetailReq req);
 
+    //活动预览
+    SeckillActivityDetailResp activityDetailPreview(String id);
+
     /*
      * 查询秒杀活动参与记录（分页） - C端
      */
