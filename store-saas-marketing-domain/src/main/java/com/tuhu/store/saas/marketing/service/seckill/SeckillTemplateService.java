@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.request.seckill.QuerySeckillTempListReq;
 import com.tuhu.store.saas.marketing.request.seckill.SortSeckillTempReq;
 import com.tuhu.store.saas.marketing.response.ClassificationReferNum;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempDetailResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillTempPicResp;
 
 import java.util.List;
 
@@ -34,4 +35,6 @@ public interface SeckillTemplateService extends IService<SeckillTemplate> {
     Boolean increseTemplateRefer(String tempId, Long tenantId);
 
     List<ClassificationReferNum> getClassificaReferNum(List<String> ids, Long tenantId);
+
+    List<SeckillTempPicResp> getTempPicUrlList(Long tenantId);
 }
