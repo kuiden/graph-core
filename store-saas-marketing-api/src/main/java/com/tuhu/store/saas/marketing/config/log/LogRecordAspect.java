@@ -79,17 +79,11 @@ public class LogRecordAspect {
             response.setCode(4000);
             response.setMessage(e.getErrorMessage());
             result = response;
-        } catch (MarketingException e){
-            log.error(request.getRequestURI(), e);
-            BizBaseResponse response = new BizBaseResponse();
-            response.setCode(4000);
-            response.setMessage(e.getMessage());
-            result = response;
         } catch (Exception e){
             log.error(request.getRequestURI(),e);
             BizBaseResponse response = new BizBaseResponse();
             response.setCode(5000);
-            response.setMessage("抱歉，服务器出了点小问题，工程师们正在抢修，请稍后再试");
+            response.setMessage(e.getMessage());
             result = response;
         }
         long endTime = new Date().getTime();
