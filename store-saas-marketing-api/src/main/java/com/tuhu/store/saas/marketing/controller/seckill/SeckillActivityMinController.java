@@ -8,7 +8,6 @@ import com.tuhu.store.saas.marketing.controller.mini.EndUserApi;
 import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityQrCodeReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRemindAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.*;
@@ -118,6 +117,7 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @PostMapping("/customer/remindAdd")
     @ApiOperation("添加开抢提醒")
+    @EndUserApiIdempotent(lockTime = 1)
     public BizBaseResponse customerActivityRemindAdd(@RequestBody SeckillRemindAddReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());

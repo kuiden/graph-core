@@ -476,6 +476,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             result.setActivityRule(seckillActivityModel.getRulesInfo());
             //门店介绍
             result.setStoreIntroduction(seckillActivityModel.getStoreInfo());
+            //活动状态
+            result.setStatus(SeckillActivityStatusEnum.WSJ.getStatus());
+            result.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
             //查门店信息
             StoreDTO storeDTO = this.getStoreInfo(result.getStoreId(),result.getTenantId());
             if (null != storeDTO){
@@ -530,6 +533,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         for (SeckillRegistrationRecord record : seckillRegistrationRecords) {
             SeckillRecordListResp resp = new SeckillRecordListResp();
             BeanUtils.copyProperties(record, resp);
+            String vehicleNumber = record.getVehicleNumber();
+            if (StringUtils.isNotBlank(vehicleNumber) && vehicleNumber.length() > 2)
+            resp.setVehicleNumber(vehicleNumber.substring(0,1)+"******"+vehicleNumber.substring(vehicleNumber.length()-1));
             respList.add(resp);
         }
         BeanUtils.copyProperties(recordPageInfo, pageInfo);
