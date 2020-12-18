@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.config.log;
 import com.alibaba.fastjson.JSON;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.springcloud.common.constant.ApiCommonConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SysReqLog;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
@@ -17,6 +18,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -37,6 +39,7 @@ import java.util.UUID;
 @Slf4j
 @Aspect
 @Component
+@Order(ApiCommonConstant.ORDERED_CUSTOM_HIGHEST - 10)
 public class LogRecordAspect {
     private final static AntPathMatcher matcher = new AntPathMatcher();
     private final static String REQUEST_ID_KEY = "requestId";
