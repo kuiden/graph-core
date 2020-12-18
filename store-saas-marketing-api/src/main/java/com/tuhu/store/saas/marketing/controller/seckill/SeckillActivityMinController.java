@@ -104,7 +104,7 @@ public class SeckillActivityMinController extends EndUserApi {
 
     @PostMapping("/customer/orderAdd")
     @ApiOperation("小程序抢购、创建秒杀订单")
-    @EndUserApiIdempotent(lockTime = 2)
+    @EndUserApiIdempotent(lockTime = 3)
     public BizBaseResponse customerActivityOrderAdd(@Validated @RequestBody SeckillRecordAddReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());

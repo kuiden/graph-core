@@ -298,7 +298,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         EntityWrapper<SeckillRegistrationRecord> search = new EntityWrapper<>();
         if (Objects.nonNull(req.getCustomerId())) {
             search.eq(SeckillRegistrationRecord.CUSTOMER_ID, req.getCustomerId());
-        }else if (Objects.nonNull(req.getCustomerPhoneNumber())) {
+        } else if (Objects.nonNull(req.getCustomerPhoneNumber())) {
             search.eq(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, req.getCustomerPhoneNumber());
         }
         search.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, req.getSeckillActivityId())
@@ -410,10 +410,14 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         addCardOrderReq.setCustomerName(customerDTO.getName());
         addCardOrderReq.setCustomerPhoneNumber(customerDTO.getPhoneNumber());
 
-        if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_1)) {
+        if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_FOREVER)) {
             addCardOrderReq.setForever(Boolean.TRUE);
-        } else {
+        } else if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_DEADLINE)) {
             addCardOrderReq.setForever(Boolean.FALSE);
+            addCardOrderReq.setExpiryDate(DateUtils.getDateEndTime2(seckillActivity.getCadCardExpiryDateTime()));
+        } else if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_EFFECTIVE)) {
+            addCardOrderReq.setForever(Boolean.FALSE);
+            addCardOrderReq.setExpiryDate(DateUtils.getDateEndTime2(DateUtils.addDate(DateUtils.now(), seckillActivity.getCadCardExpiryDateDay() - 1)));
         }
         StoreDTO storeInfoDTO = this.remoteGetStoreInfo(seckillRegistrationRecord.getStoreId());
         if (Objects.nonNull(storeInfoDTO)) {
@@ -585,7 +589,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
      * 将未收款的待收单+交易单作废
      *
      * @param seckillRegistrationRecord
-     * @param state                       0 表示：已取消、已作废；    1 表示 ：已结清、回调(成功)   2 表示 ：已取消、回调(失败)
+     * @param state                     0 表示：已取消、已作废；    1 表示 ：已结清、回调(成功)   2 表示 ：已取消、回调(失败)
      */
     private void updateReceivingAndTradeOrder(SeckillRegistrationRecord seckillRegistrationRecord, Integer state) {
         //只有成功的时候才更新总库存、和已下单库存
@@ -746,7 +750,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             throw new StoreSaasMarketingException("抢购数量不能小于1！");
         }
         if (StringUtils.isBlank(req.getSeckillActivityId())) {
-            throw new StoreSaasMarketingException("活动ID不能为空");
+            throw new StoreSaasMarketingException("秒杀活动ID不能为空");
         }
         SeckillActivity seckillActivity = null;
         if (shoppingPlatformEnum == ShoppingPlatformEnum.WECHAT_APPLET) {
@@ -755,7 +759,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         } else {
             seckillActivity = seckillActivityService.selectById(req.getSeckillActivityId());
             if (Objects.isNull(seckillActivity)) {
-                throw new StoreSaasMarketingException("活动不存在");
+                throw new StoreSaasMarketingException("秒杀活动不存在");
             }
         }
 
@@ -766,9 +770,15 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         }
         if (Objects.nonNull(seckillActivity.getStartTime())) {
             if (com.tuhu.springcloud.common.util.DateUtils.compareTime(seckillActivity.getStartTime(), DateUtils.now()) > 0) {
-                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + "活动未开始");
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + "秒杀活动未开始");
             }
         }
+        if (Objects.nonNull(seckillActivity.getStartTime())) {
+            if (com.tuhu.springcloud.common.util.DateUtils.compareTime(DateUtils.now(), seckillActivity.getEndTime()) > 0) {
+                throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + "秒杀活动已过期");
+            }
+        }
+
         if (seckillActivity.getSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
             if (req.getQuantity() > seckillActivity.getSellNumber()) {
                 throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足！");
@@ -896,14 +906,14 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     private Map<String, CustomerReq> addCustomerForOrder(SeckillRegistrationRecord seckillRegistrationRecord) {
         Map<String, CustomerReq> maps = Maps.newHashMap();
         if (seckillRegistrationRecord.getBuyerPhoneNumber().equals(seckillRegistrationRecord.getUserPhoneNumber())) {
-            String customerName = StringUtils.isBlank(seckillRegistrationRecord.getCustomerName()) ? "空" : seckillRegistrationRecord.getCustomerName();
+            String customerName = StringUtils.isBlank(seckillRegistrationRecord.getCustomerName()) ? SeckillConstant.DEFAULT_CUSTOMER_NAME : seckillRegistrationRecord.getCustomerName();
             CustomerReq buyerCustomerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), customerName, seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), buyerCustomerReq);
         } else {
-            String customerName = StringUtils.isBlank(seckillRegistrationRecord.getCustomerName()) ? "空" : seckillRegistrationRecord.getCustomerName();
+            String customerName = StringUtils.isBlank(seckillRegistrationRecord.getCustomerName()) ? SeckillConstant.DEFAULT_CUSTOMER_NAME : seckillRegistrationRecord.getCustomerName();
             CustomerReq buyerCustomerReq = this.remoteAddCustomer(seckillRegistrationRecord.getBuyerPhoneNumber(), customerName, seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getBuyerPhoneNumber(), buyerCustomerReq);
-            CustomerReq userCustomerReq = this.remoteAddCustomer(seckillRegistrationRecord.getUserPhoneNumber(), "空", seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
+            CustomerReq userCustomerReq = this.remoteAddCustomer(seckillRegistrationRecord.getUserPhoneNumber(), SeckillConstant.DEFAULT_CUSTOMER_NAME, seckillRegistrationRecord.getStoreId(), seckillRegistrationRecord.getTenantId());
             maps.put(seckillRegistrationRecord.getUserPhoneNumber(), userCustomerReq);
         }
         return maps;
