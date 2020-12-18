@@ -570,10 +570,10 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         if (Objects.isNull(cardTemplate)) {
             throw new StoreSaasMarketingException("无此卡模板数据");
         }
-        if (CardTemplateStatusEnum.DISABLE.name().equals(cardTemplate.getStatus())) {
-            throw new StoreSaasMarketingException("卡模板已停用");
-        }
-
+        //秒杀活动对应的卡模板已禁用，任然开卡成功
+//        if (CardTemplateStatusEnum.DISABLE.name().equals(cardTemplate.getStatus())) {
+//            throw new StoreSaasMarketingException("卡模板已停用");
+//        }
         crdCard.setForever((byte) (req.getForever() ? 1 : 0));
         crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
         crdCard.setCardCategoryCode(cardTemplate.getCardCategoryCode());

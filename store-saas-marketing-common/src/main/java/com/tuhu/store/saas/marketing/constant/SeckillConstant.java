@@ -26,7 +26,9 @@ public class SeckillConstant {
     public static final Integer CANCEL_STATUS = 0; //作废、取消
 
 
-    public static final Integer CARD_EXPIRY_DATE_TYPE_1 = 1;//有效期类型   1永久有效
+    public static final Integer CARD_EXPIRY_DATE_TYPE_FOREVER = 1;//有效期类型   1永久有效
+    public static final Integer CARD_EXPIRY_DATE_TYPE_DEADLINE = 2;//有效期类型   2截至日期
+    public static final Integer CARD_EXPIRY_DATE_TYPE_EFFECTIVE = 3;//有效期类型   3有效天数
 
     public static final String REGISTERED = "registered";//注册标识
 
@@ -43,4 +45,9 @@ public class SeckillConstant {
 
     //秒杀活动
     public static final String SECKILL_ACTIVITY = "seckill_activity:";
+
+
+    //默认客户名
+    public static final String DEFAULT_CUSTOMER_NAME = "未命名客户";
+
 }

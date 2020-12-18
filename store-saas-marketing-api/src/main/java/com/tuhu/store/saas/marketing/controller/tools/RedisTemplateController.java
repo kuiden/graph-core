@@ -105,7 +105,6 @@ public class RedisTemplateController {
     @GetMapping(value = "/like/delete/{key}")
     @ApiOperation(value = "redis 模糊删除")
     public Object likeDelete(@PathVariable("key") String key) {
-        List<Object> objectList = Lists.newArrayList();
         Set<String> keys = stringRedisTemplate.keys("*" + key + "*");
         if (CollectionUtils.isNotEmpty(keys)) {
             stringRedisTemplate.delete(keys);
