@@ -13,7 +13,7 @@ public class SeckillTempPicResp implements Serializable {
     private static final long serialVersionUID = 1l;
 
     @ApiModelProperty("活动模板id")
-    private String tempId;
+    private String id;
 
     @ApiModelProperty("活动模板图片")
     private String picUrl;
