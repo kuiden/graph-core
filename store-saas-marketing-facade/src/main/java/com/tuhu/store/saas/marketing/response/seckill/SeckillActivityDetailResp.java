@@ -28,7 +28,7 @@ public class SeckillActivityDetailResp implements Serializable {
     private Date cadCardExpiryDateTime;
 
     @ApiModelProperty("相关次卡有效天数")
-    private Date cadCardExpiryDateDay;
+    private Integer cadCardExpiryDateDay;
 
     @ApiModelProperty("销售数量类型")
     private Integer sellNumberType;
