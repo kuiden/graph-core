@@ -24,4 +24,5 @@ public class MarketingResult {
     private ActivityResponse activity;
     private SeckillActivityModel secKill;
     private List<CustomerAndVehicleReq> customerList;
+    private String messageData;
 }

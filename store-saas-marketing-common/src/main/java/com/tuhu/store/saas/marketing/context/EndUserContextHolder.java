@@ -2,6 +2,9 @@ package com.tuhu.store.saas.marketing.context;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
 import com.tuhu.store.saas.marketing.remote.EndUser;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Objects;
 
 
 public class EndUserContextHolder {
@@ -40,7 +43,7 @@ public class EndUserContextHolder {
      */
     public static Long getTenantId() {
         EndUser EndUser = EndUserContextHolder.getUser();
-        if (null != EndUser) {
+        if (Objects.nonNull(EndUser)&& Objects.nonNull(EndUser.getTenantId())) {
             return Long.valueOf(EndUser.getTenantId());
         }
         return null;
@@ -54,7 +57,7 @@ public class EndUserContextHolder {
      */
     public static Long getStoreId() {
         EndUser EndUser = EndUserContextHolder.getUser();
-        if (null != EndUser) {
+        if (Objects.nonNull(EndUser)&& Objects.nonNull(EndUser.getStoreId())) {
             return Long.valueOf(EndUser.getStoreId());
         }
         return null;
@@ -66,7 +69,7 @@ public class EndUserContextHolder {
      */
     public static String getCustomerId() {
         EndUser EndUser = EndUserContextHolder.getUser();
-        if (null != EndUser) {
+        if (Objects.nonNull(EndUser)&& Objects.nonNull(EndUser.getUserId())) {
             return EndUser.getUserId();
         }
         return null;
@@ -75,7 +78,7 @@ public class EndUserContextHolder {
 
     public static String getTelephone(){
         EndUser EndUser = EndUserContextHolder.getUser();
-        if (null != EndUser) {
+        if (Objects.nonNull(EndUser)&& StringUtils.isNotBlank(EndUser.getUserId())) {
             return EndUser.getPhone();
         }
         return null;
@@ -83,7 +86,7 @@ public class EndUserContextHolder {
 
     public static String getName(){
         EndUser EndUser = EndUserContextHolder.getUser();
-        if (null != EndUser) {
+        if (Objects.nonNull(EndUser)&& StringUtils.isNotBlank(EndUser.getName())) {
             return EndUser.getName();
         }
         return null;
@@ -91,7 +94,7 @@ public class EndUserContextHolder {
 
     public static String getOpenId(){
         EndUser EndUser = EndUserContextHolder.getUser();
-        if (null != EndUser) {
+        if (Objects.nonNull(EndUser)&& StringUtils.isNotBlank(EndUser.getOpenId())) {
             return EndUser.getOpenId();
         }
         return null;

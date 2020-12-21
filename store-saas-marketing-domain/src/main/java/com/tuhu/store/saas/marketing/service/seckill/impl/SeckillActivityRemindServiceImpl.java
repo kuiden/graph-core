@@ -107,32 +107,34 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
         log.info("autoSendRemind -> start");
         List<SeckillActivityRemind> remindList = this.baseMapper.selectList(new EntityWrapper<SeckillActivityRemind>().eq("is_delete", 0));
         List<String> activityIds = remindList.stream().map(x->x.getSeckillActivityId()).distinct().collect(Collectors.toList());
-        //查进行中的活动
-        Date now = new Date();
-        List<SeckillActivity> seckillActivityList = seckillActivityService.selectList(new EntityWrapper<SeckillActivity>()
-                .in("id",activityIds).eq("is_delete", 0).le("start_time", now)
-                .ge("end_time", now).ne("status", 9));
-        Map<String,List<SeckillActivityRemind>> remindMap = remindList.stream().collect(Collectors.groupingBy(x->x.getSeckillActivityId()));
-        for (SeckillActivity seckillActivity : seckillActivityList){
-            if (remindMap.containsKey(seckillActivity.getId())){
-                for (SeckillActivityRemind seckillActivityRemind : remindMap.get(seckillActivity.getId())){
-                    //发送服务通知，更新
-                    taskExecutor.execute(() -> {
-                        String result = iWechatService.miniSeckillProgramNotify(seckillActivityRemind,seckillActivity);
-                        if (result != null){
-                            JSONObject jsonObject = (JSONObject) JSONObject.parse(result);
-                            //发送成功
-                            if (jsonObject.getInteger("errcode").equals(0)){
-                                seckillActivityRemind.setStatus(1);  //成功
-                            } else {
-                                seckillActivityRemind.setStatus(2);  //失败
+        if (CollectionUtils.isNotEmpty(activityIds)){
+            //查进行中的活动
+            Date now = new Date();
+            List<SeckillActivity> seckillActivityList = seckillActivityService.selectList(new EntityWrapper<SeckillActivity>()
+                    .in("id",activityIds).eq("is_delete", 0).le("start_time", now)
+                    .ge("end_time", now).ne("status", 9));
+            Map<String,List<SeckillActivityRemind>> remindMap = remindList.stream().collect(Collectors.groupingBy(x->x.getSeckillActivityId()));
+            for (SeckillActivity seckillActivity : seckillActivityList){
+                if (remindMap.containsKey(seckillActivity.getId())){
+                    for (SeckillActivityRemind seckillActivityRemind : remindMap.get(seckillActivity.getId())){
+                        //发送服务通知，更新
+                        taskExecutor.execute(() -> {
+                            String result = iWechatService.miniSeckillProgramNotify(seckillActivityRemind,seckillActivity);
+                            if (result != null){
+                                JSONObject jsonObject = (JSONObject) JSONObject.parse(result);
+                                //发送成功
+                                if (jsonObject.getInteger("errcode").equals(0)){
+                                    seckillActivityRemind.setStatus(1);  //成功
+                                } else {
+                                    seckillActivityRemind.setStatus(2);  //失败
+                                }
+                                seckillActivityRemind.setIsDelete(1); //已提醒 删除
                             }
-                            seckillActivityRemind.setIsDelete(1); //已提醒 删除
-                        }
-                        seckillActivityRemind.setReturnMessage(result);
-                        seckillActivityRemind.setUpdateTime(new Date());
-                        this.baseMapper.updateById(seckillActivityRemind);
-                    });
+                            seckillActivityRemind.setReturnMessage(result);
+                            seckillActivityRemind.setUpdateTime(new Date());
+                            this.baseMapper.updateById(seckillActivityRemind);
+                        });
+                    }
                 }
             }
         }

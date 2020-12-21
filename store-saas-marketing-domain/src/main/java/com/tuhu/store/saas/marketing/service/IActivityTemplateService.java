@@ -4,6 +4,7 @@ import com.tuhu.store.saas.marketing.po.ActivityTemplate;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateAdd;
 import com.tuhu.store.saas.marketing.request.ActivityTemplateRequest;
 import com.tuhu.store.saas.marketing.request.ChangeSortAcTemplateReq;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillTempPicResp;
 
 import java.util.List;
 
@@ -24,5 +25,7 @@ public interface IActivityTemplateService {
     List<ActivityTemplate> queryList(ActivityTemplateRequest req);
 
     void changeSort(ChangeSortAcTemplateReq req);
+
+    List<SeckillTempPicResp> getTempPicUrlList();
 
 }

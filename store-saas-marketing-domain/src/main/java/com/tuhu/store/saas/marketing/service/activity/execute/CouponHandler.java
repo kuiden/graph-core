@@ -7,20 +7,26 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocal;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.CustomerAndVehicleReq;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
 import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
+import com.tuhu.store.saas.marketing.service.IUtilityService;
 import com.tuhu.store.saas.marketing.service.activity.MarketingResult;
 import com.tuhu.store.saas.marketing.service.activity.handler.AbstractMarketingHandler;
 import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 /**
  * <p>
@@ -39,6 +45,12 @@ public class CouponHandler extends AbstractMarketingHandler {
 
     @Autowired
     private IMessageTemplateLocalService messageTemplateLocalService;
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+
+    @Autowired
+    private IUtilityService iUtilityService;
 
     @Override
     public String getMarketingMethod() {
@@ -72,6 +84,7 @@ public class CouponHandler extends AbstractMarketingHandler {
         CustomerMarketing customerMarketing = this.buildCustomerMarketing(addReq, coupon);
         log.info("CouponHandler.customerMarketing{},{}", JSON.toJSONString(customerMarketing));
         result.setCustomerMarketing(customerMarketing);
+        result.setMessageData(getMessageData(addReq));
         this.handler(addReq, result);
         //如果是优惠券定向营销，需要占用优惠券额度
         Coupon couponEntity = new Coupon();
@@ -93,5 +106,28 @@ public class CouponHandler extends AbstractMarketingHandler {
         customerMarketing.setCouponCode(coupon.getCode());
         customerMarketing.setCouponTitle(coupon.getTitle());
         return customerMarketing;
+    }
+
+    private String getMessageData(MarketingAddReq addReq){
+        List<String> params = new ArrayList<>();
+        //优惠券营销
+        CouponResp coupon = couponService.getCouponDetailById(Long.valueOf(addReq.getCouponOrActiveId()));
+        if (null == coupon || coupon.getId() == null) {
+            //禁止查询非本门店的优惠券
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "优惠券不存在");
+        }
+        //查询门店信息
+        StoreInfoVO storeInfoVO = new StoreInfoVO();
+        storeInfoVO.setStoreId(addReq.getStoreId());
+        StoreDTO storeDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+        //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
+        //【云雀智修】车主您好,{1}优惠券,本店{2}已送到您的手机号,点击查看详情{3},退订回N
+        params.add("价值" + coupon.getContentValue().intValue() + "元" + coupon.getTitle());
+        params.add(storeDTO.getClientAppointPhone());
+        //生成短连接
+        if (StringUtils.isNotBlank(addReq.getOriginUrl())) {
+            params.add(setALabel(iUtilityService.getShortUrl(addReq.getOriginUrl())));
+        }
+        return StringUtils.join(params, ",");
     }
 }

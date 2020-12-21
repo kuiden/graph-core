@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBasePageResponse;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.boot.common.facade.response.BizResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityModel;
@@ -13,8 +14,10 @@ import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillTempPicResp;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillActivityService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
+import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +47,9 @@ public class SeckillActivityController extends BaseApi {
 
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+    @Autowired
+    private SeckillTemplateService seckillTemplateService;
 
     @PostMapping(value = "/save")
     @ApiOperation(value = "保存活动")
@@ -143,6 +149,13 @@ public class SeckillActivityController extends BaseApi {
         req.setUpdateUser(super.getUserId());
         req.setId(null);
         return new BizBaseResponse(seckillActivityService.saveSeckillActivity(req));
+    }
+
+    @PostMapping(value = "/getTemplatePicList")
+    @ApiOperation(value = "获取秒杀活动模板头图")
+    public BizResponse<List<SeckillTempPicResp>> getTemplatePicList() {
+        List<SeckillTempPicResp> picRespList = seckillTemplateService.getTempPicUrlList(this.getTenantId());
+        return BizResponse.success(picRespList);
     }
 }
 

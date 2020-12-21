@@ -67,6 +67,19 @@ public class DateUtils {
     }
 
     /**
+     * 取指定日期起始点
+     *
+     * @return
+     */
+    public static Date getDateEndTime2(Date date) {
+        Calendar calendar = new Calendar.Builder().setInstant(date).build();
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        return calendar.getTime();
+    }
+
+    /**
      * yyyy-MM-dd HH:mm:ss
      * @param dateStr
      * @return

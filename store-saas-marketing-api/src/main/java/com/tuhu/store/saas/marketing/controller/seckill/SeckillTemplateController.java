@@ -4,6 +4,7 @@ package com.tuhu.store.saas.marketing.controller.seckill;
 import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.response.BizResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSecKillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.QuerySeckillTempListReq;
@@ -45,14 +46,22 @@ public class SeckillTemplateController extends BaseApi {
     @PostMapping("/add")
     @ApiOperation("添加秒杀活动模板")
     public BizResponse add(@Validated @RequestBody AddSeckillTempReq req) {
-        seckillTemplateService.addSeckillTemplate(req, this.getTenantId(), this.getTenantUserId());
+        try {
+            seckillTemplateService.addSeckillTemplate(req, this.getTenantId(), this.getTenantUserId());
+        } catch (StoreSaasMarketingException e) {
+            return BizResponse.operationFailed(e.getMessage());
+        }
         return BizResponse.success();
     }
 
     @PostMapping("/edit")
     @ApiOperation("编辑秒杀活动模板")
     public BizResponse edit(@Validated @RequestBody EditSecKillTempReq req) {
-        seckillTemplateService.editTemplate(req, this.getTenantId(), this.getTenantUserId());
+        try {
+            seckillTemplateService.editTemplate(req, this.getTenantId(), this.getTenantUserId());
+        } catch (Exception e) {
+            return BizResponse.operationFailed(e.getMessage());
+        }
         return BizResponse.success();
     }
 

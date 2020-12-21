@@ -61,6 +61,9 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      */
     SeckillActivityDetailResp clientActivityDetail(SeckillActivityDetailReq req);
 
+    //活动预览
+    SeckillActivityDetailResp activityDetailPreview(String id);
+
     /*
      * 查询秒杀活动参与记录（分页） - C端
      */
@@ -118,6 +121,15 @@ public interface SeckillActivityService extends IService<SeckillActivity> {
      * @return
      */
     String qrCodeUrlMin(SeckillActivityQrCodeReq request);
+
+
+    /**
+     * 活动二位码url
+     *
+     * @param request
+     * @return
+     */
+    byte[]  qrCodeImage(SeckillActivityQrCodeReq request);
 
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表

@@ -6,18 +6,28 @@ import com.tuhu.store.saas.marketing.dataobject.CustomerMarketing;
 import com.tuhu.store.saas.marketing.dataobject.MessageTemplateLocal;
 import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.CustomerAndVehicleReq;
 import com.tuhu.store.saas.marketing.request.MarketingAddReq;
+import com.tuhu.store.saas.marketing.response.ActivityItemResp;
+import com.tuhu.store.saas.marketing.response.ActivityResp;
 import com.tuhu.store.saas.marketing.response.ActivityResponse;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IMessageTemplateLocalService;
+import com.tuhu.store.saas.marketing.service.IUtilityService;
 import com.tuhu.store.saas.marketing.service.activity.MarketingResult;
 import com.tuhu.store.saas.marketing.service.activity.handler.AbstractMarketingHandler;
 import com.tuhu.store.saas.marketing.util.DateUtils;
+import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -38,6 +48,12 @@ public class ActivityHandler extends AbstractMarketingHandler {
 
     @Autowired
     private IMessageTemplateLocalService messageTemplateLocalService;
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
+
+    @Autowired
+    private IUtilityService iUtilityService;
 
     @Override
     public String getMarketingMethod() {
@@ -75,6 +91,7 @@ public class ActivityHandler extends AbstractMarketingHandler {
         CustomerMarketing customerMarketing = this.buildCustomerMarketing(addReq, activity);
         log.info("ActivityHandler.customerMarketing{},{}", JSON.toJSONString(customerMarketing));
         result.setCustomerMarketing(customerMarketing);
+        result.setMessageData(getMessageData(addReq));
         this.handler(addReq, result);
     }
 
@@ -92,5 +109,37 @@ public class ActivityHandler extends AbstractMarketingHandler {
         customerMarketing.setCouponCode(activity.getActivityCode());
         customerMarketing.setCouponTitle(activity.getActivityTitle());
         return customerMarketing;
+    }
+
+    private String getMessageData(MarketingAddReq addReq){
+        List<String> params = new ArrayList<>();
+        //活动营销
+        ActivityResp activityResp = activityService.getActivityDetailById(Long.valueOf(addReq.getCouponOrActiveId()), addReq.getStoreId());
+        if (null == activityResp) {
+            //禁止查询非本门店的营销活动
+            throw new StoreSaasMarketingException(BizErrorCodeEnum.OPERATION_FAILED, "活动不存在");
+        }
+        //算出活动价和原价
+        BigDecimal activityPrice = activityResp.getActivityPrice().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal srcPrice = new BigDecimal(0);
+        List<ActivityItemResp> activityItemResps = activityResp.getItems();
+        for (ActivityItemResp activityItemResp : activityItemResps) {
+            BigDecimal itemSiglePrice = BigDecimal.valueOf(activityItemResp.getOriginalPrice()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal exeTime = BigDecimal.valueOf(activityItemResp.getItemQuantity());
+            srcPrice = srcPrice.add(itemSiglePrice.multiply(exeTime));
+        }
+        //查询门店信息
+        StoreInfoVO storeInfoVO = new StoreInfoVO();
+        storeInfoVO.setStoreId(addReq.getStoreId());
+        StoreDTO storeDTO = storeInfoClient.getStoreInfo(storeInfoVO).getData();
+        //短信模板占位符是从{1}开始，所以此处增加一个空串占位{0}
+        params.add(activityPrice.toString() + "抵" + srcPrice.toString());
+        params.add(storeDTO.getClientAppointPhone());
+        params.add(activityResp.getActivityTitle());
+        //生成短连接
+        if (StringUtils.isNotBlank(addReq.getOriginUrl())) {
+            params.add(setALabel(iUtilityService.getShortUrl(addReq.getOriginUrl())));
+        }
+        return StringUtils.join(params, ",");
     }
 }

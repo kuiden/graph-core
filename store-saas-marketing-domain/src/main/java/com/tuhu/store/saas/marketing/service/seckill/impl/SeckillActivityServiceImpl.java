@@ -390,8 +390,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 salesNumber += record.getQuantity().intValue();
                 if (null != req.getCustomerId() && record.getCustomerId().equals(req.getCustomerId())) {
                     hasBuyNumber += record.getQuantity().intValue();
-                }
-                if (null != req.getCustomerPhoneNumber() && record.getBuyerPhoneNumber().equals(req.getCustomerPhoneNumber())){
+                } else if (null != req.getCustomerPhoneNumber() && record.getBuyerPhoneNumber().equals(req.getCustomerPhoneNumber())){
                     hasBuyNumber += record.getQuantity().intValue();
                 }
             }
@@ -427,12 +426,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             result.setItems(activityDetailItems);
         }
         //查门店信息
-        StoreInfoVO storeInfoVO = new StoreInfoVO();
-        storeInfoVO.setStoreId(seckillActivity.getStoreId());
-        storeInfoVO.setTanentId(seckillActivity.getTenantId());
-        BizBaseResponse<StoreDTO> resultData = storeInfoClient.getStoreInfo(storeInfoVO);
-        if (null != resultData && null != resultData.getData()) {
-            StoreDTO storeDTO = resultData.getData();
+        StoreDTO storeDTO = this.getStoreInfo(seckillActivity.getStoreId(),seckillActivity.getTenantId());
+        if (null != storeDTO){
             SeckillActivityDetailResp.StoreInfo storeInfo = new SeckillActivityDetailResp.StoreInfo();
             BeanUtils.copyProperties(storeDTO, storeInfo);
             //电话设置为c端预约电话
@@ -443,9 +438,83 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 String[] imagePaths = imagePathsString.split(",");
                 storeInfo.setImagePaths(imagePaths);
             }
-            result.setStoreInfo(storeInfo);
             //咨询热线设置为c端预约电话
             result.setPhoneNumber(storeDTO.getClientAppointPhone());
+            result.setStoreInfo(storeInfo);
+        }
+        return result;
+    }
+
+    //获取门店信息
+    private StoreDTO getStoreInfo(Long storeId, Long tenantId){
+        StoreDTO storeDTO = null;
+        StoreInfoVO storeInfoVO = new StoreInfoVO();
+        storeInfoVO.setStoreId(storeId);
+        storeInfoVO.setTanentId(tenantId);
+        log.info("获取门店信息,请求参数:{}",storeInfoVO);
+        BizBaseResponse<StoreDTO> resultData = storeInfoClient.getStoreInfo(storeInfoVO);
+        log.info("获取门店信息,返回信息:{}",resultData);
+        if (null != resultData && null != resultData.getData()) {
+            storeDTO = resultData.getData();
+        }
+        return storeDTO;
+    }
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Override
+    public SeckillActivityDetailResp activityDetailPreview(String id) {
+        SeckillActivityDetailResp result = new SeckillActivityDetailResp();
+        if (StringUtils.isNotBlank(id) && stringRedisTemplate.hasKey(id)) {
+            String resultJson = stringRedisTemplate.opsForValue().get(id);
+            SeckillActivityModel seckillActivityModel = JSONObject.parseObject(resultJson, SeckillActivityModel.class);
+            BeanUtils.copyProperties(seckillActivityModel,result);
+            //销售总数
+            result.setTotalNumber(seckillActivityModel.getSellNumber());
+            //活动规则
+            result.setActivityRule(seckillActivityModel.getRulesInfo());
+            //门店介绍
+            result.setStoreIntroduction(seckillActivityModel.getStoreInfo());
+            //活动状态
+            result.setStatus(SeckillActivityStatusEnum.WSJ.getStatus());
+            result.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
+            //查门店信息
+            StoreDTO storeDTO = this.getStoreInfo(result.getStoreId(),result.getTenantId());
+            if (null != storeDTO){
+                SeckillActivityDetailResp.StoreInfo storeInfo = new SeckillActivityDetailResp.StoreInfo();
+                BeanUtils.copyProperties(storeDTO, storeInfo);
+                //电话设置为c端预约电话
+                storeInfo.setMobilePhone(storeDTO.getClientAppointPhone());
+                //门店照片
+                String imagePathsString = storeDTO.getImagePaths();
+                if (StringUtils.isNotBlank(imagePathsString)){
+                    String[] imagePaths = imagePathsString.split(",");
+                    storeInfo.setImagePaths(imagePaths);
+                }
+                //咨询热线设置为c端预约电话
+                result.setPhoneNumber(storeDTO.getClientAppointPhone());
+                result.setStoreInfo(storeInfo);
+            }
+            //活动项目明细
+            List<SeckillActivityDetailResp.ActivityDetailItem> activityDetailItems = new ArrayList<>();
+            //服务
+            if (CollectionUtils.isNotEmpty(seckillActivityModel.getServiceItems())){
+                for (SeckillActivityItemModel activityItemModel : seckillActivityModel.getServiceItems()) {
+                    SeckillActivityDetailResp.ActivityDetailItem activityDetailItem = new SeckillActivityDetailResp.ActivityDetailItem();
+                    BeanUtils.copyProperties(activityItemModel, activityDetailItem);
+                    activityDetailItems.add(activityDetailItem);
+                }
+            }
+            //商品
+            if (CollectionUtils.isNotEmpty(seckillActivityModel.getGoodsItems())){
+                for (SeckillActivityItemModel activityItemModel : seckillActivityModel.getGoodsItems()) {
+                    SeckillActivityDetailResp.ActivityDetailItem activityDetailItem = new SeckillActivityDetailResp.ActivityDetailItem();
+                    BeanUtils.copyProperties(activityItemModel, activityDetailItem);
+                    activityDetailItems.add(activityDetailItem);
+                }
+            }
+            result.setItems(activityDetailItems);
         }
         return result;
     }
@@ -464,6 +533,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         for (SeckillRegistrationRecord record : seckillRegistrationRecords) {
             SeckillRecordListResp resp = new SeckillRecordListResp();
             BeanUtils.copyProperties(record, resp);
+            String vehicleNumber = record.getVehicleNumber();
+            if (StringUtils.isNotBlank(vehicleNumber) && vehicleNumber.length() > 2)
+            resp.setVehicleNumber(vehicleNumber.substring(0,1)+"******"+vehicleNumber.substring(vehicleNumber.length()-1));
             respList.add(resp);
         }
         BeanUtils.copyProperties(recordPageInfo, pageInfo);
@@ -663,6 +735,19 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         activity.setWxQrUrl(wxQrUrl);
         this.updateById(activity);
         return wxQrUrl;
+    }
+
+    @Override
+    public byte[] qrCodeImage(SeckillActivityQrCodeReq request) {
+        log.info("qrCodeUrlMin{}", JSON.toJSONString(request));
+        if (null == request || StringUtils.isBlank(request.getSeckillActivityId())) {
+            throw new StoreSaasMarketingException("活动id不能为空");
+        }
+        SeckillActivity activity = this.selectById(request.getSeckillActivityId());
+        if (null == activity) {
+            throw new StoreSaasMarketingException("活动不存在");
+        }
+        return miniAppService.getQrCodeByte(request.getScene(), request.getPath(), request.getWidth());
     }
 
     @Override

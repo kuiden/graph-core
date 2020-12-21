@@ -13,5 +13,8 @@ public interface MiniAppService {
    String getQrCodeUrl(String scene, String path, Long width);
 
 
+   byte[] getQrCodeByte(String scene, String path, Long width);
+
+
    Object miniProgramNotify(MiniProgramNotifyReq miniProgramNotifyReq);
 }

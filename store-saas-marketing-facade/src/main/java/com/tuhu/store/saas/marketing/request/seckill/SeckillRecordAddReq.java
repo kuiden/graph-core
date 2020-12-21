@@ -22,7 +22,7 @@ public class SeckillRecordAddReq implements Serializable {
     private String seckillActivityId;
 
     @ApiModelProperty("活动名称")
-    @NotNull(message = "活动名称不能为空")
+    //@NotNull(message = "活动名称不能为空")
     private String seckillActivityName;
 
     @ApiModelProperty("报名客户id")
@@ -43,6 +43,7 @@ public class SeckillRecordAddReq implements Serializable {
     private String userPhoneNumber;
 
     @ApiModelProperty("车牌号")
+    @NotNull(message = "使用人车牌号不能为空")
     private String vehicleNumber;
 
     @ApiModelProperty("单价")

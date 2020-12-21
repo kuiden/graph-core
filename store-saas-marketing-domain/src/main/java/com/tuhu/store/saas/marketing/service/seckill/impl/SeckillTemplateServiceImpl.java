@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.tuhu.store.saas.marketing.dataobject.SeckillClassification;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplate;
 import com.tuhu.store.saas.marketing.dataobject.SeckillTemplateItem;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillTemplateMapper;
 import com.tuhu.store.saas.marketing.request.seckill.AddSeckillTempReq;
 import com.tuhu.store.saas.marketing.request.seckill.EditSecKillTempReq;
@@ -14,6 +15,8 @@ import com.tuhu.store.saas.marketing.request.seckill.SortSeckillTempReq;
 import com.tuhu.store.saas.marketing.response.ClassificationReferNum;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempDetailResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillTempItemResp;
+import com.tuhu.store.saas.marketing.response.seckill.SeckillTempPicResp;
+import com.tuhu.store.saas.marketing.service.IActivityTemplateService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillClassificationService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateItemService;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillTemplateService;
@@ -46,6 +49,9 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
     private SeckillClassificationService seckillClassificationService;
 
     @Autowired
+    private IActivityTemplateService activityTemplateService;
+
+    @Autowired
     private IdKeyGen idKeyGen;
 
     @Override
@@ -58,12 +64,17 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         seckillTemplate.setId(idKeyGen.generateId(tenantId));
         EntityWrapper<SeckillTemplate> wrapper = new EntityWrapper<>();
         wrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
+        wrapper.eq(SeckillTemplate.IS_DELETE, 0);
         wrapper.orderBy(SeckillTemplate.SORT, false);
-        SeckillTemplate template = this.selectOne(wrapper);
-        if (template == null) {
+        List<SeckillTemplate> templateList = this.selectList(wrapper);
+        if (CollectionUtils.isEmpty(templateList)) {
             seckillTemplate.setSort(1);
         }else {
-            seckillTemplate.setSort(template.getSort() + 1);
+            seckillTemplate.setSort(templateList.get(0).getSort() + 1);
+            if (CollectionUtils.isNotEmpty(templateList.parallelStream().filter(t->t.getActivityTitle().equals(req.getActivityTitle()))
+                .collect(Collectors.toList()))) {
+                throw new StoreSaasMarketingException("已存在同名称模板");
+            }
         }
         this.insert(seckillTemplate);
         seckillTemplateItemService.addSeckillTempItem(req.getAddTempItemList(), seckillTemplate.getId(), tenantId, userId);
@@ -127,6 +138,16 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
     @Override
     @Transactional
     public boolean editTemplate(EditSecKillTempReq req, Long tenantId, String userId) {
+        EntityWrapper<SeckillTemplate> wra = new EntityWrapper<>();
+        wra.eq(SeckillTemplate.TENANT_ID, tenantId);
+        wra.eq(SeckillTemplate.IS_DELETE, 0);
+        wra.ne(SeckillTemplate.ID, req.getId());
+        wra.orderBy(SeckillTemplate.SORT, false);
+        List<SeckillTemplate> templateList = this.selectList(wra);
+        if (CollectionUtils.isNotEmpty(templateList) && CollectionUtils.isNotEmpty(templateList.parallelStream().filter(t->t.getActivityTitle().equals(req.getActivityTitle()))
+                .collect(Collectors.toList()))) {
+            throw new StoreSaasMarketingException("已存在同名称模板");
+        }
         EntityWrapper<SeckillTemplate> wrapper = new EntityWrapper<>();
         wrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
         wrapper.eq(SeckillTemplate.ID, req.getId());
@@ -188,6 +209,33 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
     @Override
     public List<ClassificationReferNum> getClassificaReferNum(List<String> ids, Long tenantId) {
         return baseMapper.getClassificaReferNum(tenantId, ids);
+    }
+
+    @Override
+    public List<SeckillTempPicResp> getTempPicUrlList(Long tenantId) {
+        EntityWrapper<SeckillTemplate> wrapper = new EntityWrapper<>();
+        wrapper.eq(SeckillTemplate.TENANT_ID, tenantId);
+        wrapper.eq(SeckillTemplate.STATUS, 1);
+        wrapper.eq(SeckillTemplate.IS_DELETE, 0);
+        wrapper.orderBy(SeckillTemplate.SORT, false);
+        List<SeckillTemplate> list = this.selectList(wrapper);
+        List<SeckillTempPicResp> picRespList = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(l->{
+                SeckillTempPicResp pic = new SeckillTempPicResp();
+                pic.setId(l.getId());
+                pic.setPicUrl(l.getPicUrl());
+                pic.setActivityTitle(l.getActivityTitle());
+                if (StringUtils.isNotBlank(l.getPicUrl())) {
+                    picRespList.add(pic);
+                }
+            });
+        }
+        List<SeckillTempPicResp> activityPicList = activityTemplateService.getTempPicUrlList();
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(activityPicList)) {
+            picRespList.addAll(activityPicList);
+        }
+        return picRespList;
     }
 
 }

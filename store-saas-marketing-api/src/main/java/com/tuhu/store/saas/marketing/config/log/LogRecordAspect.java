@@ -6,6 +6,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.constant.ApiCommonConstant;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SysReqLog;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.remote.CoreUser;
 import com.tuhu.store.saas.marketing.sys.SysReqLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ import java.util.UUID;
 @Slf4j
 @Aspect
 @Component
+@Order(ApiCommonConstant.ORDERED_CUSTOM_HIGHEST - 10)
 public class LogRecordAspect {
     private final static AntPathMatcher matcher = new AntPathMatcher();
     private final static String REQUEST_ID_KEY = "requestId";
@@ -80,11 +82,17 @@ public class LogRecordAspect {
             response.setCode(4000);
             response.setMessage(e.getErrorMessage());
             result = response;
+        } catch (MarketingException e){
+            log.error(request.getRequestURI(), e);
+            BizBaseResponse response = new BizBaseResponse();
+            response.setCode(5000);
+            response.setMessage(e.getMessage());
+            result = response;
         } catch (Exception e){
             log.error(request.getRequestURI(),e);
             BizBaseResponse response = new BizBaseResponse();
             response.setCode(5000);
-            response.setMessage("抱歉，服务器出了点小问题，工程师们正在抢修，请稍后再试");
+            response.setMessage(e.getMessage());
             result = response;
         }
         long endTime = new Date().getTime();
