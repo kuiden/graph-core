@@ -105,4 +105,11 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      * @return
      */
     void callBack(PaymentResponse paymentResponse);
+
+    /**
+     * 秒杀订单支付详情
+     * @param seckillActivityDetailId
+     * @return
+     */
+    Map<String, Object> OrderPayDetail(String seckillActivityDetailId);
 }
