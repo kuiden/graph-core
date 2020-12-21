@@ -138,6 +138,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
         wrapper.in(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, activityIds);
         wrapper.eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_SUCCESS_STATUS);
+        wrapper.eq(SeckillRegistrationRecord.IS_DELETE, SeckillConstant.TYPE);
         List<SeckillRegistrationRecord> list = this.selectList(wrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, Integer> activityIdNumMap = new HashMap<>();
@@ -471,6 +472,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         wrapper.eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_SUCCESS_STATUS);
         wrapper.eq(SeckillRegistrationRecord.STORE_ID, UserContextHolder.getStoreId());
         wrapper.eq(SeckillRegistrationRecord.TENANT_ID, UserContextHolder.getTenantId());
+        wrapper.eq(SeckillRegistrationRecord.IS_DELETE, SeckillConstant.TYPE);
         wrapper.orderBy(SeckillRegistrationRecord.PAYMENT_TIME, Boolean.FALSE);
         List<SeckillRegistrationRecord> list = this.selectList(wrapper);
         List<SeckillRegistrationRecordResp> recordResps = new ArrayList<>();
@@ -946,7 +948,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
         log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
         if (Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
-            customerReq.setId(resultObject.getData().getCustomerReq().getId());
+            AddVehicleVO addVehicleVO = resultObject.getData();
+            customerReq.setId(addVehicleVO.getCustomerReq().getId());
+            customerReq.setName(addVehicleVO.getCustomerReq().getName());
         }
         return customerReq;
     }
