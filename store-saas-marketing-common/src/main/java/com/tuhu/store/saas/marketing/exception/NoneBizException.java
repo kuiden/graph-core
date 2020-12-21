@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.exception;
 
-import com.tuhu.boot.common.enums.BizEnum;
+import com.tuhu.boot.common.enums.BizErrorCodeEnum;
+import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import lombok.Getter;
 
@@ -8,30 +9,37 @@ import lombok.Getter;
  * 非业务异常
  */
 @Getter
-public class NoneBizException extends RuntimeException {
+public class NoneBizException extends BizException {
     private static final long serialVersionUID = -5532982887667351094L;
-    /**
-     * 错误代码
-     */
-    private int code = MarketingBizErrorCodeEnum.SYSTEM_INNER_ERROR.getCode();
+
+    private int code;
+    private String message;
 
     public NoneBizException() {
         super();
     }
 
+    public NoneBizException(int code, String message) {
+        super(MarketingBizErrorCodeEnum.OPERATION_FAILED, message);
+        this.code = code;
+        this.message = message;
+    }
+
     public NoneBizException(String message) {
-        super(message);
+        super(MarketingBizErrorCodeEnum.OPERATION_FAILED, message);
+        this.message = message;
     }
 
-    public NoneBizException(int errorCode, String errorMessage) {
-        super(errorMessage);
-        this.code = errorCode;
+    public NoneBizException(BizErrorCodeEnum bizErrorCodeEnum) {
+        super(bizErrorCodeEnum);
+        this.code = super.getErrorCode().getCode();
+        this.message = bizErrorCodeEnum.getDesc();
     }
 
-    public NoneBizException(BizEnum errorCode, String errorMessage, Throwable exception) {
-        super(errorMessage);
-        this.code = errorCode.getCode();
-        super.initCause(exception);
+    public NoneBizException(BizErrorCodeEnum bizErrorCodeEnum, String message) {
+        super(bizErrorCodeEnum, message);
+        this.code = super.getErrorCode().getCode();
+        this.message = super.getErrorCode().getDesc();
     }
 
     /**

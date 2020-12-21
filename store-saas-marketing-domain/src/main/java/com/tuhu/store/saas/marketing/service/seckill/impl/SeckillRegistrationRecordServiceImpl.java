@@ -894,6 +894,12 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         seckillRegistrationRecord.setCreateTime(DateUtils.now());
         seckillRegistrationRecord.setPaymentModeCode(PaymentModeConverEnum.WX_BARCODE.getModel());
         seckillRegistrationRecord.setPlatForm(shoppingPlatformEnum.getCode());
+        SeckillActivity seckillActivity = seckillActivityService.selectById(seckillRegistrationRecord.getSeckillActivityId());
+        if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_DEADLINE)) {
+            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(seckillActivity.getCadCardExpiryDateTime()));
+        } else if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_EFFECTIVE)) {
+            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(DateUtils.addDate(DateUtils.now(), seckillActivity.getCadCardExpiryDateDay() - 1)));
+        }
         return this.insert(seckillRegistrationRecord);
     }
 

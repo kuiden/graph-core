@@ -6,6 +6,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.annotation.EndUserApiIdempotent;
 import com.tuhu.store.saas.marketing.constant.EndUserConstant;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
+import com.tuhu.store.saas.marketing.exception.NoneBizException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
@@ -61,6 +62,9 @@ public class EndUserApiIdempotentAspect implements Ordered {
                 log.error("RepeatSubmitAspect error key: {}", key, e);
                 if (e instanceof StoreSaasMarketingException) {
                     throw new StoreSaasMarketingException(e.getMessage());
+                }
+                if (e instanceof NoneBizException) {
+                    throw new NoneBizException(e.getMessage());
                 }
                 throw new Exception(e.getMessage());
             }
