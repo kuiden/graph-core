@@ -5,6 +5,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.boot.common.facade.response.BizResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillClassificationModel;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillClassificationService;
 import io.swagger.annotations.ApiOperation;
@@ -35,7 +36,10 @@ public class SeckillClassificationController extends BaseApi {
     @ApiOperation(value = "保存活动分类")
     public BizBaseResponse<Integer> save(@RequestBody @Validated SeckillClassificationModel req) {
         if (req == null) {
-            throw new MarketingException("参数验证失败");
+            throw new StoreSaasMarketingException("参数验证失败");
+        }
+        if (!super.getUserCore().getSystemCode().equals(Integer.valueOf(2))){
+            throw new StoreSaasMarketingException("越权访问");
         }
         req.setTenantId(super.getTenantId());
         req.setCreateUser(super.getUserId());

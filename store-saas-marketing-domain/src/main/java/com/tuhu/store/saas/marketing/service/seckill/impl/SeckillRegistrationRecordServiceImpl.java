@@ -896,6 +896,16 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         seckillRegistrationRecord.setCreateTime(DateUtils.now());
         seckillRegistrationRecord.setPaymentModeCode(PaymentModeConverEnum.WX_BARCODE.getModel());
         seckillRegistrationRecord.setPlatForm(shoppingPlatformEnum.getCode());
+
+        SeckillActivity seckillActivity = seckillActivityService.selectById(seckillRegistrationRecord.getSeckillActivityId());
+        if (StringUtils.isBlank(seckillRegistrationRecord.getSeckillActivityName())) {
+            seckillRegistrationRecord.setSeckillActivityName(seckillActivity.getActivityTitle());
+        }
+        if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_DEADLINE)) {
+            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(seckillActivity.getCadCardExpiryDateTime()));
+        } else if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_EFFECTIVE)) {
+            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(DateUtils.addDate(DateUtils.now(), seckillActivity.getCadCardExpiryDateDay() - 1)));
+        }
         return this.insert(seckillRegistrationRecord);
     }
 
@@ -938,7 +948,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
         log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
         if (Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
-            customerReq.setId(resultObject.getData().getCustomerReq().getId());
+            AddVehicleVO addVehicleVO = resultObject.getData();
+            customerReq.setId(addVehicleVO.getCustomerReq().getId());
+            customerReq.setName(addVehicleVO.getCustomerReq().getName());
         }
         return customerReq;
     }
