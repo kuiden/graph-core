@@ -25,8 +25,8 @@ public class AttachedInfoAddReq implements Serializable {
     @ApiModelProperty(value = "类型 SECKILLACTIVITYRULESINFO：秒杀活动规则 SECKILLACTIVITYSTOREINFO 秒杀活动门店类型 ",
             required = true, example = "类型 SECKILLACTIVITYRULESINFO：秒杀活动规则 SECKILLACTIVITYSTOREINFO 秒杀活动门店类型")
     private AttachedInfoTypeEnum type;
-    @NotNull(message = "标题不能为空")
+
     @ApiModelProperty(value = "标题",
-            required = true, example = "标题")
+              example = "标题")
     private String title;
 }
