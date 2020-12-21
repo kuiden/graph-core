@@ -946,7 +946,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
         log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
         if (Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
-            customerReq.setId(resultObject.getData().getCustomerReq().getId());
+            AddVehicleVO addVehicleVO = resultObject.getData();
+            customerReq.setId(addVehicleVO.getCustomerReq().getId());
+            customerReq.setName(addVehicleVO.getCustomerReq().getName());
         }
         return customerReq;
     }
