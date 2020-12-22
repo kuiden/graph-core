@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.util.Date;
 @Data
 @ApiModel(value = "活动类型")
@@ -17,6 +18,7 @@ public class SeckillClassificationModel {
     /**
      * 类目名称
      */
+    @NotBlank(message = "类目名称不能为空")
     @ApiModelProperty(value = "类目名称 ",required = true,dataType ="string",example="to be number one ")
     private String name;
 
