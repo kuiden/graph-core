@@ -67,6 +67,8 @@ public class SeckillActivityController extends BaseApi {
     public BizBaseResponse<String> setCache(@RequestBody SeckillActivityModel req) {
         String result = UUID.randomUUID().toString();
         if (req != null) {
+            req.setStoreId(super.getStoreId());
+            req.setTenantId(super.getTenantId());
             stringRedisTemplate.opsForValue().set(result, JSON.toJSONString(req));
         }
         return new BizBaseResponse<String>(result);

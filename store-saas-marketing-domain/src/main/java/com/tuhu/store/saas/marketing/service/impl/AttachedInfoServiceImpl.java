@@ -70,6 +70,9 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
                 .eq(AttachedInfo.ISDELETE,Integer.valueOf(0));
         if (req.getType() != null) {
             wrapper.eq(AttachedInfo.TYPE, req.getType().getEnumCode());
+            if (req.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO)){
+                wrapper.orNew().eq(AttachedInfo.ID,"-1");
+            }
         }
         if (StringUtils.isNotBlank(req.getForeignKey())) {
             wrapper.eq(AttachedInfo.FOREIGN_KEY, req.getForeignKey());
@@ -77,7 +80,8 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
         if(StringUtils.isNotBlank(req.getQuery())){
             wrapper.andNew().like(AttachedInfo.TITLE,req.getQuery()).or().like(AttachedInfo.CONTENT, req.getQuery());
         }
-        wrapper.orderDesc(Lists.newArrayList(AttachedInfo.UPDATE_TIME));
+
+        wrapper.orderDesc(Lists.newArrayList(AttachedInfo.CREATE_TIME));
         PageHelper.startPage(req.getPageNum(), req.getPageSize());
         List<AttachedInfo> attachedInfos = super.selectList(wrapper);
         PageInfo<AttachedInfo> pageInfo = new PageInfo<>(attachedInfos);
