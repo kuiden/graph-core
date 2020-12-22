@@ -10,13 +10,10 @@ import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.finance.auth.common.dto.ExtParameter;
 import com.tuhu.finance.auth.common.dto.GetAuthTokenReq;
 import com.tuhu.springcloud.common.util.Money;
-import com.tuhu.store.saas.marketing.constant.SeckillConstant;
 import com.tuhu.store.saas.marketing.dataobject.SeckillRegistrationRecord;
-import com.tuhu.store.saas.marketing.enums.SeckillRegistrationRecordPayStatusEnum;
 import com.tuhu.store.saas.marketing.openapi.OpenApiInvoke;
 import com.tuhu.store.saas.marketing.remote.request.CashierRequestVO;
 import com.tuhu.store.saas.marketing.util.AuthSignUtil;
-import com.tuhu.store.saas.order.request.finance.receiving.OnlineReceiveReq;
 import com.tuhu.store.saas.order.request.openApi.OpenApiReq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 
 /**
  * @author wangxiang2
@@ -76,22 +70,25 @@ public class PayService {
     private String tuhuOpenApiPrivateKey;
 
 
-    public Object getPayAuthTokenTest() {
-        SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
-        seckillRegistrationRecord.setId("170385269714700144643");
-        seckillRegistrationRecord.setExpectAmount(new BigDecimal("1.00"));
-        seckillRegistrationRecord.setStoreId(1521L);
-        seckillRegistrationRecord.setTenantId(1446L);
-        OpenApiReq openApiReq = this.getAuthTokenOpenApi();
-        String tokenRequest = this.getRequestParameter(seckillRegistrationRecord, null);
-        log.info("getPayAuthToken, request:" + tokenRequest);
-        Map<String, Object> tokenRequestMap = JSONObject.parseObject(tokenRequest);
-        //调用获取收银台token
-        Object tokenResult = openApiInvoke.sendOpenApiInvoke(openApiReq, tokenRequestMap);
+
+
+    @Autowired
+    private SeckillRegistrationRecordService seckillRegistrationRecordService;
+
+
+/*    public Object queryPaymentResult(String id) {
+        Object result = new Object();
+        OpenApiReq openApiReq = this.getPaymentResultOpenApi();
+        Map<String, Object> mapRequest = Maps.newHashMap();
+        String variableUri = "/" + productCategory + "/" + paymentType + "/" + id + "/";
+        openApiReq.setVariableUri(variableUri);
+        //查询支付结果
+        log.info("queryPaymentResult, request:" + JSON.toJSONString(mapRequest));
+        result = openApiInvoke.sendGetOpenApiInvoke(openApiReq, mapRequest);
         //解析参数获取token
-        log.info("getPayAuthToken, response:" + JSON.toJSONString(tokenResult));
-        return tokenResult;
-    }
+        log.info("queryPaymentResult, response:" + JSON.toJSONString(result));
+        return result;
+    }*/
 
     public Map<String, Object> getPayAuthToken(SeckillRegistrationRecord seckillRegistrationRecord, String tradeOrderId) {
         Map<String, Object> returnMap = Maps.newHashMap();
@@ -120,6 +117,16 @@ public class PayService {
     }
 
 
+/*    private OpenApiReq getPaymentResultOpenApi() {
+        OpenApiReq openApiReq = new OpenApiReq();
+        openApiReq.setGatewayUrl(tuhuOpenApiGateWayUrl);
+        openApiReq.setAppId("store-saas-order");
+        openApiReq.setPrivateKey(tuhuOpenApiPrivateKey);
+        //openApiReq.setMethod("int-website-fin-payment-engine-query.payQuery.queryPaymentResultByBizOrderNo.get");
+        openApiReq.setMethod(queryPaymentResultByBizOrderNoUrl);
+        return openApiReq;
+    }*/
+
     private OpenApiReq getAuthTokenOpenApi() {
         OpenApiReq openApiReq = new OpenApiReq();
         openApiReq.setGatewayUrl(tuhuOpenApiGateWayUrl);
@@ -131,7 +138,7 @@ public class PayService {
 
 
     private String getRequestParameter(SeckillRegistrationRecord seckillRegistrationRecord, String tradeOrderId) {
-        String outBizNo = seckillRegistrationRecord.getId();
+        //String outBizNo = seckillRegistrationRecord.getId();
         Long amount = seckillRegistrationRecord.getExpectAmount().multiply(new BigDecimal(100)).longValue();
         long payTime = System.currentTimeMillis();
         GetAuthTokenReq getAuthTokenReq = new GetAuthTokenReq();
@@ -146,7 +153,7 @@ public class PayService {
         CashierRequestVO cashierRequestVO = new CashierRequestVO();
         cashierRequestVO.setProductCategory(productCategory);
         cashierRequestVO.setPaymentType(paymentType);
-        cashierRequestVO.setOutBizNo(outBizNo);
+        cashierRequestVO.setOutBizNo(tradeOrderId);
         //cashierRequestVO.setTerminalType(onlineReceiveReq.getTerminalType());
         cashierRequestVO.setSourceSystemCode(sourceSystemCode);
         cashierRequestVO.setRequestedPlatformCode(requestedPlatformCode);

@@ -46,6 +46,6 @@ public interface StoreReceivingClient {
      * @return
      */
     @PostMapping(value = "/feign/finance/receiving/updateReceivingAndTradeOrderByOrderNos")
-    BizBaseResponse updateReceivingAndTradeOrderByOrderNos(@RequestBody List<String> orderNos, @RequestParam("num") Integer num);
+    BizBaseResponse updateReceivingAndTradeOrderByOrderNos(@RequestBody List<String> orderNos, @RequestParam("state") Integer state);
 
 }

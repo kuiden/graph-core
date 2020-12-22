@@ -393,7 +393,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         //查询活动状态
         SeckillActivityStatusEnum seckillActivityStatusEnum = this.getSeckillActivityStatus(seckillActivity);
         result.setStatus(seckillActivityStatusEnum.getStatus());
-        result.setStatusName(seckillActivityStatusEnum.getStatusName());
+        result.setStatusName(seckillActivityStatusEnum.getClientStatusName());
         //查活动规则、门店介绍
         List<AttachedInfo> ruleInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
                 .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())
@@ -471,7 +471,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             result.setStoreIntroduction(seckillActivityModel.getStoreInfo());
             //活动状态 预览页默认为抢购中
             result.setStatus(SeckillActivityStatusEnum.SJ.getStatus());
-            result.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
+            result.setStatusName(SeckillActivityStatusEnum.SJ.getClientStatusName());
             //查门店信息
             StoreDTO storeDTO = this.getStoreInfo(result.getStoreId(),result.getTenantId());
             if (null != storeDTO){
