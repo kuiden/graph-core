@@ -157,7 +157,7 @@ public class SeckillActivityModel implements Serializable {
                 result.setExpiryDate(null);
                 result.setExpiryPeriod(Integer.valueOf(0));
                 result.setExpiryDay(this.cadCardExpiryDateDay);
-                result.setCardTypeCode("TIMIN_CARD");
+                result.setCardTypeCode("COUNTING_CARD");
                 break;
             default:
                 break;

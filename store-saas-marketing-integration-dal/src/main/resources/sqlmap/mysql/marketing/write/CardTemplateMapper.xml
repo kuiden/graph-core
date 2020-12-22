@@ -60,6 +60,7 @@
       face_amount =#{faceAmount} ,
       discount_amount =#{discountAmount} ,
       actual_amount =#{actualAmount} ,
+      card_type_code = #{cardTypeCode} ,
       description =#{description},
       update_user = #{updateUser},
         update_time = #{updateTime},
