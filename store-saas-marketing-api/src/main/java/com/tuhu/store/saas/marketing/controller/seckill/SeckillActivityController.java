@@ -148,6 +148,7 @@ public class SeckillActivityController extends BaseApi {
         req.setTenantId(super.getTenantId());
         req.setUpdateUser(super.getUserId());
         req.setId(null);
+        req.setCadCardTemplateId(null);
         return new BizBaseResponse(seckillActivityService.saveSeckillActivity(req));
     }
 
