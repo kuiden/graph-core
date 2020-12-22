@@ -27,4 +27,8 @@ public interface ValueCardMapper {
     int updateByPrimaryKeySelective(ValueCard record);
 
     int updateByPrimaryKey(ValueCard record);
+
+    int addValueCardBatch(@Param("valueCards") List<ValueCard> valueCards);
+
+    int editValueCardBatch(@Param("valueCards") List<ValueCard> valueCards);
 }

@@ -273,4 +273,29 @@
       is_delete = #{isDelete,jdbcType=BIT}
     where id = #{id,jdbcType=BIGINT}
   </update>
+
+  <insert id="addValueCardBatch">
+    insert into value_card (customer_id, store_id, tenant_id, amount, present_amount,create_time)
+    values
+    <foreach collection="valueCards" item="item" separator=",">
+      (#{item.customerId}, #{item.storeId}, #{item.tenantId}, #{item.amount}, #{item.presentAmount}, #{item.createTime})
+    </foreach>
+  </insert>
+
+  <update id="editValueCardBatch">
+    <foreach collection="valueCards" item="item" index="index" separator=";">
+      update value_card
+      <set>
+        <if test="item.amount != null">
+          amount = #{item.amount},
+        </if>
+        <if test="item.presentAmount != null">
+          present_amount = #{item.presentAmount},
+        </if>
+        update_time = now()
+      </set>
+      where id = ${item.id}
+    </foreach>
+  </update>
+
 </mapper>

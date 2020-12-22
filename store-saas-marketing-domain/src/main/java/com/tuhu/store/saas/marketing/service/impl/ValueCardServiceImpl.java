@@ -7,10 +7,8 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
-import com.tuhu.store.saas.marketing.context.UserContextHolder;
-import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
-import com.tuhu.store.saas.marketing.dataobject.*;
+import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardChangeMapper;
@@ -18,6 +16,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardRuleMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
+import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
 import com.tuhu.store.saas.marketing.response.valueCard.CustomerValueCardDetailResp;
 import com.tuhu.store.saas.marketing.response.valueCard.QueryValueCardListResp;
@@ -28,17 +27,14 @@ import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import com.tuhu.store.saas.order.vo.finance.nonpayment.AddNonpaymentVO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
-import com.tuhu.store.saas.request.purchase.AddPurchaseReturnReq;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sun.misc.Unsafe;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -773,5 +769,83 @@ public class ValueCardServiceImpl implements IValueCardService {
             throw new StoreSaasMarketingException("该单号正在进行确认收款");
         }
         return result;
+    }
+
+
+    @Override
+    @Transactional
+    public List<ValueCardReq> excelImpValueCard(List<ValueCardReq> list) {
+        log.info("excelImpValueCard.size:" + list.size());
+        Map<String, List<ValueCardReq>> vMap = list.stream().collect(Collectors.groupingBy(ValueCardReq::getCustomerId));
+        List<String> customerIdList = list.stream().map(x -> x.getCustomerId()).collect(Collectors.toList());
+        ValueCardReq req = list.get(0);
+        Long storeId = req.getStoreId();
+        Long tenantId = req.getTenantId();
+        List<ValueCard> insertList = new ArrayList<>();
+        List<ValueCard> updateList = new ArrayList<>();
+        Map<String, ValueCard> customerIdMap = getCustomerIdMap(storeId, tenantId, customerIdList);
+        log.info("excelImpValueCard{}", JSONObject.toJSON(customerIdList));
+        Date now = new Date();
+        for (ValueCardReq valueCardReq : list) {
+            String customerId = valueCardReq.getCustomerId();
+            ValueCard valueCard = customerIdMap.get(customerId);
+            if (null != valueCard) {
+                updateList.add(buildValueCard(valueCard, valueCardReq, now));
+            } else {
+                insertList.add(buildValueCard(valueCard, valueCardReq, now));
+            }
+        }
+        if(CollectionUtils.isNotEmpty(insertList)){
+            valueCardMapper.addValueCardBatch(insertList);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            valueCardMapper.editValueCardBatch(updateList);
+        }
+        return list;
+    }
+
+    /**
+     * 构建储值卡对象
+     * @param valueCard
+     * @param valueCardReq
+     * @param now
+     * @return
+     */
+    private ValueCard buildValueCard(ValueCard valueCard, ValueCardReq valueCardReq, Date now) {
+        if (null == valueCard) {
+            valueCard = new ValueCard();
+            valueCard.setCreateTime(now);
+            valueCard.setStoreId(valueCardReq.getStoreId());
+            valueCard.setTenantId(valueCardReq.getTenantId());
+            valueCard.setCustomerId(valueCardReq.getCustomerId());
+            valueCard.setAmount(new BigDecimal(valueCardReq.getAmount()));
+            valueCard.setPresentAmount(new BigDecimal(valueCardReq.getPresentAmount()));
+        } else {
+            valueCard.setUpdateTime(now);
+            BigDecimal amount = valueCard.getAmount().add(new BigDecimal(valueCardReq.getAmount()));
+            BigDecimal presentAmount = valueCard.getPresentAmount().add(new BigDecimal(valueCardReq.getPresentAmount()));
+            valueCard.setAmount(amount);
+            valueCard.setPresentAmount(presentAmount);
+        }
+        return valueCard;
+    }
+
+    /**
+     * 查询客户在门店是否存在储值卡
+     * @param storeId
+     * @param tenantId
+     * @param customerIdList
+     * @return
+     */
+    private Map<String, ValueCard> getCustomerIdMap(Long storeId, Long tenantId, List<String> customerIdList) {
+        ValueCardExample example = new ValueCardExample();
+        example.createCriteria().andCustomerIdIn(customerIdList)
+                .andStoreIdEqualTo(storeId).andTenantIdEqualTo(tenantId)
+                .andIsDeleteEqualTo(false);
+        List<ValueCard> valueCardList = valueCardMapper.selectByExample(example);
+        if (CollectionUtils.isNotEmpty(valueCardList)) {
+            return valueCardList.stream().collect(Collectors.toMap(ValueCard::getCustomerId, a -> a, (k1, k2) -> k1));
+        }
+        return Collections.EMPTY_MAP;
     }
 }

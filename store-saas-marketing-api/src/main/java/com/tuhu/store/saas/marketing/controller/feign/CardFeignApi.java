@@ -3,18 +3,19 @@ package com.tuhu.store.saas.marketing.controller.feign;
 import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.boot.common.facade.response.BizResponse;
-import com.tuhu.store.saas.marketing.dataobject.CrdCardOrder;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateReq;
+import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.response.dto.CrdCardOrderExtendDTO;
 import com.tuhu.store.saas.marketing.response.dto.CustomerMarketCountDTO;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
 import com.tuhu.store.saas.marketing.service.ICardService;
+import com.tuhu.store.saas.marketing.service.IValueCardService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ public class CardFeignApi {
 
     @Autowired
     private ICardService iCardService;
+
+    @Autowired
+    private IValueCardService iValueCardService;
 
     @GetMapping("/updateCardPaymentStatus")
     @ApiOperation("更新卡支付状态")
@@ -98,5 +102,11 @@ public class CardFeignApi {
     public BizBaseResponse<List<CrdCardOrderExtendDTO>> queryCardToCommission(@RequestBody QueryCardToCommissionReq request){
         List<CrdCardOrderExtendDTO> cardOrderList = iCardOrderService.queryCardToCommission(request);
         return new BizBaseResponse<>(cardOrderList);
+    }
+
+    @PostMapping(value = "/excelImpValueCard")
+    @ApiOperation("excel导入客户储值卡")
+    public BizBaseResponse<List<ValueCardReq>> excelImpValueCard(@RequestBody List<ValueCardReq> list) {
+        return new BizBaseResponse<>(iValueCardService.excelImpValueCard(list));
     }
 }
