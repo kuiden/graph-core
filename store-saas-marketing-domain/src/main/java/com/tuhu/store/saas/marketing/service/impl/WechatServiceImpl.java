@@ -322,7 +322,7 @@ public class WechatServiceImpl implements IWechatService {
         HashMap thing2 = Maps.newHashMap();
         String activityTime = "";
         if (Objects.nonNull(seckillActivity.getStartTime()) && Objects.nonNull(seckillActivity.getEndTime())) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("MM月dd日");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("YY年MM月dd日");
             activityTime = dateFormat.format(seckillActivity.getStartTime()) + "至" + dateFormat.format(seckillActivity.getEndTime());
         }
         thing2.put("value", activityTime);
