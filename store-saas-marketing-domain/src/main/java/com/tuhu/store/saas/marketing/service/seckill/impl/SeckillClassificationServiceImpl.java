@@ -37,25 +37,11 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
 
     @Autowired
     private SeckillTemplateService seckillTemplateService;
-    /**
-     * 缓冲
-     */
-    private HashMap<Long, WeakReference<ArrayList<SeckillClassificationModel>>> cache = new HashMap<>(2 >> 4);
 
-    private Function<Long, ArrayList<SeckillClassificationModel>> getAndSetCache = (key) -> {
-        if (!cache.containsKey(key)) {
-            WeakReference<ArrayList<SeckillClassificationModel>> arrayListWeakReference = buildCache(key);
-            if (arrayListWeakReference != null) {
-                cache.put(key, arrayListWeakReference);
-            }
-        } else if (cache.get(key) == null || cache.get(key).get() == null) {
-            WeakReference<ArrayList<SeckillClassificationModel>> arrayListWeakReference = buildCache(key);
-            if (arrayListWeakReference != null) {
-                cache.put(key, arrayListWeakReference);
-            }
-        }
-        return cache.get(key) == null ? null : cache.get(key).get();
-    };
+
+
+    private Function<Long, ArrayList<SeckillClassificationModel>> getAndSetCache = (key) -> buildCache(key).get();
+
 
     private WeakReference<ArrayList<SeckillClassificationModel>> buildCache(Long key) {
         log.info("缓冲池开始构建 -> buildCache->key -> {}", key);
@@ -89,7 +75,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
         log.info("SeckillClassificationServiceImpl->save-> req -> {}", req);
         Integer result = null;
         ArrayList<SeckillClassificationModel> seckillClassificationModels = getAndSetCache.apply(req.getTenantId());
-        boolean isInsert = req.getId() > 0 ? false : true;
+        boolean isInsert = req.getId() == null || req.getId() <= 0 ? true : false ;
         SeckillClassification entity;
         if (seckillClassificationModels != null && seckillClassificationModels.stream()
                 .filter(x -> x.getName().trim().toLowerCase().equals(req.getName().trim().toLowerCase())
@@ -101,7 +87,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
             entity.setPriority(seckillClassificationModels == null ? 1 : seckillClassificationModels.get(seckillClassificationModels.size() - 1).getPriority() + 1);
             if (super.insert(entity)) {
                 result = entity.getId();
-                cache.remove(req.getTenantId());
+
             } else {
                 throw new StoreSaasMarketingException("新增数据失败");
             }
@@ -114,7 +100,6 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
             entity.setName(req.getName());
             if (super.updateById(entity)) {
                 result = entity.getId();
-                cache.remove(req.getTenantId());
             } else {
                 throw new StoreSaasMarketingException("修改数据失败");
             }
@@ -154,11 +139,9 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
                 if (!super.updateById(seckillClassification)) {
                     throw new StoreSaasMarketingException("删除失败");
                 }
-                cache.remove(seckillClassification.getTenantId());
             } else {
                 throw new StoreSaasMarketingException("数据越权");
             }
-
         }
         return Boolean.TRUE;
     }
@@ -179,7 +162,6 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
         if (!super.updateBatchById(Lists.newArrayList(fromEntity, toEntity))) {
             throw new StoreSaasMarketingException("更新排序失败");
         }
-        this.cache.remove(tenantId);
         result = this.getAndSetCache.apply(tenantId);
         return result;
     }

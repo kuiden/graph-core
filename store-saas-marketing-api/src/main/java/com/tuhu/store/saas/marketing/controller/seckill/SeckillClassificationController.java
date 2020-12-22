@@ -42,7 +42,7 @@ public class SeckillClassificationController extends BaseApi {
             throw new StoreSaasMarketingException("越权访问");
         }
         req.setTenantId(super.getTenantId());
-        req.setCreateUser(super.getUserId());
+        req.setCreateUser(super.getTenantUserId());
         return new BizBaseResponse<>(service.save(req));
     }
 

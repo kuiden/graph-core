@@ -120,8 +120,8 @@ public class SeckillActivityModel implements Serializable {
      */
     public CardTemplateModel toCardTemplateModel() {
         CardTemplateModel result = new CardTemplateModel();
-        if (!StringUtils.isEmpty(this.getTemplateId())) {
-            result.setId(Long.valueOf(this.getTemplateId()));
+        if (!StringUtils.isEmpty(this.cadCardTemplateId)) {
+            result.setId(Long.valueOf(this.cadCardTemplateId));
         }
         result.setFaceAmount(this.originalPrice);
         result.setActualAmount(this.newPrice);
