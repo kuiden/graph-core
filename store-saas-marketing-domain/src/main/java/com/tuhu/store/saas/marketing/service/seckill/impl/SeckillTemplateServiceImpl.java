@@ -200,9 +200,9 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         if (temp == null) {
             return false;
         }
-        Integer referNum = temp.getSort() + 1;
-        temp.setSort(referNum);
-        this.update(temp, tempWrapper);
+        Integer referNum = temp.getRefenceNumber() + 1;
+        temp.setRefenceNumber(referNum);
+        this.updateById(temp);
         return true;
     }
 

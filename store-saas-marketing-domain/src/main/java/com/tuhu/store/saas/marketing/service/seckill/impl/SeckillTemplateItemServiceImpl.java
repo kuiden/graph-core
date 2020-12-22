@@ -60,10 +60,10 @@ public class SeckillTemplateItemServiceImpl extends ServiceImpl<SeckillTemplateI
             updateItem.setUpdateTime(new Date());
             updateItem.setUpdateUser(userId);
             updateItems.forEach(item->{
-                EntityWrapper<SeckillTemplateItem> updateWrapper = new EntityWrapper();
+//                EntityWrapper<SeckillTemplateItem> updateWrapper = new EntityWrapper();
                 BeanUtils.copyProperties(item, updateItem);
-                updateWrapper.eq(SeckillTemplateItem.ID, item.getId());
-                this.update(updateItem, updateWrapper);
+//                updateWrapper.eq(SeckillTemplateItem.ID, item.getId());
+                this.updateById(updateItem);
             });
         }
         return true;

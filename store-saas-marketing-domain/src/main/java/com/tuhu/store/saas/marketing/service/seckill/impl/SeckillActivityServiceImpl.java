@@ -325,10 +325,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         List<String> activityIds = activityList.stream().map(x -> x.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(activityIds)) {
             //查询活动对应的支付成功的订单
-            List<SeckillRegistrationRecord> seckillRegistrationRecords = seckillRegistrationRecordService.selectList(new EntityWrapper<SeckillRegistrationRecord>()
-                    .in("seckill_activity_id", activityIds).eq("pay_status", SeckillConstant.PAY_SUCCESS_STATUS)
-                    .eq("is_delete", 0).eq("store_id", storeId).eq("tenant_id", tenantId));
-            Map<String, List<SeckillRegistrationRecord>> activityIdNumMap = seckillRegistrationRecords.stream().collect(Collectors.groupingBy(x -> x.getSeckillActivityId()));
+            Map<String,Integer> activityIdNumMap = seckillRegistrationRecordService.activityIdNumMap(activityIds);
             //组装返回数据
             for (SeckillActivity seckillActivity : activityList) {
                 SeckillActivityListResp resp = new SeckillActivityListResp();
@@ -337,13 +334,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 resp.setStatus(seckillActivityStatusEnum.getStatus());
                 resp.setStatusName(seckillActivityStatusEnum.getStatusName());
                 resp.setTotalNumber(seckillActivity.getSellNumber());
-                //计算已售出数量
+                //已售数量
                 if (activityIdNumMap.containsKey(seckillActivity.getId())) {
-                    Integer salesNumber = 0;
-                    for (SeckillRegistrationRecord record : activityIdNumMap.get(seckillActivity.getId())) {
-                        salesNumber += record.getQuantity().intValue();
-                    }
-                    resp.setSalesNumber(salesNumber);
+                    resp.setSalesNumber(activityIdNumMap.get(seckillActivity.getId()));
                 }
                 result.add(resp);
             }
@@ -476,9 +469,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             result.setActivityRule(seckillActivityModel.getRulesInfo());
             //门店介绍
             result.setStoreIntroduction(seckillActivityModel.getStoreInfo());
-            //活动状态
-            result.setStatus(SeckillActivityStatusEnum.WSJ.getStatus());
-            result.setStatusName(SeckillActivityStatusEnum.WSJ.getStatusName());
+            //活动状态 预览页默认为抢购中
+            result.setStatus(SeckillActivityStatusEnum.SJ.getStatus());
+            result.setStatusName(SeckillActivityStatusEnum.SJ.getStatusName());
             //查门店信息
             StoreDTO storeDTO = this.getStoreInfo(result.getStoreId(),result.getTenantId());
             if (null != storeDTO){
