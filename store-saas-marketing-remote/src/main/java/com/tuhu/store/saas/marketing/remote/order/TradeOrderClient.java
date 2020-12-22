@@ -27,6 +27,15 @@ public interface TradeOrderClient {
 
 
     /**
+     * 创建交易单和待收单
+     *
+     * @param addReceivingVO
+     * @return
+     */
+    @PostMapping("/feign/finance/trade/addReceivingAndTradeOrder")
+    BizBaseResponse<String> addReceivingAndTradeOrder(@RequestBody AddReceivingVO addReceivingVO);
+
+    /**
      * 根据交易单获取交易单详情
      * @param tradeOrderId
      * @return

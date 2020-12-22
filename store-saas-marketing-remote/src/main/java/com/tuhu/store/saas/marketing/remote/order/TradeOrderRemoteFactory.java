@@ -27,6 +27,12 @@ public class TradeOrderRemoteFactory implements FallbackFactory<TradeOrderClient
             }
 
             @Override
+            public BizBaseResponse<String> addReceivingAndTradeOrder(AddReceivingVO addReceivingVO) {
+                log.error("addReceivingAndTradeOrder error,error={}", "", ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
             public BizBaseResponse<TradeOrderDTO> getTradeOrderById(String tradeOrderId) {
                 log.error("getTradeOrderById error,error={}", "", ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);

@@ -10,6 +10,7 @@ import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
+import com.tuhu.store.saas.order.dto.finance.receiving.TradeOrderDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -112,4 +113,6 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      * @return
      */
     Map<String, Object> OrderPayDetail(String seckillActivityDetailId);
+
+
 }
