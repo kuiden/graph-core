@@ -9,9 +9,9 @@ package com.tuhu.store.saas.marketing.enums;
  * @since 2020-12-03
  */
 public enum SeckillActivityStatusEnum {
-    WSJ(0, "未上架","未开始"),
-    SJ(1, "上架","进行中"),
-    XJ(9, "下架","已结束");
+    WSJ(0, "未上架","未开始","未开始"),
+    SJ(1, "上架","进行中","抢购中"),
+    XJ(9, "下架","已结束","已结束");
 
     private Integer status;
 
@@ -19,10 +19,13 @@ public enum SeckillActivityStatusEnum {
 
     private String statusName;
 
-    SeckillActivityStatusEnum(int status, String desc,String statusName) {
+    private String clientStatusName;
+
+    SeckillActivityStatusEnum(int status, String desc,String statusName,String clientStatusName) {
         this.status = status;
         this.desc = desc;
         this.statusName = statusName;
+        this.clientStatusName = clientStatusName;
     }
 
     public Integer getStatus() {
@@ -35,5 +38,9 @@ public enum SeckillActivityStatusEnum {
 
     public String getDesc() {
         return desc;
+    }
+
+    public String getClientStatusName() {
+        return clientStatusName;
     }
 }
