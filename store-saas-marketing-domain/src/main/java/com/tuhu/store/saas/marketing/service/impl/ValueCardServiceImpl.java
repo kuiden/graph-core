@@ -775,8 +775,10 @@ public class ValueCardServiceImpl implements IValueCardService {
     @Override
     @Transactional
     public List<ValueCardReq> excelImpValueCard(List<ValueCardReq> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
         log.info("excelImpValueCard.size:" + list.size());
-        Map<String, List<ValueCardReq>> vMap = list.stream().collect(Collectors.groupingBy(ValueCardReq::getCustomerId));
         List<String> customerIdList = list.stream().map(x -> x.getCustomerId()).collect(Collectors.toList());
         ValueCardReq req = list.get(0);
         Long storeId = req.getStoreId();
@@ -841,7 +843,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         ValueCardExample example = new ValueCardExample();
         example.createCriteria().andCustomerIdIn(customerIdList)
                 .andStoreIdEqualTo(storeId).andTenantIdEqualTo(tenantId)
-                .andIsDeleteEqualTo(false);
+                .andIsDeleteEqualTo(Boolean.FALSE);
         List<ValueCard> valueCardList = valueCardMapper.selectByExample(example);
         if (CollectionUtils.isNotEmpty(valueCardList)) {
             return valueCardList.stream().collect(Collectors.toMap(ValueCard::getCustomerId, a -> a, (k1, k2) -> k1));
