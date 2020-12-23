@@ -120,10 +120,10 @@ public class SeckillActivityMinController extends EndUserApi {
         return new BizBaseResponse(mapResult);
     }
 
-    @GetMapping("/customer/OrderPayDetail")
-    @ApiOperation("秒杀订单支付详情")
-    public BizBaseResponse<Map<String, Object>> customerActivityOrderPayDetail(@RequestParam("seckillActivityDetailId") String seckillActivityDetailId) {
-        return new BizBaseResponse(seckillRegistrationRecordService.OrderPayDetail(seckillActivityDetailId));
+    @PostMapping("/customer/orderPayDetail")
+    @ApiOperation("秒杀订单支付详情(前端轮询)")
+    public BizBaseResponse<Map<String, Object>> customerActivityOrderPayDetail(@RequestBody SeckillActivityDetailReq seckillActivityDetailReq) {
+        return new BizBaseResponse(seckillRegistrationRecordService.OrderPayDetail(seckillActivityDetailReq));
     }
 
     @PostMapping("/customer/remindAdd")

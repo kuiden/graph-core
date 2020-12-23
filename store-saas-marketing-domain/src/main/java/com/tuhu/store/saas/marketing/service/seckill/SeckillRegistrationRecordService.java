@@ -8,9 +8,9 @@ import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
 import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordUpdateReq;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
-import com.tuhu.store.saas.order.dto.finance.receiving.TradeOrderDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -108,11 +108,19 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
     void callBack(PaymentResponse paymentResponse);
 
     /**
-     * 秒杀订单支付详情
-     * @param seckillActivityDetailId
+     * 活动抢购-更新
+     *
+     * @param paymentResponse
      * @return
      */
-    Map<String, Object> OrderPayDetail(String seckillActivityDetailId);
+    void update(SeckillRecordUpdateReq seckillRecordUpdateReq);
+
+    /**
+     * 秒杀订单支付详情
+     * @param seckillActivityDetailReq
+     * @return
+     */
+    Map<String, Object> OrderPayDetail(SeckillActivityDetailReq seckillActivityDetailReq);
 
 
 }
