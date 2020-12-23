@@ -797,13 +797,49 @@ public class ValueCardServiceImpl implements IValueCardService {
                 insertList.add(buildValueCard(valueCard, valueCardReq, now));
             }
         }
-        if(CollectionUtils.isNotEmpty(insertList)){
-            valueCardMapper.addValueCardBatch(insertList);
+        if (CollectionUtils.isNotEmpty(insertList)) {
+            for (ValueCard valueCard : insertList) {
+                if (valueCardMapper.insert(valueCard) <= 0) {
+                    throw new StoreSaasMarketingException("新增客户卡信息失败");
+                }
+                addValueChange(req, valueCard);
+            }
+            //valueCardMapper.addValueCardBatch(insertList);
         }
-        if(CollectionUtils.isNotEmpty(updateList)){
-            valueCardMapper.editValueCardBatch(updateList);
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            for (ValueCard valueCard : updateList) {
+                if (valueCardMapper.updateByPrimaryKey(valueCard) <= 0) {
+                    throw new StoreSaasMarketingException("修改客户储值信息失败");
+                }
+                addValueChange(req, valueCard);
+            }
+            //valueCardMapper.editValueCardBatch(updateList);
         }
         return list;
+    }
+
+    private void addValueChange(ValueCardReq valueCardReq,ValueCard valueCard){
+        String codeNumber = codeFactory.getCodeNumber("CZBG", valueCardReq.getStoreId());
+        codeNumber = "CZBG"+valueCardReq.getStoreId()+codeNumber;
+        //添加一条流水
+        ValueCardRechargeOrRefundReq req = new ValueCardRechargeOrRefundReq();
+        req.setSalesmanId(valueCardReq.getUserId());
+        req.setSalesmanName("system");
+        req.setType(2);//0退款 2充值
+        req.setRemark("system");
+        req.setChangePresent(valueCard.getAmount());//本金变动
+        req.setChangePrincipal(valueCard.getPresentAmount());//赠金变动
+        ValueCardChange valueCardChange = new ValueCardChange(valueCard, req);
+        valueCardChange.setChangeNo(codeNumber);
+        valueCardChange.setCreateUserName("system");
+        valueCardChange.setCreateUserId(valueCardReq.getUserId());
+        valueCardChange.setUpdateUserId(valueCardReq.getUserId());
+        //如果当前记录 本金为0  赠金不为0  则直接生效 不用走支付流程
+        valueCardChange.setStatus(Boolean.TRUE);
+        //新增一条记录
+        if (valueCardChangeMapper.insert(valueCardChange) <= 0) {
+            throw new StoreSaasMarketingException("添加余额变更流水失败");
+        }
     }
 
     /**
@@ -822,6 +858,7 @@ public class ValueCardServiceImpl implements IValueCardService {
             valueCard.setCustomerId(valueCardReq.getCustomerId());
             valueCard.setAmount(new BigDecimal(valueCardReq.getAmount()));
             valueCard.setPresentAmount(new BigDecimal(valueCardReq.getPresentAmount()));
+            valueCard.setIsDelete(Boolean.FALSE);
         } else {
             valueCard.setUpdateTime(now);
             BigDecimal amount = valueCard.getAmount().add(new BigDecimal(valueCardReq.getAmount()));
