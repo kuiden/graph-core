@@ -68,17 +68,19 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
         Wrapper<AttachedInfo> wrapper = new EntityWrapper<AttachedInfo>().eq(AttachedInfo.STORE_ID, req.getStoreId())
                 .eq(AttachedInfo.TENANT_ID, req.getTenantId())
                 .eq(AttachedInfo.ISDELETE,Integer.valueOf(0));
+        if (StringUtils.isNotBlank(req.getForeignKey())) {
+            wrapper.eq(AttachedInfo.FOREIGN_KEY, req.getForeignKey());
+        } else {
+            wrapper.isNull(AttachedInfo.FOREIGN_KEY);
+        }
+        if(StringUtils.isNotBlank(req.getQuery())){
+            wrapper.andNew().like(AttachedInfo.TITLE,req.getQuery()).or().like(AttachedInfo.CONTENT, req.getQuery());
+        }
         if (req.getType() != null) {
             wrapper.eq(AttachedInfo.TYPE, req.getType().getEnumCode());
             if (req.getType().equals(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO)){
                 wrapper.orNew().eq(AttachedInfo.ID,"-1");
             }
-        }
-        if (StringUtils.isNotBlank(req.getForeignKey())) {
-            wrapper.eq(AttachedInfo.FOREIGN_KEY, req.getForeignKey());
-        }
-        if(StringUtils.isNotBlank(req.getQuery())){
-            wrapper.andNew().like(AttachedInfo.TITLE,req.getQuery()).or().like(AttachedInfo.CONTENT, req.getQuery());
         }
 
         wrapper.orderDesc(Lists.newArrayList(AttachedInfo.CREATE_TIME));
