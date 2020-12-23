@@ -59,7 +59,7 @@ public class SeckillTemplateController extends BaseApi {
     public BizResponse edit(@Validated @RequestBody EditSecKillTempReq req) {
         try {
             seckillTemplateService.editTemplate(req, this.getTenantId(), this.getTenantUserId());
-        } catch (Exception e) {
+        } catch (StoreSaasMarketingException e) {
             return BizResponse.operationFailed(e.getMessage());
         }
         return BizResponse.success();
@@ -68,7 +68,12 @@ public class SeckillTemplateController extends BaseApi {
     @GetMapping("/detail")
     @ApiOperation("查询秒杀活动模板详情")
     public BizResponse<SeckillTempDetailResp> detail(@RequestParam(value = "tempId") String tempId) {
-        SeckillTempDetailResp resp = seckillTemplateService.getTemplateDetail(tempId, this.getTenantId());
+        SeckillTempDetailResp resp = null;
+        try {
+            resp = seckillTemplateService.getTemplateDetail(tempId, this.getTenantId());
+        } catch (StoreSaasMarketingException e) {
+            return BizResponse.operationFailed(e.getMessage());
+        }
         return BizResponse.success(resp);
     }
 

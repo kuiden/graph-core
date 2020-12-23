@@ -537,7 +537,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         log.info("customerIdNewMap{}", JSON.toJSONString(customerIds));
         EntityWrapper<ClientEventRecordDAO> wrapper = new EntityWrapper<>();
         wrapper.eq(ClientEventRecordDAO.CONTENT_VALUE, seckillActivityId);
-        wrapper.eq(ClientEventRecordDAO.CONTENT_TYPE, SeckillConstant.REGISTERED);
+        wrapper.eq(ClientEventRecordDAO.EVENT_TYPE, SeckillConstant.REGISTERED);
         wrapper.in(SeckillRegistrationRecord.CUSTOMER_ID, customerIds);
         List<ClientEventRecordDAO> list = clientEventRecordMapper.selectList(wrapper);
         if (CollectionUtils.isNotEmpty(list)) {

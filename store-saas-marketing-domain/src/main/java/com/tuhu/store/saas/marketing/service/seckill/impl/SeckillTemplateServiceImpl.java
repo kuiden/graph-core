@@ -144,7 +144,10 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         wra.ne(SeckillTemplate.ID, req.getId());
         wra.orderBy(SeckillTemplate.SORT, false);
         List<SeckillTemplate> templateList = this.selectList(wra);
-        if (CollectionUtils.isNotEmpty(templateList) && CollectionUtils.isNotEmpty(templateList.parallelStream().filter(t->t.getActivityTitle().equals(req.getActivityTitle()))
+        if (CollectionUtils.isNotEmpty(templateList)) {
+            throw new StoreSaasMarketingException("活动模板不存在");
+        }
+        if (CollectionUtils.isNotEmpty(templateList.parallelStream().filter(t->t.getActivityTitle().equals(req.getActivityTitle()))
                 .collect(Collectors.toList()))) {
             throw new StoreSaasMarketingException("已存在同名称模板");
         }
@@ -169,6 +172,9 @@ public class SeckillTemplateServiceImpl extends ServiceImpl<SeckillTemplateMappe
         tempWrapper.eq(SeckillTemplate.ID, tempId);
         tempWrapper.eq(SeckillTemplate.IS_DELETE, 0);
         SeckillTemplate temp = this.selectOne(tempWrapper);
+        if (temp == null) {
+            throw new StoreSaasMarketingException("活动模板不存在");
+        }
         SeckillTempDetailResp resp = new SeckillTempDetailResp();
         BeanUtils.copyProperties(temp, resp);
         List<SeckillTemplateItem> itemList = seckillTemplateItemService.getSeckillTempItemList(tempId, tenantId);
