@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.entity.EndUserVisitedCouponEntity;
 import com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity;
 import com.tuhu.store.saas.marketing.enums.EventContentTypeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ClientEventRecordMapper;
 import com.tuhu.store.saas.marketing.request.ClientEventRecordReq;
 import com.tuhu.store.saas.marketing.request.ClientEventRecordRequest;
@@ -62,7 +63,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         log.info("记录用户行为入参：{}", JSONObject.toJSONString(clientEventRecordRequest));
         String validateResult = this.validateClientEventRecordRequest(clientEventRecordRequest);
         if (null != validateResult) {
-            throw new RuntimeException(validateResult);
+            throw new StoreSaasMarketingException(validateResult);
         }
         String openId = clientEventRecordRequest.getOpenId();
         Integer sourceType = clientEventRecordRequest.getSourceType();
@@ -75,7 +76,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
             if (null == oauthClientDetails) {
                 log.error("客户端配置信息不存在，clientType={}", clientType);
-                throw new RuntimeException("客户端配置信息不存在");
+                throw new StoreSaasMarketingException("客户端配置信息不存在");
             }
 
             openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()

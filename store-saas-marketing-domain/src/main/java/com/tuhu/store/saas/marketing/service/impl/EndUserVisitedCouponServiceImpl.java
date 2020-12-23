@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.tuhu.base.service.impl.BaseServiceImpl;
 import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
 import com.tuhu.store.saas.marketing.entity.EndUserVisitedCouponEntity;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.EndUserVisitedCouponWriteMapper;
 import com.tuhu.store.saas.marketing.request.EndUserVistiedCouponRequest;
 import com.tuhu.store.saas.marketing.service.IEndUserVisitedCouponService;
@@ -77,7 +78,7 @@ public class EndUserVisitedCouponServiceImpl extends BaseServiceImpl<EndUserVisi
         log.info("记录用户浏览的优惠券入参：{}", JSONObject.toJSONString(endUserVistiedCouponRequest));
         if (StringUtils.isEmpty(endUserVistiedCouponRequest.getEncryptedCode()) || StringUtils.isEmpty(endUserVistiedCouponRequest.getOpenIdCode())) {
             log.error("记录用户浏览的门店入参错误：{}", JSONObject.toJSONString(endUserVistiedCouponRequest));
-            throw new RuntimeException("记录用户浏览的门店入参错误");
+            throw new StoreSaasMarketingException("记录用户浏览的门店入参错误");
         }
         String clientType = endUserVistiedCouponRequest.getClientType();
         if (StringUtils.isEmpty(clientType)) {
@@ -86,7 +87,7 @@ public class EndUserVisitedCouponServiceImpl extends BaseServiceImpl<EndUserVisi
         OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
         if (null == oauthClientDetails) {
             log.error("客户端配置信息不存在，clientType={}", clientType);
-            throw new RuntimeException("客户端配置信息不存在");
+            throw new StoreSaasMarketingException("客户端配置信息不存在");
         }
         String openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()
                 , oauthClientDetails.getWxSecret()
@@ -118,7 +119,7 @@ public class EndUserVisitedCouponServiceImpl extends BaseServiceImpl<EndUserVisi
         log.info("记录用户浏览的优惠券入参：{}", JSONObject.toJSONString(endUserVisitedCouponEntity));
         if (StringUtils.isEmpty(endUserVisitedCouponEntity.getCouponCode()) || StringUtils.isEmpty(endUserVisitedCouponEntity.getOpenId())) {
             log.error("记录用户浏览的门店入参错误：{}", JSONObject.toJSONString(endUserVisitedCouponEntity));
-            throw new RuntimeException("记录用户浏览的门店入参错误");
+            throw new StoreSaasMarketingException("记录用户浏览的门店入参错误");
         }
         String openId = endUserVisitedCouponEntity.getOpenId();
         String couponCode = endUserVisitedCouponEntity.getCouponCode();
