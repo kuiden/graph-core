@@ -77,10 +77,10 @@
         AND customer_id IS NOT NULL
         AND content_value = #{seckillActivityId}
         <if test="type != null and type == 0 ">
-            AND content_type = 'registered'
+            AND event_type = 'registered'
         </if>
         <if test="type != null and type == 1 ">
-            AND content_type != 'registered'
+            AND event_type != 'registered'
         </if>
     </select>
 
@@ -101,10 +101,10 @@
             AND phone_number != '0'
             AND customer_id IS NOT NULL
             <if test="type != null and type == 0 ">
-                AND b.content_type = 'registered'
+                AND b.event_type = 'registered'
             </if>
             <if test="type != null and type == 1 ">
-                AND b.content_type != 'registered'
+                AND b.event_type != 'registered'
             </if>
         )
     </select>
