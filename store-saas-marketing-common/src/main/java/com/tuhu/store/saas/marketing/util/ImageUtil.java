@@ -28,8 +28,12 @@ public class ImageUtil {
 
     public static final String[] IMG_SUFFIX= {"png","jpg","jpeg","gif","tif","pcx","bmp","tga","svg","psd"};
 
-    public UploadImgRes uploadFile(MultipartFile imgFile, String indexNameParams) {
-        try {
+    public UploadImgRes uploadFile(MultipartFile imgFile, String indexNameParams) throws Exception {
+//        try {
+            String suffix = imgFile.getOriginalFilename().substring(imgFile.getOriginalFilename().lastIndexOf(".") + 1);
+            if(!Arrays.asList(IMG_SUFFIX).contains(suffix.toLowerCase())){
+                throw new StoreSaasMarketingException("图片格式错误");
+            }
             String indexName = changeIndexName(indexNameParams);
             UploadImgRes res = new UploadImgRes();
             //先上传原件
@@ -56,10 +60,12 @@ public class ImageUtil {
 //                res.setThumImgUrl(URLDecoder.decode(baseImgPath, "UTF-8"));
 //            }
             return res;
-        } catch (Exception ex) {
-            log.error("上传图片到微信服务器发生异常", ex.getMessage());
-            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
-        }
+//        } catch (StoreSaasMarketingException ex) {
+//            throw ex;
+//        } catch (Exception ex) {
+//            log.error("上传图片到微信服务器发生异常", ex.getMessage());
+//            throw new StoreSaasMarketingException("上传图片到微信服务器发生异常");
+//        }
 
     }
 
