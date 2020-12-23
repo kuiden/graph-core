@@ -403,7 +403,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             }
 
             List<Integer> integerList = Lists.newArrayList(TradeOrderStatusEnum.SUCCESS.getCode(), TradeOrderStatusEnum.FAIL.getCode());
-            if (Objects.isNull(tradeOrderDTO) && integerList.contains(tradeOrderDTO.getStatus()) && StringUtils.isNotBlank(tradeOrderDTO.getCallbackData())) {
+            if (Objects.nonNull(tradeOrderDTO) && integerList.contains(tradeOrderDTO.getStatus()) && StringUtils.isNotBlank(tradeOrderDTO.getCallbackData())) {
                 returnMap.put("payStatus", tradeOrderDTO.getStatus());
                 return returnMap;
             }
