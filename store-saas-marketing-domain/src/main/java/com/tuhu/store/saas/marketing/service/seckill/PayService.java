@@ -70,13 +70,14 @@ public class PayService {
     private String tuhuOpenApiPrivateKey;
 
 
-
+    @Value("${payQuery.queryPaymentResultByBizOrderNo:paymentengine.payQuery.queryPaymentResultByBizOrderNo.get}")
+    private String queryPaymentResultByBizOrderNoUrl;
 
     @Autowired
     private SeckillRegistrationRecordService seckillRegistrationRecordService;
 
 
-/*    public Object queryPaymentResult(String id) {
+    public Object queryPaymentResult(String id) {
         Object result = new Object();
         OpenApiReq openApiReq = this.getPaymentResultOpenApi();
         Map<String, Object> mapRequest = Maps.newHashMap();
@@ -88,7 +89,7 @@ public class PayService {
         //解析参数获取token
         log.info("queryPaymentResult, response:" + JSON.toJSONString(result));
         return result;
-    }*/
+    }
 
     public Map<String, Object> getPayAuthToken(SeckillRegistrationRecord seckillRegistrationRecord, String tradeOrderId) {
         Map<String, Object> returnMap = Maps.newHashMap();
@@ -117,7 +118,7 @@ public class PayService {
     }
 
 
-/*    private OpenApiReq getPaymentResultOpenApi() {
+    private OpenApiReq getPaymentResultOpenApi() {
         OpenApiReq openApiReq = new OpenApiReq();
         openApiReq.setGatewayUrl(tuhuOpenApiGateWayUrl);
         openApiReq.setAppId("store-saas-order");
@@ -125,7 +126,7 @@ public class PayService {
         //openApiReq.setMethod("int-website-fin-payment-engine-query.payQuery.queryPaymentResultByBizOrderNo.get");
         openApiReq.setMethod(queryPaymentResultByBizOrderNoUrl);
         return openApiReq;
-    }*/
+    }
 
     private OpenApiReq getAuthTokenOpenApi() {
         OpenApiReq openApiReq = new OpenApiReq();

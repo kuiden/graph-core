@@ -6,8 +6,8 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.annotation.DistributedLock;
 import com.tuhu.store.saas.marketing.enums.ShoppingPlatformEnum;
 import com.tuhu.store.saas.marketing.exception.NoneBizException;
-import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
+import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordUpdateReq;
 import com.tuhu.store.saas.marketing.service.seckill.SeckillRegistrationRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -60,10 +60,26 @@ public class SeckillRegistrationRecordApi {
     @ApiOperation(value = "秒杀（抢购）回调接口", notes = "callback")
     public BizBaseResponse callback(@RequestBody PaymentResponse paymentResponse) {
         log.info("/feign/seckill/registrationRecord/callback,paymentResponse={}", JSONObject.toJSONString(paymentResponse));
-        //异步调用
         seckillRegistrationRecordService.callBack(paymentResponse);
         return new BizBaseResponse();
     }
+
+
+    /**
+     * 秒杀（抢购）接口更新
+     *
+     * @param seckillRecordUpdateReq
+     * @return
+     */
+    @PostMapping("/update")
+    @ApiOperation(value = "秒杀（抢购）接口更新", notes = "update")
+    public BizBaseResponse update(@RequestBody SeckillRecordUpdateReq seckillRecordUpdateReq) {
+        log.info("/feign/seckill/registrationRecord/update,paymentResponse={}", JSONObject.toJSONString(seckillRecordUpdateReq));
+        //异步调用
+        seckillRegistrationRecordService.update(seckillRecordUpdateReq);
+        return new BizBaseResponse();
+    }
+
 
 }
 

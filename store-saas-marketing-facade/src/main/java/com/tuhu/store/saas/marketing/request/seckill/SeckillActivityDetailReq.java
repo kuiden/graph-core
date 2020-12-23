@@ -31,4 +31,10 @@ public class SeckillActivityDetailReq implements Serializable {
     //页量
     private Integer pageSize = 10;
 
+    //交易单id
+    private String tradeOrderId;
+
+    //秒杀订单id
+    private String seckillRegistrationRecordId;
+
 }
