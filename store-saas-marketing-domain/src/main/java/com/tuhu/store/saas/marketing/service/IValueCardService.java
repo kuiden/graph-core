@@ -1,6 +1,7 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
 import com.tuhu.store.saas.marketing.response.valueCard.CustomerValueCardDetailResp;
 import com.tuhu.store.saas.marketing.response.valueCard.QueryValueCardListResp;
@@ -8,6 +9,7 @@ import com.tuhu.store.saas.marketing.response.valueCard.QueryValueCardRuleResp;
 import com.tuhu.store.saas.marketing.response.valueCard.ValueCardChangeResp;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,4 +39,6 @@ public interface IValueCardService {
     PageInfo<ValueCardChangeResp> rechargeRecord(ValueCardChangeRecordReq req);
 
     Boolean confirmReceipt(ConfirmReceiptReq req);
+
+    List<ValueCardReq> excelImpValueCard(List<ValueCardReq> list);
 }

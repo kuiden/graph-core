@@ -133,8 +133,12 @@ public class LogRecordAspect {
             sysReqLog.setMethod(method);
             sysReqLog.setReqUrl(url);
             sysReqLog.setReqUri(uri);
-            sysReqLog.setReqParams(getValue(JSON.toJSONString(reqObjects)));
-            sysReqLog.setResParams(getValue(JSON.toJSONString(result)));
+            try {
+                sysReqLog.setReqParams(getValue(JSON.toJSONString(reqObjects)));
+                sysReqLog.setResParams(getValue(JSON.toJSONString(result)));
+            } catch (Exception e) {
+                log.info("logjsontojsonstring", e);
+            }
             sysReqLog.setTime(time + "");
             sysReqLogService.saveReqLog(sysReqLog);
             log.info("endlogRequestId=" + requestId);

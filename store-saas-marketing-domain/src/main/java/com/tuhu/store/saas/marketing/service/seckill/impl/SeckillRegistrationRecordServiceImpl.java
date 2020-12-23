@@ -34,10 +34,7 @@ import com.tuhu.store.saas.marketing.remote.order.TradeOrderClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityBuy;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityDetailReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillActivityReq;
-import com.tuhu.store.saas.marketing.request.seckill.SeckillRecordAddReq;
+import com.tuhu.store.saas.marketing.request.seckill.*;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
 import com.tuhu.store.saas.marketing.service.ICardOrderService;
@@ -49,10 +46,7 @@ import com.tuhu.store.saas.marketing.util.DateUtils;
 import com.tuhu.store.saas.marketing.util.IdKeyGen;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import com.tuhu.store.saas.order.dto.finance.receiving.TradeOrderDTO;
-import com.tuhu.store.saas.order.enums.BusinessCategoryEnum;
-import com.tuhu.store.saas.order.enums.FinancePaymentStatusEnum;
-import com.tuhu.store.saas.order.enums.PayStatusEnum;
-import com.tuhu.store.saas.order.enums.PaymentModeConverEnum;
+import com.tuhu.store.saas.order.enums.*;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
@@ -249,7 +243,6 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         log.info("customerActivityOrderAdd：{}", JSON.toJSONString(req));
         //校验
         this.checkSeckillRecordAddReqParam(req, shoppingPlatformEnum);
-
         Long storeId = req.getStoreId();
         //生成秒杀活动编码
         String codeNumber = codeFactory.getCodeNumber(CodeFactory.SECKILL_ACTIVITY_PREFIX_CODE, storeId);
@@ -281,12 +274,14 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 }
                 //支付
                 returnMap = payService.getPayAuthToken(seckillRegistrationRecord, tradeOrderId);
-                returnMap.put("id", seckillRegistrationRecord.getId());
+                returnMap.put("seckillRegistrationRecordId", seckillRegistrationRecord.getId());
+                returnMap.put("tradeOrderId", tradeOrderId);
+            } catch (Exception e) {
+                log.error("Repeat customerActivityOrderAdd error key: {}", seckillOrderCode, e);
+                throw new StoreSaasMarketingException(e.getMessage());
             } finally {
                 //如果发生异常后 放上释放锁
                 storeRedisUtils.releaseLock(seckillOrderCode, obj.toString());
-                //log.error("Repeat customerActivityOrderAdd error key: {}", seckillOrderCode, e);
-                //throw new StoreSaasMarketingException(e.getMessage());
             }
         } else {
             throw new StoreSaasMarketingException(BizErrorCodeEnum.TOO_MANY_REQUEST.getDesc());
@@ -333,30 +328,109 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         if (seckillRegistrationRecord.getPayStatus().equals(SeckillRegistrationRecordPayStatusEnum.CG.getStatus())) {
             log.warn("秒杀活动抢购单已支付");
         } else {
-            this.processUpdateSeckillRegistrationRecord(paymentResponse, seckillRegistrationRecord);
+            this.processUpdateSeckillRegistrationRecord(paymentResponse.getPaymentStatus(), seckillRegistrationRecord);
         }
     }
 
 
     @Override
-    public Map<String, Object> OrderPayDetail(String seckillActivityDetailId) {
+    @Transactional
+    public void update(SeckillRecordUpdateReq seckillRecordUpdateReq) {
+        log.info("update，seckillRecordUpdateReq={}", JSONObject.toJSONString(seckillRecordUpdateReq));
+        SeckillRegistrationRecord seckillRegistrationRecord = this.selectById(seckillRecordUpdateReq.getOrderId());
+        log.info("update，seckillRecordUpdateReq,seckillRegistrationRecord:{}", JSONObject.toJSONString(seckillRegistrationRecord));
+        if (Objects.isNull(seckillRegistrationRecord)) {
+            log.warn("update,没有找到秒杀活动抢购单：" + seckillRecordUpdateReq.getOrderId());
+            return;
+        }
+        if (seckillRegistrationRecord.getPayStatus().equals(SeckillRegistrationRecordPayStatusEnum.CG.getStatus())) {
+            log.warn("秒杀活动抢购单已支付");
+            return;
+        }
+
+        if (StringUtils.isNotBlank(seckillRecordUpdateReq.getStatus()) && seckillRecordUpdateReq.getStatus().equals(FinancePaymentStatusEnum.SUCCESS.getStatus())) {
+            //支付成功
+            this.updatePaySuccess(seckillRegistrationRecord);
+        } else {
+            //支付失败
+            seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.SB.getStatus());
+            this.updateById(seckillRegistrationRecord);
+        }
+    }
+
+    private void updatePaySuccess(SeckillRegistrationRecord seckillRegistrationRecord) {
+        try {
+            lock.lock();
+            seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.CG.getStatus());
+            seckillRegistrationRecord.setUpdateTime(DateUtils.now());
+            seckillRegistrationRecord.setPaymentTime(DateUtils.now());//支付时间
+            this.updateById(seckillRegistrationRecord);
+            //this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.PAY_SUCCESS_STATUS);
+            //生成开卡单
+            cardOrderService.addCardOrderBySeckillActivity(this.generateAddCardOrderReq(seckillRegistrationRecord));
+            //通过秒杀活动成功后,车辆绑定或变更
+            this.remoteAddVehicleBySeckillActivity(seckillRegistrationRecord);
+            log.info("paySuccess  key={}, counter = {}", seckillRegistrationRecord.getSeckillActivityId(), seckillRegistrationRecord.getQuantity());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
+    @Override
+    public Map<String, Object> OrderPayDetail(SeckillActivityDetailReq seckillActivityDetailReq) {
         Map<String, Object> returnMap = com.google.common.collect.Maps.newHashMap();
-        log.info("OrderPayDetail, request={}", JSONObject.toJSONString(seckillActivityDetailId));
-        if (StringUtils.isBlank(seckillActivityDetailId)) {
+        log.info("OrderPayDetail, request={}", JSONObject.toJSONString(seckillActivityDetailReq));
+        if (Objects.isNull(seckillActivityDetailReq)) {
             return returnMap;
         }
-        SeckillRegistrationRecord seckillRegistrationRecord = this.selectById(seckillActivityDetailId);
+
+        SeckillRegistrationRecord seckillRegistrationRecord = this.selectById(seckillActivityDetailReq.getSeckillRegistrationRecordId());
         if (Objects.isNull(seckillRegistrationRecord)) {
-            log.warn("not found seckillActivityDetailId key: {}", seckillActivityDetailId);
+            log.warn("not found seckillActivityDetailId key: {}", seckillActivityDetailReq.getSeckillRegistrationRecordId());
             return returnMap;
         }
         returnMap.put("id", seckillRegistrationRecord.getId());
-        returnMap.put("payStatus", seckillRegistrationRecord.getPayStatus());
+        if (StringUtils.isBlank(seckillActivityDetailReq.getTradeOrderId())) {
+            returnMap.put("payStatus", seckillRegistrationRecord.getPayStatus());
+            return returnMap;
+        } else {
+            //判断交易状态是否有变动，可能已经回调
+            TradeOrderDTO tradeOrderDTO = this.remoteGetTradeOrder(seckillActivityDetailReq.getTradeOrderId());
+            if (Objects.isNull(tradeOrderDTO)) {
+                log.warn("not found TradeOrderDTO key: {}", seckillActivityDetailReq.getTradeOrderId());
+                return returnMap;
+            }
+
+            List<Integer> integerList = Lists.newArrayList(TradeOrderStatusEnum.SUCCESS.getCode(), TradeOrderStatusEnum.FAIL.getCode());
+            if (Objects.nonNull(tradeOrderDTO) && integerList.contains(tradeOrderDTO.getStatus()) && StringUtils.isNotBlank(tradeOrderDTO.getCallbackData())) {
+                returnMap.put("payStatus", tradeOrderDTO.getStatus());
+                return returnMap;
+            }
+            Object result = payService.queryPaymentResult(seckillActivityDetailReq.getTradeOrderId());
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(result));
+            JSONObject returnObject = jsonObject.getJSONObject("data");
+            String paymentStatus = null;
+            if (Objects.nonNull(returnObject)) {
+                paymentStatus = (String) returnObject.get("paymentStatus");
+            }
+            if (StringUtils.isBlank(paymentStatus)) {
+                returnMap.put("payStatus", TradeOrderStatusEnum.UNACTIVATE.getCode());
+                return returnMap;
+            }
+            this.processUpdateSeckillRegistrationRecord(paymentStatus, seckillRegistrationRecord);
+            if (TradeOrderStatusEnum.SUCCESS.name().equals(paymentStatus)) {
+                returnMap.put("payStatus", TradeOrderStatusEnum.SUCCESS.getCode());
+            } else if (TradeOrderStatusEnum.FAIL.name().equals(paymentStatus)) {
+                returnMap.put("payStatus", TradeOrderStatusEnum.FAIL.getCode());
+            } else {
+                returnMap.put("payStatus", TradeOrderStatusEnum.UNACTIVATE.getCode());
+            }
+        }
         return returnMap;
     }
 
-    private void processUpdateSeckillRegistrationRecord(PaymentResponse paymentResponse, SeckillRegistrationRecord
-            seckillRegistrationRecord) {
+    private void processUpdateSeckillRegistrationRecord(String paymentStatus, SeckillRegistrationRecord seckillRegistrationRecord) {
         String key = seckillRegistrationRecord.getId() + seckillRegistrationRecord.getStoreId() + seckillRegistrationRecord.getTenantId();
         Object obj = storeRedisUtils.getAtomLock(key, 2);
         log.info("processUpdateSeckillRegistrationRecord tryLock key = {}", key);
@@ -365,7 +439,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             try {
                 seckillRegistrationRecord.setUpdateTime(DateUtils.now());
                 seckillRegistrationRecord.setPaymentTime(DateUtils.now());//支付时间
-                if (StringUtils.isNotBlank(paymentResponse.getPaymentStatus()) && paymentResponse.getPaymentStatus().equals(FinancePaymentStatusEnum.SUCCESS.getStatus())) {
+                if (StringUtils.isNotBlank(paymentStatus) && paymentStatus.equals(FinancePaymentStatusEnum.SUCCESS.getStatus())) {
                     //支付成功
                     this.paySuccess(seckillRegistrationRecord);
                 } else {
@@ -378,8 +452,6 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 log.error("processUpdateSeckillRegistrationRecord error key: {}", key, e);
                 seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.SB.getStatus());
                 this.updateById(seckillRegistrationRecord);
-                //如果发生异常后 放上释放锁
-                throw e;
             } finally {
                 storeRedisUtils.releaseLock(key, obj.toString());
             }
@@ -599,6 +671,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             }
         } catch (Exception e) {
             log.error("updateReceivingAndTradeOrderByOrderNos Error", e);
+            throw new StoreSaasMarketingException("更新 待收单、交易单的状态 失败");
         }
         return success;
     }
@@ -654,6 +727,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         if (Objects.nonNull(req.getIsDelete())) {
             search.eq(SeckillRegistrationRecord.IS_DELETE, req.getIsDelete());
         }
+        if (StringUtils.isNotBlank(req.getId())) {
+            search.eq(SeckillRegistrationRecord.ID, req.getId());
+        }
         return search;
     }
 
@@ -687,7 +763,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         //this.remoteAddReceiving(addReceivingVO);
         //return this.remoteAddTradeOrder(addReceivingVO);
         //添加 代收单、交易单
-        return  this.addReceivingAndTradeOrder(addReceivingVO);
+        return this.addReceivingAndTradeOrder(addReceivingVO);
     }
 
 
@@ -779,6 +855,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             }
         } catch (Exception e) {
             log.error("storeInfoClient.getStoreInfo error：调用参数{}，异常{}", JSONObject.toJSONString(storeId), e);
+            throw new StoreSaasMarketingException("获取门店信息失败");
         }
         return storeDTO;
     }
@@ -863,8 +940,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             stringRedisTemplate.boundValueOps(zku).increment((Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku)) * (-1)));//秒杀活动总库存-已下单库存=剩余总库存
         }
 
-        long syzkc=Long.parseLong(stringRedisTemplate.opsForValue().get(zku));
-        int yxdkuInt=Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku));
+        long syzkc = Long.parseLong(stringRedisTemplate.opsForValue().get(zku));
+        int yxdkuInt = Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku));
 
         if (seckillRecordAddReq.getQuantity() > syzkc) {
             throw new StoreSaasMarketingException(seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
