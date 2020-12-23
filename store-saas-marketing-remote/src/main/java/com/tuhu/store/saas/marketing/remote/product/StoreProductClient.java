@@ -14,6 +14,7 @@ import com.tuhu.store.saas.vo.product.IssuedVO;
 import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,6 +43,8 @@ public interface StoreProductClient {
     @PostMapping("/feign/product/Goods/queryBatchGoods")
     BizBaseResponse<List<ServiceGoodDTO>> queryBatchGoods(@RequestBody List<String> codeList, @RequestParam("storeId") Long storeId, @RequestParam("tenantId") Long tenantId, @RequestParam("carPosition") String carPosition) ;
 
+    @GetMapping("/feign/product/Goods/hasProduct")
+     BizBaseResponse<List<String>> hasProduct(@RequestParam("goodIds") List<String> goodIds, @RequestParam("storeId") Long storeId, @RequestParam("tenantId") Long tenantId);
     @PostMapping(value = "/feign/product/Goods/market/serviceGoodsForFeign")
     BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsForFeign(@RequestBody @Validated GoodsForMarketReq goodsForMarketReq);
 }

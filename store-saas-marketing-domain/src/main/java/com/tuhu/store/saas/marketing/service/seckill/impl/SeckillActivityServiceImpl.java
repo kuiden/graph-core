@@ -22,6 +22,7 @@ import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityMapper;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
+import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.marketing.request.card.CardTemplateModel;
 import com.tuhu.store.saas.marketing.request.seckill.*;
 import com.tuhu.store.saas.marketing.response.seckill.*;
@@ -85,6 +86,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     private SeckillActivityItemService itemService;
     @Autowired
     private StringRedisTemplate redisTemplate;
+    @Autowired
+    private StoreProductClient productClient;
 
     @Value("${seckill.activity.expire.time:300}")
     private int SECKILL_ACTIVITY_EXPIRE_TIME; //秒杀活动，预占时间
@@ -181,6 +184,11 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         if (StringUtils.isNotBlank(checkResult)) {
             log.info("数据保存失败 -> model ->{} entity -> {}", model, entityModel);
             throw new StoreSaasMarketingException(checkResult);
+        }
+        List<String> goodIds = model.getItems().stream().map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
+        BizBaseResponse<List<String>> productResult = productClient.hasProduct(goodIds, model.getStoreId(), model.getTenantId());
+        if (productResult== null || productResult.getCode()!=10000 || productResult.getData() == null || productResult.getData().size() !=goodIds.size()){
+             throw  new StoreSaasMarketingException ("商品/服务校验失败");
         }
         //更新保存信息
         CardTemplateModel cardTemplateModel = model.toCardTemplateModel();
