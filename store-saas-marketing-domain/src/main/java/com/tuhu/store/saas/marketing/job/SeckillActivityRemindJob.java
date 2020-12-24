@@ -24,7 +24,7 @@ public class SeckillActivityRemindJob extends IJobHandler {
     private SeckillActivityRemindService seckillActivityRemindService;
 
     @Override
-    public ReturnT<String> execute(String s) {
+    public ReturnT<String> execute(String s) throws Exception {
         log.info("SeckillActivityRemindJob start");
         seckillActivityRemindService.autoSendRemind();
         log.info("SeckillActivityRemindJob end");

@@ -44,4 +44,9 @@ public class ActivityApplyReq implements Serializable {
      * 验证码
      */
     private String verificationCode;
+
+    /**
+     * 微信openId
+     */
+    private String openId;
 }

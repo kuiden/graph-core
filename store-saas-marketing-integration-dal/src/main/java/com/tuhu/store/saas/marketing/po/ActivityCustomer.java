@@ -91,5 +91,10 @@ public class ActivityCustomer implements Serializable {
      */
     private String customerName;
 
+    /**
+     * 微信openId
+     */
+    private String openId;
+
     private static final long serialVersionUID = 1L;
 }

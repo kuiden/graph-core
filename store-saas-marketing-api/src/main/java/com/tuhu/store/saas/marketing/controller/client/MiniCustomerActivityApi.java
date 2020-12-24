@@ -42,6 +42,7 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
         activityApplyReq.setStoreId(super.getStoreId());
         activityApplyReq.setTenantId(super.getTenantId());
         activityApplyReq.setTelephone(super.getEndUser().getPhone());
+        activityApplyReq.setOpenId(super.getOpenId());
         CommonResp<String> activityOrderCodeResp = null;
         try {
             activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
