@@ -5,6 +5,7 @@ import com.tuhu.base.service.impl.BaseServiceImpl;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
 import com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.EndUserVisitedStoreWriteMapper;
 import com.tuhu.store.saas.marketing.remote.request.EndUserVisitedStoreReq;
 import com.tuhu.store.saas.marketing.remote.storeuser.StoreUserClient;
@@ -80,7 +81,7 @@ public class EndUserVisitedStoreServiceImpl extends BaseServiceImpl<EndUserVisit
         log.info("记录用户浏览的门店入参：{}", JSONObject.toJSONString(endUserVistiedStoreRequest));
         if (StringUtils.isEmpty(endUserVistiedStoreRequest.getOpenIdCode()) || StringUtils.isEmpty(endUserVistiedStoreRequest.getStoreId())) {
             log.error("记录用户浏览的门店入参错误：{}", JSONObject.toJSONString(endUserVistiedStoreRequest));
-            throw new RuntimeException("记录用户浏览的门店入参错误");
+            throw new StoreSaasMarketingException("记录用户浏览的门店入参错误");
         }
         String clientType = endUserVistiedStoreRequest.getClientType();
         if (StringUtils.isEmpty(clientType)) {
@@ -89,7 +90,7 @@ public class EndUserVisitedStoreServiceImpl extends BaseServiceImpl<EndUserVisit
         OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
         if (null == oauthClientDetails) {
             log.error("客户端配置信息不存在，clientType={}", clientType);
-            throw new RuntimeException("客户端配置信息不存在");
+            throw new StoreSaasMarketingException("客户端配置信息不存在");
         }
         String openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()
                 , oauthClientDetails.getWxSecret()
@@ -127,7 +128,7 @@ public class EndUserVisitedStoreServiceImpl extends BaseServiceImpl<EndUserVisit
         log.info("记录用户浏览的门店入参：{}", JSONObject.toJSONString(endUserVisitedStoreEntity));
         if (StringUtils.isEmpty(endUserVisitedStoreEntity.getOpenId()) || StringUtils.isEmpty(endUserVisitedStoreEntity.getStoreId())) {
             log.error("记录用户浏览的门店入参错误：{}", JSONObject.toJSONString(endUserVisitedStoreEntity));
-            throw new RuntimeException("记录用户浏览的门店入参错误");
+            throw new StoreSaasMarketingException("记录用户浏览的门店入参错误");
         }
         String openId = endUserVisitedStoreEntity.getOpenId();
         String storeId = endUserVisitedStoreEntity.getStoreId();
@@ -162,7 +163,7 @@ public class EndUserVisitedStoreServiceImpl extends BaseServiceImpl<EndUserVisit
         log.info("查询用户浏览的门店入参：{}", JSONObject.toJSONString(endUserVistiedStoreRequest));
         if (StringUtils.isEmpty(endUserVistiedStoreRequest.getOpenIdCode())) {
             log.error("记录用户浏览的门店入参错误：{}", JSONObject.toJSONString(endUserVistiedStoreRequest));
-            throw new RuntimeException("记录用户浏览的门店入参错误");
+            throw new StoreSaasMarketingException("记录用户浏览的门店入参错误");
         }
         String clientType = endUserVistiedStoreRequest.getClientType();
         if (StringUtils.isEmpty(clientType)) {
@@ -171,7 +172,7 @@ public class EndUserVisitedStoreServiceImpl extends BaseServiceImpl<EndUserVisit
         OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
         if (null == oauthClientDetails) {
             log.error("客户端配置信息不存在，clientType={}", clientType);
-            throw new RuntimeException("客户端配置信息不存在");
+            throw new StoreSaasMarketingException("客户端配置信息不存在");
         }
         String openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()
                 , oauthClientDetails.getWxSecret()

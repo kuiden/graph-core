@@ -46,22 +46,14 @@ public class SeckillTemplateController extends BaseApi {
     @PostMapping("/add")
     @ApiOperation("添加秒杀活动模板")
     public BizResponse add(@Validated @RequestBody AddSeckillTempReq req) {
-        try {
-            seckillTemplateService.addSeckillTemplate(req, this.getTenantId(), this.getTenantUserId());
-        } catch (StoreSaasMarketingException e) {
-            return BizResponse.operationFailed(e.getMessage());
-        }
+        seckillTemplateService.addSeckillTemplate(req, this.getTenantId(), this.getTenantUserId());
         return BizResponse.success();
     }
 
     @PostMapping("/edit")
     @ApiOperation("编辑秒杀活动模板")
     public BizResponse edit(@Validated @RequestBody EditSecKillTempReq req) {
-        try {
-            seckillTemplateService.editTemplate(req, this.getTenantId(), this.getTenantUserId());
-        } catch (Exception e) {
-            return BizResponse.operationFailed(e.getMessage());
-        }
+        seckillTemplateService.editTemplate(req, this.getTenantId(), this.getTenantUserId());
         return BizResponse.success();
     }
 
