@@ -74,4 +74,11 @@ public class AddCardOrderReq {
     @ApiModelProperty(value = "更新时间", dataType = "Long", required = false, example = "2018-11-22T12:36:54.025Z")
     private Date updateTime;
 
+    private String seckillRegisterRecodeId;
+
+    /**
+     * 购买数量
+     */
+    private Long quantity;
+
 }

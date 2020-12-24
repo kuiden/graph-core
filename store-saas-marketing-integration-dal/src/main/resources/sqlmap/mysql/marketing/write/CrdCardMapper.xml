@@ -91,7 +91,7 @@
     id, card_template_id, card_category_code, card_no, card_name, card_type_code, forever, 
     expiry_date, face_amount, discount_amount, actual_amount, `status`, description, 
     customer_id, customer_name, customer_gender, customer_phone_number, store_id, tenant_id, 
-    create_user, update_user, create_time, update_time, is_delete
+    create_user, update_user, create_time, update_time, is_delete,seckill_register_recode_id
   </sql>
     <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardExample"
             resultMap="BaseResultMap">
@@ -220,6 +220,9 @@
             <if test="isDelete != null">
                 is_delete,
             </if>
+            <if test="seckillRegisterRecodeId != null">
+                seckill_register_recode_id,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="id != null">
@@ -293,6 +296,9 @@
             </if>
             <if test="isDelete != null">
                 #{isDelete,jdbcType=TINYINT},
+            </if>
+            <if test="seckillRegisterRecodeId != null">
+                #{seckillRegisterRecodeId,jdbcType=VARCHAR},
             </if>
         </trim>
     </insert>

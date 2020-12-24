@@ -253,6 +253,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 //写入抢购报名（订单）表数据
                 SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
                 BeanUtils.copyProperties(req, seckillRegistrationRecord);
+
+
                 //将未收款的待收单+交易单作废
                 this.updateReceivingAndTradeOrder(seckillRegistrationRecord, SeckillConstant.CANCEL_STATUS);
                 //根据秒杀订单新建客户
@@ -484,6 +486,8 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             throw new StoreSaasMarketingException("没有找到秒杀活动！");
         }
         addCardOrderReq.setCardTemplateId(Long.parseLong(seckillActivity.getCadCardTemplateId()));
+        //开卡秒杀单id
+        addCardOrderReq.setSeckillRegisterRecodeId(seckillRegistrationRecord.getId());
         //开卡 填充使用人客户id
         addCardOrderReq.setCustomerId(seckillRegistrationRecord.getUserCustomerId());
         CustomerDTO customerDTO = null;
@@ -696,6 +700,13 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
                 return;
             }
             this.updateReceivingAndTradeOrderByOrderNos(orderNos, state);
+        }
+        //临时作废秒杀抢购单表数据
+        if (CollectionUtils.isNotEmpty(seckillRegistrationRecordList)) {
+            for (SeckillRegistrationRecord seckillRegistrationRecordTemp : seckillRegistrationRecordList) {
+                seckillRegistrationRecordTemp.setPayStatus(SeckillRegistrationRecordPayStatusEnum.LSZF.getStatus());
+            }
+            this.updateBatchById(seckillRegistrationRecordList);
         }
     }
 
