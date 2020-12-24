@@ -15,6 +15,7 @@ import com.tuhu.store.saas.crm.dto.CustomerDTO;
 import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
+import com.tuhu.store.saas.marketing.dataobject.EndUser;
 import com.tuhu.store.saas.marketing.enums.CustomTypeEnumVo;
 import com.tuhu.store.saas.marketing.enums.MarketingBizErrorCodeEnum;
 import com.tuhu.store.saas.marketing.enums.MarketingCustomerUseStatusEnum;
@@ -36,6 +37,7 @@ import com.tuhu.store.saas.marketing.request.vo.ClientStoreInfoVO;
 import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.service.IActivityService;
 import com.tuhu.store.saas.marketing.service.IClientActivityService;
+import com.tuhu.store.saas.marketing.service.IEndUserService;
 import com.tuhu.store.saas.marketing.util.QrCode;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
@@ -82,6 +84,9 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
 
     @Autowired
     private ActivityCustomerMapper activityCustomerMapper;
+
+    @Autowired
+    private IEndUserService endUserService;
 
     @Transactional
     @Override
@@ -131,6 +136,11 @@ public class IClientActivityServiceImpl  implements IClientActivityService {
         } else{
             applyReq.setCustomerId(customerReqList.get(0).getId());
             applyReq.setCustomerName(customerReqList.get(0).getName());
+            //获取C端用户openid
+            List<EndUser> endUserList = endUserService.findByCustomerId(applyReq.getCustomerId());
+            if (CollectionUtils.isNotEmpty(endUserList)){
+                applyReq.setOpenId(endUserList.get(0).getOpenId());
+            }
         }
         //登录
         EndUserMarketingBindRequest endUserMarketingBindRequest= new EndUserMarketingBindRequest();
