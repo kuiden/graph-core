@@ -72,5 +72,27 @@
         </if>
         order by update_time desc
     </select>
-
+    <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.dataobject.SeckillActivity">
+        UPDATE seckill_activity
+        SET head_image = #{headImage},
+        cad_card_expiry_date_type = #{cadCardExpiryDateType},
+        cad_card_expiry_date_time = #{cadCardExpiryDateTime},
+        cad_card_expiry_date_day = #{cadCardExpiryDateDay},
+        sell_number_type = #{sellNumberType},
+        sell_number = #{sellNumber},
+        solo_sell_number_type = #{soloSellNumberType},
+        solo_sell_number = #{soloSellNumber},
+        original_price = #{originalPrice},
+        new_price = #{newPrice},
+        update_user = #{updateUser},
+        update_time = #{updateTime},
+        STATUS = #{status},
+        start_time = #{startTime},
+        end_time = #{endTime},
+        activity_title = #{activityTitle},
+        template_id = #{templateId},
+        cad_card_template_id = #{cadCardTemplateId}
+        WHERE
+            id = #{id}
+    </update>
 </mapper>

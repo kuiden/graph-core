@@ -46,6 +46,9 @@ public class ClientCouponApi extends BaseApi {
     @ApiOperation(value = "领券")
     public BizBaseResponse getCoupon(@Validated @RequestBody CouponRequest req) {
         EndUser dto = EndUserContextHolder.getUser();
+        if(EndUserContextHolder.getStoreId()== null || EndUserContextHolder.getTenantId()== null){
+            throw  new StoreSaasMarketingException("没有绑定门店!");
+        }
         req.setStoreId(EndUserContextHolder.getStoreId());
         req.setTenantId(EndUserContextHolder.getTenantId());
         Map map = imCouponService.getCoupon(req, dto.getUserId());
@@ -63,6 +66,9 @@ public class ClientCouponApi extends BaseApi {
     @ApiOperation(value = "领券中心")
     public BizBaseResponse getCouponList(CouponSearchRequest req) {
         EndUser dto = EndUserContextHolder.getUser();
+        if(EndUserContextHolder.getStoreId()== null || EndUserContextHolder.getTenantId()== null){
+            throw  new StoreSaasMarketingException("没有绑定门店!");
+        }
         req.setStoreId(Long.valueOf(dto.getStoreId()));
         CouponPageResp result = imCouponService.getCouponList(req, dto.getUserId());
         //  CouponPageResp result = imCouponService.getCouponList(req, "159006368380700017990");
@@ -79,6 +85,9 @@ public class ClientCouponApi extends BaseApi {
     @GetMapping("/client/myCouponList")
     public BizBaseResponse getMyCouponList(CouponReceiveRecordRequest req) {
         EndUser dto = EndUserContextHolder.getUser();
+        if(EndUserContextHolder.getStoreId()== null || EndUserContextHolder.getTenantId()== null){
+            throw  new StoreSaasMarketingException("没有绑定门店!");
+        }
         req.setStoreId(Long.valueOf(dto.getStoreId()));
         req.setTenantId(Long.valueOf(dto.getTenantId()));
         CustomerCouponPageResp map = imCouponService.getMyCouponList(req, dto.getUserId());

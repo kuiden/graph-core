@@ -132,6 +132,7 @@ public class SeckillActivityMinController extends EndUserApi {
     public BizBaseResponse customerActivityRemindAdd(@RequestBody SeckillRemindAddReq req) {
         req.setStoreId(super.getStoreId());
         req.setTenantId(super.getTenantId());
+        req.setOpenId(super.getOpenId());
         seckillActivityRemindService.customerActivityRemindAdd(req);
         return new BizBaseResponse();
     }

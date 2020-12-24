@@ -18,6 +18,7 @@
     <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
     <result column="customer_name" jdbcType="VARCHAR" property="customerName" />
+    <result column="open_id" jdbcType="VARCHAR" property="openId" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -80,7 +81,7 @@
   <sql id="Base_Column_List">
     id, activity_order_code, activity_code, customer_id, telephone, store_id, create_time, 
     use_time, use_status, message_status, service_order_id, service_order_time, start_time, 
-    end_time, customer_name, tenant_id
+    end_time, customer_name, tenant_id, open_id
   </sql>
   <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomerExample" resultMap="BaseResultMap">
     select
@@ -142,13 +143,14 @@
       customer_id, telephone, store_id, 
       create_time, use_time, use_status, 
       message_status, service_order_id, service_order_time, 
-      start_time, end_time, customer_name
+      start_time, end_time, customer_name, open_id
       )
     values (#{id,jdbcType=BIGINT}, #{activityOrderCode,jdbcType=VARCHAR}, #{activityCode,jdbcType=VARCHAR}, 
       #{customerId,jdbcType=VARCHAR}, #{telephone,jdbcType=VARCHAR}, #{storeId,jdbcType=BIGINT}, 
       #{createTime,jdbcType=TIMESTAMP}, #{useTime,jdbcType=TIMESTAMP}, #{useStatus,jdbcType=TINYINT}, 
       #{messageStatus,jdbcType=VARCHAR}, #{serviceOrderId,jdbcType=VARCHAR}, #{serviceOrderTime,jdbcType=TIMESTAMP}, 
-      #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{customerName,jdbcType=VARCHAR}
+      #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{customerName,jdbcType=VARCHAR},
+      #{openId,jdbcType=VARCHAR})
       )
   </insert>
   <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
@@ -202,6 +204,9 @@
       <if test="customerName != null">
         customer_name,
       </if>
+      <if test="openId != null">
+        open_id,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -251,6 +256,9 @@
       </if>
       <if test="customerName != null">
         #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="openId != null">
+        #{openId,jdbcType=VARCHAR},
       </if>
     </trim>
   </insert>
@@ -308,6 +316,9 @@
       <if test="record.customerName != null">
         customer_name = #{record.customerName,jdbcType=VARCHAR},
       </if>
+      <if test="record.openId != null">
+        open_id = #{record.openId,jdbcType=VARCHAR},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -329,7 +340,8 @@
       service_order_time = #{record.serviceOrderTime,jdbcType=TIMESTAMP},
       start_time = #{record.startTime,jdbcType=TIMESTAMP},
       end_time = #{record.endTime,jdbcType=TIMESTAMP},
-      customer_name = #{record.customerName,jdbcType=VARCHAR}
+      customer_name = #{record.customerName,jdbcType=VARCHAR},
+      open_id = #{record.openId,jdbcType=VARCHAR}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -379,6 +391,9 @@
       <if test="customerName != null">
         customer_name = #{customerName,jdbcType=VARCHAR},
       </if>
+      <if test="openId != null">
+        open_id = #{openId,jdbcType=VARCHAR},
+      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
@@ -397,7 +412,8 @@
       service_order_time = #{serviceOrderTime,jdbcType=TIMESTAMP},
       start_time = #{startTime,jdbcType=TIMESTAMP},
       end_time = #{endTime,jdbcType=TIMESTAMP},
-      customer_name = #{customerName,jdbcType=VARCHAR}
+      customer_name = #{customerName,jdbcType=VARCHAR},
+      open_id = #{openId,jdbcType=VARCHAR}
     where id = #{id,jdbcType=BIGINT}
   </update>
   <select id="countByActivityCodeAndUseStatus" resultType="map">
