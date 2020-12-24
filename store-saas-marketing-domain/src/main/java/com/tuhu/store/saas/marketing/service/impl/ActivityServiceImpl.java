@@ -1176,6 +1176,7 @@ public class ActivityServiceImpl implements IActivityService {
         activityCustomer.setStartTime(activity.getStartTime());
         activityCustomer.setEndTime(this.getApplyedEndDate(activity.getStartTime(), activity.getEndTime(), activity.getActiveType(), activity.getActiveDays(), activity.getActiveDate()));
         activityCustomer.setUseStatus((byte) 0);
+        activityCustomer.setOpenId(activityApplyReq.getOpenId());
         if (null != activityApplyReq.getCustomerName()){
             activityCustomer.setCustomerName(activityApplyReq.getCustomerName());
         }

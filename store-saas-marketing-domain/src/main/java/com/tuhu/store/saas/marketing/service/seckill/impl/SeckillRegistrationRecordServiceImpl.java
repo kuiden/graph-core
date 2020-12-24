@@ -552,11 +552,13 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     }
 
     @Override
-    public List<SeckillRegistrationRecordResp> participateDetail(String customersId) {
+    public List<SeckillRegistrationRecordResp> participateDetail(String customersId, String seckillActivityId) {
         if (null == customersId) {
             throw new StoreSaasMarketingException("客户ID不能为空");
         }
+        seckillActivityService.check(seckillActivityId, Boolean.TRUE);
         EntityWrapper<SeckillRegistrationRecord> wrapper = new EntityWrapper<>();
+        wrapper.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, seckillActivityId);
         wrapper.eq(SeckillRegistrationRecord.CUSTOMER_ID, customersId);
         wrapper.eq(SeckillRegistrationRecord.PAY_STATUS, SeckillConstant.PAY_SUCCESS_STATUS);
         wrapper.eq(SeckillRegistrationRecord.STORE_ID, UserContextHolder.getStoreId());

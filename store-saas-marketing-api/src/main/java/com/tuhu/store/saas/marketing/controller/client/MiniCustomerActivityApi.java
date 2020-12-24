@@ -5,6 +5,7 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.controller.mini.BaseEndUserApi;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.po.Activity;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.*;
@@ -38,10 +39,15 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
     @PostMapping(value = "/apply")
     @ApiOperation(value = "营销活动报名")
     public BizBaseResponse apply(@Validated @RequestBody ActivityApplyReq activityApplyReq) {
+        if (null == super.getStoreId()){
+            log.error("门店id为空");
+            throw new StoreSaasMarketingException("门店参数校验失败");
+        }
         activityApplyReq.setCustomerId(super.getCustomerId());
         activityApplyReq.setStoreId(super.getStoreId());
         activityApplyReq.setTenantId(super.getTenantId());
         activityApplyReq.setTelephone(super.getEndUser().getPhone());
+        activityApplyReq.setOpenId(super.getOpenId());
         CommonResp<String> activityOrderCodeResp = null;
         try {
             activityOrderCodeResp = iActivityService.applyActivity(activityApplyReq);
@@ -61,6 +67,10 @@ public class MiniCustomerActivityApi extends BaseEndUserApi {
     @PostMapping(value = "/activityCustomerDetail")
     @ApiOperation(value = "客户报名营销活动详情")
     public BizBaseResponse getActivityCustomerDetail(@RequestBody ActivityCustomerReq activityCustomerReq) {
+        if (null == super.getStoreId()){
+            log.error("门店id为空");
+            throw new StoreSaasMarketingException("门店参数校验失败");
+        }
         if (StringUtils.isBlank(activityCustomerReq.getCustomerId())) {
             activityCustomerReq.setIsFromClient(Boolean.TRUE);
             activityCustomerReq.setCustomerId(super.getCustomerId());
