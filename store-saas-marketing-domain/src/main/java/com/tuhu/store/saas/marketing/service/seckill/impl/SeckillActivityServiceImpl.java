@@ -221,7 +221,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             }
         } else {
             //删除关联活动的商品和服务item
-            itemService.deleteBatchIds(model.getItems().stream().map(x->x.getId()).collect(Collectors.toList()));
+            Wrapper<SeckillActivityItem> itemWrapper = new EntityWrapper<SeckillActivityItem>().eq(SeckillActivityItem.SECKILL_ACTIVITY_ID, model.getId());
+            itemService.delete(itemWrapper);
+            //itemService.deleteBatchIds(model.getItems().stream().map(x->x.getId()).collect(Collectors.toList()));
             if (this.baseMapper.updateByPrimaryKey(entity) > 0) {
                  result = entity.getId();
                  insertSeckillActivityItemFunc.apply(model);
