@@ -46,7 +46,7 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
      * @param customersId
      * @return
      */
-    List<SeckillRegistrationRecordResp> participateDetail(String customersId);
+    List<SeckillRegistrationRecordResp> participateDetail(String customersId, String seckillActivityId);
 
     /**
      * 活动数据-已购客户、浏览未购买客户分页列表
