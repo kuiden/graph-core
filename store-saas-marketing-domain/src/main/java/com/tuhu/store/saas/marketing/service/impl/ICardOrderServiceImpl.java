@@ -562,6 +562,15 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Transactional
     public void addCardOrderBySeckillActivity(AddCardOrderReq req) {
         log.info("addCardOrderBySeckillActivity,request：{}", JSONObject.toJSON(req));
+        if (Objects.isNull(req.getQuantity())) {
+            log.error("根据秒杀活动，创建次卡单的数量为空");
+        }
+        for (Long num = 0l; num < req.getQuantity(); num++) {
+            this.processAddCardOrderBySeckillActivity(req);
+        }
+    }
+
+    private void processAddCardOrderBySeckillActivity(AddCardOrderReq req) {
         //新增次卡
         CrdCard crdCard = new CrdCard();
         BeanUtils.copyProperties(req, crdCard);
@@ -570,10 +579,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         if (Objects.isNull(cardTemplate)) {
             throw new StoreSaasMarketingException("无此卡模板数据");
         }
-        //秒杀活动对应的卡模板已禁用，任然开卡成功
-//        if (CardTemplateStatusEnum.DISABLE.name().equals(cardTemplate.getStatus())) {
-//            throw new StoreSaasMarketingException("卡模板已停用");
-//        }
+        crdCard.setSeckillRegisterRecodeId(req.getSeckillRegisterRecodeId());
         crdCard.setForever((byte) (req.getForever() ? 1 : 0));
         crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
         crdCard.setCardCategoryCode(cardTemplate.getCardCategoryCode());
