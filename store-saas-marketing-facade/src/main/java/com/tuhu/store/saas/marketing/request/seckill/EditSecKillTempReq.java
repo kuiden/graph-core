@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -53,6 +54,7 @@ public class EditSecKillTempReq implements Serializable {
 
     @ApiModelProperty(value = "秒杀活动模板明细", required = true)
     @NotNull(message = "至少填写一项商品或服务")
+    @Valid
     private List<EditSeckillTempItemReq> editTempItemList;
 
 
