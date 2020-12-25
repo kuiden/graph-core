@@ -56,16 +56,15 @@ public class EndUserApiIdempotentAspect implements Ordered {
             try {
                 // 执行进程
                 result = pjp.proceed();
+            } catch (BizException e){
+                BizBaseResponse response = new BizBaseResponse();
+                response.setCode(e.getErrorCode().getCode());
+                response.setMessage(e.getErrorMessage());
+                result = response;
             } catch (Exception e) {
                 //如果发生异常后 放上释放锁
                 storeRedisUtils.releaseLock(key, obj.toString());
                 log.error("RepeatSubmitAspect error key: {}", key, e);
-                if (e instanceof StoreSaasMarketingException) {
-                    throw new StoreSaasMarketingException(e.getMessage());
-                }
-                if (e instanceof NoneBizException) {
-                    throw new NoneBizException(e.getMessage());
-                }
                 throw new Exception(e.getMessage());
             }
             return result;
