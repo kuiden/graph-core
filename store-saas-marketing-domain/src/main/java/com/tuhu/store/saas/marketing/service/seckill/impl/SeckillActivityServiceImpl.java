@@ -767,7 +767,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             throw new StoreSaasMarketingException("活动不存在");
         }
         String wxQrUrl = activity.getWxQrUrl();
-        if (StringUtils.isNotBlank(wxQrUrl)) {
+        if (StringUtils.isNotBlank(wxQrUrl) && SECKILL_WX_QR_SWITCH) {
             return wxQrUrl;
         }
         return getWxQrUrlMin(request);
