@@ -45,6 +45,7 @@ public class AddSeckillTempReq implements Serializable {
 
     @ApiModelProperty(value = "秒杀活动模板明细", required = true)
     @NotEmpty(message = "至少填写一项商品或服务")
+    @NotNull(message = "模板明细不能为空")
     @Valid
     private List<AddSeckillTempItemReq> addTempItemList;
 
