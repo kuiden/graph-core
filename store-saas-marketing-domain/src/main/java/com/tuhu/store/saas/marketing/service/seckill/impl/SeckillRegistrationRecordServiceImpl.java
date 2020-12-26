@@ -290,9 +290,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     public List<SeckillRegistrationRecord> customerBuyRecordList(SeckillActivityDetailReq req) {
         EntityWrapper<SeckillRegistrationRecord> search = new EntityWrapper<>();
-        if (Objects.nonNull(req.getCustomerId())) {
+        if (StringUtils.isNotBlank(req.getCustomerId())) {
             search.eq(SeckillRegistrationRecord.CUSTOMER_ID, req.getCustomerId());
-        } else if (Objects.nonNull(req.getCustomerPhoneNumber())) {
+        } else if (StringUtils.isNotBlank(req.getCustomerPhoneNumber())) {
             search.eq(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, req.getCustomerPhoneNumber());
         }
         search.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, req.getSeckillActivityId())
