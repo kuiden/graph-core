@@ -42,6 +42,13 @@ public class StoreSaasMarketingException extends BizException {
         this.message = super.getErrorCode().getDesc();
     }
 
+
+    public StoreSaasMarketingException(MarketingBizErrorCodeEnum marketingBizErrorCodeEnum, String message) {
+        super(marketingBizErrorCodeEnum, message);
+        this.code = marketingBizErrorCodeEnum.getCode();
+        this.message = message;
+    }
+
     /**
      * 重新fillInStackTrace方法，不填充异常堆栈
      *

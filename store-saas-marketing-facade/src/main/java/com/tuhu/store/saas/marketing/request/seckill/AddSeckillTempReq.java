@@ -4,10 +4,8 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -46,7 +44,9 @@ public class AddSeckillTempReq implements Serializable {
     private Integer sort;
 
     @ApiModelProperty(value = "秒杀活动模板明细", required = true)
-    @NotNull(message = "至少填写一项商品或服务")
+    @NotEmpty(message = "至少填写一项商品或服务")
+    @NotNull(message = "模板明细不能为空")
+    @Valid
     private List<AddSeckillTempItemReq> addTempItemList;
 
 }

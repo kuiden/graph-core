@@ -96,7 +96,9 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         if (StringUtils.isEmpty(contentValue)) {
             contentValue = clientEventRecordRequest.getContentValue();
         }
-        ClientEventRecordDAO oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType);
+        String customerId = clientEventRecordRequest.getCustomerId();
+        String phoneNumber = clientEventRecordRequest.getPhoneNumber();
+        ClientEventRecordDAO oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType, customerId, phoneNumber);
         //如果没有记录
         if (null == oldClientEventRecordEntity || StringUtils.isEmpty(oldClientEventRecordEntity.getId())) {
             ClientEventRecordDAO clientEventRecordEntity = new ClientEventRecordDAO();
@@ -111,14 +113,18 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             clientEventRecordEntity.setUpdateTime(date);
             clientEventRecordEntity.setEventCount(1);
             clientEventRecordEntity.setSourceType(sourceType);
-            clientEventRecordEntity.setCustomerId(clientEventRecordRequest.getCustomerId());
-            clientEventRecordEntity.setPhoneNumber(clientEventRecordRequest.getPhoneNumber());
+            if (StringUtils.isNotBlank(customerId)) {
+                clientEventRecordEntity.setCustomerId(customerId);
+            }
+            if (StringUtils.isNotBlank(phoneNumber)) {
+                clientEventRecordEntity.setPhoneNumber(phoneNumber);
+            }
             try {
                 this.addNewClientEventRecord(clientEventRecordEntity);
             } catch (Exception e) {
                 log.error("C端客户行为新增记录失败,ClientEventRecordEntity={},error={}", JSONObject.toJSONString(clientEventRecordEntity), ExceptionUtils.getStackTrace(e));
                 //再次查询
-                oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType);
+                oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType, customerId, phoneNumber);
                 this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId());
             }
         } else {
@@ -208,7 +214,8 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
     }
 
     @Override
-    public ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId, Integer sourceType) {
+    public ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId, Integer sourceType,
+                                                       String customerId, String phoneNumber) {
         EntityWrapper<ClientEventRecordDAO> wrapper = new EntityWrapper<>();
         wrapper.eq("event_type", eventType)
                 .eq("content_type", contentType)
@@ -216,6 +223,12 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
                 .eq("source_type", sourceType);
         if (StringUtils.isNotEmpty(openId)) {
             wrapper.eq("open_id", openId);
+        }
+        if (StringUtils.isNotBlank(customerId)) {
+            wrapper.eq(ClientEventRecordDAO.CUSTOMER_ID, customerId);
+        }
+        if (StringUtils.isNotBlank(phoneNumber)) {
+            wrapper.eq(ClientEventRecordDAO.PHONE_NUMBER, phoneNumber);
         }
         List<ClientEventRecordDAO> recordDAOList = clientEventRecordMapper.selectList(wrapper);
         if (CollectionUtils.isEmpty(recordDAOList)) {

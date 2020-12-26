@@ -92,6 +92,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Value("${seckill.activity.expire.time:300}")
     private int SECKILL_ACTIVITY_EXPIRE_TIME; //秒杀活动，预占时间
 
+    @Value("${seckill.wx.qr.switch:false}")
+    private Boolean SECKILL_WX_QR_SWITCH;  //是否重新生成微信二维码
+
     @Autowired
     IdKeyGen idKeyGen;
 
@@ -221,8 +224,10 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             }
         } else {
             //删除关联活动的商品和服务item
-            itemService.deleteBatchIds(model.getItems().stream().map(x->x.getId()).collect(Collectors.toList()));
-             if(super.updateById(entity)){
+            Wrapper<SeckillActivityItem> itemWrapper = new EntityWrapper<SeckillActivityItem>().eq(SeckillActivityItem.SECKILL_ACTIVITY_ID, model.getId());
+            itemService.delete(itemWrapper);
+            //itemService.deleteBatchIds(model.getItems().stream().map(x->x.getId()).collect(Collectors.toList()));
+            if (this.baseMapper.updateByPrimaryKey(entity) > 0) {
                  result = entity.getId();
                  insertSeckillActivityItemFunc.apply(model);
                  saveFuncAttachedInfoFunc.apply(model);
@@ -694,7 +699,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         SeckillActivityResp resp = new SeckillActivityResp();
         BeanUtils.copyProperties(activity, resp);
         String wxQrUrl = activity.getWxQrUrl();
-        if (StringUtils.isNotBlank(wxQrUrl)) {
+        if (StringUtils.isNotBlank(wxQrUrl) && SECKILL_WX_QR_SWITCH) {
             resp.setWxQrUrl(wxQrUrl);
         } else {
             wxQrUrl = getWxQrUrl(activity, request);
@@ -715,7 +720,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         log.info("qrCodeUrl{}", JSON.toJSONString(request));
         SeckillActivity activity = check(request.getSeckillActivityId(),Boolean.TRUE);
         String wxQrUrl = activity.getWxQrUrl();
-        if (StringUtils.isNotBlank(wxQrUrl)) {
+        if (StringUtils.isNotBlank(wxQrUrl) && SECKILL_WX_QR_SWITCH) {
             return wxQrUrl;
         }
         return getWxQrUrl(activity, request);
@@ -765,7 +770,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             throw new StoreSaasMarketingException("活动不存在");
         }
         String wxQrUrl = activity.getWxQrUrl();
-        if (StringUtils.isNotBlank(wxQrUrl)) {
+        if (StringUtils.isNotBlank(wxQrUrl) && SECKILL_WX_QR_SWITCH) {
             return wxQrUrl;
         }
         return getWxQrUrlMin(request);

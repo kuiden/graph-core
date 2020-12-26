@@ -50,6 +50,18 @@ public class SeckillActivityModel implements Serializable {
             result = "请完善商品/服务信息";
             return result;
         }
+        if (this.cadCardExpiryDateType == null || this.cadCardExpiryDateType <= 0 || this.cadCardExpiryDateType > 3) {
+            result = "卡有效期识别失败";
+            return  result;
+        }
+        if (this.sellNumberType == null || this.sellNumberType <= 0 || this.sellNumberType > 2) {
+            result = "销售类型识别失败";
+            return  result;
+        }
+        if (this.soloSellNumberType == null || this.soloSellNumberType <= 0 || this.soloSellNumberType > 2) {
+            result = "单人销售类型识别失败";
+            return  result;
+        }
         for (SeckillActivityItemModel item : this.items) {
             if (StringUtils.isEmpty(item.getGoodsId()) || StringUtils.isEmpty(item.getGoodsCode()) ||
                     StringUtils.isEmpty(item.getGoodsName()) || StringUtils.isEmpty(item.getShowName())) {
@@ -198,6 +210,7 @@ public class SeckillActivityModel implements Serializable {
         if (this.soloSellNumberType == 1 && (this.soloSellNumber == null || this.soloSellNumber <= 0)) {
             this.soloSellNumber = 1;
         }
+
         BigDecimal totalOriginalPrice = BigDecimal.ZERO;
         if (CollectionUtils.isEmpty(this.items)) {
             this.items = new ArrayList<>();
@@ -270,7 +283,7 @@ public class SeckillActivityModel implements Serializable {
     /**
      * 现价
      */
-    @ApiModelProperty(value = "现价", dataType = "BigDecimal",required =true,example = "222.222")
+    @ApiModelProperty(value = "现价", dataType = "BigDecimal", required = true, example = "222.222")
     private BigDecimal newPrice;
     /**
      * 租户id
@@ -353,14 +366,16 @@ public class SeckillActivityModel implements Serializable {
     private List<SeckillActivityItemModel> serviceItems;
 
 
-
     @ApiModelProperty(value = "规则信息", dataType = "String", example = "规则信息")
     private String rulesInfo;
 
     @ApiModelProperty(value = "门店描述", dataType = "String", example = "门店描述")
     private String storeInfo;
 
-
+    /**
+     * 微信活动二维码
+     */
+    private String wxQrUrl;
 
 
 }

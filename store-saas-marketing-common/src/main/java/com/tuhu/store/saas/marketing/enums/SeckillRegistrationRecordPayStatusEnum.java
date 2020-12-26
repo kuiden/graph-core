@@ -11,7 +11,8 @@ public enum SeckillRegistrationRecordPayStatusEnum {
     WZF(0, "未支付"),
     CG(1, "成功"),
     SB(2, "失败"),
-    ZF(3, "作废");
+    ZF(3, "作废"),
+    LSZF(4, "临时作废");
 
     private Integer status;
 

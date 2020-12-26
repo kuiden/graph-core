@@ -20,4 +20,5 @@ public interface SeckillActivityMapper extends BaseWriteMapper<SeckillActivity> 
 
     List<SeckillActivity> pageList(@Param("tenantId") Long tenantId, @Param("storeId") Long storeId, @Param("activityTitle") String activityTitle, @Param("status") Integer status);
 
+    int updateByPrimaryKey(SeckillActivity entity);
 }

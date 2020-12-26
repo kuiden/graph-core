@@ -115,8 +115,8 @@ public class SeckillActivityController extends BaseApi {
 
     @GetMapping(value = "/participateDetail")
     @ApiOperation(value = "参与详情")
-    public BizBaseResponse<List<SeckillRegistrationRecordResp>> participateDetail(@RequestParam("customersId") String customersId) {
-        return new BizBaseResponse(seckillRegistrationRecordService.participateDetail(customersId));
+    public BizBaseResponse<List<SeckillRegistrationRecordResp>> participateDetail(@RequestParam("customersId") String customersId, @RequestParam("seckillActivityId") String seckillActivityId) {
+        return new BizBaseResponse(seckillRegistrationRecordService.participateDetail(customersId,seckillActivityId));
     }
 
     @GetMapping(value = "/offShelf")
