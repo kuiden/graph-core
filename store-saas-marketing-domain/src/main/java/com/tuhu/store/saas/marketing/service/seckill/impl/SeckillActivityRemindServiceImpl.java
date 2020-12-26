@@ -7,6 +7,8 @@ import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
 import com.tuhu.store.saas.marketing.dataobject.SeckillActivityRemind;
+import com.tuhu.store.saas.marketing.enums.SeckillActivityStatusEnum;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SeckillActivityRemindMapper;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.request.seckill.SeckillRemindAddReq;
@@ -66,12 +68,12 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
     @Override
     public void customerActivityRemindAdd(SeckillRemindAddReq req) {
         log.info("customerActivityRemindAdd -> req:{}",req);
-        if (null == req.getTemplateId()){
+        if (StringUtils.isBlank(req.getTemplateId())){
             req.setTemplateId(this.seckillTemplateId);
         }
         if (StringUtils.isBlank(req.getOpenId())){
             //获取openId
-            String clientType = req.getClientType() == null ? this.seckillClientType : req.getClientType();
+            String clientType = StringUtils.isBlank(req.getClientType()) ? this.seckillClientType : req.getClientType();
             OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
             String openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid(),
                     oauthClientDetails.getWxSecret(), req.getOpenIdCode(), oauthClientDetails.getWxOpenidUrl());
@@ -92,13 +94,17 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
             storeInfoVO.setStoreId(req.getStoreId());
             storeInfoVO.setTanentId(req.getTenantId());
             BizBaseResponse<StoreDTO> resultData = storeInfoClient.getStoreInfo(storeInfoVO);
-            if (null != resultData && null != resultData.getData()) {
+            if (null != resultData && 10000 == resultData.getCode() && null != resultData.getData()) {
                 StoreDTO storeDTO = resultData.getData();
                 seckillActivityRemind.setStoreAddress(storeDTO.getAddress());
                 seckillActivityRemind.setStoreName(storeDTO.getStoreName());
                 seckillActivityRemind.setStorePhone(storeDTO.getClientAppointPhone());
             }
-            this.baseMapper.insert(seckillActivityRemind);
+            Integer result = this.baseMapper.insert(seckillActivityRemind);
+            if (result <= 0){
+                log.error("开抢提醒insert异常，seckillActivityRemind:{}",seckillActivityRemind);
+                throw new StoreSaasMarketingException("添加提醒失败，请重试");
+            }
         }
     }
 
@@ -112,7 +118,7 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
             Date now = new Date();
             List<SeckillActivity> seckillActivityList = seckillActivityService.selectList(new EntityWrapper<SeckillActivity>()
                     .in("id",activityIds).eq("is_delete", 0).le("start_time", now)
-                    .ge("end_time", now).ne("status", 9));
+                    .ge("end_time", now).ne("status", SeckillActivityStatusEnum.XJ.getStatus()));
             Map<String,List<SeckillActivityRemind>> remindMap = remindList.stream().collect(Collectors.groupingBy(x->x.getSeckillActivityId()));
             for (SeckillActivity seckillActivity : seckillActivityList){
                 if (remindMap.containsKey(seckillActivity.getId())){
@@ -132,7 +138,10 @@ public class SeckillActivityRemindServiceImpl extends ServiceImpl<SeckillActivit
                             }
                             seckillActivityRemind.setReturnMessage(result);
                             seckillActivityRemind.setUpdateTime(new Date());
-                            this.baseMapper.updateById(seckillActivityRemind);
+                            Integer updateResult = this.baseMapper.updateById(seckillActivityRemind);
+                            if (updateResult <= 0){
+                                log.error("SeckillActivityRemind:{} update异常",seckillActivityRemind);
+                            }
                         });
                     }
                 }

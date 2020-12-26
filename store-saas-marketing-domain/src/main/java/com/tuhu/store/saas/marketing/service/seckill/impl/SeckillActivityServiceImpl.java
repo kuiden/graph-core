@@ -324,12 +324,12 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         activityList.addAll(this.baseMapper.selectList(new EntityWrapper<SeckillActivity>()
                 .eq("store_id", storeId).eq("tenant_id", tenantId)
                 .eq("is_delete", 0).le("start_time", now)
-                .ge("end_time", now).ne("status", 9).orderBy("end_time")));
+                .ge("end_time", now).ne("status", SeckillActivityStatusEnum.XJ.getStatus()).orderBy("end_time")));
         //添加未开始的活动
         activityList.addAll(this.baseMapper.selectList(new EntityWrapper<SeckillActivity>()
                 .eq("store_id", storeId).eq("tenant_id", tenantId)
                 .eq("is_delete", 0).gt("start_time", now)
-                .ne("status", 9).orderBy("start_time")));
+                .ne("status", SeckillActivityStatusEnum.XJ.getStatus()).orderBy("start_time")));
         List<String> activityIds = activityList.stream().map(x -> x.getId()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(activityIds)) {
             //查询活动对应的支付成功的订单
@@ -356,7 +356,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     private SeckillActivityStatusEnum getSeckillActivityStatus(SeckillActivity seckillActivity){
         SeckillActivityStatusEnum result;
         Date now = new Date();
-        if (seckillActivity.getStatus().equals(9)) {
+        if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
             //手动下架
             result = SeckillActivityStatusEnum.XJ;
         } else if (seckillActivity.getStartTime().compareTo(now) > 0) {
@@ -403,17 +403,19 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         result.setStatus(seckillActivityStatusEnum.getStatus());
         result.setStatusName(seckillActivityStatusEnum.getClientStatusName());
         //查活动规则、门店介绍
-        List<AttachedInfo> ruleInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())
-                .eq("store_id", seckillActivity.getStoreId()).eq("tenant_id", seckillActivity.getTenantId()).eq("is_delete",0));
-        if (CollectionUtils.isNotEmpty(ruleInfoList)) {
-            result.setActivityRule(ruleInfoList.get(0).getContent());
-        }
-        List<AttachedInfo> storeInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
-                .eq("foreign_key", seckillActivity.getId()).eq("type", AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())
-                .eq("store_id", seckillActivity.getStoreId()).eq("tenant_id", seckillActivity.getTenantId()).eq("is_delete",0));
-        if (CollectionUtils.isNotEmpty(storeInfoList)) {
-            result.setStoreIntroduction(storeInfoList.get(0).getContent());
+        List<AttachedInfo> attachedInfoList = attachedInfoService.selectList(new EntityWrapper<AttachedInfo>()
+                .eq("foreign_key", seckillActivity.getId()).eq("store_id", seckillActivity.getStoreId())
+                .eq("tenant_id", seckillActivity.getTenantId()).eq("is_delete",0));
+        if (CollectionUtils.isNotEmpty(attachedInfoList)){
+            Map<String,String> attachedInfoMap = attachedInfoList.stream().collect(Collectors.toMap(x->x.getType(),v->v.getContent(),(i,j)->i));
+            //活动规则
+            if (attachedInfoMap.containsKey(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode())){
+                result.setActivityRule(attachedInfoMap.get(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode()));
+            }
+            //门店介绍
+            if (attachedInfoMap.containsKey(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode())){
+                result.setStoreIntroduction(attachedInfoMap.get(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode()));
+            }
         }
         //查活动项目 按服务、商品排序
         List<SeckillActivityItem> activityItems = seckillActivityItemService.queryItemsByActivityId(seckillActivity.getId(), seckillActivity.getStoreId(), seckillActivity.getTenantId());
@@ -455,7 +457,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         log.info("获取门店信息,请求参数:{}",storeInfoVO);
         BizBaseResponse<StoreDTO> resultData = storeInfoClient.getStoreInfo(storeInfoVO);
         log.info("获取门店信息,返回信息:{}",resultData);
-        if (null != resultData && null != resultData.getData()) {
+        if (null != resultData && 10000 == resultData.getCode() && null != resultData.getData()) {
             storeDTO = resultData.getData();
         }
         return storeDTO;
@@ -535,8 +537,9 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             SeckillRecordListResp resp = new SeckillRecordListResp();
             BeanUtils.copyProperties(record, resp);
             String vehicleNumber = record.getVehicleNumber();
-            if (StringUtils.isNotBlank(vehicleNumber) && vehicleNumber.length() > 2)
-            resp.setVehicleNumber(vehicleNumber.substring(0,1)+"******"+vehicleNumber.substring(vehicleNumber.length()-1));
+            if (StringUtils.isNotBlank(vehicleNumber) && vehicleNumber.length() > 2){
+                resp.setVehicleNumber(vehicleNumber.substring(0,1)+"******"+vehicleNumber.substring(vehicleNumber.length()-1));
+            }
             respList.add(resp);
         }
         BeanUtils.copyProperties(recordPageInfo, pageInfo);
@@ -579,7 +582,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
     @Override
     public CustomerActivityOrderDetailResp customerActivityOrderDetail(SeckillActivityDetailReq req) {
         log.info("customerActivityOrderDetail -> req:{}", req);
-        if (null == req.getCustomerId() && null == req.getCustomerPhoneNumber()){
+        if (StringUtils.isBlank(req.getCustomerId()) && StringUtils.isBlank(req.getCustomerPhoneNumber())){
             log.error("参数校验失败");
             throw new StoreSaasMarketingException("未登录");
         }
