@@ -162,7 +162,6 @@ public class LogRecordAspect {
         sysReqLog.setStoreId(null != endUser.getStoreId() ? Long.valueOf(endUser.getStoreId()) : 0L);
         sysReqLog.setTenantId(null != endUser.getTenantId() ? Long.valueOf(endUser.getTenantId()) : 0L);
         sysReqLog.setCompanyId(null != endUser.getCompanyId() ? Long.valueOf(endUser.getCompanyId()) : 0L);
-        sysReqLog.setStoreId(null != endUser.getStoreId() ? Long.valueOf(endUser.getStoreId()) : 0L);
         sysReqLog.setOpenId(null != endUser.getOpenId() ? endUser.getOpenId() : "");
         sysReqLog.setNickName(null != endUser.getClientType() ? endUser.getClientType() : "");
         sysReqLog.setAccount(null != endUser.getPhone() ? endUser.getPhone() : "");
