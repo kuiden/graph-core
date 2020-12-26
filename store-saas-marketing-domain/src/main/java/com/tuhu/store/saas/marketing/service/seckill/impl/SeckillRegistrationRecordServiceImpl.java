@@ -290,9 +290,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
     @Override
     public List<SeckillRegistrationRecord> customerBuyRecordList(SeckillActivityDetailReq req) {
         EntityWrapper<SeckillRegistrationRecord> search = new EntityWrapper<>();
-        if (Objects.nonNull(req.getCustomerId())) {
+        if (StringUtils.isNotBlank(req.getCustomerId())) {
             search.eq(SeckillRegistrationRecord.CUSTOMER_ID, req.getCustomerId());
-        } else if (Objects.nonNull(req.getCustomerPhoneNumber())) {
+        } else if (StringUtils.isNotBlank(req.getCustomerPhoneNumber())) {
             search.eq(SeckillRegistrationRecord.BUYER_PHONE_NUMBER, req.getCustomerPhoneNumber());
         }
         search.eq(SeckillRegistrationRecord.SECKILL_ACTIVITY_ID, req.getSeckillActivityId())
@@ -873,7 +873,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
     private void checkSeckillRecordAddReqParam(SeckillRecordAddReq req, ShoppingPlatformEnum shoppingPlatformEnum) {
         if (Objects.isNull(req.getQuantity()) || req.getQuantity() < 1) {
-            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,"抢购数量不能小于1！");
+            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, "抢购数量不能小于1！");
         }
         if (StringUtils.isBlank(req.getSeckillActivityId())) {
             throw new StoreSaasMarketingException("秒杀活动ID不能为空");
@@ -885,36 +885,36 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         } else {
             seckillActivity = seckillActivityService.selectById(req.getSeckillActivityId());
             if (Objects.isNull(seckillActivity)) {
-                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,"秒杀活动不存在");
+                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, "秒杀活动不存在");
             }
         }
 
         if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.WSJ.getStatus())) {
-            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.WSJ.getStatusName());
+            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.WSJ.getStatusName());
         } else if (seckillActivity.getStatus().equals(SeckillActivityStatusEnum.XJ.getStatus())) {
-            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.XJ.getStatusName());
+            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + SeckillActivityStatusEnum.XJ.getStatusName());
         }
         if (Objects.nonNull(seckillActivity.getStartTime())) {
             if (com.tuhu.springcloud.common.util.DateUtils.compareTime(seckillActivity.getStartTime(), DateUtils.now()) > 0) {
-                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + "秒杀活动未开始");
+                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + "秒杀活动未开始");
             }
         }
         if (Objects.nonNull(seckillActivity.getStartTime())) {
             if (com.tuhu.springcloud.common.util.DateUtils.compareTime(DateUtils.now(), seckillActivity.getEndTime()) > 0) {
-                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + "秒杀活动已过期");
+                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + "秒杀活动已过期");
             }
         }
 
         if (seckillActivity.getSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
             if (req.getQuantity() > seckillActivity.getSellNumber()) {
-                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
+                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
             }
             //校验预占库存
             this.checkHasStock(req, seckillActivity);
 
             Long hasBuyNum = this.getTotalRealHasBuyNum(req);
-            if (hasBuyNum + req.getQuantity() > seckillActivity.getSoloSellNumber()) {
-                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + ",销售数量不能大于" + seckillActivity.getSoloSellNumber());
+            if (hasBuyNum + req.getQuantity() > seckillActivity.getSellNumber()) {
+                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不能大于" + seckillActivity.getSoloSellNumber());
             }
         }
         if (seckillActivity.getSoloSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
@@ -922,7 +922,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             Long customerHasBuyNum = this.baseMapper.getCustomerBuyNumber(seckillActivity.getId(), req.getCustomerId());
             customerHasBuyNum = Objects.isNull(customerHasBuyNum) ? 0L : customerHasBuyNum;
             if (customerHasBuyNum + req.getQuantity() > seckillActivity.getSoloSellNumber()) {
-                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + ",单人销售数量不能大于" + seckillActivity.getSoloSellNumber());
+                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",单人销售数量不能大于" + seckillActivity.getSoloSellNumber());
             }
         }
     }
@@ -950,10 +950,10 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         int yxdkuInt = Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku));
 
         if (seckillRecordAddReq.getQuantity() > syzkc) {
-            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
+            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
         }
         if (yxdkuInt + seckillRecordAddReq.getQuantity() > syzkc) {
-            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
+            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
         }
         SeckillActivityBuy seckillActivityBuy = new SeckillActivityBuy();
         seckillActivityBuy.setActivityId(seckillRecordAddReq.getSeckillActivityId());
@@ -965,11 +965,11 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         seckillActivityBuy.setSaleNum(seckillActivityBuy.getTotalNum() - seckillActivityBuy.getBuyNum());
         Integer preNum = seckillActivityService.getPreNum(seckillActivityBuy);
         if (preNum + yxdkuInt > syzkc) {
-            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR,seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
+            throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
         }
     }
 
-    private Long getTotalRealHasBuyNum(SeckillRecordAddReq seckillRecordAddReq){
+    private Long getTotalRealHasBuyNum(SeckillRecordAddReq seckillRecordAddReq) {
         Long hasBuyNum = 0l;
         //查询支付成的单据
         SeckillRegistrationRecord seckillRegistrationRecord = new SeckillRegistrationRecord();
@@ -1041,9 +1041,9 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             seckillRegistrationRecord.setSeckillActivityName(seckillActivity.getActivityTitle());
         }
         if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_DEADLINE)) {
-            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(seckillActivity.getCadCardExpiryDateTime()));
+            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(DateUtils.shortDate(seckillActivity.getCadCardExpiryDateTime())));
         } else if (Objects.nonNull(seckillActivity) && seckillActivity.getCadCardExpiryDateType().equals(SeckillConstant.CARD_EXPIRY_DATE_TYPE_EFFECTIVE)) {
-            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(DateUtils.addDate(DateUtils.now(), seckillActivity.getCadCardExpiryDateDay() - 1)));
+            seckillRegistrationRecord.setEffectiveTime(DateUtils.getDateEndTime2(DateUtils.addDate(DateUtils.shortDate(new Date()), seckillActivity.getCadCardExpiryDateDay() - 1)));
         }
         boolean flag = this.insert(seckillRegistrationRecord);
         if (!flag) {
