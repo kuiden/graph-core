@@ -97,7 +97,6 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
 
     @Autowired
     IdKeyGen idKeyGen;
-
     private Function<SeckillActivityModel, Boolean> insertSeckillActivityItemFunc = (model) -> {
         log.info("添加商品或服务明细开始-> model{}",model);
         List<SeckillActivityItem> items = new ArrayList<>();
@@ -143,8 +142,8 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
                 }
 
             }
-            if (!attachedInfoService.updateBatchById(attachedInfos)){
-                    throw  new StoreSaasMarketingException("活动附属信息保存失败");
+            if (!attachedInfoService.updateBatchById(attachedInfos)) {
+                throw new StoreSaasMarketingException("活动附属信息保存失败");
             }
 
         } else {
@@ -162,14 +161,14 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             attachedInfo.setId(idKeyGen.generateId(model.getTenantId()));
             attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYRULESINFO.getEnumCode());
             attachedInfo.setContent(model.getRulesInfo());
-            if (!attachedInfoService.insert(attachedInfo)){
-                throw  new StoreSaasMarketingException("活动附属信息保存失败");
+            if (!attachedInfoService.insert(attachedInfo)) {
+                throw new StoreSaasMarketingException("活动附属信息保存失败");
             }
             attachedInfo.setId(idKeyGen.generateId(model.getTenantId()));
             attachedInfo.setType(AttachedInfoTypeEnum.SECKILLACTIVITYSTOREINFO.getEnumCode());
             attachedInfo.setContent(model.getStoreInfo());
-            if (!attachedInfoService.insert(attachedInfo)){
-                throw  new StoreSaasMarketingException("活动附属信息保存失败");
+            if (!attachedInfoService.insert(attachedInfo)) {
+                throw new StoreSaasMarketingException("活动附属信息保存失败");
             }
         }
         return Boolean.TRUE;
@@ -201,24 +200,22 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
         model.setUpdateTime(now);
         SeckillActivity entity = new SeckillActivity(model);
         if (isInsert) {
+            // 新增
             entity.setCreateTime(now);
             entity.setCreateUser(model.getUpdateUser());
             entity.setId(idKeyGen.generateId(model.getTenantId()));
-            // 新增
-            //添加一张次卡模板
-            //保存商品和服务明显
-            //计算 商品/服务总价格
             if (super.insert(entity)) {
                 result = entity.getId();
                 model.setId(entity.getId());
                 //初始化商品明细
                 insertSeckillActivityItemFunc.apply(model);
+                //添加活动规则
+                //添加门店信息
                 saveFuncAttachedInfoFunc.apply(model);
                 if (StringUtils.isNotBlank(entity.getTemplateId())){
                     seckillTemplateService.increseTemplateRefer(entity.getTemplateId(),entity.getTenantId());
                 }
-                //添加活动规则
-                //添加门店信息
+
             } else {
                 throw new StoreSaasMarketingException("数据添加失败");
             }
@@ -227,6 +224,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             Wrapper<SeckillActivityItem> itemWrapper = new EntityWrapper<SeckillActivityItem>().eq(SeckillActivityItem.SECKILL_ACTIVITY_ID, model.getId());
             itemService.delete(itemWrapper);
             //itemService.deleteBatchIds(model.getItems().stream().map(x->x.getId()).collect(Collectors.toList()));
+
             if (this.baseMapper.updateByPrimaryKey(entity) > 0) {
                  result = entity.getId();
                  insertSeckillActivityItemFunc.apply(model);

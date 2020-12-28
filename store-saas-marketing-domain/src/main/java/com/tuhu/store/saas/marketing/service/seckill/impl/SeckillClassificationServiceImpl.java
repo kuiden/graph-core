@@ -39,11 +39,10 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
     private SeckillTemplateService seckillTemplateService;
 
 
+    private Function<Long, ArrayList<SeckillClassificationModel>> getAndSetCache = (key) -> buildCache(key);
 
-    private Function<Long, ArrayList<SeckillClassificationModel>> getAndSetCache = (key) -> buildCache(key).get();
 
-
-    private WeakReference<ArrayList<SeckillClassificationModel>> buildCache(Long key) {
+    private ArrayList<SeckillClassificationModel> buildCache(Long key) {
         log.info("缓冲池开始构建 -> buildCache->key -> {}", key);
         ArrayList<SeckillClassificationModel> result = null;
         Wrapper<SeckillClassification> wrapper = new EntityWrapper<SeckillClassification>();
@@ -66,7 +65,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
                 result.add(seckillClassificationModel);
             }
         }
-        return result == null ? null : new WeakReference(result);
+        return result;
     }
 
     @Override
@@ -75,7 +74,7 @@ public class SeckillClassificationServiceImpl extends ServiceImpl<SeckillClassif
         log.info("SeckillClassificationServiceImpl->save-> req -> {}", req);
         Integer result = null;
         ArrayList<SeckillClassificationModel> seckillClassificationModels = getAndSetCache.apply(req.getTenantId());
-        boolean isInsert = req.getId() == null || req.getId() <= 0 ? true : false ;
+        boolean isInsert = req.getId() == null || req.getId() <= 0 ? true : false;
         SeckillClassification entity;
         if (seckillClassificationModels != null && seckillClassificationModels.stream()
                 .filter(x -> x.getName().trim().toLowerCase().equals(req.getName().trim().toLowerCase())

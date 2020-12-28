@@ -50,6 +50,8 @@ public class SeckillActivityController extends BaseApi {
 
     @Autowired
     private SeckillTemplateService seckillTemplateService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @PostMapping(value = "/save")
     @ApiOperation(value = "保存活动")
@@ -60,10 +62,9 @@ public class SeckillActivityController extends BaseApi {
         return new BizBaseResponse(seckillActivityService.saveSeckillActivity(req));
     }
 
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+
     @PostMapping(value = "/setCache")
-    @ApiOperation(value = "保持预览")
+    @ApiOperation(value = "保存预览")
     public BizBaseResponse<String> setCache(@RequestBody SeckillActivityModel req) {
         String result = UUID.randomUUID().toString();
         if (req != null) {
@@ -71,7 +72,7 @@ public class SeckillActivityController extends BaseApi {
             req.setTenantId(super.getTenantId());
             stringRedisTemplate.opsForValue().set(result, JSON.toJSONString(req));
         }
-        return new BizBaseResponse<String>(result);
+        return new BizBaseResponse<>(result);
     }
 
     @GetMapping(value = "/getModelById")
