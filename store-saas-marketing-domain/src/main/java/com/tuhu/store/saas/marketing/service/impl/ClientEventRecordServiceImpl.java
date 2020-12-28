@@ -114,7 +114,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             clientEventRecordEntity.setEventCount(1);
             clientEventRecordEntity.setSourceType(sourceType);
             if (StringUtils.isNotBlank(customerId)) {
-                clientEventRecordEntity.setCustomerId(customerId);
+                clientEventRecordEntity.setCustomerId("null".equals(customerId) ? null : customerId);
             }
             if (StringUtils.isNotBlank(phoneNumber)) {
                 clientEventRecordEntity.setPhoneNumber(phoneNumber);
