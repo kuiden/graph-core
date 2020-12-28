@@ -914,7 +914,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
 
             Long hasBuyNum = this.getTotalRealHasBuyNum(req);
             if (hasBuyNum + req.getQuantity() > seckillActivity.getSellNumber()) {
-                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不能大于" + seckillActivity.getSoloSellNumber());
+                throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不能大于" + seckillActivity.getSellNumber());
             }
         }
         if (seckillActivity.getSoloSellNumberType().equals(SeckillActivitySellTypeEnum.XZSL.getCode())) {
@@ -1081,7 +1081,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         customerReq.setName(name);
         customerReq.setCustomerType("person");
         customerReq.setGender("3");
-        customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
+        customerReq.setCustomerSource(CustomerSourceEnumVo.WLYL.getCode());
         AddVehicleReq addVehicleReq = new AddVehicleReq();
         addVehicleReq.setStoreId(storeId);
         addVehicleReq.setTenantId(tenantId);
