@@ -35,7 +35,7 @@
     <select id="pageBuyList" resultMap="BaseResultMap">
         SELECT
         store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number,
-        count(1) as quantity,sum(expect_amount) as expect_amount,max(is_new_customer) as is_new_customer
+        SUM(quantity) as quantity,sum(expect_amount) as expect_amount,max(is_new_customer) as is_new_customer
         FROM seckill_registration_record
         WHERE
         1=1

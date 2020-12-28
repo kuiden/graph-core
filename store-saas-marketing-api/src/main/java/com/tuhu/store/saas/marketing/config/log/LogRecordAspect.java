@@ -4,10 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.constant.ApiCommonConstant;
+import com.tuhu.store.saas.marketing.context.EndUserContextHolder;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.SysReqLog;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.remote.CoreUser;
+import com.tuhu.store.saas.marketing.remote.EndUser;
 import com.tuhu.store.saas.marketing.sys.SysReqLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -123,13 +125,21 @@ public class LogRecordAspect {
             }
             SysReqLog sysReqLog = new SysReqLog();
             sysReqLog.setRequestId(requestId);
+            sysReqLog.setSource("store-saas-marketing");
+            //B端用户
             CoreUser customUser = UserContextHolder.getUser();
             if (null != customUser) {
                 String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
                 BeanUtils.copyProperties(customUser, sysReqLog);
                 sysReqLog.setToken(authorization);
             }
-            sysReqLog.setSource("store-saas-marketing");
+            //C端用户
+            EndUser endUser = EndUserContextHolder.getUser();
+            if (null != endUser) {
+                String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+                sysReqLog.setToken(null != authorization ? authorization : "");
+                buildSysReqLog(sysReqLog, endUser);
+            }
             sysReqLog.setMethod(method);
             sysReqLog.setReqUrl(url);
             sysReqLog.setReqUri(uri);
@@ -145,6 +155,17 @@ public class LogRecordAspect {
         } catch (Exception e) {
             log.error("marketingsaveReqLog.error:", e);
         }
+    }
+
+    private void buildSysReqLog(SysReqLog sysReqLog, EndUser endUser) {
+        sysReqLog.setSource("C端-store-saas-marketing");
+        sysReqLog.setStoreId(null != endUser.getStoreId() ? Long.valueOf(endUser.getStoreId()) : 0L);
+        sysReqLog.setTenantId(null != endUser.getTenantId() ? Long.valueOf(endUser.getTenantId()) : 0L);
+        sysReqLog.setCompanyId(null != endUser.getCompanyId() ? Long.valueOf(endUser.getCompanyId()) : 0L);
+        sysReqLog.setOpenId(null != endUser.getOpenId() ? endUser.getOpenId() : "");
+        sysReqLog.setNickName(null != endUser.getClientType() ? endUser.getClientType() : "");
+        sysReqLog.setAccount(null != endUser.getPhone() ? endUser.getPhone() : "");
+        sysReqLog.setUsername(null != endUser.getName() ? endUser.getName() : "");
     }
 
     private String getValue(String val) {

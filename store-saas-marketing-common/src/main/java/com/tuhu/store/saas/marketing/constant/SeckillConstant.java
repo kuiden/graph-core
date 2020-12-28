@@ -23,7 +23,7 @@ public class SeckillConstant {
 
     public static final Integer NEW_SCALE = 1;
 
-    public static final Integer CANCEL_STATUS = 0; //作废、取消
+    public static final Integer CANCEL_STATUS = 0; //临时作废、取消
 
 
     public static final Integer CARD_EXPIRY_DATE_TYPE_FOREVER = 1;//有效期类型   1永久有效

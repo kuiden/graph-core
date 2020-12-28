@@ -71,4 +71,5 @@ public class ClientEventRecordDAO implements Serializable {
 
     public static final String UPDATE_TIME = "update_time";
 
+    public static final String PHONE_NUMBER = "phone_number";
 }
