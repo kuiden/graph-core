@@ -70,7 +70,7 @@ public class SeckillActivityModel implements Serializable {
 
             }
             if (item.getItemQuantity() <= Integer.valueOf(0)) {
-                result = "单个商品/ 服务数量不能小于0";
+                result = item.getGoodsName()+" 数量不能小于0";
                 return result;
             }
 

@@ -117,7 +117,6 @@ public class AttachedInfoServiceImpl extends ServiceImpl<AttachedInfoMapper, Att
     @Override
     public Boolean del(String id, Long storeId) {
         log.info("del-> req -> id {} storeId {}", id, storeId);
-        AttachedInfoResp result =  null ;
         AttachedInfo o = super.selectOne(new EntityWrapper<AttachedInfo>().eq(AttachedInfo.ID, id)
                 .eq(AttachedInfo.STORE_ID, storeId));
         o.setIsDelete(Integer.valueOf(1));
