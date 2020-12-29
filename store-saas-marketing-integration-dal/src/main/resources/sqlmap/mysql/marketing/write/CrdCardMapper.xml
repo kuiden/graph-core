@@ -26,6 +26,7 @@
         <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
         <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
         <result column="is_delete" jdbcType="TINYINT" property="isDelete"/>
+        <result column="seckill_register_recode_id" jdbcType="VARCHAR" property="seckillRegisterRecodeId"/>
     </resultMap>
     <sql id="Example_Where_Clause">
         <where>
@@ -88,11 +89,13 @@
         </where>
     </sql>
     <sql id="Base_Column_List">
-    id, card_template_id, card_category_code, card_no, card_name, card_type_code, forever, 
-    expiry_date, face_amount, discount_amount, actual_amount, `status`, description, 
-    customer_id, customer_name, customer_gender, customer_phone_number, store_id, tenant_id, 
-    create_user, update_user, create_time, update_time, is_delete,seckill_register_recode_id
-  </sql>
+
+            id, card_template_id, card_category_code, card_no, card_name, card_type_code, forever,
+            expiry_date, face_amount, discount_amount, actual_amount, `status`, description,
+            customer_id, customer_name, customer_gender, customer_phone_number, store_id, tenant_id,
+            create_user, update_user, create_time, update_time, is_delete,seckill_register_recode_id
+
+    </sql>
     <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardExample"
             resultMap="BaseResultMap">
         select
@@ -115,9 +118,11 @@
         where id = #{id,jdbcType=BIGINT}
     </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
-    delete from crd_card
-    where id = #{id,jdbcType=BIGINT}
-  </delete>
+
+            delete from crd_card
+            where id = #{id,jdbcType=BIGINT}
+
+    </delete>
     <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCardExample">
         delete from crd_card
         <if test="_parameter != null">
@@ -125,25 +130,27 @@
         </if>
     </delete>
     <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCard">
-    insert into crd_card (id, card_template_id, card_category_code, 
-      card_no, card_name, card_type_code, 
-      forever, expiry_date, face_amount, 
-      discount_amount, actual_amount, `status`, 
-      description, customer_id, customer_name, 
-      customer_gender, customer_phone_number, store_id, 
-      tenant_id, create_user, update_user, 
-      create_time, update_time, is_delete
-      )
-    values (#{id,jdbcType=BIGINT}, #{cardTemplateId,jdbcType=BIGINT}, #{cardCategoryCode,jdbcType=VARCHAR}, 
-      #{cardNo,jdbcType=VARCHAR}, #{cardName,jdbcType=VARCHAR}, #{cardTypeCode,jdbcType=VARCHAR}, 
-      #{forever,jdbcType=TINYINT}, #{expiryDate,jdbcType=TIMESTAMP}, #{faceAmount,jdbcType=DECIMAL}, 
-      #{discountAmount,jdbcType=DECIMAL}, #{actualAmount,jdbcType=DECIMAL}, #{status,jdbcType=VARCHAR}, 
-      #{description,jdbcType=VARCHAR}, #{customerId,jdbcType=VARCHAR}, #{customerName,jdbcType=VARCHAR}, 
-      #{customerGender,jdbcType=CHAR}, #{customerPhoneNumber,jdbcType=VARCHAR}, #{storeId,jdbcType=BIGINT}, 
-      #{tenantId,jdbcType=BIGINT}, #{createUser,jdbcType=VARCHAR}, #{updateUser,jdbcType=VARCHAR}, 
-      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{isDelete,jdbcType=TINYINT}
-      )
-  </insert>
+
+            insert into crd_card (id, card_template_id, card_category_code,
+              card_no, card_name, card_type_code,
+              forever, expiry_date, face_amount,
+              discount_amount, actual_amount, `status`,
+              description, customer_id, customer_name,
+              customer_gender, customer_phone_number, store_id,
+              tenant_id, create_user, update_user,
+              create_time, update_time, is_delete,
+              seckill_register_recode_id)
+            values (#{id,jdbcType=BIGINT}, #{cardTemplateId,jdbcType=BIGINT}, #{cardCategoryCode,jdbcType=VARCHAR},
+              #{cardNo,jdbcType=VARCHAR}, #{cardName,jdbcType=VARCHAR}, #{cardTypeCode,jdbcType=VARCHAR},
+              #{forever,jdbcType=TINYINT}, #{expiryDate,jdbcType=TIMESTAMP}, #{faceAmount,jdbcType=DECIMAL},
+              #{discountAmount,jdbcType=DECIMAL}, #{actualAmount,jdbcType=DECIMAL}, #{status,jdbcType=VARCHAR},
+              #{description,jdbcType=VARCHAR}, #{customerId,jdbcType=VARCHAR}, #{customerName,jdbcType=VARCHAR},
+              #{customerGender,jdbcType=CHAR}, #{customerPhoneNumber,jdbcType=VARCHAR}, #{storeId,jdbcType=BIGINT},
+              #{tenantId,jdbcType=BIGINT}, #{createUser,jdbcType=VARCHAR}, #{updateUser,jdbcType=VARCHAR},
+              #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{isDelete,jdbcType=TINYINT},
+              #{seckillRegisterRecodeId,jdbcType=VARCHAR})
+
+    </insert>
     <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCard"
             useGeneratedKeys="true" keyProperty="id">
         insert into crd_card
@@ -311,7 +318,9 @@
     </select>
 
     <select id="countByCustomerId" resultType="java.lang.Integer">
-            select count(1) from crd_card_order where customer_id = #{customerId} and payment_status = 'PAYMENT_OK'
+
+                    select count(1) from crd_card_order where customer_id = #{customerId} and payment_status = 'PAYMENT_OK'
+
     </select>
 
     <update id="updateByExampleSelective" parameterType="map">
@@ -389,6 +398,9 @@
             <if test="record.isDelete != null">
                 is_delete = #{record.isDelete,jdbcType=TINYINT},
             </if>
+            <if test="record.seckillRegisterRecodeId != null">
+                seckill_register_recode_id = #{record.seckillRegisterRecodeId,jdbcType=VARCHAR},
+            </if>
         </set>
         <if test="_parameter != null">
             <include refid="Update_By_Example_Where_Clause"/>
@@ -419,7 +431,8 @@
         update_user = #{record.updateUser,jdbcType=VARCHAR},
         create_time = #{record.createTime,jdbcType=TIMESTAMP},
         update_time = #{record.updateTime,jdbcType=TIMESTAMP},
-        is_delete = #{record.isDelete,jdbcType=TINYINT}
+        is_delete = #{record.isDelete,jdbcType=TINYINT},
+        seckill_register_recode_id = #{record.seckillRegisterRecodeId,jdbcType=VARCHAR}
         <if test="_parameter != null">
             <include refid="Update_By_Example_Where_Clause"/>
         </if>
@@ -500,30 +513,33 @@
         where id = #{id,jdbcType=BIGINT}
     </update>
     <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCard">
-    update crd_card
-    set card_template_id = #{cardTemplateId,jdbcType=BIGINT},
-      card_category_code = #{cardCategoryCode,jdbcType=VARCHAR},
-      card_no = #{cardNo,jdbcType=VARCHAR},
-      card_name = #{cardName,jdbcType=VARCHAR},
-      card_type_code = #{cardTypeCode,jdbcType=VARCHAR},
-      forever = #{forever,jdbcType=TINYINT},
-      expiry_date = #{expiryDate,jdbcType=TIMESTAMP},
-      face_amount = #{faceAmount,jdbcType=DECIMAL},
-      discount_amount = #{discountAmount,jdbcType=DECIMAL},
-      actual_amount = #{actualAmount,jdbcType=DECIMAL},
-      `status` = #{status,jdbcType=VARCHAR},
-      description = #{description,jdbcType=VARCHAR},
-      customer_id = #{customerId,jdbcType=VARCHAR},
-      customer_name = #{customerName,jdbcType=VARCHAR},
-      customer_gender = #{customerGender,jdbcType=CHAR},
-      customer_phone_number = #{customerPhoneNumber,jdbcType=VARCHAR},
-      store_id = #{storeId,jdbcType=BIGINT},
-      tenant_id = #{tenantId,jdbcType=BIGINT},
-      create_user = #{createUser,jdbcType=VARCHAR},
-      update_user = #{updateUser,jdbcType=VARCHAR},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP},
-      is_delete = #{isDelete,jdbcType=TINYINT}
-    where id = #{id,jdbcType=BIGINT}
-  </update>
+
+            update crd_card
+            set card_template_id = #{cardTemplateId,jdbcType=BIGINT},
+              card_category_code = #{cardCategoryCode,jdbcType=VARCHAR},
+              card_no = #{cardNo,jdbcType=VARCHAR},
+              card_name = #{cardName,jdbcType=VARCHAR},
+              card_type_code = #{cardTypeCode,jdbcType=VARCHAR},
+              forever = #{forever,jdbcType=TINYINT},
+              expiry_date = #{expiryDate,jdbcType=TIMESTAMP},
+              face_amount = #{faceAmount,jdbcType=DECIMAL},
+              discount_amount = #{discountAmount,jdbcType=DECIMAL},
+              actual_amount = #{actualAmount,jdbcType=DECIMAL},
+              `status` = #{status,jdbcType=VARCHAR},
+              description = #{description,jdbcType=VARCHAR},
+              customer_id = #{customerId,jdbcType=VARCHAR},
+              customer_name = #{customerName,jdbcType=VARCHAR},
+              customer_gender = #{customerGender,jdbcType=CHAR},
+              customer_phone_number = #{customerPhoneNumber,jdbcType=VARCHAR},
+              store_id = #{storeId,jdbcType=BIGINT},
+              tenant_id = #{tenantId,jdbcType=BIGINT},
+              create_user = #{createUser,jdbcType=VARCHAR},
+              update_user = #{updateUser,jdbcType=VARCHAR},
+              create_time = #{createTime,jdbcType=TIMESTAMP},
+              update_time = #{updateTime,jdbcType=TIMESTAMP},
+              is_delete = #{isDelete,jdbcType=TINYINT},
+            seckill_register_recode_id = #{seckillRegisterRecodeId,jdbcType=VARCHAR}
+            where id = #{id,jdbcType=BIGINT}
+
+    </update>
 </mapper>

@@ -110,13 +110,23 @@ public interface SeckillRegistrationRecordService extends IService<SeckillRegist
     /**
      * 活动抢购-更新
      *
-     * @param paymentResponse
+     * @param seckillRecordUpdateReq
      * @return
      */
     void update(SeckillRecordUpdateReq seckillRecordUpdateReq);
 
     /**
+     * 活动抢购-查询
+     *
+     * @param seckillRecordUpdateReq
+     * @return
+     */
+    List<Long> query(SeckillRecordUpdateReq seckillRecordUpdateReq);
+
+
+    /**
      * 秒杀订单支付详情
+     *
      * @param seckillActivityDetailReq
      * @return
      */

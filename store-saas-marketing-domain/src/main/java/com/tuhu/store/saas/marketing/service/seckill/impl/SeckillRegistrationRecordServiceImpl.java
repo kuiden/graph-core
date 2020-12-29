@@ -31,6 +31,7 @@ import com.tuhu.store.saas.marketing.remote.order.TradeOrderClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.request.card.AddCardOrderReq;
+import com.tuhu.store.saas.marketing.request.card.QueryCardOrderReq;
 import com.tuhu.store.saas.marketing.request.seckill.*;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillActivityStatisticsResp;
 import com.tuhu.store.saas.marketing.response.seckill.SeckillRegistrationRecordResp;
@@ -354,6 +355,24 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.SB.getStatus());
             this.updateById(seckillRegistrationRecord);
         }
+    }
+
+
+    @Override
+    public List<Long> query(SeckillRecordUpdateReq seckillRecordUpdateReq) {
+        List<Long> cardOrderIds = Lists.newArrayList();
+        log.info("update，seckillRecordUpdateReq={}", JSONObject.toJSONString(seckillRecordUpdateReq));
+        SeckillRegistrationRecord seckillRegistrationRecord = this.selectById(seckillRecordUpdateReq.getOrderId());
+        log.info("update，seckillRecordUpdateReq,seckillRegistrationRecord:{}", JSONObject.toJSONString(seckillRegistrationRecord));
+        if (Objects.isNull(seckillRegistrationRecord) || StringUtils.isBlank(seckillRegistrationRecord.getId())) {
+            return cardOrderIds;
+        }
+        QueryCardOrderReq queryCardOrderReq = new QueryCardOrderReq();
+        queryCardOrderReq.setStoreId(seckillRegistrationRecord.getStoreId());
+        queryCardOrderReq.setTenantId(seckillRegistrationRecord.getTenantId());
+        queryCardOrderReq.setSeckillRegisterRecodeId(seckillRegistrationRecord.getId());
+        cardOrderIds = cardOrderService.getCardOrderIdsBySeckillRegisterRecodeId(queryCardOrderReq);
+        return cardOrderIds;
     }
 
     private void updatePaySuccess(SeckillRegistrationRecord seckillRegistrationRecord) {
