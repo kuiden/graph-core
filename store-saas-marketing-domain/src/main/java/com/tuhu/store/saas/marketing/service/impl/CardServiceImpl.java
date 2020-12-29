@@ -212,7 +212,8 @@ public class CardServiceImpl implements ICardService {
                             item.setUpdateTime(date);
                             Integer result = cardItemMapper.updateByPrimaryKeySelective(item);
                             if (result <= 0) {
-                                ok = false;
+                                log.error("cardItem update失败");
+                                throw new StoreSaasMarketingException("次卡更新异常");
                             }
                         }
                         if (totalQuantity.compareTo(0) > 0){
