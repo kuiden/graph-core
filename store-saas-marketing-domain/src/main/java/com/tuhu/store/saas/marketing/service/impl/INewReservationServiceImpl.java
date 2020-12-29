@@ -130,7 +130,7 @@ public class INewReservationServiceImpl implements INewReservationService {
 
     @Override
     public String addReservation(NewReservationReq req, Integer type) {
-        log.info("C端新增预约单addReservation入参：", JSONObject.toJSONString(req));
+        log.info("C端新增预约单addReservation入参：{}", req);
         //校验
         validReservationParam(req,type,1);
         //写表
