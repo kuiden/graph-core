@@ -432,6 +432,7 @@
       a.customer_id,
       a.telephone,
       a.store_id,
+      a.tenant_id,
       a.create_time,
       a.use_time,
       a.use_status,
