@@ -152,6 +152,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             crdCardItem.setCardId(crdCard.getId());
             crdCardItem.setCardName(crdCard.getCardName());
             crdCardItem.setId(null);
+            crdCardItem.setCreateTime(crdCard.getCreateTime());
+            crdCardItem.setUpdateTime(crdCard.getUpdateTime());
             crdCardItemMapper.insertSelective(crdCardItem);
         }
 
