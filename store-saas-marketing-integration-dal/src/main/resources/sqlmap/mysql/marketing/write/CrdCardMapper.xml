@@ -129,7 +129,7 @@
             <include refid="Example_Where_Clause"/>
         </if>
     </delete>
-    <insert id="insert" parameterType="com.tuhu.store.saas.purchase.dataobject.CrdCard">
+    <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.CrdCard">
 
             insert into crd_card (id, card_template_id, card_category_code,
               card_no, card_name, card_type_code,
