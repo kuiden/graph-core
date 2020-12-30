@@ -152,6 +152,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             crdCardItem.setCardId(crdCard.getId());
             crdCardItem.setCardName(crdCard.getCardName());
             crdCardItem.setId(null);
+            crdCardItem.setCreateTime(crdCard.getCreateTime());
+            crdCardItem.setUpdateTime(crdCard.getUpdateTime());
             crdCardItemMapper.insertSelective(crdCardItem);
         }
 
@@ -558,6 +560,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         return crdCardOrderExtendDTOList;
     }
 
+
     @Override
     @Transactional
     public void addCardOrderBySeckillActivity(AddCardOrderReq req) {
@@ -568,6 +571,33 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         for (Long num = 0l; num < req.getQuantity(); num++) {
             this.processAddCardOrderBySeckillActivity(req);
         }
+    }
+
+    @Override
+    public List<Long> getCardOrderIdsBySeckillRegisterRecodeId(QueryCardOrderReq req) {
+        List<Long> crdCardOrderIds = Lists.newArrayList();
+
+        CrdCardExample cardExample = new CrdCardExample();
+        CrdCardExample.Criteria criteria = cardExample.createCriteria();
+        criteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        if (null != req.getSeckillRegisterRecodeId()) {
+            criteria.andSeckillRegisterRecodeIdEqualTo(req.getSeckillRegisterRecodeId());
+        }
+        cardExample.setOrderByClause("update_time desc");
+        List<CrdCard> cardList = crdCardMapper.selectByExample(cardExample);
+        if (CollectionUtils.isEmpty(cardList)) {
+            return crdCardOrderIds;
+        }
+
+        CrdCardOrderExample crdCardOrderExample = new CrdCardOrderExample();
+        crdCardOrderExample.createCriteria().andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
+                .andCardIdIn(cardList.stream().map(x -> x.getId()).collect(Collectors.toList()));
+        List<CrdCardOrder> crdCardOrderList = crdCardOrderMapper.selectByExample(crdCardOrderExample);
+
+        if (CollectionUtils.isNotEmpty(crdCardOrderList)) {
+            crdCardOrderIds.addAll(crdCardOrderList.stream().map(x -> x.getId()).collect(Collectors.toList()));
+        }
+        return crdCardOrderIds;
     }
 
     private void processAddCardOrderBySeckillActivity(AddCardOrderReq req) {

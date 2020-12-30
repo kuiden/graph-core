@@ -12,6 +12,12 @@ public class CrdCardExample {
 
     protected List<Criteria> oredCriteria;
 
+    private Integer limit;
+
+    private Long offset;
+
+    private Boolean forUpdate;
+
     public CrdCardExample() {
         oredCriteria = new ArrayList<Criteria>();
     }
@@ -63,6 +69,30 @@ public class CrdCardExample {
         oredCriteria.clear();
         orderByClause = null;
         distinct = false;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public void setOffset(Long offset) {
+        this.offset = offset;
+    }
+
+    public Long getOffset() {
+        return offset;
+    }
+
+    public void setForUpdate(Boolean forUpdate) {
+        this.forUpdate = forUpdate;
+    }
+
+    public Boolean getForUpdate() {
+        return forUpdate;
     }
 
     protected abstract static class GeneratedCriteria {
@@ -1663,6 +1693,76 @@ public class CrdCardExample {
 
         public Criteria andIsDeleteNotBetween(Byte value1, Byte value2) {
             addCriterion("is_delete not between", value1, value2, "isDelete");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdIsNull() {
+            addCriterion("seckill_register_recode_id is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdIsNotNull() {
+            addCriterion("seckill_register_recode_id is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdEqualTo(String value) {
+            addCriterion("seckill_register_recode_id =", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdNotEqualTo(String value) {
+            addCriterion("seckill_register_recode_id <>", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdGreaterThan(String value) {
+            addCriterion("seckill_register_recode_id >", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdGreaterThanOrEqualTo(String value) {
+            addCriterion("seckill_register_recode_id >=", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdLessThan(String value) {
+            addCriterion("seckill_register_recode_id <", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdLessThanOrEqualTo(String value) {
+            addCriterion("seckill_register_recode_id <=", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdLike(String value) {
+            addCriterion("seckill_register_recode_id like", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdNotLike(String value) {
+            addCriterion("seckill_register_recode_id not like", value, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdIn(List<String> values) {
+            addCriterion("seckill_register_recode_id in", values, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdNotIn(List<String> values) {
+            addCriterion("seckill_register_recode_id not in", values, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdBetween(String value1, String value2) {
+            addCriterion("seckill_register_recode_id between", value1, value2, "seckillRegisterRecodeId");
+            return (Criteria) this;
+        }
+
+        public Criteria andSeckillRegisterRecodeIdNotBetween(String value1, String value2) {
+            addCriterion("seckill_register_recode_id not between", value1, value2, "seckillRegisterRecodeId");
             return (Criteria) this;
         }
     }
