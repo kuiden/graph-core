@@ -352,6 +352,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
             this.updatePaySuccess(seckillRegistrationRecord);
         } else {
             //支付失败
+            seckillRegistrationRecord.setUpdateTime(DateUtils.now());
             seckillRegistrationRecord.setPayStatus(SeckillRegistrationRecordPayStatusEnum.SB.getStatus());
             this.updateById(seckillRegistrationRecord);
         }
