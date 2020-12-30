@@ -69,6 +69,17 @@ public class RedisTemplateController {
     }
 
 
+    @GetMapping(value = "/set/{key}/{value}")
+    @ApiOperation(value = "redis 设置")
+    public Object set(@PathVariable("key") String key, @PathVariable("value") String value) {
+        if (stringRedisTemplate.hasKey(key)) {
+            stringRedisTemplate.opsForValue().set(key, value);
+        } else {
+            return "找不到key,请重试！";
+        }
+        return "success";
+    }
+
     @GetMapping(value = "/like/get/{key}")
     @ApiOperation(value = "redis 模糊匹配")
     public Object likeGet(@PathVariable("key") String key) {
