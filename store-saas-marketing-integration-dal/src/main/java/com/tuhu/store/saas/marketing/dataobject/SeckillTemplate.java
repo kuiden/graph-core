@@ -7,6 +7,7 @@ import java.io.Serializable;
 
 import com.baomidou.mybatisplus.annotations.Version;
 
+import com.baomidou.mybatisplus.enums.FieldStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -54,7 +55,7 @@ public class SeckillTemplate implements Serializable {
     /**
      * 活动分类id
      */
-    @TableField("classification_id")
+    @TableField(value = "classification_id", strategy = FieldStrategy.IGNORED)
     private Integer classificationId;
     /**
      * 模板引用次数
