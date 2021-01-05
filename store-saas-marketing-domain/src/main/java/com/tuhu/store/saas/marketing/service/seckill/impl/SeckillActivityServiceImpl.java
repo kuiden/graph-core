@@ -203,7 +203,7 @@ public class SeckillActivityServiceImpl extends ServiceImpl<SeckillActivityMappe
             // 新增
             entity.setCreateTime(now);
             entity.setCreateUser(model.getUpdateUser());
-            entity.setId(idKeyGen.generateId(model.getTenantId()));
+            entity.setId(idKeyGen.generateIdV2For32(model.getTenantId(), model.getStoreId().toString().concat("SeckillActivity")));
             if (super.insert(entity)) {
                 result = entity.getId();
                 model.setId(entity.getId());
