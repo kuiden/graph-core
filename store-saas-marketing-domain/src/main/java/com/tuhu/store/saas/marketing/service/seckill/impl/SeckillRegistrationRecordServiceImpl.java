@@ -972,7 +972,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         if (seckillRecordAddReq.getQuantity() > syzkc) {
             throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
         }
-        if (yxdkuInt + seckillRecordAddReq.getQuantity() > syzkc) {
+        if (yxdkuInt + seckillRecordAddReq.getQuantity() > seckillActivity.getSellNumber()) {
             throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
         }
         SeckillActivityBuy seckillActivityBuy = new SeckillActivityBuy();
@@ -984,7 +984,7 @@ public class SeckillRegistrationRecordServiceImpl extends ServiceImpl<SeckillReg
         seckillActivityBuy.setBuyNum(Integer.parseInt(stringRedisTemplate.opsForValue().get(yxdku)));
         seckillActivityBuy.setSaleNum(seckillActivityBuy.getTotalNum() - seckillActivityBuy.getBuyNum());
         Integer preNum = seckillActivityService.getPreNum(seckillActivityBuy);
-        if (preNum + yxdkuInt > syzkc) {
+        if (preNum + yxdkuInt > seckillActivity.getSellNumber()) {
             throw new StoreSaasMarketingException(MarketingBizErrorCodeEnum.SECKILL_ACTIVITY_PARAM_ERROR, seckillActivity.getActivityTitle() + ",销售数量不足或已抢购完");
         }
     }
