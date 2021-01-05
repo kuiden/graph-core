@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -74,10 +75,24 @@ public class SeckillRegistrationRecordApi {
     @PostMapping("/update")
     @ApiOperation(value = "秒杀（抢购）接口更新", notes = "update")
     public BizBaseResponse update(@RequestBody SeckillRecordUpdateReq seckillRecordUpdateReq) {
-        log.info("/feign/seckill/registrationRecord/update,paymentResponse={}", JSONObject.toJSONString(seckillRecordUpdateReq));
-        //异步调用
+        log.info("/feign/seckill/registrationRecord/update,seckillRecordUpdateReq={}", JSONObject.toJSONString(seckillRecordUpdateReq));
         seckillRegistrationRecordService.update(seckillRecordUpdateReq);
         return new BizBaseResponse();
+    }
+
+
+    /**
+     * 秒杀（抢购）接口查询
+     *
+     * @param seckillRecordUpdateReq
+     * @return
+     */
+    @PostMapping("/query")
+    @ApiOperation(value = "秒杀（抢购）接口查询", notes = "query")
+    public BizBaseResponse<List<Long>> query(@RequestBody SeckillRecordUpdateReq seckillRecordUpdateReq) {
+        log.info("/feign/seckill/registrationRecord/query,seckillRecordUpdateReq={}", JSONObject.toJSONString(seckillRecordUpdateReq));
+        List<Long> cardOrderIds = seckillRegistrationRecordService.query(seckillRecordUpdateReq);
+        return new BizBaseResponse(cardOrderIds);
     }
 
 

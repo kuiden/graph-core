@@ -30,4 +30,9 @@ public class QueryCardOrderReq {
     @ApiModelProperty(value = "租户ID", dataType = "Long", required = false, example = "19")
     private Long tenantId;
 
+    /**
+     * 秒杀活动订单id
+     */
+    private String seckillRegisterRecodeId;
+
 }
