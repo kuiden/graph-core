@@ -65,6 +65,21 @@ public class IdKeyGen {
         return currentTimeMillisStr + tenantIdStr + seqValue;
     }
 
+
+    public String generateIdV2For32(Long tenantId, String seqName) {
+
+        long currentTimeMillis = System.currentTimeMillis() - 943891200L;
+        String currentTimeMillisStr = Long.toString(currentTimeMillis);
+        if (StringUtils.isBlank(seqName)) {
+            seqName = DEFUALT_SEQ_KEY_NAME;
+        }
+        String keyName = String.format(SEQ_KEY_PREFIX, tenantId, seqName);
+        Long seqValue = this.next(keyName);
+        return currentTimeMillisStr + seqValue;
+    }
+
+
+
     public Long next(String key) {
         Long currentValue = stringRedisTemplate.opsForValue().increment(key, 1L);
         while (Long.valueOf(0).compareTo(currentValue) >= 0) {
