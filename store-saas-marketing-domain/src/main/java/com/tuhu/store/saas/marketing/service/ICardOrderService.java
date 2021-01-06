@@ -34,15 +34,15 @@ public interface ICardOrderService {
      */
     PageInfo<CardOrderResp> getCardOrderList(ListCardOrderReq req);
 
-   /**
-    * 更新卡支付状态
-    */
-   void updateCardPaymentStatus(String orderNo, Long storeId, Long tenantId, Long amount);
+    /**
+     * 更新卡支付状态
+     */
+    void updateCardPaymentStatus(String orderNo, Long storeId, Long tenantId, Long amount);
 
 
-   /**
-    * 卡详情
-    */
+    /**
+     * 卡详情
+     */
     CardOrderDetailResp queryCardOrder(QueryCardOrderReq req);
 
 
@@ -61,4 +61,15 @@ public interface ICardOrderService {
      */
     List<CrdCardOrderExtendDTO> queryCardToCommission(QueryCardToCommissionReq request);
 
+
+    /**
+     * 通过秒杀活动创建次卡订单
+     */
+    void addCardOrderBySeckillActivity(AddCardOrderReq req);
+
+
+    /**
+     * 通过秒杀抢购单id,查询开卡单
+     */
+    List<Long> getCardOrderIdsBySeckillRegisterRecodeId(QueryCardOrderReq req);
 }

@@ -8,6 +8,7 @@ import com.tuhu.store.saas.marketing.entity.EndUserVisitedCouponEntity;
 import com.tuhu.store.saas.marketing.entity.EndUserVisitedStoreEntity;
 import com.tuhu.store.saas.marketing.enums.EventContentTypeEnum;
 import com.tuhu.store.saas.marketing.exception.MarketingException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ClientEventRecordMapper;
 import com.tuhu.store.saas.marketing.request.ClientEventRecordReq;
 import com.tuhu.store.saas.marketing.request.ClientEventRecordRequest;
@@ -62,7 +63,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         log.info("记录用户行为入参：{}", JSONObject.toJSONString(clientEventRecordRequest));
         String validateResult = this.validateClientEventRecordRequest(clientEventRecordRequest);
         if (null != validateResult) {
-            throw new RuntimeException(validateResult);
+            throw new StoreSaasMarketingException(validateResult);
         }
         String openId = clientEventRecordRequest.getOpenId();
         Integer sourceType = clientEventRecordRequest.getSourceType();
@@ -75,7 +76,7 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             OauthClientDetailsDAO oauthClientDetails = iOauthClientDetailsService.getClientDetailByClientId(clientType);
             if (null == oauthClientDetails) {
                 log.error("客户端配置信息不存在，clientType={}", clientType);
-                throw new RuntimeException("客户端配置信息不存在");
+                throw new StoreSaasMarketingException("客户端配置信息不存在");
             }
 
             openId = iWechatService.getOpenId(oauthClientDetails.getWxAppid()
@@ -95,7 +96,12 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
         if (StringUtils.isEmpty(contentValue)) {
             contentValue = clientEventRecordRequest.getContentValue();
         }
-        ClientEventRecordDAO oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType);
+        String customerId = clientEventRecordRequest.getCustomerId();
+        String phoneNumber = clientEventRecordRequest.getPhoneNumber();
+        if (StringUtils.isNotBlank(customerId)) {
+            customerId = "null".equals(customerId) ? null : customerId;
+        }
+        ClientEventRecordDAO oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType, customerId, phoneNumber);
         //如果没有记录
         if (null == oldClientEventRecordEntity || StringUtils.isEmpty(oldClientEventRecordEntity.getId())) {
             ClientEventRecordDAO clientEventRecordEntity = new ClientEventRecordDAO();
@@ -110,12 +116,14 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             clientEventRecordEntity.setUpdateTime(date);
             clientEventRecordEntity.setEventCount(1);
             clientEventRecordEntity.setSourceType(sourceType);
+            clientEventRecordEntity.setCustomerId(customerId);
+            clientEventRecordEntity.setPhoneNumber(phoneNumber);
             try {
                 this.addNewClientEventRecord(clientEventRecordEntity);
             } catch (Exception e) {
                 log.error("C端客户行为新增记录失败,ClientEventRecordEntity={},error={}", JSONObject.toJSONString(clientEventRecordEntity), ExceptionUtils.getStackTrace(e));
                 //再次查询
-                oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType);
+                oldClientEventRecordEntity = this.getEventRecordByParams(clientEventRecordRequest.getEventType(), clientEventRecordRequest.getContentType(), contentValue, openId, sourceType, customerId, phoneNumber);
                 this.updateClientEventRecordCountById(oldClientEventRecordEntity.getId());
             }
         } else {
@@ -136,15 +144,15 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
                 endUserVisitedCouponEntity.setCouponCode(contentValue);
                 iEndUserVisitedCouponService.recordEndUserVistiedCoupon(endUserVisitedCouponEntity);
             }
-        } else if (EventTypeEnum.LOGIN.getCode().equals(clientEventRecordRequest.getEventType()) || EventTypeEnum.REGISTERED.getCode().equals(clientEventRecordRequest.getEventType())) {
-            if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())
-                    && StringUtils.isNotBlank(clientEventRecordRequest.getCustomerId()) && StringUtils.isNotBlank(storeId)) {
-                EndUserVistiedCouponRequest endUserVistiedCouponRequest = new EndUserVistiedCouponRequest();
-                endUserVistiedCouponRequest.setEncryptedCode(contentValue);
-                endUserVistiedCouponRequest.setOpenId(openId);
-                endUserVistiedCouponRequest.setStoreId(storeId);
-                iEndUserVisitedCouponService.recordNewCustomerByVistiedCoupon(endUserVistiedCouponRequest, clientEventRecordRequest.getCustomerId());
-            }
+//        } else if (EventTypeEnum.LOGIN.getCode().equals(clientEventRecordRequest.getEventType()) || EventTypeEnum.REGISTERED.getCode().equals(clientEventRecordRequest.getEventType())) {
+//            if (EventContentTypeEnum.COUPON.getCode().equals(clientEventRecordRequest.getContentType())
+//                    && StringUtils.isNotBlank(clientEventRecordRequest.getCustomerId()) && StringUtils.isNotBlank(storeId)) {
+//                EndUserVistiedCouponRequest endUserVistiedCouponRequest = new EndUserVistiedCouponRequest();
+//                endUserVistiedCouponRequest.setEncryptedCode(contentValue);
+//                endUserVistiedCouponRequest.setOpenId(openId);
+//                endUserVistiedCouponRequest.setStoreId(storeId);
+//                iEndUserVisitedCouponService.recordNewCustomerByVistiedCoupon(endUserVistiedCouponRequest, clientEventRecordRequest.getCustomerId());
+//            }
         }
     }
 
@@ -182,6 +190,10 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
             if (StringUtils.isEmpty(clientEventRecordRequest.getEncryptedCode()) && StringUtils.isEmpty(clientEventRecordRequest.getContentValue())) {
                 return "活动编码不能为空";
             }
+        } else if (EventContentTypeEnum.SEC_KILL.getCode().equals(clientEventRecordRequest.getContentType())) {
+            if (StringUtils.isEmpty(clientEventRecordRequest.getEncryptedCode()) && StringUtils.isEmpty(clientEventRecordRequest.getContentValue())) {
+                return "秒杀活动编码不能为空";
+            }
         }
         return null;
     }
@@ -201,7 +213,8 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
     }
 
     @Override
-    public ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId, Integer sourceType) {
+    public ClientEventRecordDAO getEventRecordByParams(String eventType, String contentType, String contentValue, String openId, Integer sourceType,
+                                                       String customerId, String phoneNumber) {
         EntityWrapper<ClientEventRecordDAO> wrapper = new EntityWrapper<>();
         wrapper.eq("event_type", eventType)
                 .eq("content_type", contentType)
@@ -209,6 +222,12 @@ public class ClientEventRecordServiceImpl implements IClientEventRecordService {
                 .eq("source_type", sourceType);
         if (StringUtils.isNotEmpty(openId)) {
             wrapper.eq("open_id", openId);
+        }
+        if (StringUtils.isNotBlank(customerId)) {
+            wrapper.eq(ClientEventRecordDAO.CUSTOMER_ID, customerId);
+        }
+        if (StringUtils.isNotBlank(phoneNumber)) {
+            wrapper.eq(ClientEventRecordDAO.PHONE_NUMBER, phoneNumber);
         }
         List<ClientEventRecordDAO> recordDAOList = clientEventRecordMapper.selectList(wrapper);
         if (CollectionUtils.isEmpty(recordDAOList)) {

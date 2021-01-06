@@ -36,10 +36,21 @@ public class CardTemplate implements Serializable {
     private String cardName;
 
     /**
-     * 有效期
+     * 有效期类型，0-有效月份，1-永久有效，2-有效天数，3-有效截止日期
+     */
+    private Integer expiryType;
+    /**
+     * 有效月份
      */
     private Integer expiryPeriod;
-
+    /**
+     * 次卡有效截止日期
+     */
+    private Date expiryDate;
+    /**
+     * 次卡有效天数
+     */
+    private Integer expiryDay;
 
     /**
      * 是否是永久

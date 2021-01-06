@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.job;
 
+import com.beust.jcommander.internal.Lists;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.dataobject.MessageRemind;
 import com.tuhu.store.saas.marketing.enums.MessageStatusEnum;
@@ -47,7 +48,12 @@ public class SendMarketingSMSJob extends IJobHandler {
             smsParameter.setPhone(messageRemind.getPhoneNumber());
             smsParameter.setTemplateId(messageRemind.getTemplateId());
             List<String> sendDatas = GsonTool.fromJsonList(messageRemind.getDatas(),String.class);
-            smsParameter.setDatas(sendDatas);
+            List<String> datas = Lists.newArrayList();
+            for (String data : sendDatas) {
+                String newData = data.replace("\\", "").replace("\"", "");
+                datas.add(newData);
+            }
+            smsParameter.setDatas(datas);
             SMSResult sendResult = ismsService.sendCommonSms(smsParameter);
 
             if(sendResult.isSendResult()) {//成功。刷新状态为成功

@@ -11,10 +11,7 @@ import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
 import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.dataobject.*;
-import com.tuhu.store.saas.marketing.enums.CardOrderStatusEnum;
-import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
-import com.tuhu.store.saas.marketing.enums.PaymentStatusEnum;
-import com.tuhu.store.saas.marketing.enums.SMSTypeEnum;
+import com.tuhu.store.saas.marketing.enums.*;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.parameter.SMSParameter;
@@ -107,7 +104,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Transactional
     public String addCardOrder(AddCardOrderReq req) {
         log.info("开卡接口请求参数：{}", JSONObject.toJSON(req));
-
         //获取最新客户信息
         BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
         baseIdReqVO.setId(req.getCustomerId());
@@ -119,7 +115,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         }
         req.setCustomerName(customerDTO.getName());
         req.setCustomerPhoneNumber(customerDTO.getPhoneNumber());
-
+        if (req.getExpiryDate() != null) {
+            req.setExpiryDate(DateUtils.getDateEndTime(req.getExpiryDate()));
+        }
         //新增次卡
         CrdCard crdCard = new CrdCard();
         BeanUtils.copyProperties(req, crdCard);
@@ -154,6 +152,8 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             crdCardItem.setCardId(crdCard.getId());
             crdCardItem.setCardName(crdCard.getCardName());
             crdCardItem.setId(null);
+            crdCardItem.setCreateTime(crdCard.getCreateTime());
+            crdCardItem.setUpdateTime(crdCard.getUpdateTime());
             crdCardItemMapper.insertSelective(crdCardItem);
         }
 
@@ -222,7 +222,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             CrdCardOrderExample.Criteria nameCriteria = cardOrderExample.createCriteria();
             CrdCardOrderExample.Criteria phoneCriteria = cardOrderExample.createCriteria();
             //根据客户id查询
-            if (null != req.getCustomerId()){
+            if (null != req.getCustomerId()) {
                 nameCriteria.andCustomerIdEqualTo(req.getCustomerId());
                 phoneCriteria.andCustomerIdEqualTo(req.getCustomerId());
             }
@@ -412,9 +412,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             queryGoodsListVO.setGoodsSource("");
             BizBaseResponse<List<QueryGoodsListDTO>> productResult = productClient.queryGoodsListV2(queryGoodsListVO);
             if (productResult != null && CollectionUtils.isNotEmpty(productResult.getData())) {
-                Map<String,QueryGoodsListDTO> goodsListDTOMap = productResult.getData().stream().collect(Collectors.toMap(x->x.getGoodsId(),v -> v));
+                Map<String, QueryGoodsListDTO> goodsListDTOMap = productResult.getData().stream().collect(Collectors.toMap(x -> x.getGoodsId(), v -> v));
                 for (CardItemResp item : cardGoodsItem) {
-                    if (goodsListDTOMap.containsKey(item.getGoodsId())){
+                    if (goodsListDTOMap.containsKey(item.getGoodsId())) {
                         item.setServiceItemName(goodsListDTOMap.get(item.getGoodsId()).getGoodsName());
                     }
                 }
@@ -435,9 +435,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.serviceGoodsForFeign(goodsForMarketReq);
             if (null != serviceGoodsPage.getData() && null != serviceGoodsPage.getData().getList()) {
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = serviceGoodsPage.getData().getList();
-                Map<String,ServiceGoodsListForMarketResp> serviceGoodsListForMarketRespMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v -> v));
+                Map<String, ServiceGoodsListForMarketResp> serviceGoodsListForMarketRespMap = serviceGoodsList.stream().collect(Collectors.toMap(x -> x.getId(), v -> v));
                 for (CardItemResp item : cardServiceItem) {
-                    if (serviceGoodsListForMarketRespMap.containsKey(item.getGoodsId())){
+                    if (serviceGoodsListForMarketRespMap.containsKey(item.getGoodsId())) {
                         item.setServiceItemName(serviceGoodsListForMarketRespMap.get(item.getGoodsId()).getServiceName());
                     }
                 }
@@ -558,5 +558,98 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             crdCardOrderExtendDTOList.add(crdCardOrderExtendDTO);
         });
         return crdCardOrderExtendDTOList;
+    }
+
+
+    @Override
+    @Transactional
+    public void addCardOrderBySeckillActivity(AddCardOrderReq req) {
+        log.info("addCardOrderBySeckillActivity,request：{}", JSONObject.toJSON(req));
+        if (Objects.isNull(req.getQuantity())) {
+            log.error("根据秒杀活动，创建次卡单的数量为空");
+        }
+        for (Long num = 0l; num < req.getQuantity(); num++) {
+            this.processAddCardOrderBySeckillActivity(req);
+        }
+    }
+
+    @Override
+    public List<Long> getCardOrderIdsBySeckillRegisterRecodeId(QueryCardOrderReq req) {
+        List<Long> crdCardOrderIds = Lists.newArrayList();
+
+        CrdCardExample cardExample = new CrdCardExample();
+        CrdCardExample.Criteria criteria = cardExample.createCriteria();
+        criteria.andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId());
+        if (null != req.getSeckillRegisterRecodeId()) {
+            criteria.andSeckillRegisterRecodeIdEqualTo(req.getSeckillRegisterRecodeId());
+        }
+        cardExample.setOrderByClause("update_time desc");
+        List<CrdCard> cardList = crdCardMapper.selectByExample(cardExample);
+        if (CollectionUtils.isEmpty(cardList)) {
+            return crdCardOrderIds;
+        }
+
+        CrdCardOrderExample crdCardOrderExample = new CrdCardOrderExample();
+        crdCardOrderExample.createCriteria().andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
+                .andCardIdIn(cardList.stream().map(x -> x.getId()).collect(Collectors.toList()));
+        List<CrdCardOrder> crdCardOrderList = crdCardOrderMapper.selectByExample(crdCardOrderExample);
+
+        if (CollectionUtils.isNotEmpty(crdCardOrderList)) {
+            crdCardOrderIds.addAll(crdCardOrderList.stream().map(x -> x.getId()).collect(Collectors.toList()));
+        }
+        return crdCardOrderIds;
+    }
+
+    private void processAddCardOrderBySeckillActivity(AddCardOrderReq req) {
+        //新增次卡
+        CrdCard crdCard = new CrdCard();
+        BeanUtils.copyProperties(req, crdCard);
+        Long templateId = req.getCardTemplateId();
+        CardTemplate cardTemplate = cardTemplateMapper.getCardTemplateById(templateId, req.getTenantId(), req.getStoreId());
+        if (Objects.isNull(cardTemplate)) {
+            throw new StoreSaasMarketingException("无此卡模板数据");
+        }
+        crdCard.setSeckillRegisterRecodeId(req.getSeckillRegisterRecodeId());
+        crdCard.setForever((byte) (req.getForever() ? 1 : 0));
+        crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
+        crdCard.setCardCategoryCode(cardTemplate.getCardCategoryCode());
+        crdCard.setCardTypeCode(cardTemplate.getCardTypeCode());
+        crdCard.setStatus(CardStatusEnum.ACTIVATED.getEnumCode());
+        crdCard.setDescription(cardTemplate.getDescription());
+        crdCard.setCardName(cardTemplate.getCardName());
+        crdCard.setActualAmount(cardTemplate.getActualAmount());
+        crdCard.setFaceAmount(cardTemplate.getFaceAmount());
+        crdCardMapper.insertSelective(crdCard);
+
+        //新增次卡关联的商品和服务
+        List<CardTemplateItem> cardTemplateItems = cardTemplateItemMapper.selectCardTemplateItemList(templateId);
+        for (CardTemplateItem item : cardTemplateItems) {
+            CrdCardItem crdCardItem = new CrdCardItem();
+            BeanUtils.copyProperties(item, crdCardItem);
+            crdCardItem.setId(null);
+            crdCardItem.setAmount(item.getFaceAmount());
+            crdCardItem.setCardId(crdCard.getId());
+            crdCardItem.setCardName(crdCard.getCardName());
+            crdCardItemMapper.insertSelective(crdCardItem);
+        }
+
+        //新增开卡单
+        CrdCardOrder crdCardOrder = new CrdCardOrder();
+        BeanUtils.copyProperties(req, crdCardOrder);
+        crdCardOrder.setCardId(crdCard.getId());
+        crdCardOrder.setCardName(cardTemplate.getCardName());
+        crdCardOrder.setAmount(cardTemplate.getFaceAmount());
+        crdCardOrder.setActualAmount(cardTemplate.getActualAmount());
+        crdCardOrder.setDiscountAmount(cardTemplate.getDiscountAmount());
+        crdCardOrder.setStatus(CardOrderStatusEnum.SETTLE_CARD.getEnumCode());
+        crdCardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_OK.getEnumCode());
+        crdCardOrder.setCardStatus(CardStatusEnum.ACTIVATED.getEnumCode());
+        //生成开卡单号
+        String code = cardOrderRedisCache.getCode(cardOrderRedisPrefix, req.getStoreId());
+        if (null == req.getStoreNo()) {
+            req.setStoreNo(req.getStoreId().toString());
+        }
+        crdCardOrder.setOrderNo(getCardOrderNumber(code, req.getStoreNo()));
+        crdCardOrderMapper.insertSelective(crdCardOrder);
     }
 }

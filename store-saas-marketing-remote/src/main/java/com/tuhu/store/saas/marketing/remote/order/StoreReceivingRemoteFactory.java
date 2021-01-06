@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Slf4j
 public class StoreReceivingRemoteFactory implements FallbackFactory<StoreReceivingClient> {
@@ -35,6 +37,11 @@ public class StoreReceivingRemoteFactory implements FallbackFactory<StoreReceivi
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 
+            @Override
+            public BizBaseResponse updateReceivingAndTradeOrderByOrderNos(List<String> orderNos, Integer flag) {
+                log.error("updateReceivingAndTradeOrderByOrderNos error,error={}", "", ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
         };
     }
 }

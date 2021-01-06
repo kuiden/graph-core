@@ -67,6 +67,7 @@ public class ApiExceptionHandlerAdvice {
         }
         log.error("异常信息", exception);
         errorResult.setCode(5000);
+        errorResult.setMessage(exception.getMessage());
         return errorResult;
     }
 

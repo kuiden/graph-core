@@ -28,7 +28,9 @@ public enum MarketingBizErrorCodeEnum implements BizEnum {
 
     SYSTEM_INNER_ERROR(5000, "SYSTEM_INNER_ERROR", "系统内部错误"),
 
-    PARAM_ERROR(6000, "PARAM_ERROR", "参数错误");
+    PARAM_ERROR(6000, "PARAM_ERROR", "参数错误"),
+    SECKILL_ACTIVITY_PARAM_ERROR(6001,"SECKILL_ACTIVITY_PARAM_ERROR","秒杀活动抢购失败");
+
 
     private int code;
     private String name;

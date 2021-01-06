@@ -6,8 +6,11 @@ import com.mengfan.common.util.GatewayClient;
 import com.tuhu.store.saas.marketing.constant.AuthConstant;
 import com.tuhu.store.saas.marketing.constant.MiniNotifyConstant;
 import com.tuhu.store.saas.marketing.dataobject.OauthClientDetailsDAO;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivity;
+import com.tuhu.store.saas.marketing.dataobject.SeckillActivityRemind;
 import com.tuhu.store.saas.marketing.exception.OpenIdException;
 import com.tuhu.store.saas.marketing.exception.SaasAuthException;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.SrvReservationOrderMapper;
 import com.tuhu.store.saas.marketing.po.SrvReservationOrder;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
@@ -67,6 +70,12 @@ public class WechatServiceImpl implements IWechatService {
 
     @Value("${wechat.access.token.address}")
     private String accessTokenUrl;
+
+    @Value("${wechat.seckill.miniprogram.message.client.type}")
+    private String seckillClientType;
+
+    @Value("${wechat.seckill.miniprogram.message.template.id}")
+    private String seckillTemplateId;
 
     private String tokenUrl = "https://api.yunquecloud.com/auth/wechat/accessToken";
 
@@ -284,6 +293,91 @@ public class WechatServiceImpl implements IWechatService {
         return null;
     }
 
+    @Override
+    public String miniSeckillProgramNotify(SeckillActivityRemind remind, SeckillActivity seckillActivity) {
+        try {
+            ResultDTO<String> accessTokenData = this.getWechatAccessTokenByClientTypeNoCache(this.seckillClientType);
+            if (null == accessTokenData.getData()){
+                log.error("getWechatAccessTokenByClientTypeNoCache返回结果异常");
+                throw new StoreSaasMarketingException("获取微信AccessToken返回结果异常");
+            }
+            String sendUrl = templateMessageSendUrl.concat(accessTokenData.getData());
+            Map<String, Object> param = new HashMap();
+            param.put("touser", remind.getOpenId());
+            String templateId = remind.getTemplateId();
+            if (StringUtils.isEmpty(templateId)) {
+                templateId = this.seckillTemplateId;
+            }
+            param.put("template_id", templateId);
+            param.put("page", remind.getPage());
+
+            HashMap data = Maps.newHashMap();
+            //活动名称
+            HashMap thing4 = Maps.newHashMap();
+            String activityName = "";
+            if (!StringUtils.isEmpty(seckillActivity.getActivityTitle())) {
+                activityName = seckillActivity.getActivityTitle();
+                if (activityName.length() > 20) {
+                    activityName = activityName.substring(0, 17);
+                    activityName = activityName + "...";
+                }
+            }
+            thing4.put("value", activityName);
+            data.put("thing4", thing4);
+            //活动时间
+            HashMap thing2 = Maps.newHashMap();
+            String activityTime = "";
+            if (Objects.nonNull(seckillActivity.getStartTime()) && Objects.nonNull(seckillActivity.getEndTime())) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("YY年MM月dd日");
+                activityTime = dateFormat.format(seckillActivity.getStartTime()) + "至" + dateFormat.format(seckillActivity.getEndTime());
+            }
+            thing2.put("value", activityTime);
+            data.put("thing2", thing2);
+            //门店地址
+            HashMap thing5 = Maps.newHashMap();
+            String address = null;
+            if (!StringUtils.isEmpty(remind.getStoreAddress())) {
+                address = remind.getStoreAddress();
+                if (address.length() > 20) {
+                    address = address.substring(0, 17);
+                    address = address + "...";
+                }
+            } else {
+                address = MiniNotifyConstant.ADDRESS;
+            }
+            thing5.put("value", address);
+            data.put("thing5", thing5);
+            //门店名称
+            HashMap thing7 = Maps.newHashMap();
+            String storeName = null;
+            if (!StringUtils.isEmpty(remind.getStoreName())) {
+                storeName = remind.getStoreName();
+                if (storeName.length() > 20) {
+                    storeName = storeName.substring(0, 17);
+                    storeName = storeName + "...";
+                }
+            } else {
+                storeName = MiniNotifyConstant.STORENAME;
+            }
+            thing7.put("value", storeName);
+            data.put("thing7", thing7);
+            //门店电话
+            HashMap phone_number6 = Maps.newHashMap();
+            String phoneNumber = StringUtils.isEmpty(remind.getStorePhone()) ? "无" : remind.getStorePhone();
+            phone_number6.put("value", phoneNumber);
+            data.put("phone_number6", phone_number6);
+            param.put("data", data);
+            //param.put("emphasis_keyword", miniProgramNotifyReq.getEmphasisKeyword());
+            log.info("发送小程序模板消息通知，request={}", JSONObject.toJSONString(param));
+            String result = restTemplate.postForObject(sendUrl, param, String.class);
+            log.info("发送小程序模板消息通知，response={}", result);
+            return result;
+        } catch (Exception e) {
+            log.error("miniSeckillProgramNotify error:", e);
+        }
+        return null;
+    }
+
 
     private ResultDTO<String> getWechatAccessTokenByClientTypeNoCache(String clientType) {
         ResultDTO<String> resultDTO = new ResultDTO<>();
@@ -312,6 +406,7 @@ public class WechatServiceImpl implements IWechatService {
             resultDTO.setCode(AuthConstant.succesCode);
             resultDTO.setData(tokenJSON.getString("access_token"));
         }
+        log.info("getWechatAccessTokenByClientTypeNoCache 出参：{}",resultDTO);
         return resultDTO;
     }
 

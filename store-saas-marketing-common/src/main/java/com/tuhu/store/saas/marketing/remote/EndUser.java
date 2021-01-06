@@ -18,4 +18,5 @@ public class EndUser {
     private boolean resetFlag;
     private Boolean accountState;
     private String endUserId;
+    private String openId;
 }

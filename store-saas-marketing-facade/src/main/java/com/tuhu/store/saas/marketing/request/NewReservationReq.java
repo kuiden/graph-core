@@ -64,7 +64,7 @@ public class NewReservationReq implements Serializable {
     private Integer teminal;
 
     /**
-     * 预约渠道:MD(门店创建);ZXYY(小程序在线预约);COUPON(优惠券营销);ACTIVITY(活动营销)
+     * 预约渠道:MD(门店创建);ZXYY(小程序在线预约);COUPON(优惠券营销);ACTIVITY(活动营销);SECKILLACTIVITY(秒杀活动）
      */
     private String sourceChannel;
 
@@ -74,7 +74,7 @@ public class NewReservationReq implements Serializable {
     private String marketingId;
 
     /**
-     * 优惠券或活动名称
+     * 优惠券或活动名称或秒杀活动名称
      */
     private String marketingName;
 

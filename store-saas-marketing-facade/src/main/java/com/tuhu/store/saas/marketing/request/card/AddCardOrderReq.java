@@ -49,7 +49,7 @@ public class AddCardOrderReq {
     @NotNull(message = "卡模板ID不能为空")
     private Long cardTemplateId;
 
-    @ApiModelProperty(value = "有效日期", dataType = "Long", required = false, example = "234543")
+    @ApiModelProperty(value = "有效日期", dataType = "Date", required = false, example = "234543")
     private Date expiryDate;
 
     @ApiModelProperty(value = "是否永久有效", dataType = "Boolean", required = false, example = "false")
@@ -73,5 +73,12 @@ public class AddCardOrderReq {
 
     @ApiModelProperty(value = "更新时间", dataType = "Long", required = false, example = "2018-11-22T12:36:54.025Z")
     private Date updateTime;
+
+    private String seckillRegisterRecodeId;
+
+    /**
+     * 购买数量
+     */
+    private Long quantity;
 
 }

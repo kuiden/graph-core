@@ -17,7 +17,7 @@ public class CustomerMarketing {
     private Byte taskType;
 
     /**
-    * 营销方式 0、优惠券关怀 1、短信营销
+    * 营销方式 0、优惠券关怀 1、短信营销 2、秒杀活动
     */
     private Byte marketingMethod;
 

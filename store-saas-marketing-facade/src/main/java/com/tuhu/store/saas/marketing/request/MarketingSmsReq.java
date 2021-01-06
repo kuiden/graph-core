@@ -12,9 +12,9 @@ import java.io.Serializable;
 public class MarketingSmsReq implements Serializable {
 
     /**
-     * 营销方式 0、优惠券营销 1、活动营销
+     * 营销方式 0、优惠券营销 1、活动营销 2、秒杀活动
      */
-    @ApiModelProperty(value = "营销方式")
+    @ApiModelProperty(value = "营销方式 0、优惠券营销 1、活动营销 2、秒杀活动")
     @NotNull(message = "营销方式不能为空")
     private Byte marketingMethod;
 

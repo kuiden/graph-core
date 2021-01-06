@@ -1,6 +1,8 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
+import com.tuhu.boot.common.exceptions.BizException;
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.boot.common.facade.response.BizResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.po.ActivityTemplate;
@@ -11,6 +13,7 @@ import com.tuhu.store.saas.marketing.request.ChangeSortAcTemplateReq;
 import com.tuhu.store.saas.marketing.service.IActivityTemplateService;
 import com.tuhu.store.saas.marketing.service.ImageUploadService;
 import com.tuhu.store.saas.marketing.util.ImageUtil;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +34,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/activityTemplate")
+@Api(tags = "到店活动模板服务")
 @Slf4j
 public class ActivityTemplateApi  extends BaseApi {
 
@@ -108,6 +112,8 @@ public class ActivityTemplateApi  extends BaseApi {
         try {
             UploadImgRes imgRes = imageUtil.uploadFile(file, "/store/marketing/activityTemplate/");
             url = imgRes.getImgUrl();
+        } catch (BizException e) {
+            return BizBaseResponse.operationFailed(e.getMessage());
         } catch (Exception e) {
             log.info("图片上传接口异常", e);
             return BizBaseResponse.operationFailed("服务异常");

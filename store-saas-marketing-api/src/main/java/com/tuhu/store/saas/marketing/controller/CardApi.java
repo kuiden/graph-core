@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/card")
-@Api(value = "次卡相关")
+@Api(tags = "次卡相关")
 public class CardApi extends BaseApi {
 
     @Autowired

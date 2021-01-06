@@ -5,7 +5,8 @@ public enum SrvReservationChannelEnum {
     ZXYY("ZXYY","小程序在线预约"),
     COUPON("COUPON","优惠券营销"),
     ACTIVITY("ACTIVITY","活动营销"),
-    SUBCARD("SUBCARD","次卡办理")
+    SUBCARD("SUBCARD","次卡办理"),
+    SECKILLACTIVITY("SECKILLACTIVITY","秒杀活动营销")
     ;
     private String enumCode;
 

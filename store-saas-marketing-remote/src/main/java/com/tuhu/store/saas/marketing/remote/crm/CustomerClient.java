@@ -2,11 +2,9 @@ package com.tuhu.store.saas.marketing.remote.crm;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
-import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
-import com.tuhu.store.saas.crm.vo.BaseIdsReqVO;
-import com.tuhu.store.saas.crm.vo.CustomerSearchVO;
-import com.tuhu.store.saas.crm.vo.CustomerVO;
-import com.tuhu.store.saas.crm.vo.VehicleMaintenanceVo;
+import com.tuhu.store.saas.crm.vo.*;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.request.product.Vehicle;
 import com.tuhu.store.saas.user.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +43,14 @@ public interface CustomerClient {
     BizBaseResponse<List<CustomerDTO>> getCustomerListByPhoneOrName(@RequestBody CustomerSearchVO customerSearchVO);
 
     @PostMapping("feign/user/storeInfo/getUserInfoMapByIdList")
-    BizBaseResponse<Map<String, UserDTO>> getUserInfoMapByIdList(@RequestBody List<String> list) ;
+    BizBaseResponse<Map<String, UserDTO>> getUserInfoMapByIdList(@RequestBody List<String> list);
+
+    @PostMapping(value = "/feign/crm/Customer/addCustomerForOrder")
+    BizBaseResponse<AddVehicleVO> addCustomerForOrder(AddVehicleReq addVehicleReq);
+
+
+    @PostMapping(value = "/feign/crm/Vehicle/addVehicleBySeckillActivity")
+    BizBaseResponse addVehicleBySeckillActivity(AddVehicleVO addVehicleVO);
+
 
 }

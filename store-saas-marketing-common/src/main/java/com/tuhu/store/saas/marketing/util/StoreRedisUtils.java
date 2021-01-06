@@ -230,4 +230,16 @@ public class StoreRedisUtils {
         Date time = new Date();
         return (new KeyResult(redisAtomicLong.incrementAndGet(), time));
     }
+
+
+    /**
+     * 自增长
+     *
+     * @param key
+     * @return
+     */
+    public Long increment(String key, Long value) {
+        key = this.keyWithPrefix(key);
+        return redisUtils.increment(key,value);
+    }
 }

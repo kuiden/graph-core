@@ -10,7 +10,10 @@
         <result column="actual_amount" property="actualAmount"/>
         <result column="discount_amount" property="discountAmount"/>
         <result column="forever" property="forever"/>
-        <result column="expiry_period" property="expiryPeriod"/>
+        <result column="expiry_type" property="expiryType" />
+        <result column="expiry_period" property="expiryPeriod" />
+        <result column="expiry_date" property="expiryDate" />
+        <result column="expiry_day" property="expiryDay" />
         <result column="card_type_code" property="cardTypeCode"/>
         <result column="status" property="status"/>
         <result column="description" property="description"/>
@@ -27,7 +30,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period,
+        id, card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period,expiry_type,expiry_date,expiry_day,
          card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time,
           is_delete, `type`, is_show
     </sql>
@@ -35,9 +38,9 @@
     <insert id="insertCardTemplate" parameterType="com.tuhu.store.saas.marketing.dataobject.CardTemplate" keyColumn="id"
             keyProperty="id"
             useGeneratedKeys="true">
-    insert into crd_card_template ( card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period
-    , card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time , `type`, is_show)
-    values (#{cardCategoryCode},#{cardName},#{faceAmount},#{actualAmount},#{discountAmount},#{forever},#{expiryPeriod}
+    insert into crd_card_template ( card_category_code, card_name, face_amount, actual_amount, discount_amount, forever, expiry_period,
+     expiry_type, expiry_date, expiry_day, card_type_code, status, description, store_id, tenant_id, create_user, update_user, create_time, update_time , `type`, is_show)
+    values (#{cardCategoryCode},#{cardName},#{faceAmount},#{actualAmount},#{discountAmount},#{forever},#{expiryPeriod},#{expiryType},#{expiryDate},#{expiryDay}
     ,#{cardTypeCode},#{status},#{description},#{storeId},#{tenantId},#{createUser},#{updateUser},#{createTime},#{updateTime},
     #{type},#{isShow}
     )
@@ -49,11 +52,15 @@
       card_name = #{cardName},
       expiry_period = #{expiryPeriod},
       forever = #{forever},
+      expiry_type = #{expiryType},
+      expiry_date = #{expiryDate},
+      expiry_day = #{expiryDay},
       status =#{status} ,
       type = #{type} ,
       face_amount =#{faceAmount} ,
       discount_amount =#{discountAmount} ,
       actual_amount =#{actualAmount} ,
+      card_type_code = #{cardTypeCode} ,
       description =#{description},
       update_user = #{updateUser},
         update_time = #{updateTime},
@@ -111,6 +118,9 @@
         </if>
         <if test="isShow != null">
             AND a.is_show = #{isShow,jdbcType=TINYINT}
+        </if>
+        <if test="type != null">
+            AND a.type = #{type,jdbcType=TINYINT}
         </if>
         order by update_time desc
     </select>

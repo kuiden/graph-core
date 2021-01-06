@@ -59,7 +59,7 @@ public class MiniReservationApi extends EndUserApi {
     @PostMapping(value = "/newForC")
     @ApiOperation(value = "C端新增预约单")
     public BizBaseResponse<String> newForC(@RequestBody NewReservationReq req){
-        log.info("C端新增预约单入参：", JSONObject.toJSONString(req));
+        log.info("C端新增预约单入参：{}", req);
         BizBaseResponse<String> result = BizBaseResponse.success();
         validParam(req);
         if(req.getStoreId() == null){
@@ -78,7 +78,8 @@ public class MiniReservationApi extends EndUserApi {
         Integer teminalType = MiniNotifyConstant.MINI_HOME;
         if(SrvReservationChannelEnum.COUPON.getEnumCode().equals(req.getSourceChannel()) ||
                 SrvReservationChannelEnum.ACTIVITY.getEnumCode().equals(req.getSourceChannel())||
-                SrvReservationChannelEnum.SUBCARD.getEnumCode().equals(req.getSourceChannel())){
+                SrvReservationChannelEnum.SUBCARD.getEnumCode().equals(req.getSourceChannel()) ||
+                SrvReservationChannelEnum.SECKILLACTIVITY.getEnumCode().equals(req.getSourceChannel())){
             teminalType = MiniNotifyConstant.MINI_MARKETING;
         }
         result.setData(iNewReservationService.addReservation(req,teminalType));
@@ -146,7 +147,7 @@ public class MiniReservationApi extends EndUserApi {
     //新增预约单公共校验
     private void validParam(NewReservationReq req){
         req.setTenantId(this.getTenantId());
-        req.setUserId(this.getUserId());
+        //req.setUserId(this.getUserId());
         req.setCustomerId(this.getCustomerId());
         if(req.getEstimatedArriveTime() == null){
             throw new StoreSaasMarketingException("请选择到店时间");

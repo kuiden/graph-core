@@ -64,6 +64,12 @@ public class StoreProductRemoteFactory implements FallbackFactory<StoreProductCl
             }
 
             @Override
+            public BizBaseResponse<List<String>> hasProduct(List<String> goodIds, Long storeId, Long tenantId) {
+                log.error("queryBatchGoods error,goodIds={},storeId={},tenantId={},error={}", goodIds, storeId, tenantId, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
             public BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsForFeign(GoodsForMarketReq goodsForMarketReq) {
                 log.error("serviceGoodsForFeign error,request={}", goodsForMarketReq, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
