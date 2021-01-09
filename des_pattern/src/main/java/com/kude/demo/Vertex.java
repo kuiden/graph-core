@@ -1,5 +1,6 @@
 package com.kude.demo;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,13 +16,18 @@ public class Vertex<T> {
     /**
      * 能够标识这个定点的属性，可以用不同类型来标识顶点如String,Integer....
      */
-    private T label;
+    private final T label;
+
+    /**
+     * 别名
+     */
+    private String nickName;
 
     /**
      * 这个定点对应的边<br>
      * 如果为有向图，则代表以这个定点为起点的边
      */
-    private List<Edge> edgeList;
+    private final List<Edge<T>> edgeList;
 
     /**
      * 表示这个顶点是否已被访问，在bfs和dfs中会被使用到
@@ -32,24 +38,25 @@ public class Vertex<T> {
      * 该顶点的前驱节点<br>
      * 在求图中某两个顶点之间的最短路径时，在从起始顶点遍历过程中，需要记录下遍历到某个顶点时的前驱顶点
      */
-    private Vertex previousVertex;
+    private Vertex<T> previousVertex;
 
     /**
      * 这个定点的权值（注意不是边的权值）
      */
-    private double cost;
+    private int cost;
 
     /**创建顶点
      * @param label  这个顶点的标识
      * @param cost  这个顶点的权值
      */
-    public Vertex(T label,double cost){
-        this.label=label;
+    public Vertex(T label, int cost, String nickName) {
+        this.label = label;
         //用链表存储边
-        edgeList=new LinkedList<>();
-        visited=false;
-        previousVertex=null;
-        this.cost=cost;
+        edgeList = new LinkedList<>();
+        visited = false;
+        previousVertex = null;
+        this.cost = cost;
+        this.nickName = nickName;
     }
 
     //下面与顶点的标识相关
@@ -82,7 +89,7 @@ public class Vertex<T> {
     /** 返回边的迭代器
      * @return
      */
-    public Iterator<Edge> getEdgeIterator(){
+    public Iterator<Edge<T>> getEdgeIterator(){
         return edgeList.iterator();
     }
 
@@ -99,10 +106,10 @@ public class Vertex<T> {
      * @return 如果顶点已经与endVertex连接，那么将会更新权值，返回false<br>
      * 如果顶点没有与endVertex相连，则互相连接，返回true
      */
-    public boolean connect(Vertex endVertex,double weight){
-        Iterator<Edge> iterator=getEdgeIterator();
-        Edge edge=null;
-        Vertex vertex=null;
+    public boolean connect(Vertex<T> endVertex,double weight){
+        Iterator<Edge<T>> iterator=getEdgeIterator();
+        Edge<T> edge=null;
+        Vertex<T> vertex=null;
         while(iterator.hasNext()){
             edge=iterator.next();
             vertex=edge.getEndVertex();
@@ -113,7 +120,7 @@ public class Vertex<T> {
             }
         }
         //如果顶点没有与endVertex相连，则互相连接，返回true
-        edge=new Edge(this,endVertex, weight);
+        edge=new Edge<T>(this,endVertex, weight);
         edgeList.add(edge);
         return true;
     }
@@ -123,10 +130,10 @@ public class Vertex<T> {
      * @return  如果顶点已经与endVertex连接，那么将会删除这条边，返回true<br>
      * 如果顶点没有与endVertex连接，则啥都不做，返回false
      */
-    public boolean disconnect(Vertex endVertex){
-        Iterator<Edge> iterator=getEdgeIterator();
-        Edge edge=null;
-        Vertex vertex=null;
+    public boolean disconnect(Vertex<T> endVertex){
+        Iterator<Edge<T>> iterator=getEdgeIterator();
+        Edge<T> edge=null;
+        Vertex<T> vertex=null;
         while(iterator.hasNext()){
             edge=iterator.next();
             vertex=edge.getEndVertex();
@@ -145,10 +152,10 @@ public class Vertex<T> {
      * @return 如果有，返回那条边<br>
      * 如果没有，返回null
      */
-    public Edge hasNeighbourVertex(Vertex endVertex){
-        Iterator<Edge> iterator=getEdgeIterator();
-        Edge edge=null;
-        Vertex vertex=null;
+    public Edge<T> hasNeighbourVertex(Vertex<T> endVertex){
+        Iterator<Edge<T>> iterator=getEdgeIterator();
+        Edge<T> edge=null;
+        Vertex<T> vertex=null;
         while(iterator.hasNext()){
             edge=iterator.next();
             vertex=edge.getEndVertex();
@@ -190,14 +197,14 @@ public class Vertex<T> {
      * @return 如果没有，返回null<br>
      * 如果有，返回对应的顶点
      */
-    public Vertex getUnvisitedVertex(){
-        Iterator<Edge> iterator=getEdgeIterator();
-        Edge edge=null;
-        Vertex vertex=null;
+    public Vertex<T> getUnvisitedVertex(){
+        Iterator<Edge<T>> iterator=getEdgeIterator();
+        Edge<T> edge=null;
+        Vertex<T> vertex=null;
         while(iterator.hasNext()){
             edge=iterator.next();
             vertex=edge.getEndVertex();
-            if(vertex.isVisited()==false){
+            if(!vertex.isVisited()){
                 return vertex;
             }
         }
@@ -210,14 +217,14 @@ public class Vertex<T> {
     /**返回顶点的前驱节点
      * @return
      */
-    public Vertex getPreviousVertex() {
+    public Vertex<T> getPreviousVertex() {
         return previousVertex;
     }
 
     /**设置顶点的前驱节点
      * @param previousVertex
      */
-    public void setPreviousVertex(Vertex previousVertex) {
+    public void setPreviousVertex(Vertex<T> previousVertex) {
         this.previousVertex = previousVertex;
     }
 
@@ -226,20 +233,23 @@ public class Vertex<T> {
     /**返回顶点的权值
      * @return
      */
-    public double getCost() {
+    public int getCost() {
         return cost;
     }
 
     /** 设置顶点的权值
      * @param cost
      */
-    public void setCost(double cost) {
+    public void setCost(int cost) {
         this.cost = cost;
     }
 
+    public String getNickName() {
+        return nickName;
+    }
 
-
-
-
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
 
 }

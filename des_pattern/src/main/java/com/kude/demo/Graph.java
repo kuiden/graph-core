@@ -1,7 +1,7 @@
 package com.kude.demo;
 
 import java.util.*;
-import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**邻接矩阵的图类
  * @author xusy
@@ -60,15 +60,15 @@ public class Graph<T> {
      * @return 如果图中不存在该节点，则插入，返回true<br>
      * 如果图中已经存在该节点，则更新权值，返回false
      */
-    public boolean addVertex(T label,double cost){
-        Vertex vertex=vertexMap.get(label);
-        if(vertex!=null){
+    public boolean addVertex(T label, int cost, String nickName) {
+        Vertex<T> vertex = vertexMap.get(label);
+        if (vertex!=null) {
             //如果图中已经存在该节点，则更新权值，返回false
             vertex.setCost(cost);
             return false;
         }
         //如果图中不存在该节点，则插入，返回true
-        vertex=new Vertex<T>(label, cost);
+        vertex = new Vertex<T>(label, cost, nickName);
         vertexMap.put(label, vertex);
         return true;
     }
@@ -81,16 +81,16 @@ public class Graph<T> {
      * @throws Exception
      */
     public double getDirectEdgeWight(T startLabel, T endLabel) throws Exception {
-        Vertex startVertex = vertexMap.get(startLabel);
+        Vertex<T> startVertex = vertexMap.get(startLabel);
         if (startVertex == null) {
             throw new Exception("NO SUCH VERTEX");
         }
-        Iterator<Edge> iteratorEdge = startVertex.getEdgeIterator();
+        Iterator<Edge<T>> iteratorEdge = startVertex.getEdgeIterator();
         while (iteratorEdge.hasNext()) {
-            Edge directEdge = iteratorEdge.next();
-            Vertex endVertex = directEdge.getEndVertex();
+            Edge<T> directEdge = iteratorEdge.next();
+            Vertex<T> endVertex = directEdge.getEndVertex();
             if (endVertex.getLabel().equals(endLabel)) {
-                return endVertex.getCost();
+                return directEdge.getWeight();
             }
         }
         throw new Exception("NO SUCH DIRECT");
@@ -133,7 +133,7 @@ public class Graph<T> {
      * @param label
      * @return 如果没有这个顶点，返回null
      */
-    public Iterator<Edge> getEdgeIterator(T label){
+    public Iterator<Edge<T>> getEdgeIterator(T label){
         Vertex<T> vertex=vertexMap.get(label);
         if(vertex==null){
             //如果图中没有这个顶点，返回null
@@ -155,8 +155,8 @@ public class Graph<T> {
      * 如果没有以begin或者end标识的顶点，则直接返回false
      */
     public boolean addEdge(T begin,T end,double weight){
-        Vertex beginVertex=vertexMap.get(begin);
-        Vertex endVertex=vertexMap.get(end);
+        Vertex<T> beginVertex=vertexMap.get(begin);
+        Vertex<T> endVertex=vertexMap.get(end);
         if(beginVertex==null||endVertex==null){
             //如果没有以begin或者end标识的顶点，则直接返回false
             return false;
@@ -189,8 +189,8 @@ public class Graph<T> {
      * 如果没有以begin或者end标识的顶点，则直接返回false
      */
     public boolean removeEdge(T begin,T end){
-        Vertex beginVertex=vertexMap.get(begin);
-        Vertex endVertex=vertexMap.get(end);
+        Vertex<T> beginVertex=vertexMap.get(begin);
+        Vertex<T> endVertex=vertexMap.get(end);
         if(beginVertex==null||endVertex==null){
             //如果没有以begin或者end标识的顶点，则直接返回false
             return false;
@@ -220,9 +220,9 @@ public class Graph<T> {
      */
     public void printGraph(){
         Iterator<Vertex<T>> iteratorVertex=getVertexIterator();
-        Iterator<Edge> iteratorEdge;
+        Iterator<Edge<T>> iteratorEdge;
         Vertex<T> vertex;
-        Edge edge;
+        Edge<T> edge;
         T label;
         System.out.println("图是否为有向图："+isDirect+"，图的顶点个数："+getVertexCount()+"，图的总边个数："+getEdgeCount());
         while(iteratorVertex.hasNext()){
@@ -258,8 +258,75 @@ public class Graph<T> {
         return routeCost;
     }
 
-    public Integer getRouteNumberByStops(T startLabel, T endLabel, Integer stop) {
-        return 1;
+    /**声明一个list，list的index+1为停站次数，value为停站次数到达的节点map，map中key为节点，value为节点到达的次数
+     *
+     * @param startLabel
+     * @param endLabel
+     * @param stop
+     * @return
+     */
+    public int getRouteNumberByStops(T startLabel, T endLabel, Integer stop) {
+        //如果停站次数小于1，直接返回0
+        if (stop < 1) {
+            return 0;
+        }
+        List<Map<Vertex<T>, Integer>> vertexRouteList = new ArrayList<>();
+        Set<Vertex<T>> vertexSet = this.getVertexSet();
+        //初始节点的停站数为0
+//        for (Vertex<T> medicate : vertexSet) {
+//            //节点初始权值设置为1
+//            medicate.setCost(1);
+//            vertexRouteMap.put(medicate, 0);
+//        }
+        //开始节点出发的节点停站次数初始为1
+        Vertex<T> startVertex = this.vertexMap.get(startLabel);
+        Iterator<Edge<T>> startVertexEdgeIterator = startVertex.getEdgeIterator();
+        Map<Vertex<T>, Integer> vertexInitMap = new HashMap<>();
+        int onlyOneStopCost = 0;
+        while (startVertexEdgeIterator.hasNext()) {
+            Edge<T> startEdge = startVertexEdgeIterator.next();
+            Vertex<T> mediateVertex = startEdge.getEndVertex();
+            //如果停站次数等于1，则检查是否能直达，能直达则直接返回1
+            if (endLabel.equals(mediateVertex.getLabel())) {
+                onlyOneStopCost = 1;
+            }
+            vertexInitMap.put(mediateVertex, 1);
+        }
+        if (stop == 1) {
+            return onlyOneStopCost;
+        }
+        vertexRouteList.add(vertexInitMap);
+        //中转节点遍历，设置对应的停站次数为stop-1的节点，在停站次数相同时，节点每被引用一次，则节点权值+1
+        for (int i = 1; i < stop - 1; i++) {
+            Map<Vertex<T>, Integer> vertexMap = vertexRouteList.get(i - 1);
+            Map<Vertex<T>, Integer> vertexMediateMap = new HashMap<>();
+            for (Vertex<T> mediateVertex : vertexMap.keySet()) {
+                Iterator<Edge<T>> mediateVertexEdgeIterator = mediateVertex.getEdgeIterator();
+                while (mediateVertexEdgeIterator.hasNext()) {
+                    int cost = vertexMap.get(mediateVertex);
+                    Edge<T> mediateEdge = mediateVertexEdgeIterator.next();
+                    Vertex<T> endVertex = mediateEdge.getEndVertex();
+                    if (vertexMediateMap.get(endVertex) != null) {
+                        cost += vertexMediateMap.get(endVertex);
+                    }
+                    vertexMediateMap.put(endVertex, cost);
+                }
+            }
+            vertexRouteList.add(vertexMediateMap);
+        }
+        AtomicInteger count = new AtomicInteger();
+        vertexRouteList.get(stop-2).forEach((k, v) -> {
+//            if (v == stop -1) {
+                Iterator<Edge<T>> mediateVertexEdgeIterator = k.getEdgeIterator();
+                while (mediateVertexEdgeIterator.hasNext()) {
+                    Edge<T> endEdge = mediateVertexEdgeIterator.next();
+                    if (endLabel.equals(endEdge.getEndVertex().getLabel())) {
+                        count.addAndGet(v);
+                    }
+                }
+//            }
+        });
+        return count.get();
     }
 
     public Set<Vertex<T>> getVertexSet() {
@@ -286,7 +353,7 @@ public class Graph<T> {
         HashMap<Vertex<T>, Double> distance=new HashMap<>();
         Set<Vertex<T>> set = this.getVertexSet();
         Vertex<T> firstVertex = vertexMap.get(first);
-        Edge edge;
+        Edge<T> edge;
         if(firstVertex==null){
             return distance;
         }
@@ -301,7 +368,7 @@ public class Graph<T> {
         close.add(firstVertex);
         distance.put(firstVertex, 0.0);
         path.put(firstVertex, firstVertex);
-        Iterator<Edge> edgeIterator=firstVertex.getEdgeIterator();
+        Iterator<Edge<T>> edgeIterator=firstVertex.getEdgeIterator();
         while(edgeIterator.hasNext()){
             edge=edgeIterator.next();
             Vertex<T> endVertex=edge.getEndVertex();
@@ -310,28 +377,28 @@ public class Graph<T> {
         }
         //以初始节点为中心向外一层层遍历，获取离指定节点最近的子节点（遍历open中的vertex,找到distance最小的vertex）
         //放入close并从新计算路径，直至close包含所有子节点（或者说open为空）
-        while(!open.isEmpty()){
-            Double minDistance=Double.MAX_VALUE;
-            Vertex<T> minVertex=null;
-            for(Vertex<T> vertex:open){
-                if(minDistance>distance.get(vertex)){
+        while (!open.isEmpty()) {
+            Double minDistance = Double.MAX_VALUE;
+            Vertex<T> minVertex = null;
+            for (Vertex<T> vertex:open) {
+                if (minDistance > distance.get(vertex)) {
                     //遍历open中的vertex,找到distance最小的vertex
-                    minDistance=distance.get(vertex);
-                    minVertex=vertex;
+                    minDistance = distance.get(vertex);
+                    minVertex = vertex;
                 }
             }
 //            放入close并从新计算路径，直至close包含所有子节点（或者说open为空）
             open.remove(minVertex);
             close.add(minVertex);
             //System.out.println("加入节点："+minVertex.getLabel());
-            edgeIterator=minVertex.getEdgeIterator();
-            while(edgeIterator.hasNext()){
-                edge=edgeIterator.next();
-                Vertex<T> endVertex=edge.getEndVertex();
-                Double weight=edge.getWeight();
+            edgeIterator = minVertex.getEdgeIterator();
+            while (edgeIterator.hasNext()) {
+                edge = edgeIterator.next();
+                Vertex<T> endVertex = edge.getEndVertex();
+                Double weight = edge.getWeight();
                 //如果之前的距离>初始到minVertex+minVertex到endVertex，就替换
-                if(distance.get(endVertex)>distance.get(minVertex)+weight){
-                    distance.put(endVertex, distance.get(minVertex)+weight);
+                if(distance.get(endVertex) > distance.get(minVertex) + weight){
+                    distance.put(endVertex, distance.get(minVertex) + weight);
                     path.put(endVertex, minVertex);
                 }
             }
@@ -343,6 +410,92 @@ public class Graph<T> {
         }
 
         return distance;
+    }
+
+
+    /**使用Floyd（弗洛伊德）算法，返回所有节点间的最短距离<br>
+     * 设置两个map<br>
+     * 第一个 result，key为出发点，value是map，这个map的key是结束点，value是出发点到结束点的最短距离<br>
+     * 第二个 path，key为出发点，value是map，这个map的key是结束点，value是出发点到结束点的最短距离的路径的最后的中转节点<br>
+     * 一开始，result里的value为maxDouble(到自己的value为0），path里的value是结束点<br>
+     * 然后，用图里的所有的边对result做初始化，当不经过任意第三节点时，其最短路径为初始路径，只对图里先有的只经过两点的边，对result里的value更新<br>
+     * <br>
+     * 进行循环
+     * 当只允许经过1号节点时，求两点之间的最短路径该如何求呢？只需判断i到1号的min距离 + 1号到j的min距离是否比i到j的min距离要小即可。
+     * 如果i到1号的min距离 + 1号到j的min距离 小于 i到j的min距离，说明经过1号的路径更好，
+     * 让i到j的min距离=i到1号的min距离 + 1号到j的min距离，并且i到j的最后的中转节点为1号节点
+     * 比如说a到b到c到d，a到c的中转为b，a到d的中转为c（根据c得到a到c的中转为b，a到b的中转为b，就可以得到a到b到c到d）
+     * 循环遍历result，便可以获取在仅仅经过1号节点时的最短距离和中转节点。
+     * 由于此时result的结果已经保存了中转1号节点的最短路径，此时如果继续并入2号节点为中转节点
+     * 则是任意两个节点都经过中转节点1号节点和2号节点的最短路径，把所有节点作为中转节点后，得到的是所有节点间的最短距离
+     *
+     *
+     * @return
+     */
+    public Map<Vertex<T>, HashMap<Vertex<T>, Double>> getSmallestDistanceFloyd() {
+        //第一个 result，key为出发点，value是map，这个map的key是结束点，value是出发点到结束点的最短距离
+        Map<Vertex<T>, HashMap<Vertex<T>, Double>> result = new HashMap<>();
+        //第二个 path，key为出发点，value是map，这个map的key是结束点，value是出发点到结束点的最短距离的路径的最后的中转节点
+        Map<Vertex<T>, HashMap<Vertex<T>, Vertex<T>>> path = new HashMap<>();
+        Set<Vertex<T>> vertexSet = getVertexSet();
+        Vertex<T> vertex;
+        Edge<T> edge;
+
+        for(Vertex<T> begin:vertexSet){
+            HashMap<Vertex<T>, Double> distanceMap=new HashMap<>();
+            HashMap<Vertex<T>, Vertex<T>> pathMap=new HashMap<>();
+            for(Vertex<T> end:vertexSet){
+                //初始result里的value为maxDouble(到自己的value也为maxDouble），path里的value是结束点
+                distanceMap.put(end, Double.MAX_VALUE);
+                pathMap.put(end, end);
+            }
+            //result里的value为maxDouble(到自己的value为0），path里的value是结束点
+            distanceMap.put(begin, Double.MAX_VALUE);
+            result.put(begin, distanceMap);
+            path.put(begin, pathMap);
+        }
+
+        for (Vertex<T> begin:vertexSet) {
+            HashMap<Vertex<T>, Double> distanceMap=result.get(begin);
+            Iterator<Edge<T>> edgeIterator=begin.getEdgeIterator();
+            while(edgeIterator.hasNext()){
+                edge=edgeIterator.next();
+                //用图里的所有的边对result做初始化，当不经过任意第三节点时，其最短路径为初始路径，只对图里先有的只经过两点的边，对result里的value更新
+                distanceMap.put(edge.getEndVertex(), edge.getWeight());
+            }
+            result.put(begin, distanceMap);
+        }
+        for (Vertex<T> mid:vertexSet) {
+            for (Vertex<T> begin:vertexSet) {
+                HashMap<Vertex<T>, Double> distanceMap = result.get(begin);
+                HashMap<Vertex<T>, Vertex<T>> pathMap = path.get(begin);
+                for (Vertex<T> end:vertexSet) {
+                    Double beginEnd=distanceMap.get(end);
+                    Double beginMid=distanceMap.get(mid);
+                    Double midEnd=result.get(mid).get(end);
+                    if(beginMid==Double.MAX_VALUE||midEnd==Double.MAX_VALUE||beginMid+midEnd>beginEnd){
+                        //如果通过中转点不行，或者通过中转点的距离大于原先距离，就不考虑这个中转点
+                        continue;
+                    }
+                    //让i到j的min距离=i到1号的min距离 + 1号到j的min距离，并且i到j的最后的中转节点为1号节点
+                    distanceMap.put(end, beginMid+midEnd);
+                    pathMap.put(end, mid);
+                }
+                result.put(begin, distanceMap);
+                path.put(begin, pathMap);
+            }
+        }
+
+        for(Vertex<T> begin:vertexSet){
+            HashMap<Vertex<T>, Double> distanceMap=result.get(begin);
+            HashMap<Vertex<T>, Vertex<T>> pathMap=path.get(begin);
+            for(Vertex<T> end:vertexSet){
+                System.out.println("从顶点:"+begin.getLabel()+" ，到顶点："+end.getLabel()+
+                        " ，最短距离为："+distanceMap.get(end)+" ，最后中转点为:"+pathMap.get(end).getLabel());
+            }
+        }
+
+        return result;
     }
 
 }
