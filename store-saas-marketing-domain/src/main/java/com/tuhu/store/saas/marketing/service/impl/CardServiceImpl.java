@@ -831,7 +831,18 @@ public class CardServiceImpl implements ICardService {
         cardTemplate.setActualAmount(cardTemplateModelReq.getActualAmount());
         cardTemplate.setFaceAmount(BigDecimal.ZERO);
         if (CollectionUtils.isNotEmpty(cardTemplateModelReq.getCardTemplateItemModelList())) {
-            for (CardTemplateItemModel cardTemplateItemModel : cardTemplateModelReq.getCardTemplateItemModelList()) {
+            Map<String, List<CardTemplateItemModel>> collect = cardTemplateModelReq.getCardTemplateItemModelList().stream()
+                    .collect(Collectors.groupingBy(k -> k.getGoodsId()));
+            for (Map.Entry<String, List<CardTemplateItemModel>> entry : collect.entrySet()) {
+                CardTemplateItemModel cardTemplateItemModel = entry.getValue().get(0);
+                if (entry.getValue().size() > 1) {
+                    Integer sum = Integer.valueOf(0);
+                    //有多条时遍历数量  合并当前重复商品/ 服务 只追加数量。其他的以第一条为准
+                    for (CardTemplateItemModel templateItemModel : entry.getValue()) {
+                        sum += templateItemModel.getMeasuredQuantity();
+                    }
+                    cardTemplateItemModel.setMeasuredQuantity(sum);
+                }
                 CardTemplateItem cardTemplateItem = convertorToCardTemplateItem(cardTemplateModelReq.getCreateUser(), cardTemplateModelReq.getStoreId(), cardTemplateModelReq.getTenantId(), cardTemplateItemModel);
                 BigDecimal quantity = new BigDecimal(cardTemplateItem.getMeasuredQuantity() == null ? 0 : cardTemplateItem.getMeasuredQuantity());
                 //计算单次项目总优惠
