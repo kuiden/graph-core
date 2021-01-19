@@ -45,6 +45,10 @@ public interface StoreProductClient {
 
     @GetMapping("/feign/product/Goods/hasProduct")
      BizBaseResponse<List<String>> hasProduct(@RequestParam("goodIds") List<String> goodIds, @RequestParam("storeId") Long storeId, @RequestParam("tenantId") Long tenantId);
+
     @PostMapping(value = "/feign/product/Goods/market/serviceGoodsForFeign")
     BizBaseResponse<PageInfo<ServiceGoodsListForMarketResp>> serviceGoodsForFeign(@RequestBody @Validated GoodsForMarketReq goodsForMarketReq);
+
+    @PostMapping(value = "/feign/product/Goods/market/getServiceGoodsByCode")
+    BizBaseResponse<List<ServiceGoodsListForMarketResp>> getServiceGoodsByCode(@RequestBody @Validated GoodsForMarketReq goodsForMarketReq, @RequestParam List<String> codeList);
 }
