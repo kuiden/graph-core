@@ -23,4 +23,7 @@ public class AllotCardItemReq {
     private Long storeId;
 
     private Long tenantId;
+
+    @ApiModelProperty(value = "车辆分类")
+    private String vehicleType;
 }

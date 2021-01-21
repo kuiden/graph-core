@@ -586,6 +586,20 @@ public class CardServiceImpl implements ICardService {
         return serviceGoodsList;
     }
 
+    //通过code获取服务信息
+    private List<ServiceGoodsListForMarketResp> getServiceByCode(List<String> codeList,Long storeId,Long tenantId,String vehicleType){
+        GoodsForMarketReq goodsForMarketReq = new GoodsForMarketReq();
+        goodsForMarketReq.setStoreId(storeId);
+        goodsForMarketReq.setTenantId(tenantId);
+        goodsForMarketReq.setVehicleType(vehicleType);
+        BizBaseResponse<List<ServiceGoodsListForMarketResp>> serviceGoodsPage = productClient.getServiceGoodsByCode(goodsForMarketReq,codeList);
+        List<ServiceGoodsListForMarketResp> serviceGoodsList = new ArrayList<>();
+        if (null != serviceGoodsPage.getData()) {
+            serviceGoodsList = serviceGoodsPage.getData();
+        }
+        return serviceGoodsList;
+    }
+
     //获取次卡服务列表
     private void getCardServiceList(QueryByCustomerIdReq req, List<String> goodsIdList, Map<String,List<CrdCardItem>> cardItemsMap, List<QueryCardItemResp> resultList){
         List<ServiceGoodsListForMarketResp> serviceGoodsList = this.queryServiceInfoList(goodsIdList,req.getStoreId(),req.getTenantId(),req.getSearch());
@@ -761,9 +775,10 @@ public class CardServiceImpl implements ICardService {
                 }
                 String warehouseId = String.valueOf(storeRelatedResponse.getStoreOutPurchaseWarehouseId());
                 String warehouseName = storeRelatedResponse.getStoreOutPurchaseWarehouseName();
-                //查服务信息
-                List<ServiceGoodsListForMarketResp> serviceGoodsList = this.queryServiceInfoList(goodsIdList,req.getStoreId(),req.getTenantId(),null);
-                Map<String,ServiceGoodsListForMarketResp> serviceListMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getId(),v->v));
+                //查服务信息,跟据车型适配工时
+                List<String> serviceCodeList = cardItems.stream().filter(x->(x.getType()==1)).map(x->x.getServiceItemCode()).distinct().collect(Collectors.toList());
+                List<ServiceGoodsListForMarketResp> serviceGoodsList = this.getServiceByCode(serviceCodeList,req.getStoreId(),req.getTenantId(),req.getVehicleType());
+                Map<String,ServiceGoodsListForMarketResp> serviceListMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getServiceCode(),v->v));
 
                 //生成返回结果
                 for (String goodsId : goodsIdList){
@@ -774,9 +789,11 @@ public class CardServiceImpl implements ICardService {
                         QueryCardItemResp.CardService cardService = new QueryCardItemResp.CardService();
                         //商品信息
                         QueryCardItemResp.CardGoods cardGoods = new QueryCardItemResp.CardGoods();
-                        if (serviceListMap.containsKey(goodsId)){
+                        if (CollectionUtils.isNotEmpty(cardItemList) && serviceListMap.containsKey(cardItemList.get(0).getServiceItemCode())){
+                            ServiceGoodsListForMarketResp serviceGoods = serviceListMap.get(cardItemList.get(0).getServiceItemCode());
+                            serviceGoods.setId(goodsId);
                             //copy服务信息
-                            BeanUtils.copyProperties(serviceListMap.get(goodsId), cardService);
+                            BeanUtils.copyProperties(serviceGoods, cardService);
                         }
                         if (goodsListDTOMap.containsKey(goodsId)){
                             //copy商品信息
@@ -831,7 +848,18 @@ public class CardServiceImpl implements ICardService {
         cardTemplate.setActualAmount(cardTemplateModelReq.getActualAmount());
         cardTemplate.setFaceAmount(BigDecimal.ZERO);
         if (CollectionUtils.isNotEmpty(cardTemplateModelReq.getCardTemplateItemModelList())) {
-            for (CardTemplateItemModel cardTemplateItemModel : cardTemplateModelReq.getCardTemplateItemModelList()) {
+            Map<String, List<CardTemplateItemModel>> collect = cardTemplateModelReq.getCardTemplateItemModelList().stream()
+                    .collect(Collectors.groupingBy(k -> k.getGoodsId()));
+            for (Map.Entry<String, List<CardTemplateItemModel>> entry : collect.entrySet()) {
+                CardTemplateItemModel cardTemplateItemModel = entry.getValue().get(0);
+                if (entry.getValue().size() > 1) {
+                    Integer sum = Integer.valueOf(0);
+                    //有多条时遍历数量  合并当前重复商品/ 服务 只追加数量。其他的以第一条为准
+                    for (CardTemplateItemModel templateItemModel : entry.getValue()) {
+                        sum += templateItemModel.getMeasuredQuantity();
+                    }
+                    cardTemplateItemModel.setMeasuredQuantity(sum);
+                }
                 CardTemplateItem cardTemplateItem = convertorToCardTemplateItem(cardTemplateModelReq.getCreateUser(), cardTemplateModelReq.getStoreId(), cardTemplateModelReq.getTenantId(), cardTemplateItemModel);
                 BigDecimal quantity = new BigDecimal(cardTemplateItem.getMeasuredQuantity() == null ? 0 : cardTemplateItem.getMeasuredQuantity());
                 //计算单次项目总优惠
