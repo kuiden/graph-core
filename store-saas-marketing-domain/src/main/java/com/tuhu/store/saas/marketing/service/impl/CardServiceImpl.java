@@ -763,11 +763,9 @@ public class CardServiceImpl implements ICardService {
             //goodsId - 次卡项目
             Map<String,List<CrdCardItem>> cardItemsMap = cardItems.stream().collect(Collectors.groupingBy(x->x.getGoodsId()));
             List<String> goodsIdList = cardItems.stream().map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
+            List<String> goodsIds = cardItems.stream().filter(x->x.getType()==2).map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
 
-            if (!goodsIdList.isEmpty()) {
-                //查商品信息
-                List<QueryGoodsListDTO> queryGoodsListDTOS = this.queryGoodsInfoList(goodsIdList,req.getStoreId(),req.getTenantId(),null);
-                Map<String,QueryGoodsListDTO> goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
+            if (CollectionUtils.isNotEmpty(goodsIdList)) {
                 StoreInfoRelatedDTO storeRelatedResponse = storeInfoClient.getRelatedInfoByStoreId(req.getStoreId()).getData();
                 log.info("查询门店仓库信息返回：{}", JSON.toJSONString(storeRelatedResponse));
                 if (null == storeRelatedResponse) {
@@ -775,6 +773,40 @@ public class CardServiceImpl implements ICardService {
                 }
                 String warehouseId = String.valueOf(storeRelatedResponse.getStoreOutPurchaseWarehouseId());
                 String warehouseName = storeRelatedResponse.getStoreOutPurchaseWarehouseName();
+                Map<String,QueryGoodsListDTO> goodsListDTOMap = new HashMap<>();
+                LinkedHashMap<String, BigDecimal> inventoryMap = new LinkedHashMap();
+                if (CollectionUtils.isNotEmpty(goodsIds)){
+                    //查商品信息
+                    List<QueryGoodsListDTO> queryGoodsListDTOS = this.queryGoodsInfoList(goodsIdList,req.getStoreId(),req.getTenantId(),null);
+                    goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
+                    //查商品可用库存
+                    if (CollectionUtils.isNotEmpty(queryGoodsListDTOS)){
+                        goodsIds = queryGoodsListDTOS.stream().map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
+                        log.info("获取门店WMS库存,ids={}", JSONObject.toJSONString(goodsIds));
+                        StkQtyRequest request = new StkQtyRequest();
+                        request.setWarehouseId(warehouseId);
+                        request.setSkuIdList(goodsIds);
+                        request.setDamaged(DamagedEnum.NORMAL.getType());
+                        try {
+                            BizRsp<List<StkQtyDto>> stkQtyDtoListResp = storeWmsClient.listQty(request);
+                            log.info("查询门店库存信息返回：{}", JSON.toJSONString(stkQtyDtoListResp));
+                            if (null != stkQtyDtoListResp && 1 == stkQtyDtoListResp.getStatus() && stkQtyDtoListResp.getData() != null) {
+                                List<StkQtyDto> stkQtyDtoList = stkQtyDtoListResp.getData();
+                                for (StkQtyDto dto : stkQtyDtoList) {
+                                    inventoryMap.put(dto.getSkuId(), dto.getQty());
+                                }
+                            } else {
+                                log.warn("根据门店商品ID和仓库ID未查询到库存信息,goodsIdList={},warehouseId={}",
+                                        JSONObject.toJSONString(goodsIdList), warehouseId);
+                                throw new StoreSaasMarketingException("获取门店关联的信息异常");
+                            }
+                        } catch (Exception e) {
+                            log.error("根据门店商品ID和仓库ID查询库存信息异常", e);
+                            throw new StoreSaasMarketingException("根据门店商品ID和仓库ID查询库存信息异常");
+                        }
+                    }
+                }
+
                 //查服务信息,跟据车型适配工时
                 List<String> serviceCodeList = cardItems.stream().filter(x->(x.getType()==1)).map(x->x.getServiceItemCode()).distinct().collect(Collectors.toList());
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = this.getServiceByCode(serviceCodeList,req.getStoreId(),req.getTenantId(),req.getVehicleType());
@@ -805,6 +837,7 @@ public class CardServiceImpl implements ICardService {
                             }
                             cardGoods.setWarehouseId(warehouseId);
                             cardGoods.setWarehouseName(warehouseName);
+                            cardGoods.setUsedNum(inventoryMap.containsKey(goodsId)?inventoryMap.get(goodsId):BigDecimal.ZERO);
                         }
                         //按次卡 在前面的优先分配
                         int index = 0;
