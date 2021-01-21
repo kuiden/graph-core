@@ -30,7 +30,7 @@ public class StoreUserRemoteFactory implements FallbackFactory<StoreUserClient> 
 
             @Override
             public BizBaseResponse<UserDTO> getStoreUserInfoBySysUserId(Long sysUserId) {
-                log.error("getCustomerIdsByCarInfo error,request={},error={}", sysUserId, ExceptionUtils.getStackTrace(throwable));
+                log.error("getStoreUserInfoBySysUserId error,request={},error={}", sysUserId, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
 
