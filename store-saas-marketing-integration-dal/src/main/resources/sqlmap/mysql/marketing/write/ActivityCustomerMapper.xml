@@ -441,11 +441,27 @@
 
   <select id="selectByEncryptedCodeAndUser" resultType="com.tuhu.store.saas.marketing.po.ActivityCustomer">
     SELECT
-    a.*
+      a.id ,
+      a.activity_order_code,
+      a.activity_code,
+      a.customer_id,
+      a.telephone,
+      a.store_id,
+      a.tenant_id,
+      a.create_time,
+      a.use_time,
+      a.use_status,
+      a.message_status,
+      a.service_order_id,
+      a.service_order_time,
+      a.start_time,
+      a.end_time,
+      a.customer_name,
+      a.open_id
     FROM activity_customer AS a,activity As b
     WHERE b.encrypted_code = #{encryptedCode,jdbcType=VARCHAR}
       AND a.activity_code = b.activity_code
-      AND a.telephone = #{telephone,jdbcType=VARCHAR}
+      AND a.telephone = #{telephone,jdbcType=VARCHAR} limit 1
 
   </select>
 </mapper>
