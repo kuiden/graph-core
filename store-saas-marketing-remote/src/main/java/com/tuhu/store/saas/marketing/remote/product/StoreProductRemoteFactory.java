@@ -74,6 +74,12 @@ public class StoreProductRemoteFactory implements FallbackFactory<StoreProductCl
                 log.error("serviceGoodsForFeign error,request={}", goodsForMarketReq, ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
+
+            @Override
+            public BizBaseResponse<List<ServiceGoodsListForMarketResp>> getServiceGoodsByCode(GoodsForMarketReq goodsForMarketReq, List<String> codeList) {
+                log.error("getServiceGoodsByCode error,goodsForMarketReq={},codeList={}", goodsForMarketReq, codeList, ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
         };
     }
 }
