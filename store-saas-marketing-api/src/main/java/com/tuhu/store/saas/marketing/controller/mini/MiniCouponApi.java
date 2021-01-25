@@ -30,7 +30,7 @@ import java.util.Map;
  * 优惠券相关Controller
  */
 @RestController
-@RequestMapping("/mini/coupon")
+@RequestMapping({"/mini/coupon", "/coupon"})
 public class MiniCouponApi extends BaseApi {
 
     @Autowired

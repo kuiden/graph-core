@@ -73,5 +73,5 @@ public  interface ICardService {
 
     List<QueryCardItemResp> allotCardItem(AllotCardItemReq req);
 
-
+    Map<String, CustomerMarketCountDTO> getCustomerIdMarketInfoMap(List<String> customerIds);
 }
