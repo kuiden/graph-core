@@ -1841,8 +1841,6 @@ public class CouponServiceImpl implements ICouponService {
                         response.setConditionLimit(coupon.getConditionLimit());
                         response.setContentValue(coupon.getContentValue());
                         response.setDiscountValue(coupon.getDiscountValue());
-                        response.setUseStartTime(coupon.getUseStartTime());
-                        response.setUseEndTime(coupon.getUseEndTime());
                         response.setRelativeDaysNum(coupon.getRelativeDaysNum());
                         response.setRemark(coupon.getRemark());
                     }
