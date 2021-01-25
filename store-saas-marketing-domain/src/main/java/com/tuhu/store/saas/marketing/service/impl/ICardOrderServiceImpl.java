@@ -139,7 +139,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCard.setStatus(CardStatusEnum.INACTIVATED.getEnumCode());
         crdCard.setDescription(cardTemplate.getDescription());
         crdCard.setCardName(cardTemplate.getCardName());
-        crdCard.setActualAmount(cardTemplate.getActualAmount());
+        crdCard.setActualAmount(req.getActualAmount());
         crdCard.setFaceAmount(cardTemplate.getFaceAmount());
         crdCardMapper.insertSelective(crdCard);
 
@@ -163,7 +163,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCardOrder.setCardId(crdCard.getId());
         crdCardOrder.setCardName(cardTemplate.getCardName());
         crdCardOrder.setAmount(cardTemplate.getFaceAmount());
-        crdCardOrder.setActualAmount(cardTemplate.getActualAmount());
+        crdCardOrder.setActualAmount(req.getActualAmount());
         crdCardOrder.setDiscountAmount(cardTemplate.getDiscountAmount());
         crdCardOrder.setStatus(CardOrderStatusEnum.OPENED_CARD.getEnumCode());
         crdCardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_NOT.getEnumCode());

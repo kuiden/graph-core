@@ -581,7 +581,7 @@ public class ValueCardServiceImpl implements IValueCardService {
      */
     @Override
     @Transactional
-    public Boolean customerConsumption(ValueCardConsumptionReq req) {
+    public Map<String,Long> customerConsumption(ValueCardConsumptionReq req) {
         log.info("储值卡核销请求参数：{}",req);
         if (null == req.getStoreId() || null == req.getTenantId() || null == req.getCustomerId()){
             throw new StoreSaasMarketingException("参数校验失败");
@@ -590,7 +590,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         Object value = storeRedisUtils.tryLock(key, 10, 10);
-        Boolean result = true;
+        Map<String,Long> resultMap = null;
         if (null != value) {
             try {
                 if (req.getAmount().compareTo(BigDecimal.ZERO) > 0){
@@ -647,20 +647,27 @@ public class ValueCardServiceImpl implements IValueCardService {
                     cardChange.setUpdateTime(date);
                     cardChange.setCreateUserId(req.getCreateUserId());
                     cardChange.setCreateUserName(req.getCreateUserName());
-                    result = valueCardChangeMapper.insertSelective(cardChange) > 0;
+                    if (valueCardChangeMapper.insertSelective(cardChange) <= 0){
+                        log.error("储值变更明细数据写入异常,cardChange={}",cardChange);
+                        throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
+                    }
                     //更新账户余额
                     valueCard.setAmount(principal);
                     valueCard.setPresentAmount(present);
                     valueCard.setUpdateTime(date);
-                    result = result && valueCardMapper.updateByPrimaryKeySelective(valueCard) > 0;
+                    if (valueCardMapper.updateByPrimaryKeySelective(valueCard) <= 0){
+                        log.error("更新储值账户余额异常,valueCard={}",valueCard);
+                        throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
+                    }
+                    resultMap = new HashMap<>();
+                    resultMap.put("principal",cardChange.getChangePrincipal().multiply(new BigDecimal(100)).longValue());
+                    resultMap.put("present",cardChange.getChangePresent().multiply(new BigDecimal(100)).longValue());
                 }
             } finally {
                 storeRedisUtils.releaseLock(key, value.toString());
             }
-        } else {
-            result = false;
         }
-        return result;
+        return resultMap;
     }
 
     @Override
