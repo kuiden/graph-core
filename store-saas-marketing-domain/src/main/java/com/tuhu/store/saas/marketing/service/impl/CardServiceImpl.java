@@ -809,7 +809,9 @@ public class CardServiceImpl implements ICardService {
 
                 //查服务信息,跟据车型适配工时
                 List<String> serviceCodeList = cardItems.stream().filter(x->(x.getType()==1)).map(x->x.getServiceItemCode()).distinct().collect(Collectors.toList());
-                List<ServiceGoodsListForMarketResp> serviceGoodsList = this.getServiceByCode(serviceCodeList,req.getStoreId(),req.getTenantId(),req.getVehicleType());
+
+                List<ServiceGoodsListForMarketResp> serviceGoodsList =
+                        CollectionUtils.isNotEmpty(serviceCodeList)?this.getServiceByCode(serviceCodeList,req.getStoreId(),req.getTenantId(),req.getVehicleType()):new ArrayList<>(0);
                 Map<String,ServiceGoodsListForMarketResp> serviceListMap = serviceGoodsList.stream().collect(Collectors.toMap(x->x.getServiceCode(),v->v));
 
                 //生成返回结果
