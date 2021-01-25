@@ -193,6 +193,8 @@ public class ValueCardServiceImpl implements IValueCardService {
             for (ValueCard valueCard : pageInfo.getList()){
                 QueryValueCardListResp resp = new QueryValueCardListResp();
                 resp.setAmount(valueCard.getAmount().add(valueCard.getPresentAmount()));
+                resp.setPresentAmount(valueCard.getPresentAmount()); // 赠送
+                resp.setPrincipalAmount(valueCard.getAmount());//本金
                 resp.setCardId(valueCard.getId());
                 resp.setCustomerId(valueCard.getCustomerId());
                 if (customerDTOMap.containsKey(resp.getCustomerId())){

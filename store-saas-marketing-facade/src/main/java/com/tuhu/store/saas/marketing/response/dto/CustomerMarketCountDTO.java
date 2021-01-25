@@ -7,9 +7,9 @@ import java.math.BigDecimal;
 @Data
 public class CustomerMarketCountDTO {
     //次卡总数
-    private Integer onceCardCount;
+    private Integer onceCardCount = 0;
     //优惠券总数
-    private Integer couponCount;
+    private Integer couponCount = 0;
     //可用次卡总数
     private Integer useOnceCardCount = 0;
     //储值

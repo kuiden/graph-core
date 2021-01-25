@@ -298,4 +298,15 @@
     </foreach>
   </update>
 
+  <select id="countByCustomerIds" resultType="com.tuhu.store.saas.marketing.response.CustomerIdMarketInfo">
+    select sum(amount) as amount,customer_id as customerId from value_card
+    where 1=1
+    and is_delete = 0
+    and customer_id in
+    <foreach collection="customerIds" item="customerId" open="(" close=")" separator=",">
+      #{customerId}
+    </foreach>
+    group by customer_id
+  </select>
+
 </mapper>
