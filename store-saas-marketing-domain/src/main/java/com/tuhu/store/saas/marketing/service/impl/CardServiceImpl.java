@@ -926,4 +926,25 @@ public class CardServiceImpl implements ICardService {
         return cardTemplateItem;
     }
 
+    /**
+     * 获取客户 存值，优惠券,次卡
+     * @param customerIds
+     * @return
+     */
+    public Map<String, CustomerMarketCountDTO> getCustomerIdMarketInfoMap(List<String> customerIds){
+        Map<String, CustomerMarketCountDTO> customerIdMarketInfoMap = new HashMap<>();
+        if(org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIds)){
+           //TODO 根据客户id 查询客户相关卡信息
+            CustomerMarketCountDTO customerMarketCountDTO = new CustomerMarketCountDTO();
+            for(String customerId : customerIds){
+                customerMarketCountDTO = new CustomerMarketCountDTO();
+                customerMarketCountDTO.setCouponCount(1);
+                customerMarketCountDTO.setUseOnceCardCount(2);
+                customerMarketCountDTO.setOnceCardCount(3);
+                customerMarketCountDTO.setValueCardAmount(BigDecimal.TEN);
+                customerIdMarketInfoMap.put(customerId,customerMarketCountDTO);
+            }
+        }
+        return customerIdMarketInfoMap;
+    }
 }
