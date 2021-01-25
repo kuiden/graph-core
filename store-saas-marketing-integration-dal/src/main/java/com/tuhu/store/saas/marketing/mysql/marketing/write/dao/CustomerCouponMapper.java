@@ -7,6 +7,7 @@ import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.request.CustomerCouponSearch;
 import com.tuhu.store.saas.marketing.response.ComputeMarktingCustomerForReportResp;
 import com.tuhu.store.saas.marketing.response.CustomerCouponDetailResponse;
+import com.tuhu.store.saas.marketing.response.CustomerIdMarketInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -67,4 +68,6 @@ public interface CustomerCouponMapper {
     int countCustomerCoupon(@Param("customerId") String customerId);
 
     CustomerCouponDetailResponse queryCustomerCouponDetailById(@Param("id")Long id);
+
+    List<CustomerIdMarketInfo> countByCustomerIds(@Param("customerIds")List<String> customerIds);
 }

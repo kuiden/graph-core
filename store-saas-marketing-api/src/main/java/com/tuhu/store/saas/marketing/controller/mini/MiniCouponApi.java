@@ -30,7 +30,7 @@ import java.util.Map;
  * 优惠券相关Controller
  */
 @RestController
-@RequestMapping({"/mini/coupon", "/coupon"})
+@RequestMapping({"/mini/coupon", "/pc/coupon"})
 public class MiniCouponApi extends BaseApi {
 
     @Autowired
@@ -239,7 +239,8 @@ public class MiniCouponApi extends BaseApi {
 
 
     @PostMapping("/customerCoupon")
-    public BizBaseResponse getCustomerCouponList(@RequestBody CustomerCouponRequest couponRequest){
+    @ApiOperation(value = "根据客户id 分页查询客户优惠券")
+    public BizBaseResponse<PageInfo<CustomerCouponResponse>> getCustomerCouponList(@RequestBody CustomerCouponRequest couponRequest){
         PageInfo<CustomerCouponResponse> customerCouponList = iCouponService.getCustomerCouponList(couponRequest);
         return new BizBaseResponse(customerCouponList);
     }

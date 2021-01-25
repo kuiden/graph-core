@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @Api("核销API")
 @RestController
-@RequestMapping("/mini/writeOff")
+@RequestMapping({"/mini/writeOff","/pc/writeOff"})
 public class MiniWriteOffApi extends BaseApi {
 
     @Autowired
