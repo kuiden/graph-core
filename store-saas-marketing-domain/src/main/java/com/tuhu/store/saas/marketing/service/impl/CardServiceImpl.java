@@ -1003,6 +1003,9 @@ public class CardServiceImpl implements ICardService {
             if (CollectionUtils.isNotEmpty(crdCards)) {
                 List<Long> cardIds = crdCards.stream().map(CrdCard::getId).collect(Collectors.toList());
                 List<CrdCardItem> crdCardItems = crdCardItemMapper.crdCardItemsByCardIds(cardIds);
+                if (CollectionUtils.isEmpty(crdCardItems)) {
+                    return Collections.emptyMap();
+                }
                 //每个卡id对应的明细已使用次数小于等于0使用完
                 Map<Long, CrdCardItem> cardIdCardItemMap = crdCardItems.stream().collect(Collectors.toMap(x -> x.getCardId(), v -> v));
                 for (Map.Entry<String, List<CrdCard>> entry : customerIdCardsMap.entrySet()) {
