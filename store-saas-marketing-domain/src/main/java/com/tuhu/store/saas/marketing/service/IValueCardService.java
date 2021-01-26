@@ -34,7 +34,7 @@ public interface IValueCardService {
 
     String settlement(ValueCardRechargeOrRefundReq req);
 
-    Boolean customerConsumption(ValueCardConsumptionReq req);
+    Map<String,Long> customerConsumption(ValueCardConsumptionReq req);
 
     PageInfo<ValueCardChangeResp> rechargeRecord(ValueCardChangeRecordReq req);
 
