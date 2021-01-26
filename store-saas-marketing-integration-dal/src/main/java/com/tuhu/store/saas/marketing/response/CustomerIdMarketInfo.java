@@ -9,5 +9,4 @@ public class CustomerIdMarketInfo {
     private Integer count = 0;
     private BigDecimal amount = BigDecimal.ZERO;
     private String customerId;
-    private String paymentStatus;
 }
