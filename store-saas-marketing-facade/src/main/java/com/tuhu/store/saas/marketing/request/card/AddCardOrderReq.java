@@ -14,6 +14,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -80,5 +81,8 @@ public class AddCardOrderReq {
      * 购买数量
      */
     private Long quantity;
+
+    @ApiModelProperty(value = "售价")
+    private BigDecimal actualAmount;
 
 }
