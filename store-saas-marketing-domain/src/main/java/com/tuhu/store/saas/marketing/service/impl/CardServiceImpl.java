@@ -940,7 +940,7 @@ public class CardServiceImpl implements ICardService {
      */
     public Map<String, CustomerMarketCountDTO> getCustomerIdMarketInfoMap(List<String> customerIds) {
         Map<String, CustomerMarketCountDTO> customerIdMarketInfoMap = new HashMap<>();
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIds)) {
+        if (CollectionUtils.isNotEmpty(customerIds)) {
             //次卡支付总数
             List<CustomerIdMarketInfo> customerIdMarketInfos = cardMapper.countByCustomerIds(customerIds);
             Map<String, CustomerIdMarketInfo> customerIdCardMap = getCustomerIdMap(customerIdMarketInfos);
