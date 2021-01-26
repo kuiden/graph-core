@@ -417,7 +417,7 @@ public class ValueCardServiceImpl implements IValueCardService {
     public String settlement(ValueCardRechargeOrRefundReq req) {
         log.info("ValueCardServiceImpl->settlement-> req->{}", req);
 
-        //充值-->查询客户&新建客户  退款-->查询客户
+        //充值-->新建客户
         if (StringUtils.isBlank(req.getCustomerId()) && req.getType().equals(2)){
             CustomerReq customer = this.remoteAddCustomer(req.getCustomerPhoneNumber(),req.getStoreId(),req.getTenantId());
             req.setCustomerId(customer.getId());
@@ -704,8 +704,8 @@ public class ValueCardServiceImpl implements IValueCardService {
                         throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
                     }
                     resultMap = new HashMap<>();
-                    resultMap.put("principal",cardChange.getChangePrincipal().multiply(new BigDecimal(100)).longValue());
-                    resultMap.put("present",cardChange.getChangePresent().multiply(new BigDecimal(100)).longValue());
+                    resultMap.put("principal",0 - cardChange.getChangePrincipal().multiply(new BigDecimal(100)).longValue());
+                    resultMap.put("present",0 - cardChange.getChangePresent().multiply(new BigDecimal(100)).longValue());
                 }
             } finally {
                 storeRedisUtils.releaseLock(key, value.toString());
