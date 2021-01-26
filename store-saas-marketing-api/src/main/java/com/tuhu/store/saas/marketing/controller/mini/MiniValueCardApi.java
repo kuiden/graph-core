@@ -1,10 +1,9 @@
 package com.tuhu.store.saas.marketing.controller.mini;
 
 import com.github.pagehelper.PageInfo;
-import com.tuhu.boot.common.enums.BizErrorCodeEnum;
-import com.tuhu.boot.common.facade.BizBasePageResponse;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.store.saas.marketing.controller.BaseApi;
+import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
 import com.tuhu.store.saas.marketing.response.valueCard.CustomerValueCardDetailResp;
 import com.tuhu.store.saas.marketing.response.valueCard.QueryValueCardListResp;
@@ -90,17 +89,13 @@ public class MiniValueCardApi extends BaseApi {
     @ApiOperation("H5-客户储值卡结算")
     @PostMapping("/settlement")
     BizBaseResponse<String> settlement(@RequestBody @Validated ValueCardRechargeOrRefundReq req){
+        if (StringUtils.isBlank(req.getCustomerId()) && StringUtils.isBlank(req.getCustomerPhoneNumber())){
+            throw new StoreSaasMarketingException("请填写正确的客户手机号");
+        }
         req.setTenantId(super.getTenantId());
         req.setStoreId(super.getStoreId());
         String result =  iValueCardService.settlement(req);
         return new BizBaseResponse<>(result);
     }
-
-//    @ApiOperation("H5-客户储值卡核销")
-//    @GetMapping("/consumption")
-//    BizBaseResponse<Boolean> customerConsumption(@RequestBody ValueCardConsumptionReq req){
-//
-//        return new BizBaseResponse();
-//    }
 
 }

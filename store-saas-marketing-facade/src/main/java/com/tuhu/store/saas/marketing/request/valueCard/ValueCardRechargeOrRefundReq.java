@@ -18,8 +18,9 @@ import java.math.BigDecimal;
 public class ValueCardRechargeOrRefundReq implements Serializable {
 
     @ApiModelProperty(value = "客户id", example = "1600482306772000011875", required = true, dataType = "String")
-    @NotNull(message = "客户ID不能为空")
     private String customerId;
+    @ApiModelProperty(value = "客户手机号")
+    private String customerPhoneNumber;
     @ApiModelProperty(value = "storeId", hidden = true)
     private Long storeId;
     @ApiModelProperty(value = "tenantId", hidden = true)
