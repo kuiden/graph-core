@@ -1009,6 +1009,9 @@ public class CardServiceImpl implements ICardService {
                 //每个卡id对应的明细已使用次数小于等于0使用完
                 Map<Long, CrdCardItem> cardIdCardItemMap = crdCardItems.stream().collect(Collectors.toMap(x -> x.getCardId(), v -> v));
                 for (Map.Entry<String, List<CrdCard>> entry : customerIdCardsMap.entrySet()) {
+                    if (CollectionUtils.isEmpty(entry.getValue())) {
+                        continue;
+                    }
                     Integer count = customerIdUseOnceCardCount.get(entry.getKey());
                     for (CrdCard crdCard : entry.getValue()) {
                         CrdCardItem crdCardItem = cardIdCardItemMap.get(crdCard.getId());
@@ -1019,7 +1022,7 @@ public class CardServiceImpl implements ICardService {
                             count--;
                         }
                     }
-                    customerIdUseOnceCardCount.put(entry.getKey(), count);
+                    customerIdUseOnceCardCount.put(entry.getKey(), count < 0 ? 0 : count);
                 }
             }
             return customerIdUseOnceCardCount;
