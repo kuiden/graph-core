@@ -1,6 +1,9 @@
 package com.tuhu.store.saas.marketing.controller.feign;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.dataobject.ValueCardChange;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
+import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.ConfirmReceiptReq;
 import com.tuhu.store.saas.marketing.request.valueCard.CustomerValueCardDetailReq;
 import com.tuhu.store.saas.marketing.request.valueCard.ValueCardConsumptionReq;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,5 +48,10 @@ public class ValueCardFeignApi {
         return new BizBaseResponse(iValueCardService.confirmReceipt(req));
     }
 
+    @ApiOperation("查询储值卡，开卡（第一次充值）")
+    @PostMapping("/getFirstValueCardChangeList")
+    BizBaseResponse<List<ValueCardChange>> getFirstValueCardChangeList(@RequestBody QueryCardToCommissionReq req){
+        return new BizBaseResponse(iValueCardService.getFirstValueCardChangeList(req));
+    }
 
 }

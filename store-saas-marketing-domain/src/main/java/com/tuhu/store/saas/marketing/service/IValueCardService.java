@@ -1,6 +1,8 @@
 package com.tuhu.store.saas.marketing.service;
 
 import com.github.pagehelper.PageInfo;
+import com.tuhu.store.saas.marketing.dataobject.ValueCardChange;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
 import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
 import com.tuhu.store.saas.marketing.response.valueCard.CustomerValueCardDetailResp;
@@ -41,4 +43,6 @@ public interface IValueCardService {
     Boolean confirmReceipt(ConfirmReceiptReq req);
 
     List<ValueCardReq> excelImpValueCard(List<ValueCardReq> list);
+
+    List<ValueCardChange> getFirstValueCardChangeList(QueryCardToCommissionReq req);
 }
