@@ -90,12 +90,13 @@ public class MiniValueCardApi extends BaseApi {
     @PostMapping("/settlement")
     BizBaseResponse<String> settlement(@RequestBody @Validated ValueCardRechargeOrRefundReq req){
         if (StringUtils.isBlank(req.getCustomerId()) && StringUtils.isBlank(req.getCustomerPhoneNumber())){
-            throw new StoreSaasMarketingException("请填写正确的客户手机号");
+            throw new StoreSaasMarketingException("未获取到客户信息");
         }
         req.setTenantId(super.getTenantId());
         req.setStoreId(super.getStoreId());
         String result =  iValueCardService.settlement(req);
         return new BizBaseResponse<>(result);
     }
+
 
 }
