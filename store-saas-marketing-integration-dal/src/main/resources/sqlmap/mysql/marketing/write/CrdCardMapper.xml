@@ -323,6 +323,17 @@
 
     </select>
 
+    <select id="countByCustomerIds" resultType="com.tuhu.store.saas.marketing.response.CustomerIdMarketInfo">
+        select count(1) as count,customer_id as customerId, payment_status as paymentStatus from crd_card_order
+        where 1=1
+        and is_delete = 0
+        and customer_id in
+        <foreach collection="customerIds" item="customerId" open="(" close=")" separator=",">
+            #{customerId}
+        </foreach>
+        group by customer_id,payment_status
+    </select>
+
     <update id="updateByExampleSelective" parameterType="map">
         update crd_card
         <set>

@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 import com.tuhu.store.saas.marketing.dataobject.ValueCard;
 import com.tuhu.store.saas.marketing.dataobject.ValueCardExample;
 import java.util.List;
+
+import com.tuhu.store.saas.marketing.response.CustomerIdMarketInfo;
 import org.apache.ibatis.annotations.Param;
 
 public interface ValueCardMapper {
@@ -31,4 +33,6 @@ public interface ValueCardMapper {
     int addValueCardBatch(@Param("valueCards") List<ValueCard> valueCards);
 
     int editValueCardBatch(@Param("valueCards") List<ValueCard> valueCards);
+
+    List<CustomerIdMarketInfo> countByCustomerIds(@Param("customerIds")List<String> customerIds);
 }

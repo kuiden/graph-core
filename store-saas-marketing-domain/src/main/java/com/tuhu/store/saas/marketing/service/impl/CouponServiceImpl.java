@@ -21,15 +21,16 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.CustomerCouponMap
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.OrderCouponMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.request.*;
+import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
+import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
+import com.tuhu.store.saas.marketing.request.vo.ServiceOrderItemVO;
 import com.tuhu.store.saas.marketing.response.*;
 import com.tuhu.store.saas.marketing.response.dto.*;
 import com.tuhu.store.saas.marketing.service.ICouponService;
 import com.tuhu.store.saas.marketing.service.ICustomerMarketingService;
 import com.tuhu.store.saas.marketing.service.IMCouponService;
 import com.tuhu.store.saas.marketing.util.*;
-import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponUseVO;
-import com.tuhu.store.saas.marketing.request.vo.ServiceOrderCouponVO;
-import com.tuhu.store.saas.marketing.request.vo.ServiceOrderItemVO;
+import com.tuhu.store.saas.user.dto.UserDTO;
 import com.xiangyun.versionhelper.VersionHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -106,7 +107,7 @@ public class CouponServiceImpl implements ICouponService {
         couponMapper.insertSelective(coupon);
         threadPoolTaskExecutor.submit(() -> {
             //生成分享二维码
-            this.getQrCodeForCoupon(coupon.getId(),encryptedCode);
+            this.getQrCodeForCoupon(coupon.getId(), encryptedCode);
         });
         //如果不是不限数量，则缓存券发放数量
         if (coupon.getGrantNumber().compareTo(0L) > 0) {
@@ -329,7 +330,7 @@ public class CouponServiceImpl implements ICouponService {
             resp.setSendNumber(Long.valueOf(sendCount + ""));
             resp.setIsMarketingCoupon(customerMarketingService.customerMarketingContainsCoupon(resp.getId(), resp.getTenantId(), resp.getStoreId()));
             //未获取到分享二维码，则同步生成
-            if (null == coupon.getWeixinQrUrl()){
+            if (null == coupon.getWeixinQrUrl()) {
                 String url = this.getQrCodeForCoupon(couponId, coupon.getEncryptedCode());
                 resp.setWeixinQrUrl(url);
             }
@@ -1756,10 +1757,10 @@ public class CouponServiceImpl implements ICouponService {
         PageHelper.startPage(couponRequest.getPageNum(), couponRequest.getPageSize());
         String customerId = couponRequest.getCustomerId();
         List<CustomerCoupon> customerCoupons = customerCouponMapper.selectByCustomerId(customerId);
-        if (CollectionUtils.isEmpty(customerCoupons)){
+        if (CollectionUtils.isEmpty(customerCoupons)) {
             PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
             PageInfo<CustomerCouponResponse> info = new PageInfo<>();
-            BeanUtils.copyProperties(pageInfo,info);
+            BeanUtils.copyProperties(pageInfo, info);
             return info;
         }
         PageInfo<CustomerCoupon> pageInfo = new PageInfo<>(customerCoupons);
@@ -1768,12 +1769,13 @@ public class CouponServiceImpl implements ICouponService {
         baseIdReqVO.setStoreId(UserContextHolder.getStoreId());
         baseIdReqVO.setTenantId(UserContextHolder.getTenantId());
         BizBaseResponse<CustomerDTO> customerById = customerClient.getCustomerById(baseIdReqVO);
-        if (customerById.getData()==null){
+        if (customerById.getData() == null) {
             throw new StoreSaasMarketingException("获取用户信息失败");
         }
         CustomerDTO data = customerById.getData();
         List<CustomerCouponResponse> list = new ArrayList<>();
-        for (CustomerCoupon customerCoupon:customerCoupons) {
+
+        for (CustomerCoupon customerCoupon : customerCoupons) {
             //判断优惠券是否有效
             CustomerCouponResponse response = new CustomerCouponResponse();
             response.setId(customerCoupon.getId());
@@ -1781,16 +1783,22 @@ public class CouponServiceImpl implements ICouponService {
             response.setCreateTime(customerCoupon.getCreateTime());
             response.setCustomerId(customerCoupon.getCustomerId());
             response.setCustomerCouponCode(customerCoupon.getCode());
+            response.setCouponCode(customerCoupon.getCouponCode());
             Date useEndTime = customerCoupon.getUseEndTime();
+            Date useStartTime = customerCoupon.getUseStartTime();
+            response.setUseEndTime(useEndTime);
+            response.setUseStartTime(useStartTime);
+            response.setSendUser(customerCoupon.getSendUser());
+            response.setReceiveType(customerCoupon.getReceiveType());
             Integer useStatus = customerCoupon.getUseStatus().intValue();
             Integer status = -1;
-            if (useStatus==1){
+            if (useStatus == 1) {
                 status = 1;
-            }else {
+            } else {
                 //判断当前日期是否大于useEndTime
                 Date now = new Date();
                 int i = now.compareTo(useEndTime);
-                if (i<1){
+                if (i < 1) {
                     status = 0;
                 }
             }
@@ -1798,9 +1806,67 @@ public class CouponServiceImpl implements ICouponService {
             list.add(response);
         }
         PageInfo<CustomerCouponResponse> info = new PageInfo<>();
-        BeanUtils.copyProperties(pageInfo,info);
+        BeanUtils.copyProperties(pageInfo, info);
+        setCustomerCouponResponse(list);
         info.setList(list);
         return info;
+    }
+
+    /**
+     * 设置优惠券基础信息
+     *
+     * @param list
+     */
+    private void setCustomerCouponResponse(List<CustomerCouponResponse> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<String> couponCodes = list.stream().map(x -> x.getCouponCode()).collect(Collectors.toList());
+            List<String> sendUsers = list.stream().filter(x-> StringUtils.isNotBlank(x.getSendUser())).map(x -> x.getSendUser()).collect(Collectors.toList());
+            log.info("sendUsers{},couponCodes{}", sendUsers, couponCodes);
+            Map<String, UserDTO> userDTOMap = getUserDTOMap(sendUsers);
+            Map<String, Coupon> couponMap = imCouponService.couponCodeMap(UserContextHolder.getStoreId(), new HashSet<>(couponCodes));
+            for (CustomerCouponResponse response : list) {
+                if (MapUtils.isNotEmpty(userDTOMap)) {
+                    UserDTO userDTO = userDTOMap.get(response.getSendUser());
+                    if (null != userDTO) {
+                        response.setSendUser(userDTO.getUsername());
+                    }
+                }
+                if (MapUtils.isNotEmpty(couponMap)) {
+                    Coupon coupon = couponMap.get(response.getCouponCode());
+                    if (null != coupon) { //对应优惠券码对应的优惠券信息
+                        response.setCouponCode(null);
+                        response.setTitle(coupon.getTitle());
+                        response.setType(coupon.getType());
+                        response.setValidityType(coupon.getValidityType());
+                        response.setConditionLimit(coupon.getConditionLimit());
+                        response.setContentValue(coupon.getContentValue());
+                        response.setDiscountValue(coupon.getDiscountValue());
+                        response.setRelativeDaysNum(coupon.getRelativeDaysNum());
+                        response.setRemark(coupon.getRemark());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 根据用户id 获取用户信息
+     * @param sendUsers
+     * @return
+     */
+    private Map<String, UserDTO> getUserDTOMap(List<String> sendUsers) {
+        if (CollectionUtils.isNotEmpty(sendUsers)) {
+            try {
+                BizBaseResponse<Map<String, UserDTO>> crmResult = customerClient.getUserInfoMapByIdList(sendUsers);
+                log.info("getUserDTOMapResult{}", crmResult);
+                if (null != crmResult && null != crmResult.getData()) {
+                    return crmResult.getData();
+                }
+            } catch (Exception e) {
+                log.error("getUserDTOMapError", e);
+            }
+        }
+        return Collections.emptyMap();
     }
 
     /**
@@ -1818,13 +1884,13 @@ public class CouponServiceImpl implements ICouponService {
         Integer useStatus = detail.getUseStatus();
         Date useEndTime = detail.getUseEndTime();
         Integer status = -1;
-        if (useStatus==1){
+        if (useStatus == 1) {
             status = 1;
-        }else {
+        } else {
             //判断当前日期是否大于useEndTime
             Date now = new Date();
             int i = now.compareTo(useEndTime);
-            if (i<1){
+            if (i < 1) {
                 status = 0;
             }
         }
@@ -1836,10 +1902,12 @@ public class CouponServiceImpl implements ICouponService {
         baseIdReqVO.setTenantId(tenantId);
         BizBaseResponse<CustomerDTO> customerById = customerClient.getCustomerById(baseIdReqVO);
         CustomerDTO data = customerById.getData();
-        if (data!=null){
+        if (data != null) {
             detail.setCustomerName(data.getName());
             detail.setPhoneNumber(data.getPhoneNumber());
         }
         return detail;
     }
+
+
 }

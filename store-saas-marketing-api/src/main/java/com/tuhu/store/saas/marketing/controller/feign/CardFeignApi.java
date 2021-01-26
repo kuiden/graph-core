@@ -109,4 +109,10 @@ public class CardFeignApi {
     public BizBaseResponse<List<ValueCardReq>> excelImpValueCard(@RequestBody List<ValueCardReq> list) {
         return new BizBaseResponse<>(iValueCardService.excelImpValueCard(list));
     }
+
+    @PostMapping(value = "/customerIdMarketInfoMap")
+    @ApiOperation("获取客户 存值，优惠券,次卡")
+    public BizBaseResponse<Map<String, CustomerMarketCountDTO>> customerIdMarketInfoMap(@RequestBody List<String> customerIds) {
+        return new BizBaseResponse<>(iCardService.getCustomerIdMarketInfoMap(customerIds));
+    }
 }

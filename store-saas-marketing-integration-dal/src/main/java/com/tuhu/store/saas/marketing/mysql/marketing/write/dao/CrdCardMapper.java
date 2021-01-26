@@ -3,6 +3,8 @@ package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 import com.tuhu.store.saas.marketing.dataobject.CrdCard;
 import com.tuhu.store.saas.marketing.dataobject.CrdCardExample;
 import java.util.List;
+
+import com.tuhu.store.saas.marketing.response.CustomerIdMarketInfo;
 import org.apache.ibatis.annotations.Param;
 
 public interface CrdCardMapper {
@@ -29,4 +31,6 @@ public interface CrdCardMapper {
     int updateByPrimaryKey(CrdCard record);
 
     int countByCustomerId(@Param("customerId")String customerId);
+
+    List<CustomerIdMarketInfo> countByCustomerIds(@Param("customerIds")List<String> customerIds);
 }

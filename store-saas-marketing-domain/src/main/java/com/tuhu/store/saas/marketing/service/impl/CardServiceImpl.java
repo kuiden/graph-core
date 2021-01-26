@@ -13,6 +13,7 @@ import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardExpiryDateEnum;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
+import com.tuhu.store.saas.marketing.enums.PaymentStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
@@ -22,6 +23,7 @@ import com.tuhu.store.saas.marketing.remote.reponse.CardUseRecordDTO;
 import com.tuhu.store.saas.marketing.remote.wms.StoreWmsClient;
 import com.tuhu.store.saas.marketing.request.card.*;
 import com.tuhu.store.saas.marketing.request.vo.UpdateCardVo;
+import com.tuhu.store.saas.marketing.response.CustomerIdMarketInfo;
 import com.tuhu.store.saas.marketing.response.card.CardItemResp;
 import com.tuhu.store.saas.marketing.response.card.CardResp;
 import com.tuhu.store.saas.marketing.response.card.CardUseRecordResp;
@@ -34,7 +36,6 @@ import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import com.tuhu.store.saas.request.product.GoodsForMarketReq;
 import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
 import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.scmc.arch.model.facade.rsp.BizRsp;
 import org.scmc.store.stk.qty.dto.StkQtyDto;
@@ -86,6 +87,9 @@ public class CardServiceImpl implements ICardService {
 
     @Autowired
     private CustomerCouponMapper customerCouponMapper;
+
+    @Autowired
+    private ValueCardMapper valueCardMapper;
 
     @Override
     @Transactional
@@ -763,11 +767,9 @@ public class CardServiceImpl implements ICardService {
             //goodsId - 次卡项目
             Map<String,List<CrdCardItem>> cardItemsMap = cardItems.stream().collect(Collectors.groupingBy(x->x.getGoodsId()));
             List<String> goodsIdList = cardItems.stream().map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
+            List<String> goodsIds = cardItems.stream().filter(x->x.getType()==2).map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
 
-            if (!goodsIdList.isEmpty()) {
-                //查商品信息
-                List<QueryGoodsListDTO> queryGoodsListDTOS = this.queryGoodsInfoList(goodsIdList,req.getStoreId(),req.getTenantId(),null);
-                Map<String,QueryGoodsListDTO> goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
+            if (CollectionUtils.isNotEmpty(goodsIdList)) {
                 StoreInfoRelatedDTO storeRelatedResponse = storeInfoClient.getRelatedInfoByStoreId(req.getStoreId()).getData();
                 log.info("查询门店仓库信息返回：{}", JSON.toJSONString(storeRelatedResponse));
                 if (null == storeRelatedResponse) {
@@ -775,6 +777,40 @@ public class CardServiceImpl implements ICardService {
                 }
                 String warehouseId = String.valueOf(storeRelatedResponse.getStoreOutPurchaseWarehouseId());
                 String warehouseName = storeRelatedResponse.getStoreOutPurchaseWarehouseName();
+                Map<String,QueryGoodsListDTO> goodsListDTOMap = new HashMap<>();
+                LinkedHashMap<String, BigDecimal> inventoryMap = new LinkedHashMap();
+                if (CollectionUtils.isNotEmpty(goodsIds)){
+                    //查商品信息
+                    List<QueryGoodsListDTO> queryGoodsListDTOS = this.queryGoodsInfoList(goodsIdList,req.getStoreId(),req.getTenantId(),null);
+                    goodsListDTOMap = queryGoodsListDTOS.stream().collect(Collectors.toMap(x->x.getGoodsId(),v->v));
+                    //查商品可用库存
+                    if (CollectionUtils.isNotEmpty(queryGoodsListDTOS)){
+                        goodsIds = queryGoodsListDTOS.stream().map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
+                        log.info("获取门店WMS库存,ids={}", JSONObject.toJSONString(goodsIds));
+                        StkQtyRequest request = new StkQtyRequest();
+                        request.setWarehouseId(warehouseId);
+                        request.setSkuIdList(goodsIds);
+                        request.setDamaged(DamagedEnum.NORMAL.getType());
+                        try {
+                            BizRsp<List<StkQtyDto>> stkQtyDtoListResp = storeWmsClient.listQty(request);
+                            log.info("查询门店库存信息返回：{}", JSON.toJSONString(stkQtyDtoListResp));
+                            if (null != stkQtyDtoListResp && 1 == stkQtyDtoListResp.getStatus() && stkQtyDtoListResp.getData() != null) {
+                                List<StkQtyDto> stkQtyDtoList = stkQtyDtoListResp.getData();
+                                for (StkQtyDto dto : stkQtyDtoList) {
+                                    inventoryMap.put(dto.getSkuId(), dto.getQty());
+                                }
+                            } else {
+                                log.warn("根据门店商品ID和仓库ID未查询到库存信息,goodsIdList={},warehouseId={}",
+                                        JSONObject.toJSONString(goodsIdList), warehouseId);
+                                throw new StoreSaasMarketingException("获取门店关联的信息异常");
+                            }
+                        } catch (Exception e) {
+                            log.error("根据门店商品ID和仓库ID查询库存信息异常", e);
+                            throw new StoreSaasMarketingException("根据门店商品ID和仓库ID查询库存信息异常");
+                        }
+                    }
+                }
+
                 //查服务信息,跟据车型适配工时
                 List<String> serviceCodeList = cardItems.stream().filter(x->(x.getType()==1)).map(x->x.getServiceItemCode()).distinct().collect(Collectors.toList());
                 List<ServiceGoodsListForMarketResp> serviceGoodsList = this.getServiceByCode(serviceCodeList,req.getStoreId(),req.getTenantId(),req.getVehicleType());
@@ -805,6 +841,7 @@ public class CardServiceImpl implements ICardService {
                             }
                             cardGoods.setWarehouseId(warehouseId);
                             cardGoods.setWarehouseName(warehouseName);
+                            cardGoods.setUsedNum(inventoryMap.containsKey(goodsId)?inventoryMap.get(goodsId):BigDecimal.ZERO);
                         }
                         //按次卡 在前面的优先分配
                         int index = 0;
@@ -893,4 +930,61 @@ public class CardServiceImpl implements ICardService {
         return cardTemplateItem;
     }
 
+    /**
+     * 获取客户 存值，优惠券,次卡
+     *
+     * @param customerIds
+     * @return
+     */
+    public Map<String, CustomerMarketCountDTO> getCustomerIdMarketInfoMap(List<String> customerIds) {
+        Map<String, CustomerMarketCountDTO> customerIdMarketInfoMap = new HashMap<>();
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIds)) {
+            //次卡  //统计客户次卡总数只统计已付款结清的次卡总数 payment_status = 'PAYMENT_OK'
+            List<CustomerIdMarketInfo> customerIdMarketInfos = cardMapper.countByCustomerIds(customerIds);
+            Map<String, List<CustomerIdMarketInfo>> customerIdCardMap = getCustomerIdCardMarketInfoMap(customerIdMarketInfos);
+            //优惠券
+            List<CustomerIdMarketInfo> customerIdMarketInfos2 = customerCouponMapper.countByCustomerIds(customerIds);
+            Map<String, CustomerIdMarketInfo> customerIdCouponMap = getCustomerIdMap(customerIdMarketInfos2);
+            //储值卡
+            List<CustomerIdMarketInfo> customerIdMarketInfos3 = valueCardMapper.countByCustomerIds(customerIds);
+            Map<String, CustomerIdMarketInfo> customerIdValueCardMap = getCustomerIdMap(customerIdMarketInfos3);
+            CustomerMarketCountDTO customerMarketCountDTO = null;
+            for (String customerId : customerIds) {
+                customerMarketCountDTO = new CustomerMarketCountDTO();
+                CustomerIdMarketInfo coupon = customerIdCouponMap.get(customerId);
+                CustomerIdMarketInfo valueCard = customerIdValueCardMap.get(customerId);
+                customerMarketCountDTO.setCouponCount(null != coupon ? coupon.getCount() : 0);
+                customerMarketCountDTO.setValueCardAmount(null != valueCard ? valueCard.getAmount() : BigDecimal.ZERO);
+                List<CustomerIdMarketInfo> customerIdMarketInfos1 = customerIdCardMap.get(customerId);
+                int useOnceCardCount = 0;
+                if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIdMarketInfos1)) {
+                    for (CustomerIdMarketInfo info : customerIdMarketInfos1) {
+                        if (null != info.getPaymentStatus() && info.getPaymentStatus().equals(PaymentStatusEnum.PAYMENT_OK.getEnumCode())) {
+                            useOnceCardCount = useOnceCardCount + 1;
+                        }
+                    }
+                    customerMarketCountDTO.setUseOnceCardCount(useOnceCardCount);
+                    customerMarketCountDTO.setOnceCardCount(customerIdMarketInfos1.size());
+                }
+                customerIdMarketInfoMap.put(customerId, customerMarketCountDTO);
+            }
+        }
+        return customerIdMarketInfoMap;
+    }
+
+    private Map<String, CustomerIdMarketInfo> getCustomerIdMap(List<CustomerIdMarketInfo> customerIdMarketInfos) {
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIdMarketInfos)) {
+            Map<String, CustomerIdMarketInfo> customerIdMarketInfoMap = customerIdMarketInfos.stream().collect(Collectors.toMap(x -> x.getCustomerId(), v -> v));
+            return customerIdMarketInfoMap;
+        }
+        return Collections.emptyMap();
+    }
+
+    private Map<String, List<CustomerIdMarketInfo>> getCustomerIdCardMarketInfoMap(List<CustomerIdMarketInfo> customerIdMarketInfos) {
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIdMarketInfos)) {
+            Map<String, List<CustomerIdMarketInfo>> customerIdMarketInfoMap = customerIdMarketInfos.stream().collect(Collectors.groupingBy(x -> (x.getCustomerId())));
+            return customerIdMarketInfoMap;
+        }
+        return Collections.emptyMap();
+    }
 }

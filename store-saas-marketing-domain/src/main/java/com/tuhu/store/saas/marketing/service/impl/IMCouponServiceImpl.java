@@ -1137,8 +1137,25 @@ public class IMCouponServiceImpl implements IMCouponService {
         return obj;
     }*/
 
-
     /**
+     * 获取优惠券code 对应的优惠券
+     *
+     * @param storeId
+     * @param couponCodeSet
+     * @return
+     */
+    public Map<String, Coupon> couponCodeMap(Long storeId, HashSet<String> couponCodeSet) {
+        if (CollectionUtils.isEmpty(couponCodeSet)) {
+            return Collections.emptyMap();
+        }
+        List<Coupon> coupons = this.getCouponInfoListByCouponCodeList(storeId, couponCodeSet);
+        if (CollectionUtils.isNotEmpty(coupons)) {
+            log.info("couponCodeMapResult{}", coupons);
+            return coupons.stream().collect(Collectors.toMap(x -> x.getCode(), v -> v));
+        }
+        return Collections.emptyMap();
+    }
+        /**
      * 根据d多个优惠券码查询优惠券信息
      */
     private List<Coupon> getCouponInfoListByCouponCodeList(Long storeId, HashSet<String> couponCodeSet) {

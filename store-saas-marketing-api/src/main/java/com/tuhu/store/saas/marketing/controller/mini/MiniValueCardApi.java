@@ -29,7 +29,7 @@ import java.util.Map;
 @Slf4j
 @Api(tags = "H5-储值卡Api")
 @RestController
-@RequestMapping("/mini/valueCard")
+@RequestMapping({"/mini/valueCard", "/pc/valueCard"})
 public class MiniValueCardApi extends BaseApi {
 
     @Autowired

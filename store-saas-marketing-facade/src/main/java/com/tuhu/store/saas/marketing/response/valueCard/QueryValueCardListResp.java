@@ -21,7 +21,13 @@ public class QueryValueCardListResp {
     @ApiModelProperty("客户手机号")
     private String customerPhone;
 
-    @ApiModelProperty("总余额")
+    @ApiModelProperty("总余额 = 本金+赠送")
     private BigDecimal amount;
+
+    @ApiModelProperty("赠送金")
+    private BigDecimal presentAmount;
+
+    @ApiModelProperty("本金")
+    private BigDecimal principalAmount;
 
 }
