@@ -33,4 +33,6 @@ public interface CrdCardMapper {
     int countByCustomerId(@Param("customerId")String customerId);
 
     List<CustomerIdMarketInfo> countByCustomerIds(@Param("customerIds")List<String> customerIds);
+
+    List<CrdCard> cardsByCustomerIds(@Param("customerIds")List<String> customerIds);
 }

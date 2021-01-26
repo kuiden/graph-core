@@ -31,4 +31,6 @@ public interface CrdCardItemMapper {
     int updateByPrimaryKey(CrdCardItem record);
 
     List<CrdCardItem> selectAvailableItems(QueryAvailableItemsReq req);
+
+    List<CrdCardItem> crdCardItemsByCardIds(@Param("cardIds")List<Long> cardIds);
 }

@@ -2,7 +2,6 @@ package com.tuhu.store.saas.marketing.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.toolkit.StringUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -13,7 +12,6 @@ import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.CardExpiryDateEnum;
 import com.tuhu.store.saas.marketing.enums.CardStatusEnum;
-import com.tuhu.store.saas.marketing.enums.PaymentStatusEnum;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
@@ -37,6 +35,7 @@ import com.tuhu.store.saas.request.product.GoodsForMarketReq;
 import com.tuhu.store.saas.response.product.ServiceGoodsListForMarketResp;
 import com.tuhu.store.saas.vo.product.QueryGoodsListVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.scmc.arch.model.facade.rsp.BizRsp;
 import org.scmc.store.stk.qty.dto.StkQtyDto;
 import org.scmc.store.stk.qty.request.StkQtyRequest;
@@ -90,6 +89,12 @@ public class CardServiceImpl implements ICardService {
 
     @Autowired
     private ValueCardMapper valueCardMapper;
+
+    @Autowired
+    private CrdCardOrderMapper crdCardOrderMapper;
+
+    @Autowired
+    private CrdCardItemMapper crdCardItemMapper;
 
     @Override
     @Transactional
@@ -251,9 +256,6 @@ public class CardServiceImpl implements ICardService {
         }
         return result;
     }
-
-    @Autowired
-    private CrdCardOrderMapper crdCardOrderMapper;
 
     @Override
     public List<CardResp> queryCardRespList(MiniQueryCardReq req) {
@@ -938,10 +940,12 @@ public class CardServiceImpl implements ICardService {
      */
     public Map<String, CustomerMarketCountDTO> getCustomerIdMarketInfoMap(List<String> customerIds) {
         Map<String, CustomerMarketCountDTO> customerIdMarketInfoMap = new HashMap<>();
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIds)) {
-            //次卡  //统计客户次卡总数只统计已付款结清的次卡总数 payment_status = 'PAYMENT_OK'
+        if (CollectionUtils.isNotEmpty(customerIds)) {
+            //次卡支付总数
             List<CustomerIdMarketInfo> customerIdMarketInfos = cardMapper.countByCustomerIds(customerIds);
-            Map<String, List<CustomerIdMarketInfo>> customerIdCardMap = getCustomerIdCardMarketInfoMap(customerIdMarketInfos);
+            Map<String, CustomerIdMarketInfo> customerIdCardMap = getCustomerIdMap(customerIdMarketInfos);
+            //次卡有效总数
+            Map<String, Integer> customerIdUseOnceCardCountMap = getCustomerIdUseOnceCardCountMap(customerIds);
             //优惠券
             List<CustomerIdMarketInfo> customerIdMarketInfos2 = customerCouponMapper.countByCustomerIds(customerIds);
             Map<String, CustomerIdMarketInfo> customerIdCouponMap = getCustomerIdMap(customerIdMarketInfos2);
@@ -953,19 +957,12 @@ public class CardServiceImpl implements ICardService {
                 customerMarketCountDTO = new CustomerMarketCountDTO();
                 CustomerIdMarketInfo coupon = customerIdCouponMap.get(customerId);
                 CustomerIdMarketInfo valueCard = customerIdValueCardMap.get(customerId);
+                CustomerIdMarketInfo card = customerIdCardMap.get(customerId);
+                Integer useCount = customerIdUseOnceCardCountMap.get(customerId);
                 customerMarketCountDTO.setCouponCount(null != coupon ? coupon.getCount() : 0);
                 customerMarketCountDTO.setValueCardAmount(null != valueCard ? valueCard.getAmount() : BigDecimal.ZERO);
-                List<CustomerIdMarketInfo> customerIdMarketInfos1 = customerIdCardMap.get(customerId);
-                int useOnceCardCount = 0;
-                if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIdMarketInfos1)) {
-                    for (CustomerIdMarketInfo info : customerIdMarketInfos1) {
-                        if (null != info.getPaymentStatus() && info.getPaymentStatus().equals(PaymentStatusEnum.PAYMENT_OK.getEnumCode())) {
-                            useOnceCardCount = useOnceCardCount + 1;
-                        }
-                    }
-                    customerMarketCountDTO.setUseOnceCardCount(useOnceCardCount);
-                    customerMarketCountDTO.setOnceCardCount(customerIdMarketInfos1.size());
-                }
+                customerMarketCountDTO.setUseOnceCardCount(null != useCount ? useCount : 0);
+                customerMarketCountDTO.setOnceCardCount(null != card ? card.getCount() : 0);
                 customerIdMarketInfoMap.put(customerId, customerMarketCountDTO);
             }
         }
@@ -973,17 +970,62 @@ public class CardServiceImpl implements ICardService {
     }
 
     private Map<String, CustomerIdMarketInfo> getCustomerIdMap(List<CustomerIdMarketInfo> customerIdMarketInfos) {
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIdMarketInfos)) {
+        if (CollectionUtils.isNotEmpty(customerIdMarketInfos)) {
             Map<String, CustomerIdMarketInfo> customerIdMarketInfoMap = customerIdMarketInfos.stream().collect(Collectors.toMap(x -> x.getCustomerId(), v -> v));
             return customerIdMarketInfoMap;
         }
         return Collections.emptyMap();
     }
 
-    private Map<String, List<CustomerIdMarketInfo>> getCustomerIdCardMarketInfoMap(List<CustomerIdMarketInfo> customerIdMarketInfos) {
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(customerIdMarketInfos)) {
-            Map<String, List<CustomerIdMarketInfo>> customerIdMarketInfoMap = customerIdMarketInfos.stream().collect(Collectors.groupingBy(x -> (x.getCustomerId())));
-            return customerIdMarketInfoMap;
+    private Map<String, List<CrdCard>> getCustomerIdCardsMap(List<CrdCard> crdCards) {
+        if (CollectionUtils.isNotEmpty(crdCards)) {
+            Map<String, List<CrdCard>> customerIdCardMap = crdCards.stream().collect(Collectors.groupingBy(x -> (x.getCustomerId())));
+            return customerIdCardMap;
+        }
+        return Collections.emptyMap();
+    }
+
+    /**
+     * 客户对应的有效次卡数量
+     * @param customerIds
+     * @return
+     */
+    private Map<String, Integer> getCustomerIdUseOnceCardCountMap(List<String> customerIds) {
+        if (CollectionUtils.isNotEmpty(customerIds)) {
+            Map<String, Integer> customerIdUseOnceCardCount = new HashMap<>();
+            List<CrdCard> crdCards = cardMapper.cardsByCustomerIds(customerIds);
+            //开卡单 每个客户对应有效头的卡id集合
+            Map<String, List<CrdCard>> customerIdCardsMap = getCustomerIdCardsMap(crdCards);
+            for (Map.Entry<String, List<CrdCard>> entry : customerIdCardsMap.entrySet()) {
+                //初始化，默认都是有效的
+                customerIdUseOnceCardCount.put(entry.getKey(), CollectionUtils.isEmpty(entry.getValue()) ? 0 : entry.getValue().size());
+            }
+            if (CollectionUtils.isNotEmpty(crdCards)) {
+                List<Long> cardIds = crdCards.stream().map(CrdCard::getId).collect(Collectors.toList());
+                List<CrdCardItem> crdCardItems = crdCardItemMapper.crdCardItemsByCardIds(cardIds);
+                if (CollectionUtils.isEmpty(crdCardItems)) {
+                    return Collections.emptyMap();
+                }
+                //每个卡id对应的明细已使用次数小于等于0使用完
+                Map<Long, CrdCardItem> cardIdCardItemMap = crdCardItems.stream().collect(Collectors.toMap(x -> x.getCardId(), v -> v));
+                for (Map.Entry<String, List<CrdCard>> entry : customerIdCardsMap.entrySet()) {
+                    if (CollectionUtils.isEmpty(entry.getValue())) {
+                        continue;
+                    }
+                    Integer count = customerIdUseOnceCardCount.get(entry.getKey());
+                    for (CrdCard crdCard : entry.getValue()) {
+                        CrdCardItem crdCardItem = cardIdCardItemMap.get(crdCard.getId());
+                        if (null == crdCardItem) {
+                            continue;
+                        }
+                        if (null != crdCardItem.getMeasuredQuantity() && crdCardItem.getMeasuredQuantity() <= 0) { //过滤已使用完的次卡
+                            count--;
+                        }
+                    }
+                    customerIdUseOnceCardCount.put(entry.getKey(), count < 0 ? 0 : count);
+                }
+            }
+            return customerIdUseOnceCardCount;
         }
         return Collections.emptyMap();
     }

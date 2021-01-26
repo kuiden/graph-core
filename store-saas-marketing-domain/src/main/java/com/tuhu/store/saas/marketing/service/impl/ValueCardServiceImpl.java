@@ -6,7 +6,9 @@ import com.github.pagehelper.PageInfo;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.AddVehicleVO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.*;
@@ -16,6 +18,8 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardRuleMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
 import com.tuhu.store.saas.marketing.response.valueCard.CustomerValueCardDetailResp;
@@ -410,6 +414,24 @@ public class ValueCardServiceImpl implements IValueCardService {
     @Transactional
     public String settlement(ValueCardRechargeOrRefundReq req) {
         log.info("ValueCardServiceImpl->settlement-> req->{}", req);
+
+        //充值-->查询客户&新建客户  退款-->查询客户
+        if (StringUtils.isBlank(req.getCustomerId()) && req.getType().equals(2)){
+            CustomerReq customer = this.remoteAddCustomer(req.getCustomerPhoneNumber(),req.getStoreId(),req.getTenantId());
+            req.setCustomerId(customer.getId());
+        } else if (StringUtils.isBlank(req.getCustomerId()) && req.getType().equals(0)){
+            CustomerVO customerVO = new CustomerVO();
+            customerVO.setStoreId(req.getStoreId());
+            customerVO.setTenantId(req.getTenantId());
+            customerVO.setPhone(req.getCustomerPhoneNumber());
+            BizBaseResponse<List<CustomerDTO>> cutomerListResp = customerClient.getCustomer(customerVO);
+            if (null != cutomerListResp && 10000 == cutomerListResp.getCode() && CollectionUtils.isNotEmpty(cutomerListResp.getData())){
+                req.setCustomerId(cutomerListResp.getData().get(0).getId());
+            } else {
+                throw new StoreSaasMarketingException("门店没有该手机号的客户信息");
+            }
+        }
+
         String result = null;
         if (redisTemplate.hasKey(settlementCacheKey.concat(req.getCustomerId()))) {
             throw new StoreSaasMarketingException("当前客户已经有该单据正在进行结算请稍后再试");
@@ -507,19 +529,37 @@ public class ValueCardServiceImpl implements IValueCardService {
                         valueCardChange.setFinNo(finNo);
                         valueCardChangeMapper.updateByPrimaryKey(valueCardChange);
                     }
-
-
                 } else {
                     throw new StoreSaasMarketingException("数据校验失败");
                 }
-
-
             } finally {
                 storeRedisUtils.releaseLock(settlementCacheKey.concat(req.getCustomerId()), value.toString());
             }
         }
-
         return result;
+    }
+
+    private CustomerReq remoteAddCustomer(String phoneNumber, Long storeId, Long tenantId) {
+        //添加客户
+        CustomerReq customerReq = new CustomerReq();
+        customerReq.setPhoneNumber(phoneNumber);
+        customerReq.setName("空");
+        customerReq.setCustomerType("person");
+        customerReq.setGender("3");
+        customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
+        AddVehicleReq addVehicleReq = new AddVehicleReq();
+        addVehicleReq.setStoreId(storeId);
+        addVehicleReq.setTenantId(tenantId);
+        addVehicleReq.setCustomerReq(customerReq);
+        log.info("customerClient.addCustomerForOrder request:{}", JSONObject.toJSONString(addVehicleReq));
+        BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
+        log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
+        if (Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
+            AddVehicleVO addVehicleVO = resultObject.getData();
+            customerReq.setId(addVehicleVO.getCustomerReq().getId());
+            customerReq.setName(addVehicleVO.getCustomerReq().getName());
+        }
+        return customerReq;
     }
 
     private  AddNonpaymentVO createAddNonpaymentVO(ValueCardChange cardChange,String payerId,String payerName,String phone){
@@ -583,7 +623,7 @@ public class ValueCardServiceImpl implements IValueCardService {
      */
     @Override
     @Transactional
-    public Boolean customerConsumption(ValueCardConsumptionReq req) {
+    public Map<String,Long> customerConsumption(ValueCardConsumptionReq req) {
         log.info("储值卡核销请求参数：{}",req);
         if (null == req.getStoreId() || null == req.getTenantId() || null == req.getCustomerId()){
             throw new StoreSaasMarketingException("参数校验失败");
@@ -592,7 +632,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         Object value = storeRedisUtils.tryLock(key, 10, 10);
-        Boolean result = true;
+        Map<String,Long> resultMap = null;
         if (null != value) {
             try {
                 if (req.getAmount().compareTo(BigDecimal.ZERO) > 0){
@@ -649,20 +689,27 @@ public class ValueCardServiceImpl implements IValueCardService {
                     cardChange.setUpdateTime(date);
                     cardChange.setCreateUserId(req.getCreateUserId());
                     cardChange.setCreateUserName(req.getCreateUserName());
-                    result = valueCardChangeMapper.insertSelective(cardChange) > 0;
+                    if (valueCardChangeMapper.insertSelective(cardChange) <= 0){
+                        log.error("储值变更明细数据写入异常,cardChange={}",cardChange);
+                        throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
+                    }
                     //更新账户余额
                     valueCard.setAmount(principal);
                     valueCard.setPresentAmount(present);
                     valueCard.setUpdateTime(date);
-                    result = result && valueCardMapper.updateByPrimaryKeySelective(valueCard) > 0;
+                    if (valueCardMapper.updateByPrimaryKeySelective(valueCard) <= 0){
+                        log.error("更新储值账户余额异常,valueCard={}",valueCard);
+                        throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
+                    }
+                    resultMap = new HashMap<>();
+                    resultMap.put("principal",cardChange.getChangePrincipal().multiply(new BigDecimal(100)).longValue());
+                    resultMap.put("present",cardChange.getChangePresent().multiply(new BigDecimal(100)).longValue());
                 }
             } finally {
                 storeRedisUtils.releaseLock(key, value.toString());
             }
-        } else {
-            result = false;
         }
-        return result;
+        return resultMap;
     }
 
     @Override

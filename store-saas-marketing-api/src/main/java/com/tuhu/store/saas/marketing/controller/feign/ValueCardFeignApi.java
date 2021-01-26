@@ -27,7 +27,7 @@ public class ValueCardFeignApi {
 
     @ApiOperation("储值卡核销")
     @PostMapping("/consumption")
-    BizBaseResponse<Boolean> valueCardConsumption(@RequestBody ValueCardConsumptionReq req){
+    BizBaseResponse<Map<String,Long>> valueCardConsumption(@RequestBody ValueCardConsumptionReq req){
         return new BizBaseResponse(iValueCardService.customerConsumption(req));
     }
 
