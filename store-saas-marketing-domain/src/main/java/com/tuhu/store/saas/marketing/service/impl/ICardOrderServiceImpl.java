@@ -110,6 +110,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Transactional
     public String addCardOrder(AddCardOrderReq req) {
         log.info("开卡接口请求参数：{}", JSONObject.toJSON(req));
+        if(req.getActualAmount().compareTo(BigDecimal.ZERO)<0){
+            throw new StoreSaasMarketingException("售价不能小于0");
+        }
+        if(req.getActualAmount().compareTo(new BigDecimal(999999999.99))>0){
+            throw new StoreSaasMarketingException("售价不能大于999999999.99");
+        }
         String phoneNumber=req.getCustomerPhoneNumber();
         Long storeId=req.getStoreId();
         Long tenantId=req.getTenantId();
@@ -153,11 +159,12 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         if (null != customerDTO.getGender()) {
             crdCard.setCustomerGender(customerDTO.getGender());
         }
+        boolean isZeroAmount=req.getActualAmount().compareTo(BigDecimal.ZERO)==0;
         crdCard.setForever((byte) (req.getForever() ? 1 : 0));
         crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
         crdCard.setCardCategoryCode(cardTemplate.getCardCategoryCode());
         crdCard.setCardTypeCode(cardTemplate.getCardTypeCode());
-        crdCard.setStatus(CardStatusEnum.INACTIVATED.getEnumCode());
+        crdCard.setStatus(isZeroAmount?CardStatusEnum.ACTIVATED.getDescription():CardStatusEnum.INACTIVATED.getEnumCode());
         crdCard.setDescription(cardTemplate.getDescription());
         crdCard.setCardName(cardTemplate.getCardName());
         crdCard.setActualAmount(req.getActualAmount());
@@ -186,9 +193,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCardOrder.setAmount(cardTemplate.getFaceAmount());
         crdCardOrder.setActualAmount(req.getActualAmount());
         crdCardOrder.setDiscountAmount(cardTemplate.getDiscountAmount());
-        crdCardOrder.setStatus(CardOrderStatusEnum.OPENED_CARD.getEnumCode());
-        crdCardOrder.setPaymentStatus(PaymentStatusEnum.PAYMENT_NOT.getEnumCode());
-        crdCardOrder.setCardStatus(CardStatusEnum.INACTIVATED.getEnumCode());
+        crdCardOrder.setStatus(isZeroAmount?CardOrderStatusEnum.SETTLE_CARD.getEnumCode():CardOrderStatusEnum.OPENED_CARD.getEnumCode());
+        crdCardOrder.setPaymentStatus(isZeroAmount?PaymentStatusEnum.PAYMENT_OK.getEnumCode():PaymentStatusEnum.PAYMENT_NOT.getEnumCode());
+        crdCardOrder.setCardStatus(isZeroAmount?CardStatusEnum.ACTIVATED.getEnumCode():CardStatusEnum.INACTIVATED.getEnumCode());
         //生成开卡单号
         String code = cardOrderRedisCache.getCode(cardOrderRedisPrefix, req.getStoreId());
         if (null == req.getStoreNo()) {
@@ -197,6 +204,9 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCardOrder.setOrderNo(getCardOrderNumber(code, req.getStoreNo()));
         crdCardOrderMapper.insertSelective(crdCardOrder);
 
+        if(crdCardOrder.getActualAmount().compareTo(BigDecimal.ZERO)==0){
+            return crdCardOrder.getId().toString();
+        }
         //新增待收记录
         AddReceivingVO addReceivingVO = new AddReceivingVO();
         addReceivingVO.setOrderId(crdCardOrder.getId().toString());

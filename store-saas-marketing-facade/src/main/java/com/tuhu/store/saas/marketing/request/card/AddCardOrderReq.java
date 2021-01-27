@@ -7,12 +7,10 @@
  */
 package com.tuhu.store.saas.marketing.request.card;
 
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -83,6 +81,7 @@ public class AddCardOrderReq {
     private Long quantity;
 
     @ApiModelProperty(value = "售价")
+    @NotNull(message = "售价不能为空")
     private BigDecimal actualAmount;
 
 }
