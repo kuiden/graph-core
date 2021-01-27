@@ -3,6 +3,7 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.google.common.collect.Maps;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
@@ -20,6 +21,7 @@ import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
 import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
 import com.tuhu.store.saas.marketing.response.valueCard.CustomerValueCardDetailResp;
@@ -375,10 +377,10 @@ public class ValueCardServiceImpl implements IValueCardService {
         log.info("进入退款数据校验检查->  req :{}  model -> {} ", req, model);
         if (req.getChangePresent().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)) {
             //退款金额为正数
-            throw  new StoreSaasMarketingException("退款本金为正正数");
+            throw  new StoreSaasMarketingException("退款本金为正数");
         }
         if (req.getChangePrincipal().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)){
-            throw  new StoreSaasMarketingException("退款赠金为正正数");
+            throw  new StoreSaasMarketingException("退款赠金为正数");
         }
         // 客户没有开过卡而且要退款的情况
         if (model == null) {
@@ -415,7 +417,7 @@ public class ValueCardServiceImpl implements IValueCardService {
     public String settlement(ValueCardRechargeOrRefundReq req) {
         log.info("ValueCardServiceImpl->settlement-> req->{}", req);
 
-        //充值-->查询客户&新建客户  退款-->查询客户
+        //充值-->新建客户
         if (StringUtils.isBlank(req.getCustomerId()) && req.getType().equals(2)){
             CustomerReq customer = this.remoteAddCustomer(req.getCustomerPhoneNumber(),req.getStoreId(),req.getTenantId());
             req.setCustomerId(customer.getId());
@@ -558,6 +560,8 @@ public class ValueCardServiceImpl implements IValueCardService {
             AddVehicleVO addVehicleVO = resultObject.getData();
             customerReq.setId(addVehicleVO.getCustomerReq().getId());
             customerReq.setName(addVehicleVO.getCustomerReq().getName());
+        } else {
+            throw new StoreSaasMarketingException("创建客户失败");
         }
         return customerReq;
     }
@@ -865,6 +869,14 @@ public class ValueCardServiceImpl implements IValueCardService {
             //valueCardMapper.editValueCardBatch(updateList);
         }
         return list;
+    }
+
+    @Override
+    public List<ValueCardChange> getFirstValueCardChangeList(QueryCardToCommissionReq req) {
+        HashMap map= Maps.newHashMap();
+        map.put("startTime",req.getStartTime());
+        map.put("endTime",req.getEndTime());
+        return valueCardChangeMapper.getValueCardChangeList(map);
     }
 
     private void addValueChange(ValueCardReq valueCardReq,ValueCard valueCard){

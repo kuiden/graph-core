@@ -515,10 +515,16 @@
   <select id="selectByCustomerId" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
+    ,
+    CASE
+    WHEN use_status = 0 AND use_end_time <![CDATA[ >= ]]> NOW() THEN 1
+    WHEN use_status = 1  THEN 2
+    ELSE 3
+    END AS px
     FROM
     customer_coupon
     WHERE customer_id = #{customerId}
-    order by use_end_time desc
+    ORDER BY px ASC , use_end_time DESC
   </select>
 
   <select id="countCustomerCoupon" resultType="java.lang.Integer">
@@ -542,6 +548,7 @@
     select count(1) as count,customer_id as customerId from customer_coupon
     where 1=1
     and use_status = 0
+    and use_end_time <![CDATA[ >= ]]> now()
     and customer_id in
     <foreach collection="customerIds" item="customerId" open="(" close=")" separator=",">
       #{customerId}
