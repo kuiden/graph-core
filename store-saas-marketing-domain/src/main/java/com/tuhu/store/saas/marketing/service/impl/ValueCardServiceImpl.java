@@ -375,10 +375,10 @@ public class ValueCardServiceImpl implements IValueCardService {
         log.info("进入退款数据校验检查->  req :{}  model -> {} ", req, model);
         if (req.getChangePresent().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)) {
             //退款金额为正数
-            throw  new StoreSaasMarketingException("退款本金为正正数");
+            throw  new StoreSaasMarketingException("退款本金为正数");
         }
         if (req.getChangePrincipal().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)){
-            throw  new StoreSaasMarketingException("退款赠金为正正数");
+            throw  new StoreSaasMarketingException("退款赠金为正数");
         }
         // 客户没有开过卡而且要退款的情况
         if (model == null) {
@@ -558,6 +558,8 @@ public class ValueCardServiceImpl implements IValueCardService {
             AddVehicleVO addVehicleVO = resultObject.getData();
             customerReq.setId(addVehicleVO.getCustomerReq().getId());
             customerReq.setName(addVehicleVO.getCustomerReq().getName());
+        } else {
+            throw new StoreSaasMarketingException("创建客户失败");
         }
         return customerReq;
     }
@@ -702,8 +704,8 @@ public class ValueCardServiceImpl implements IValueCardService {
                         throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
                     }
                     resultMap = new HashMap<>();
-                    resultMap.put("principal",0 - cardChange.getChangePrincipal().multiply(new BigDecimal(100)).longValue());
-                    resultMap.put("present",0 - cardChange.getChangePresent().multiply(new BigDecimal(100)).longValue());
+                    resultMap.put("principal",cardChange.getChangePrincipal().multiply(new BigDecimal(100)).longValue());
+                    resultMap.put("present",cardChange.getChangePresent().multiply(new BigDecimal(100)).longValue());
                 }
             } finally {
                 storeRedisUtils.releaseLock(key, value.toString());

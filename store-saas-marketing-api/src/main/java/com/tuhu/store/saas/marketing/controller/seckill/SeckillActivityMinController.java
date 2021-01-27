@@ -88,7 +88,7 @@ public class SeckillActivityMinController extends EndUserApi {
     public BizBaseResponse<List<CustomerActivityOrderListResp>> customerActivityOrderList() {
         EndUser endUser = EndUserContextHolder.getUser();
         if (null == endUser || StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())) {
-            log.error("参数校验失败");
+            log.info("散户请求，endUser={}",endUser);
             return new BizBaseResponse<>();
         }
         return new BizBaseResponse(seckillActivityService.customerActivityOrderList(super.getCustomerId(), super.getStoreId(), super.getTenantId()));
