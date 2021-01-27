@@ -164,7 +164,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         crdCard.setDiscountAmount(cardTemplate.getDiscountAmount());
         crdCard.setCardCategoryCode(cardTemplate.getCardCategoryCode());
         crdCard.setCardTypeCode(cardTemplate.getCardTypeCode());
-        crdCard.setStatus(isZeroAmount?CardStatusEnum.ACTIVATED.getDescription():CardStatusEnum.INACTIVATED.getEnumCode());
+        crdCard.setStatus(isZeroAmount?CardStatusEnum.ACTIVATED.getEnumCode():CardStatusEnum.INACTIVATED.getEnumCode());
         crdCard.setDescription(cardTemplate.getDescription());
         crdCard.setCardName(cardTemplate.getCardName());
         crdCard.setActualAmount(req.getActualAmount());
