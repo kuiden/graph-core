@@ -542,7 +542,7 @@
     select count(1) as count,customer_id as customerId from customer_coupon
     where 1=1
     and use_status = 0
-    and use_end_time <![CDATA[ > ]]> now()
+    and use_end_time <![CDATA[ >= ]]> now()
     and customer_id in
     <foreach collection="customerIds" item="customerId" open="(" close=")" separator=",">
       #{customerId}
