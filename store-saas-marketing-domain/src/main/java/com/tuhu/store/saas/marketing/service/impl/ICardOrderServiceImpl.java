@@ -7,11 +7,15 @@ import com.google.common.collect.Lists;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.boot.common.utils.StringUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.AddVehicleVO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
+import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.dto.product.QueryGoodsListDTO;
 import com.tuhu.store.saas.marketing.bo.SMSResult;
 import com.tuhu.store.saas.marketing.dataobject.*;
 import com.tuhu.store.saas.marketing.enums.*;
+import com.tuhu.store.saas.marketing.exception.MarketingException;
 import com.tuhu.store.saas.marketing.exception.StoreSaasMarketingException;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.*;
 import com.tuhu.store.saas.marketing.parameter.SMSParameter;
@@ -19,6 +23,8 @@ import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
 import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseDTO;
 import com.tuhu.store.saas.marketing.request.CustomerLastPurchaseRequest;
 import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
@@ -104,17 +110,32 @@ public class ICardOrderServiceImpl implements ICardOrderService {
     @Transactional
     public String addCardOrder(AddCardOrderReq req) {
         log.info("开卡接口请求参数：{}", JSONObject.toJSON(req));
+        String phoneNumber=req.getCustomerPhoneNumber();
+        Long storeId=req.getStoreId();
+        Long tenantId=req.getTenantId();
+        String customerId=req.getCustomerId();
         //获取最新客户信息
-        BaseIdReqVO baseIdReqVO = new BaseIdReqVO();
-        baseIdReqVO.setId(req.getCustomerId());
-        baseIdReqVO.setStoreId(req.getStoreId());
-        baseIdReqVO.setTenantId(req.getTenantId());
-        CustomerDTO customerDTO = customerClient.getCustomerById(baseIdReqVO).getData();
-        if (null == customerDTO) {
-            throw new StoreSaasMarketingException("未获取到客户信息");
+        CustomerVO customerVO=new CustomerVO();
+        customerVO.setPhone(phoneNumber);
+        customerVO.setStoreId(storeId);
+        customerVO.setTenantId(tenantId);
+        List<CustomerDTO> customers = customerClient.getCustomer(customerVO).getData();
+        CustomerDTO customerDTO=new CustomerDTO();
+        if(CollectionUtils.isEmpty(customers)){
+            CustomerReq customerReq= remoteAddCustomer(phoneNumber,storeId,tenantId);
+            customerDTO.setId(customerReq.getId());
+            customerDTO.setName(customerReq.getName());
+            customerDTO.setGender(customerReq.getGender());
+        }else {
+            customerDTO=customers.get(0);
+            if(customerId!=null&&!customerId.equals(customerDTO.getId())){
+                throw new StoreSaasMarketingException("选择的客户手机号和输入的手机号不一致！");
+            }
         }
+
         req.setCustomerName(customerDTO.getName());
         req.setCustomerPhoneNumber(customerDTO.getPhoneNumber());
+        req.setCustomerId(customerDTO.getId());
         if (req.getExpiryDate() != null) {
             req.setExpiryDate(DateUtils.getDateEndTime(req.getExpiryDate()));
         }
@@ -202,6 +223,31 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             throw new StoreSaasMarketingException("创建待收记录失败");
         }
         return addReceivingVO.getOrderId();
+    }
+
+    private CustomerReq remoteAddCustomer(String phoneNumber, Long storeId, Long tenantId) {
+        //添加客户
+        CustomerReq customerReq = new CustomerReq();
+        customerReq.setPhoneNumber(phoneNumber);
+        customerReq.setName(phoneNumber);
+        customerReq.setCustomerType("person");
+        customerReq.setGender("3");
+        customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
+        AddVehicleReq addVehicleReq = new AddVehicleReq();
+        addVehicleReq.setStoreId(storeId);
+        addVehicleReq.setTenantId(tenantId);
+        addVehicleReq.setCustomerReq(customerReq);
+        log.info("customerClient.addCustomerForOrder request:{}", JSONObject.toJSONString(addVehicleReq));
+        BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
+        log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
+        if (resultObject.isSuccess()&&Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
+            AddVehicleVO addVehicleVO = resultObject.getData();
+            customerReq.setId(addVehicleVO.getCustomerReq().getId());
+            customerReq.setName(addVehicleVO.getCustomerReq().getName());
+        }else{
+            throw new StoreSaasMarketingException("新客户创建失败！");
+        }
+        return customerReq;
     }
 
     private String getCardOrderNumber(String cardOrderCode, String storeNo) {
