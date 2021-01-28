@@ -33,7 +33,7 @@ public class ClientValueCardApi extends BaseApi {
 
     @ApiOperation("我的储值-余额")
     @GetMapping("/queryAmount")
-    BizBaseResponse<BigDecimal> customerValueCardAmount(){
+    public BizBaseResponse<BigDecimal> customerValueCardAmount(){
         CustomerValueCardDetailReq req = new CustomerValueCardDetailReq();
         EndUser endUser = EndUserContextHolder.getUser();
         if (StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
@@ -48,7 +48,7 @@ public class ClientValueCardApi extends BaseApi {
 
     @ApiOperation("我的储值-充值/消费记录列表")
     @PostMapping("/rechargeRecord")
-    BizBaseResponse<PageInfo<ValueCardChangeResp>> rechargeRecord(@RequestBody ValueCardChangeRecordReq req){
+    public BizBaseResponse<PageInfo<ValueCardChangeResp>> rechargeRecord(@RequestBody ValueCardChangeRecordReq req){
         EndUser endUser = EndUserContextHolder.getUser();
         if (StringUtils.isBlank(endUser.getStoreId()) || StringUtils.isBlank(endUser.getTenantId())){
             log.info("参数校验失败");
