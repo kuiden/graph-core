@@ -132,6 +132,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             customerDTO.setId(customerReq.getId());
             customerDTO.setName(customerReq.getName());
             customerDTO.setGender(customerReq.getGender());
+            customerDTO.setPhoneNumber(customerReq.getPhoneNumber());
         }else {
             customerDTO=customers.get(0);
             if(customerId!=null&&!customerId.equals(customerDTO.getId())){
@@ -239,7 +240,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         //添加客户
         CustomerReq customerReq = new CustomerReq();
         customerReq.setPhoneNumber(phoneNumber);
-        customerReq.setName(phoneNumber);
+        customerReq.setName("空");
         customerReq.setCustomerType("person");
         customerReq.setGender("3");
         customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
