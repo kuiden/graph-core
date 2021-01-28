@@ -357,7 +357,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                 valueCard = valueCardList.get(0);
             }
         }
-        if (null != valueCard){
+        if (null != valueCard && valueCard.getStoreId().equals(req.getStoreId())){
             principal = valueCard.getAmount();
             present = valueCard.getPresentAmount();
         }
@@ -545,7 +545,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         //添加客户
         CustomerReq customerReq = new CustomerReq();
         customerReq.setPhoneNumber(phoneNumber);
-        customerReq.setName("空");
+        customerReq.setName("未命名客户");
         customerReq.setCustomerType("person");
         customerReq.setGender("3");
         customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
