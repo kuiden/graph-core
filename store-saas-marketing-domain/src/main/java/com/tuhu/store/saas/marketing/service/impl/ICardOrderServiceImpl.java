@@ -113,7 +113,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         if(req.getActualAmount().compareTo(BigDecimal.ZERO)<0){
             throw new StoreSaasMarketingException("售价不能小于0");
         }
-        if(req.getActualAmount().compareTo(new BigDecimal(999999999.99))>0){
+        if(req.getActualAmount().compareTo(new BigDecimal(9999999.99))>0){
             throw new StoreSaasMarketingException("售价不能大于9999999.99");
         }
         String phoneNumber=req.getCustomerPhoneNumber();
