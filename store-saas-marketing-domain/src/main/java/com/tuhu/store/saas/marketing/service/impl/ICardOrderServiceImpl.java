@@ -278,17 +278,17 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             CrdCardOrderExample.Criteria nameCriteria = cardOrderExample.createCriteria();
             CrdCardOrderExample.Criteria phoneCriteria = cardOrderExample.createCriteria();
             //根据客户id查询
-            if (null != req.getCustomerId()) {
+            if (StringUtils.isNotNullOrEmpty(req.getCustomerId())) {
                 nameCriteria.andCustomerIdEqualTo(req.getCustomerId());
                 phoneCriteria.andCustomerIdEqualTo(req.getCustomerId());
             }
             //客户姓名、手机号模糊查询
-            if (null != req.getCondition()) {
+            if (StringUtils.isNotNullOrEmpty(req.getCondition())) {
                 nameCriteria.andCustomerNameLike("%" + req.getCondition() + "%");
                 phoneCriteria.andCustomerPhoneNumberLike("%" + req.getCondition() + "%");
             }
             //支付状态 未支付、已结清
-            if (null != req.getPaymentStatus()) {
+            if (StringUtils.isNotNullOrEmpty(req.getPaymentStatus())) {
                 nameCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
                 phoneCriteria.andPaymentStatusEqualTo(req.getPaymentStatus());
             }
@@ -305,6 +305,11 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         for (CrdCardOrder item : cardOrderList) {
             CardOrderResp cardOrderResp = new CardOrderResp();
             BeanUtils.copyProperties(item, cardOrderResp);
+            String phoneNumber=cardOrderResp.getCustomerPhoneNumber();
+            if(StringUtils.isNotNullOrEmpty(phoneNumber)){
+                phoneNumber=phoneNumber.replaceAll("(\\d{3})\\d{4}(\\d{4})","$1****$2");
+                cardOrderResp.setCustomerPhoneNumber(phoneNumber);
+            }
             cardOrderResp.setCardStatus(CardStatusEnum.valueOf(item.getCardStatus()).getDescription());
             cardOrderResp.setCardStatusCode(CardStatusEnum.valueOf(item.getCardStatus()).getEnumCode());
             cardOrderResp.setPaymentStatus(PaymentStatusEnum.valueOf(item.getPaymentStatus()).getDescription());
