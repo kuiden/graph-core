@@ -114,7 +114,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
             throw new StoreSaasMarketingException("售价不能小于0");
         }
         if(req.getActualAmount().compareTo(new BigDecimal(999999999.99))>0){
-            throw new StoreSaasMarketingException("售价不能大于999999999.99");
+            throw new StoreSaasMarketingException("售价不能大于9999999.99");
         }
         String phoneNumber=req.getCustomerPhoneNumber();
         Long storeId=req.getStoreId();
@@ -240,7 +240,7 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         //添加客户
         CustomerReq customerReq = new CustomerReq();
         customerReq.setPhoneNumber(phoneNumber);
-        customerReq.setName("空");
+        customerReq.setName("未命名客户");
         customerReq.setCustomerType("person");
         customerReq.setGender("3");
         customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
@@ -306,11 +306,6 @@ public class ICardOrderServiceImpl implements ICardOrderService {
         for (CrdCardOrder item : cardOrderList) {
             CardOrderResp cardOrderResp = new CardOrderResp();
             BeanUtils.copyProperties(item, cardOrderResp);
-            String phoneNumber=cardOrderResp.getCustomerPhoneNumber();
-            if(StringUtils.isNotNullOrEmpty(phoneNumber)){
-                phoneNumber=phoneNumber.replaceAll("(\\d{3})\\d{4}(\\d{4})","$1****$2");
-                cardOrderResp.setCustomerPhoneNumber(phoneNumber);
-            }
             cardOrderResp.setCardStatus(CardStatusEnum.valueOf(item.getCardStatus()).getDescription());
             cardOrderResp.setCardStatusCode(CardStatusEnum.valueOf(item.getCardStatus()).getEnumCode());
             cardOrderResp.setPaymentStatus(PaymentStatusEnum.valueOf(item.getPaymentStatus()).getDescription());
