@@ -25,7 +25,6 @@ import java.util.Date;
 public class AddCardOrderReq {
 
     @ApiModelProperty(value = "客户ID", dataType = "Long", required = false, example = "1")
-    @NotNull(message = "客户Id不能为空")
     private String customerId;
 
     @ApiModelProperty(value = "客户名称", dataType = "Long", required = false, example = "客户名称")
