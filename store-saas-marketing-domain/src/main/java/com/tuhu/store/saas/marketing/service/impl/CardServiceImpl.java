@@ -134,22 +134,31 @@ public class CardServiceImpl implements ICardService {
         log.info("getCardTemplateById-> req  id {}  tenantId{}  storeId {}", id, tenantId, storeId);
         CardTemplateModel result = new CardTemplateModel();
         CardTemplate cardTemplateEntity = cardTemplateMapper.getCardTemplateById(id, tenantId, storeId);
+        result = this.convertModel(cardTemplateEntity,Boolean.TRUE);
+        return result;
+    }
+
+    /**
+     * entity转换model
+     * @param cardTemplateEntity
+     * @param hashItem
+     * @return
+     */
+    private CardTemplateModel convertModel(CardTemplate cardTemplateEntity, boolean hashItem) {
+        CardTemplateModel result = new CardTemplateModel();
         if (cardTemplateEntity != null) {
             BeanUtils.copyProperties(cardTemplateEntity, result);
-            result.setCardTemplateItemModelList(itemService.getCardTemplateItemListByCardTemplateId(id));
+            if (hashItem) {
+                result.setCardTemplateItemModelList(itemService.getCardTemplateItemListByCardTemplateId(cardTemplateEntity.getId()));
+            }
             if (CardExpiryDateEnum.EXPIRE_MONTH.getCode() == cardTemplateEntity.getExpiryType() && result.getExpiryPeriod() != null) {
-                //计算卡的截止日期
-//                Date now = new Date(System.currentTimeMillis());
-//                Calendar cal = Calendar.getInstance();
-//                cal.add(Calendar.MONTH, result.getExpiryPeriod());
                 LocalDateTime dateTime = LocalDateTime.now().plusMonths(result.getExpiryPeriod()).withHour(23).withMinute(59).withSecond(59);
                 result.setExpiryDate(Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant()));
-            }else if (CardExpiryDateEnum.EXPIRE_DAY.getCode() == cardTemplateEntity.getExpiryType() && result.getExpiryDay() != null) {
+            } else if (CardExpiryDateEnum.EXPIRE_DAY.getCode() == cardTemplateEntity.getExpiryType() && result.getExpiryDay() != null) {
                 LocalDateTime dateTime = LocalDateTime.now().plusDays(result.getExpiryDay()).withHour(23).withMinute(59).withSecond(59);
                 result.setExpiryDate(Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant()));
             }
         }
-
         return result;
     }
 
@@ -163,14 +172,12 @@ public class CardServiceImpl implements ICardService {
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
             PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
             List<CardTemplateModel> resultArray = new ArrayList<>();
-            if (req.getHashItem()) {
                 for (CardTemplate x : cardTemplates) {
                     //CardTemplateModel model = new CardTemplateModel();
-                    CardTemplateModel model = this.getCardTemplateById(x.getId(), x.getTenantId(), x.getStoreId());
+                    CardTemplateModel model =this.convertModel(x,req.getHashItem());
                     BeanUtils.copyProperties(x, model);
                     resultArray.add(model);
                 }
-            }
             result.setList(resultArray);
             result.setTotal(cardTemplatePageInfo.getTotal());
         }
