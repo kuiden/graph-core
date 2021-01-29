@@ -103,6 +103,13 @@ public class CardServiceImpl implements ICardService {
 //        if (cardTemplateMapper.checkCardTemplateName(req.getCardName().trim(), req.getId() == null ? 0 : req.getId(), req.getTenantId(), req.getStoreId()) > 0)
 //            throw new StoreSaasMarketingException("卡名称不能重复");
         boolean isUpdate = req.getId() != null && req.getId() > 0 ? true : false;
+        //商品、服务越权校验
+        List<String> goodIds = req.getCardTemplateItemModelList().stream()
+                .map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
+        BizBaseResponse<List<String>> productResult = productClient.hasProduct(goodIds, req.getStoreId(), req.getTenantId());
+        if (productResult== null || productResult.getCode()!=10000 || productResult.getData() == null || productResult.getData().size() !=goodIds.size()){
+            throw  new StoreSaasMarketingException ("商品/服务校验失败");
+        }
         CardTemplate cardTemplate = this.convertorToCardTemplate(req);
         if (isUpdate) {
             cardTemplate.setUpdateUser(userId);
