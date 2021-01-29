@@ -548,7 +548,7 @@ public class CardServiceImpl implements ICardService {
     public List<QueryCardItemResp> queryCardItemByCustomer(QueryByCustomerIdReq req) {
         log.info("查询客户可用次卡项目/商品，请求参数：{}", JSONObject.toJSON(req));
         if (null == req.getStoreId() || null == req.getTenantId() || (null == req.getCustomerId() && null == req.getCustomerPhoneNumber())){
-            log.error("参数校验失败，req=",req);
+            log.error("参数校验失败，req={}",req);
             throw new StoreSaasMarketingException("参数校验失败");
         }
         List<QueryCardItemResp> resultList = new ArrayList<>();
