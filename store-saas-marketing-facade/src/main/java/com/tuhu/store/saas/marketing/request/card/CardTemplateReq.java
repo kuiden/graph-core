@@ -22,4 +22,7 @@ public class CardTemplateReq extends BaseReq implements Serializable {
 
     @ApiModelProperty(value = "卡类型 1次卡 2 活动创建的卡模板", dataType = "Byte", required = false, example = "1")
     private Byte type;
+
+    @ApiModelProperty(value = "是否包含详情 默认包含", dataType = "Byte", required = false, example = "true")
+    private  Boolean hashItem = true;
 }

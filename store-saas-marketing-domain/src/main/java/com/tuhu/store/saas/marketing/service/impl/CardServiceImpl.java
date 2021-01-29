@@ -163,11 +163,13 @@ public class CardServiceImpl implements ICardService {
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
             PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
             List<CardTemplateModel> resultArray = new ArrayList<>();
-            for (CardTemplate x : cardTemplates) {
-                //CardTemplateModel model = new CardTemplateModel();
-                CardTemplateModel model = this.getCardTemplateById(x.getId(), x.getTenantId(), x.getStoreId());
-                BeanUtils.copyProperties(x, model);
-                resultArray.add(model);
+            if (req.getHashItem()) {
+                for (CardTemplate x : cardTemplates) {
+                    //CardTemplateModel model = new CardTemplateModel();
+                    CardTemplateModel model = this.getCardTemplateById(x.getId(), x.getTenantId(), x.getStoreId());
+                    BeanUtils.copyProperties(x, model);
+                    resultArray.add(model);
+                }
             }
             result.setList(resultArray);
             result.setTotal(cardTemplatePageInfo.getTotal());
