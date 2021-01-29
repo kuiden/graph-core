@@ -7,6 +7,7 @@ import com.tuhu.store.saas.crm.dto.StoreInfoRelatedDTO;
 import com.tuhu.store.saas.marketing.remote.product.StoreProductClient;
 import com.tuhu.store.saas.user.dto.ClientStoreDTO;
 import com.tuhu.store.saas.user.dto.StoreDTO;
+import com.tuhu.store.saas.user.dto.UserDTO;
 import com.tuhu.store.saas.user.vo.ClientStoreVO;
 import com.tuhu.store.saas.user.vo.StoreInfoVO;
 import com.tuhu.store.saas.vo.product.IssuedVO;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @time 2020-08-04
@@ -45,6 +47,12 @@ public class StoreInfoRemoteFactory implements FallbackFactory<StoreInfoClient> 
             @Override
             public BizBaseResponse<StoreInfoRelatedDTO> getRelatedInfoByStoreId(Long storeId) {
                 log.error("getRelatedInfoByStoreId error,request={},error={}", storeId, org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(throwable));
+                throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
+            }
+
+            @Override
+            public BizBaseResponse<Map<String, UserDTO>> getUserInfoMapByIdList(List<String> list) {
+                log.error("getUserInfoMapByIdList error,request={},error={}", list, org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(throwable));
                 throw new BizException(BizErrorCodeEnum.CALLSERVICCE_ERROR, throwable.getMessage(), throwable);
             }
         };

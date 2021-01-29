@@ -18,6 +18,7 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardChangeMa
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardRuleMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
 import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
 import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
@@ -33,6 +34,7 @@ import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import com.tuhu.store.saas.order.vo.finance.nonpayment.AddNonpaymentVO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
+import com.tuhu.store.saas.user.dto.UserDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -67,6 +69,9 @@ public class ValueCardServiceImpl implements IValueCardService {
 
     @Autowired
     private CustomerClient customerClient;
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -294,25 +299,25 @@ public class ValueCardServiceImpl implements IValueCardService {
 
     @Override
     public PageInfo<ValueCardChangeResp> customerValueCardChangeList(CustomerValueCardDetailReq req) {
-        log.info("查询客户储值变更明细详情请求参数：{}",req);
-        if (null == req.getStoreId() || null == req.getTenantId()){
+        log.info("查询客户储值变更明细详情请求参数：{}", req);
+        if (null == req.getStoreId() || null == req.getTenantId()) {
             throw new StoreSaasMarketingException("参数校验失败");
         }
         //如果没拿到卡id 使用客户id查询
-        if (null == req.getCardId()){
+        if (null == req.getCardId()) {
             ValueCardExample example = new ValueCardExample();
             example.createCriteria().andCustomerIdEqualTo(req.getCustomerId())
                     .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
                     .andIsDeleteEqualTo(false);
             List<ValueCard> valueCardList = valueCardMapper.selectByExample(example);
-            if (CollectionUtils.isNotEmpty(valueCardList)){
+            if (CollectionUtils.isNotEmpty(valueCardList)) {
                 req.setCardId(valueCardList.get(0).getId());
-            } else{
+            } else {
                 //throw new StoreSaasMarketingException("客户未开通储值卡");
                 return new PageInfo<>();
             }
         }
-        PageHelper.startPage(req.getPageNum(),req.getPageSize());
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
         ValueCardChangeExample cardChangeExample = new ValueCardChangeExample();
         cardChangeExample.createCriteria().andCardIdEqualTo(req.getCardId())
                 .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
@@ -320,15 +325,22 @@ public class ValueCardServiceImpl implements IValueCardService {
         cardChangeExample.setOrderByClause("update_time desc");
         List<ValueCardChange> cardChanges = valueCardChangeMapper.selectByExample(cardChangeExample);
         PageInfo<ValueCardChangeResp> respPageInfo = new PageInfo<>();
-        if (CollectionUtils.isNotEmpty(cardChanges)){
+        if (CollectionUtils.isNotEmpty(cardChanges)) {
+            List<String> collect = cardChanges.stream().map(x -> x.getSalesmanId()).distinct().collect(Collectors.toList());
+            BizBaseResponse<Map<String, UserDTO>> crmResult = storeInfoClient.getUserInfoMapByIdList(collect);
+            Map<String, UserDTO> userDTOMap = crmResult.getData() == null ?
+                    new HashMap<>(0,0) : crmResult.getData();
             PageInfo<ValueCardChange> pageInfo = new PageInfo<>(cardChanges);
             List<ValueCardChangeResp> respList = new ArrayList<>();
-            for (ValueCardChange cardChange : pageInfo.getList()){
+            for (ValueCardChange cardChange : pageInfo.getList()) {
                 ValueCardChangeResp resp = new ValueCardChangeResp();
-                BeanUtils.copyProperties(cardChange,resp);
+                BeanUtils.copyProperties(cardChange, resp);
+                if (userDTOMap.containsKey(resp.getSalesmanId())) {
+                    resp.setSalesmanName(userDTOMap.get(resp.getSalesmanId()).getUsername());
+                }
                 respList.add(resp);
             }
-            BeanUtils.copyProperties(pageInfo,respPageInfo);
+            BeanUtils.copyProperties(pageInfo, respPageInfo);
             respPageInfo.setList(respList);
             respPageInfo.setTotal(pageInfo.getTotal());
         }
