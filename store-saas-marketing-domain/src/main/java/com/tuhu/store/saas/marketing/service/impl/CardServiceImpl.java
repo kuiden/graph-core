@@ -108,7 +108,7 @@ public class CardServiceImpl implements ICardService {
                 .map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
         BizBaseResponse<List<String>> productResult = productClient.hasProduct(goodIds, req.getStoreId(), req.getTenantId());
         if (productResult== null || productResult.getCode()!=10000 || productResult.getData() == null || productResult.getData().size() !=goodIds.size()){
-            throw  new StoreSaasMarketingException ("商品/服务校验失败");
+            throw  new StoreSaasMarketingException ("服务/商品已禁用");
         }
         CardTemplate cardTemplate = this.convertorToCardTemplate(req);
         if (isUpdate) {
