@@ -327,7 +327,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         PageInfo<ValueCardChangeResp> respPageInfo = new PageInfo<>();
         if (CollectionUtils.isNotEmpty(cardChanges)) {
             List<String> collect = cardChanges.stream().map(x -> x.getSalesmanId()).distinct().collect(Collectors.toList());
-            Map<String, UserDTO> userDTOMap = new HashMap<>(0, 0);
+            Map<String, UserDTO> userDTOMap = new HashMap<>(0, 1);
             if (collect != null && collect.size() > 0) {
                 BizBaseResponse<Map<String, UserDTO>> crmResult = storeInfoClient.getUserInfoMapByIdList(collect);
                 userDTOMap = crmResult.getData() == null ?
