@@ -1,5 +1,6 @@
 package com.tuhu.store.saas.marketing.service;
 
+import com.tuhu.store.saas.marketing.dataobject.Coupon;
 import com.tuhu.store.saas.marketing.po.CustomerCouponPO;
 import com.tuhu.store.saas.marketing.request.*;
 import com.tuhu.store.saas.marketing.response.CouponItemResp;
@@ -8,6 +9,8 @@ import com.tuhu.store.saas.marketing.response.CouponResp;
 import com.tuhu.store.saas.marketing.response.CustomerCouponPageResp;
 
 import javax.validation.groups.Default;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,4 +68,6 @@ public interface IMCouponService extends Default {
     CouponResp openGetCouponDetail(String code);
 
     CustomerCouponPO getCouponDetailv2(CouponRequest req);
+
+    Map<String, Coupon> couponCodeMap(Long storeId, HashSet<String> couponCodeSet);
 }

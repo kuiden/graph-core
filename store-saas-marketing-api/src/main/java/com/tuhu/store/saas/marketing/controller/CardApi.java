@@ -13,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/card")
+@RequestMapping(value = {"/card","pc/card"})
 @Api(tags = "次卡相关")
 public class CardApi extends BaseApi {
 

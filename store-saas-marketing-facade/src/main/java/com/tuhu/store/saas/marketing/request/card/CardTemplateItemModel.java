@@ -34,13 +34,13 @@ public class CardTemplateItemModel {
     @ApiModelProperty(value = "产品PID", dataType = "String", required = false, example = "123423")
     private String pid;
 
-    @ApiModelProperty(value = "服务项名称", dataType = "String", required = false, example = "服务项名称")
+    @ApiModelProperty(value = "服务项名称", dataType = "String", required = true, example = "服务项名称")
     private String serviceItemName;
 
-    @ApiModelProperty(value = "服务项展示名称", dataType = "String", required = false, example = "服务项展示名称")
+    @ApiModelProperty(value = "服务项展示名称", dataType = "String", required = true, example = "服务项展示名称")
     private String serviceShowName;
 
-    @ApiModelProperty(value = "服务项编码", dataType = "String", required = false, example = "sdgsdfg")
+    @ApiModelProperty(value = "服务项编码", dataType = "String", required = true, example = "sdgsdfg")
     private String serviceItemCode;
 
     @ApiModelProperty(value = "业务分类", dataType = "String", required = false, example = "sdgsdfg")
@@ -52,17 +52,17 @@ public class CardTemplateItemModel {
     @ApiModelProperty(value = "业务分类名称", dataType = "String", required = false, example = "sdgsdfg")
     private String businessCategoryName;
 
-    @ApiModelProperty(value = "工时", dataType = "String", required = false, example = "12")
+    @ApiModelProperty(value = "工时", dataType = "String", required = true, example = "12")
     private Integer laborHour;
 
     @Min(value = 0,message = "次数不能低于0次")
-    @ApiModelProperty(value = "次数", dataType = "String", required = false, example = "12")
+    @ApiModelProperty(value = "次数", dataType = "String", required = true, example = "12")
     private Integer measuredQuantity;
 
-    @ApiModelProperty(value = "原单价", dataType = "String", required = false, example = "12")
+    @ApiModelProperty(value = "原单价", dataType = "String", required = true, example = "12")
     private BigDecimal price;
 
-    @ApiModelProperty(value = "现单价", dataType = "String", required = false, example = "12")
+    @ApiModelProperty(value = "现单价", dataType = "String", required = true, example = "12")
     private BigDecimal faceAmount;
 
     @ApiModelProperty(value = "优惠金额", dataType = "String", required = false, example = "12")

@@ -36,7 +36,7 @@ public class CardTemplateModel {
     private String cardCategoryCode;
 
     @NotBlank(message = "卡名称不能为空")
-    @ApiModelProperty(value = "卡名称", dataType = "String", required = false, example = "卡名称")
+    @ApiModelProperty(value = "卡名称", dataType = "String", required = true, example = "卡名称")
     private String cardName;
 
     @ApiModelProperty(value = "有效期  X个月", dataType = "Integer", required = false, example = "1")
@@ -45,7 +45,7 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "是否是永久", dataType = "Boolean", required = false, example = "false")
     private Boolean forever;
 
-    @ApiModelProperty(value = "有效期类型，0-有效月份，1-永久有效，2-有效天数，3-有效截止日期", dataType = "Integer")
+    @ApiModelProperty(value = "有效期类型，0-有效月份，1-永久有效，2-有效天数，3-有效截止日期", required = true, dataType = "Integer")
     private Integer expiryType;
 
     @ApiModelProperty(value = "次卡有效天数", dataType = "Integer")
@@ -55,11 +55,11 @@ public class CardTemplateModel {
     private String status;
 
     @Min(value = 0,message = "卡面值不能低于0元")
-    @ApiModelProperty(value = "卡面值", dataType = "Long", required = false, example = "100")
+    @ApiModelProperty(value = "卡面值", dataType = "Long", required = true, example = "100")
     private BigDecimal faceAmount;
 
     @Min(value = 0,message = "卡实额不能低于0元")
-    @ApiModelProperty(value = "卡实额", dataType = "Long", required = false, example = "90")
+    @ApiModelProperty(value = "卡实额", dataType = "Long", required = true, example = "90")
     private BigDecimal actualAmount;
 
     @ApiModelProperty(value = " 卡优惠金额", dataType = "Long", required = false, example = "10")
@@ -88,14 +88,14 @@ public class CardTemplateModel {
     @ApiModelProperty(value = "更新时间", dataType = "Date", required = false, example = "111")
     private Date updateTime;
 
-    @ApiModelProperty(value = "卡类型 1次卡 2 活动创建的卡模板", dataType = "Date", required = false, example = "1")
+    @ApiModelProperty(value = "卡类型 1次卡 2 活动创建的卡模板", dataType = "Date", required = true, example = "1")
     private Byte type ;
 
 
     @ApiModelProperty(value = "过期时间  日期格式 开卡的时候用", dataType = "Date", required = false, example = "2020-08-06")
     private  Date expiryDate;
 
-    @ApiModelProperty(value = "车主端是否展示", dataType = "Integer", required = false, example = "1")
+    @ApiModelProperty(value = "车主端是否展示", dataType = "Integer", required = true, example = "1")
     private Byte isShow;
 
     @Valid

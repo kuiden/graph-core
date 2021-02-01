@@ -560,4 +560,17 @@
       `type` = #{type,jdbcType=TINYINT}
     where id = #{id,jdbcType=BIGINT}
   </update>
+
+
+  <select id="crdCardItemsByCardIds" resultMap="BaseResultMap">
+    select sum(measured_quantity - used_quantity) as measured_quantity,card_id from crd_card_item
+    where 1=1
+    and is_delete = 0
+    and card_id in
+    <foreach collection="cardIds" item="cardId" open="(" close=")" separator=",">
+      #{cardId}
+    </foreach>
+    group by card_id
+  </select>
+
 </mapper>

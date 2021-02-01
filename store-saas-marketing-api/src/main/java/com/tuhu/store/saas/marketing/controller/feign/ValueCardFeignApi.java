@@ -1,6 +1,9 @@
 package com.tuhu.store.saas.marketing.controller.feign;
 
 import com.tuhu.boot.common.facade.BizBaseResponse;
+import com.tuhu.store.saas.marketing.dataobject.ValueCardChange;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
+import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.ConfirmReceiptReq;
 import com.tuhu.store.saas.marketing.request.valueCard.CustomerValueCardDetailReq;
 import com.tuhu.store.saas.marketing.request.valueCard.ValueCardConsumptionReq;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,22 +31,27 @@ public class ValueCardFeignApi {
 
     @ApiOperation("储值卡核销")
     @PostMapping("/consumption")
-    BizBaseResponse<Boolean> valueCardConsumption(@RequestBody ValueCardConsumptionReq req){
+    public BizBaseResponse<Map<String,Long>> valueCardConsumption(@RequestBody ValueCardConsumptionReq req){
         return new BizBaseResponse(iValueCardService.customerConsumption(req));
     }
 
 
     @ApiOperation("获取储值卡余额")
     @PostMapping("/getAmount")
-    BizBaseResponse<Map<String,BigDecimal>> getValueCardAmount(@RequestBody CustomerValueCardDetailReq req){
+    public BizBaseResponse<Map<String,BigDecimal>> getValueCardAmount(@RequestBody CustomerValueCardDetailReq req){
         return new BizBaseResponse<>(iValueCardService.customerValueCardAmount(req));
     }
 
     @ApiOperation("储值变更单确认收款")
     @PostMapping("/confirmReceipt")
-    BizBaseResponse<Boolean> confirmReceipt(@RequestBody ConfirmReceiptReq req){
+    public BizBaseResponse<Boolean> confirmReceipt(@RequestBody ConfirmReceiptReq req){
         return new BizBaseResponse(iValueCardService.confirmReceipt(req));
     }
 
+    @ApiOperation("查询储值卡，开卡（第一次充值）")
+    @PostMapping("/getFirstValueCardChangeList")
+    public BizBaseResponse<List<ValueCardChange>> getFirstValueCardChangeList(@RequestBody QueryCardToCommissionReq req){
+        return new BizBaseResponse(iValueCardService.getFirstValueCardChangeList(req));
+    }
 
 }

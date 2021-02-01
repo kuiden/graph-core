@@ -1,8 +1,13 @@
 package com.tuhu.store.saas.marketing.mysql.marketing.write.dao;
 
+import com.tuhu.store.saas.marketing.dataobject.ValueCard;
 import com.tuhu.store.saas.marketing.dataobject.ValueCardChange;
 import com.tuhu.store.saas.marketing.dataobject.ValueCardChangeExample;
+
+import java.util.HashMap;
 import java.util.List;
+
+import com.tuhu.store.saas.marketing.dataobject.ValueCardExample;
 import org.apache.ibatis.annotations.Param;
 
 public interface ValueCardChangeMapper {
@@ -27,4 +32,8 @@ public interface ValueCardChangeMapper {
     int updateByPrimaryKeySelective(ValueCardChange record);
 
     int updateByPrimaryKey(ValueCardChange record);
+
+    List<ValueCardChange> getFirstValueCardChangeList(HashMap map);
+
+    List<ValueCardChange> getValueCardChangeList(HashMap map);
 }

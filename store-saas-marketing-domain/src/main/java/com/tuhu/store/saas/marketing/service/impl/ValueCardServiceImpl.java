@@ -3,10 +3,13 @@ package com.tuhu.store.saas.marketing.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.google.common.collect.Maps;
 import com.tuhu.boot.common.facade.BizBaseResponse;
 import com.tuhu.springcloud.common.util.RedisUtils;
 import com.tuhu.store.saas.crm.dto.CustomerDTO;
+import com.tuhu.store.saas.crm.vo.AddVehicleVO;
 import com.tuhu.store.saas.crm.vo.BaseIdReqVO;
+import com.tuhu.store.saas.crm.vo.CustomerSourceEnumVo;
 import com.tuhu.store.saas.crm.vo.CustomerVO;
 import com.tuhu.store.saas.marketing.context.UserContextHolder;
 import com.tuhu.store.saas.marketing.dataobject.*;
@@ -15,7 +18,11 @@ import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardChangeMa
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardMapper;
 import com.tuhu.store.saas.marketing.mysql.marketing.write.dao.ValueCardRuleMapper;
 import com.tuhu.store.saas.marketing.remote.crm.CustomerClient;
+import com.tuhu.store.saas.marketing.remote.crm.StoreInfoClient;
 import com.tuhu.store.saas.marketing.remote.order.StoreReceivingClient;
+import com.tuhu.store.saas.marketing.remote.request.AddVehicleReq;
+import com.tuhu.store.saas.marketing.remote.request.CustomerReq;
+import com.tuhu.store.saas.marketing.request.QueryCardToCommissionReq;
 import com.tuhu.store.saas.marketing.request.card.ValueCardReq;
 import com.tuhu.store.saas.marketing.request.valueCard.*;
 import com.tuhu.store.saas.marketing.response.valueCard.CustomerValueCardDetailResp;
@@ -27,6 +34,7 @@ import com.tuhu.store.saas.marketing.util.CodeFactory;
 import com.tuhu.store.saas.marketing.util.StoreRedisUtils;
 import com.tuhu.store.saas.order.vo.finance.nonpayment.AddNonpaymentVO;
 import com.tuhu.store.saas.order.vo.finance.receiving.AddReceivingVO;
+import com.tuhu.store.saas.user.dto.UserDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +69,9 @@ public class ValueCardServiceImpl implements IValueCardService {
 
     @Autowired
     private CustomerClient customerClient;
+
+    @Autowired
+    private StoreInfoClient storeInfoClient;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -193,6 +204,8 @@ public class ValueCardServiceImpl implements IValueCardService {
             for (ValueCard valueCard : pageInfo.getList()){
                 QueryValueCardListResp resp = new QueryValueCardListResp();
                 resp.setAmount(valueCard.getAmount().add(valueCard.getPresentAmount()));
+                resp.setPresentAmount(valueCard.getPresentAmount()); // 赠送
+                resp.setPrincipalAmount(valueCard.getAmount());//本金
                 resp.setCardId(valueCard.getId());
                 resp.setCustomerId(valueCard.getCustomerId());
                 if (customerDTOMap.containsKey(resp.getCustomerId())){
@@ -286,25 +299,25 @@ public class ValueCardServiceImpl implements IValueCardService {
 
     @Override
     public PageInfo<ValueCardChangeResp> customerValueCardChangeList(CustomerValueCardDetailReq req) {
-        log.info("查询客户储值变更明细详情请求参数：{}",req);
-        if (null == req.getStoreId() || null == req.getTenantId()){
+        log.info("查询客户储值变更明细详情请求参数：{}", req);
+        if (null == req.getStoreId() || null == req.getTenantId()) {
             throw new StoreSaasMarketingException("参数校验失败");
         }
         //如果没拿到卡id 使用客户id查询
-        if (null == req.getCardId()){
+        if (null == req.getCardId()) {
             ValueCardExample example = new ValueCardExample();
             example.createCriteria().andCustomerIdEqualTo(req.getCustomerId())
                     .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
                     .andIsDeleteEqualTo(false);
             List<ValueCard> valueCardList = valueCardMapper.selectByExample(example);
-            if (CollectionUtils.isNotEmpty(valueCardList)){
+            if (CollectionUtils.isNotEmpty(valueCardList)) {
                 req.setCardId(valueCardList.get(0).getId());
-            } else{
+            } else {
                 //throw new StoreSaasMarketingException("客户未开通储值卡");
                 return new PageInfo<>();
             }
         }
-        PageHelper.startPage(req.getPageNum(),req.getPageSize());
+        PageHelper.startPage(req.getPageNum(), req.getPageSize());
         ValueCardChangeExample cardChangeExample = new ValueCardChangeExample();
         cardChangeExample.createCriteria().andCardIdEqualTo(req.getCardId())
                 .andStoreIdEqualTo(req.getStoreId()).andTenantIdEqualTo(req.getTenantId())
@@ -312,15 +325,22 @@ public class ValueCardServiceImpl implements IValueCardService {
         cardChangeExample.setOrderByClause("update_time desc");
         List<ValueCardChange> cardChanges = valueCardChangeMapper.selectByExample(cardChangeExample);
         PageInfo<ValueCardChangeResp> respPageInfo = new PageInfo<>();
-        if (CollectionUtils.isNotEmpty(cardChanges)){
+        if (CollectionUtils.isNotEmpty(cardChanges)) {
+            List<String> collect = cardChanges.stream().map(x -> x.getSalesmanId()).distinct().collect(Collectors.toList());
+            BizBaseResponse<Map<String, UserDTO>> crmResult = storeInfoClient.getUserInfoMapByIdList(collect);
+            Map<String, UserDTO> userDTOMap = crmResult.getData() == null ?
+                    new HashMap<>(0,0) : crmResult.getData();
             PageInfo<ValueCardChange> pageInfo = new PageInfo<>(cardChanges);
             List<ValueCardChangeResp> respList = new ArrayList<>();
-            for (ValueCardChange cardChange : pageInfo.getList()){
+            for (ValueCardChange cardChange : pageInfo.getList()) {
                 ValueCardChangeResp resp = new ValueCardChangeResp();
-                BeanUtils.copyProperties(cardChange,resp);
+                BeanUtils.copyProperties(cardChange, resp);
+                if (userDTOMap.containsKey(resp.getSalesmanId())) {
+                    resp.setSalesmanName(userDTOMap.get(resp.getSalesmanId()).getUsername());
+                }
                 respList.add(resp);
             }
-            BeanUtils.copyProperties(pageInfo,respPageInfo);
+            BeanUtils.copyProperties(pageInfo, respPageInfo);
             respPageInfo.setList(respList);
             respPageInfo.setTotal(pageInfo.getTotal());
         }
@@ -349,7 +369,7 @@ public class ValueCardServiceImpl implements IValueCardService {
                 valueCard = valueCardList.get(0);
             }
         }
-        if (null != valueCard){
+        if (null != valueCard && valueCard.getStoreId().equals(req.getStoreId())){
             principal = valueCard.getAmount();
             present = valueCard.getPresentAmount();
         }
@@ -369,10 +389,10 @@ public class ValueCardServiceImpl implements IValueCardService {
         log.info("进入退款数据校验检查->  req :{}  model -> {} ", req, model);
         if (req.getChangePresent().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)) {
             //退款金额为正数
-            throw  new StoreSaasMarketingException("退款本金为正正数");
+            throw  new StoreSaasMarketingException("退款本金为正数");
         }
         if (req.getChangePrincipal().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)){
-            throw  new StoreSaasMarketingException("退款赠金为正正数");
+            throw  new StoreSaasMarketingException("退款赠金为正数");
         }
         // 客户没有开过卡而且要退款的情况
         if (model == null) {
@@ -408,6 +428,24 @@ public class ValueCardServiceImpl implements IValueCardService {
     @Transactional
     public String settlement(ValueCardRechargeOrRefundReq req) {
         log.info("ValueCardServiceImpl->settlement-> req->{}", req);
+
+        //充值-->新建客户
+        if (StringUtils.isBlank(req.getCustomerId()) && req.getType().equals(2)){
+            CustomerReq customer = this.remoteAddCustomer(req.getCustomerPhoneNumber(),req.getStoreId(),req.getTenantId());
+            req.setCustomerId(customer.getId());
+        } else if (StringUtils.isBlank(req.getCustomerId()) && req.getType().equals(0)){
+            CustomerVO customerVO = new CustomerVO();
+            customerVO.setStoreId(req.getStoreId());
+            customerVO.setTenantId(req.getTenantId());
+            customerVO.setPhone(req.getCustomerPhoneNumber());
+            BizBaseResponse<List<CustomerDTO>> cutomerListResp = customerClient.getCustomer(customerVO);
+            if (null != cutomerListResp && 10000 == cutomerListResp.getCode() && CollectionUtils.isNotEmpty(cutomerListResp.getData())){
+                req.setCustomerId(cutomerListResp.getData().get(0).getId());
+            } else {
+                throw new StoreSaasMarketingException("门店没有该手机号的客户信息");
+            }
+        }
+
         String result = null;
         if (redisTemplate.hasKey(settlementCacheKey.concat(req.getCustomerId()))) {
             throw new StoreSaasMarketingException("当前客户已经有该单据正在进行结算请稍后再试");
@@ -505,19 +543,39 @@ public class ValueCardServiceImpl implements IValueCardService {
                         valueCardChange.setFinNo(finNo);
                         valueCardChangeMapper.updateByPrimaryKey(valueCardChange);
                     }
-
-
                 } else {
                     throw new StoreSaasMarketingException("数据校验失败");
                 }
-
-
             } finally {
                 storeRedisUtils.releaseLock(settlementCacheKey.concat(req.getCustomerId()), value.toString());
             }
         }
-
         return result;
+    }
+
+    private CustomerReq remoteAddCustomer(String phoneNumber, Long storeId, Long tenantId) {
+        //添加客户
+        CustomerReq customerReq = new CustomerReq();
+        customerReq.setPhoneNumber(phoneNumber);
+        customerReq.setName("未命名客户");
+        customerReq.setCustomerType("person");
+        customerReq.setGender("3");
+        customerReq.setCustomerSource(CustomerSourceEnumVo.ZRJD.getCode());
+        AddVehicleReq addVehicleReq = new AddVehicleReq();
+        addVehicleReq.setStoreId(storeId);
+        addVehicleReq.setTenantId(tenantId);
+        addVehicleReq.setCustomerReq(customerReq);
+        log.info("customerClient.addCustomerForOrder request:{}", JSONObject.toJSONString(addVehicleReq));
+        BizBaseResponse<AddVehicleVO> resultObject = customerClient.addCustomerForOrder(addVehicleReq);
+        log.info("customerClient.addCustomerForOrder response:{}", JSONObject.toJSONString(resultObject));
+        if (Objects.nonNull(resultObject) && Objects.nonNull(resultObject.getData())) {
+            AddVehicleVO addVehicleVO = resultObject.getData();
+            customerReq.setId(addVehicleVO.getCustomerReq().getId());
+            customerReq.setName(addVehicleVO.getCustomerReq().getName());
+        } else {
+            throw new StoreSaasMarketingException("创建客户失败");
+        }
+        return customerReq;
     }
 
     private  AddNonpaymentVO createAddNonpaymentVO(ValueCardChange cardChange,String payerId,String payerName,String phone){
@@ -581,7 +639,7 @@ public class ValueCardServiceImpl implements IValueCardService {
      */
     @Override
     @Transactional
-    public Boolean customerConsumption(ValueCardConsumptionReq req) {
+    public Map<String,Long> customerConsumption(ValueCardConsumptionReq req) {
         log.info("储值卡核销请求参数：{}",req);
         if (null == req.getStoreId() || null == req.getTenantId() || null == req.getCustomerId()){
             throw new StoreSaasMarketingException("参数校验失败");
@@ -590,7 +648,7 @@ public class ValueCardServiceImpl implements IValueCardService {
         RedisUtils redisUtils = new RedisUtils(redisTemplate, "STORE-SAAS-MARKETING-");
         StoreRedisUtils storeRedisUtils = new StoreRedisUtils(redisUtils, redisTemplate);
         Object value = storeRedisUtils.tryLock(key, 10, 10);
-        Boolean result = true;
+        Map<String,Long> resultMap = null;
         if (null != value) {
             try {
                 if (req.getAmount().compareTo(BigDecimal.ZERO) > 0){
@@ -647,20 +705,27 @@ public class ValueCardServiceImpl implements IValueCardService {
                     cardChange.setUpdateTime(date);
                     cardChange.setCreateUserId(req.getCreateUserId());
                     cardChange.setCreateUserName(req.getCreateUserName());
-                    result = valueCardChangeMapper.insertSelective(cardChange) > 0;
+                    if (valueCardChangeMapper.insertSelective(cardChange) <= 0){
+                        log.error("储值变更明细数据写入异常,cardChange={}",cardChange);
+                        throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
+                    }
                     //更新账户余额
                     valueCard.setAmount(principal);
                     valueCard.setPresentAmount(present);
                     valueCard.setUpdateTime(date);
-                    result = result && valueCardMapper.updateByPrimaryKeySelective(valueCard) > 0;
+                    if (valueCardMapper.updateByPrimaryKeySelective(valueCard) <= 0){
+                        log.error("更新储值账户余额异常,valueCard={}",valueCard);
+                        throw new StoreSaasMarketingException("数据写入异常，储值核销失败");
+                    }
+                    resultMap = new HashMap<>();
+                    resultMap.put("principal",cardChange.getChangePrincipal().multiply(new BigDecimal(100)).longValue());
+                    resultMap.put("present",cardChange.getChangePresent().multiply(new BigDecimal(100)).longValue());
                 }
             } finally {
                 storeRedisUtils.releaseLock(key, value.toString());
             }
-        } else {
-            result = false;
         }
-        return result;
+        return resultMap;
     }
 
     @Override
@@ -816,6 +881,14 @@ public class ValueCardServiceImpl implements IValueCardService {
             //valueCardMapper.editValueCardBatch(updateList);
         }
         return list;
+    }
+
+    @Override
+    public List<ValueCardChange> getFirstValueCardChangeList(QueryCardToCommissionReq req) {
+        HashMap map= Maps.newHashMap();
+        map.put("startTime",req.getStartTime());
+        map.put("endTime",req.getEndTime());
+        return valueCardChangeMapper.getValueCardChangeList(map);
     }
 
     private void addValueChange(ValueCardReq valueCardReq,ValueCard valueCard){

@@ -323,6 +323,33 @@
 
     </select>
 
+    <select id="countByCustomerIds" resultType="com.tuhu.store.saas.marketing.response.CustomerIdMarketInfo">
+        select count(1) as count,customer_id as customerId from crd_card
+        where 1=1
+        AND is_delete = 0
+        AND status ='ACTIVATED'
+        and customer_id in
+        <foreach collection="customerIds" item="customerId" open="(" close=")" separator=",">
+            #{customerId}
+        </foreach>
+        group by customer_id
+    </select>
+
+    <select id="cardsByCustomerIds" resultMap="BaseResultMap">
+        SELECT a.customer_id,a.id,a.forever
+        FROM crd_card a
+        WHERE 1=1
+        AND is_delete = 0
+        AND status ='ACTIVATED'
+        AND (forever =1 OR expiry_date>NOW())
+        AND customer_id in
+        <foreach collection="customerIds" item="customerId" open="(" close=")" separator=",">
+            #{customerId}
+        </foreach>
+    </select>
+
+
+
     <update id="updateByExampleSelective" parameterType="map">
         update crd_card
         <set>
