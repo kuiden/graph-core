@@ -530,6 +530,8 @@
   <select id="countCustomerCoupon" resultType="java.lang.Integer">
     select count(1) from  customer_coupon
     WHERE customer_id = #{customerId}
+    and use_status = 0
+    and use_end_time <![CDATA[ >= ]]> now()
   </select>
 
   <select id="queryCustomerCouponDetailById"
