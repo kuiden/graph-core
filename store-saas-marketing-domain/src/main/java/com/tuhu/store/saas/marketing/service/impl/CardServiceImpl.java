@@ -169,8 +169,8 @@ public class CardServiceImpl implements ICardService {
         PageInfo<CardTemplateModel> result = new PageInfo<>();
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
         List<CardTemplate> cardTemplates = cardTemplateMapper.selectPage(req.getStatus(), req.getQuery(), req.getTenantId(), req.getStoreId(), req.getIsShow(), req.getType());
+        PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
-            PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
             List<CardTemplateModel> resultArray = new ArrayList<>();
                 for (CardTemplate x : cardTemplates) {
                     //CardTemplateModel model = new CardTemplateModel();
@@ -179,8 +179,8 @@ public class CardServiceImpl implements ICardService {
                     resultArray.add(model);
                 }
             result.setList(resultArray);
-            result.setTotal(cardTemplatePageInfo.getTotal());
         }
+        result.setTotal(cardTemplatePageInfo.getTotal());
         return result;
     }
 
