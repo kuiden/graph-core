@@ -496,7 +496,8 @@
         select
         <include refid="Base_Column_List"/>
         ,min(create_time) from value_card_change
-        where change_type = 2 and  status = 1 and create_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP}
+        where change_type = 2 and  status = 1 and and  is_delete = 0
+        and create_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP}
         and create_time <![CDATA[<=]]> #{endTime,jdbcType=TIMESTAMP}
         group by card_id ORDER BY create_time DESC
     </select>
@@ -506,8 +507,8 @@
         select
         <include refid="Base_Column_List"/>
         from value_card_change
-        where change_type = 2 and  status = 1 and  create_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP}
+        where change_type = 2 and  status = 1 and  is_delete = 0
+        and create_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP}
         and create_time <![CDATA[<=]]> #{endTime,jdbcType=TIMESTAMP}
-        order by create_time desc
     </select>
 </mapper>

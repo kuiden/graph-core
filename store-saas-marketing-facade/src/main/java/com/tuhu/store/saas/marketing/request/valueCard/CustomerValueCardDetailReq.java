@@ -3,12 +3,16 @@ package com.tuhu.store.saas.marketing.request.valueCard;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author wangyuqing
  * @since 2020/10/19 10:39
  */
 @Data
-public class CustomerValueCardDetailReq {
+public class CustomerValueCardDetailReq implements Serializable {
+    private static final long serialVersionUID = 4272272196720284761L;
+
     @ApiModelProperty("客户id")
     private String customerId;
 

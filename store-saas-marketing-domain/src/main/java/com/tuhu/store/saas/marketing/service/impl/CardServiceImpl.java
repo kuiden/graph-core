@@ -108,7 +108,7 @@ public class CardServiceImpl implements ICardService {
                 .map(x->x.getGoodsId()).distinct().collect(Collectors.toList());
         BizBaseResponse<List<String>> productResult = productClient.hasProduct(goodIds, req.getStoreId(), req.getTenantId());
         if (productResult== null || productResult.getCode()!=10000 || productResult.getData() == null || productResult.getData().size() !=goodIds.size()){
-            throw  new StoreSaasMarketingException ("商品/服务校验失败");
+            throw  new StoreSaasMarketingException ("服务/商品已禁用");
         }
         CardTemplate cardTemplate = this.convertorToCardTemplate(req);
         if (isUpdate) {
@@ -169,8 +169,8 @@ public class CardServiceImpl implements ICardService {
         PageInfo<CardTemplateModel> result = new PageInfo<>();
         PageHelper.startPage(req.getPageNum() + 1, req.getPageSize());
         List<CardTemplate> cardTemplates = cardTemplateMapper.selectPage(req.getStatus(), req.getQuery(), req.getTenantId(), req.getStoreId(), req.getIsShow(), req.getType());
+        PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
         if (CollectionUtils.isNotEmpty(cardTemplates)) {
-            PageInfo<CardTemplate> cardTemplatePageInfo = new PageInfo<>(cardTemplates);
             List<CardTemplateModel> resultArray = new ArrayList<>();
                 for (CardTemplate x : cardTemplates) {
                     //CardTemplateModel model = new CardTemplateModel();
@@ -179,8 +179,8 @@ public class CardServiceImpl implements ICardService {
                     resultArray.add(model);
                 }
             result.setList(resultArray);
-            result.setTotal(cardTemplatePageInfo.getTotal());
         }
+        result.setTotal(cardTemplatePageInfo.getTotal());
         return result;
     }
 
