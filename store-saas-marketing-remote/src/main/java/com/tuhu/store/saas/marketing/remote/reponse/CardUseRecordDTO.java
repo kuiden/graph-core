@@ -28,6 +28,11 @@ public class CardUseRecordDTO implements Serializable {
      */
     private String serviceOrderId;
 
+    /**
+     * 工单号
+     */
+    private String serviceOrderNo;
+
     /*
      * 工单类型：GD、XMD、XSD
      */
