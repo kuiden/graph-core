@@ -87,9 +87,11 @@
     </sql>
     <sql id="Base_Column_List">
 
-            id, card_id, store_id, tenant_id, change_no, order_no, fin_no, salesman_id, salesman_name,
-            change_principal, change_present, amount, change_type, `status`, create_time, update_time,
-            remark, create_user_id, update_user_id, create_user_name, is_delete, order_id
+
+                    id, card_id, store_id, tenant_id, change_no, order_no, fin_no, salesman_id, salesman_name,
+                    change_principal, change_present, amount, change_type, `status`, create_time, update_time,
+                    remark, create_user_id, update_user_id, create_user_name, is_delete, order_id
+
 
     </sql>
     <select id="selectByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChangeExample"
@@ -115,8 +117,10 @@
     </select>
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
 
-            delete from value_card_change
-            where id = #{id,jdbcType=BIGINT}
+
+                    delete from value_card_change
+                    where id = #{id,jdbcType=BIGINT}
+
 
     </delete>
     <delete id="deleteByExample" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChangeExample">
@@ -128,22 +132,24 @@
     <insert id="insert" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChange" useGeneratedKeys="true"
             keyProperty="id">
 
-            insert into value_card_change (id, card_id, store_id,
-              tenant_id, change_no, order_no,
-              fin_no, salesman_id, salesman_name,
-              change_principal, change_present, amount,
-              change_type, `status`, create_time,
-              update_time, remark, create_user_id,
-              update_user_id, create_user_name, is_delete,
-              order_id)
-            values (#{id,jdbcType=BIGINT}, #{cardId,jdbcType=BIGINT}, #{storeId,jdbcType=BIGINT},
-              #{tenantId,jdbcType=BIGINT}, #{changeNo,jdbcType=VARCHAR}, #{orderNo,jdbcType=VARCHAR},
-              #{finNo,jdbcType=VARCHAR}, #{salesmanId,jdbcType=VARCHAR}, #{salesmanName,jdbcType=VARCHAR},
-              #{changePrincipal,jdbcType=DECIMAL}, #{changePresent,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL},
-              #{changeType,jdbcType=INTEGER}, #{status,jdbcType=BIT}, #{createTime,jdbcType=TIMESTAMP},
-              #{updateTime,jdbcType=TIMESTAMP}, #{remark,jdbcType=VARCHAR}, #{createUserId,jdbcType=VARCHAR},
-              #{updateUserId,jdbcType=VARCHAR}, #{createUserName,jdbcType=VARCHAR}, #{isDelete,jdbcType=BIT},
-              #{orderId,jdbcType=VARCHAR})
+
+                    insert into value_card_change (id, card_id, store_id,
+                      tenant_id, change_no, order_no,
+                      fin_no, salesman_id, salesman_name,
+                      change_principal, change_present, amount,
+                      change_type, `status`, create_time,
+                      update_time, remark, create_user_id,
+                      update_user_id, create_user_name, is_delete,
+                      order_id)
+                    values (#{id,jdbcType=BIGINT}, #{cardId,jdbcType=BIGINT}, #{storeId,jdbcType=BIGINT},
+                      #{tenantId,jdbcType=BIGINT}, #{changeNo,jdbcType=VARCHAR}, #{orderNo,jdbcType=VARCHAR},
+                      #{finNo,jdbcType=VARCHAR}, #{salesmanId,jdbcType=VARCHAR}, #{salesmanName,jdbcType=VARCHAR},
+                      #{changePrincipal,jdbcType=DECIMAL}, #{changePresent,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL},
+                      #{changeType,jdbcType=INTEGER}, #{status,jdbcType=BIT}, #{createTime,jdbcType=TIMESTAMP},
+                      #{updateTime,jdbcType=TIMESTAMP}, #{remark,jdbcType=VARCHAR}, #{createUserId,jdbcType=VARCHAR},
+                      #{updateUserId,jdbcType=VARCHAR}, #{createUserName,jdbcType=VARCHAR}, #{isDelete,jdbcType=BIT},
+                      #{orderId,jdbcType=VARCHAR})
+
 
     </insert>
     <insert id="insertSelective" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChange">
@@ -465,29 +471,31 @@
     </update>
     <update id="updateByPrimaryKey" parameterType="com.tuhu.store.saas.marketing.dataobject.ValueCardChange">
 
-            update value_card_change
-            set card_id = #{cardId,jdbcType=BIGINT},
-              store_id = #{storeId,jdbcType=BIGINT},
-              tenant_id = #{tenantId,jdbcType=BIGINT},
-              change_no = #{changeNo,jdbcType=VARCHAR},
-              order_no = #{orderNo,jdbcType=VARCHAR},
-              fin_no = #{finNo,jdbcType=VARCHAR},
-              salesman_id = #{salesmanId,jdbcType=VARCHAR},
-              salesman_name = #{salesmanName,jdbcType=VARCHAR},
-              change_principal = #{changePrincipal,jdbcType=DECIMAL},
-              change_present = #{changePresent,jdbcType=DECIMAL},
-              amount = #{amount,jdbcType=DECIMAL},
-              change_type = #{changeType,jdbcType=INTEGER},
-              `status` = #{status,jdbcType=BIT},
-              create_time = #{createTime,jdbcType=TIMESTAMP},
-              update_time = #{updateTime,jdbcType=TIMESTAMP},
-              remark = #{remark,jdbcType=VARCHAR},
-              create_user_id = #{createUserId,jdbcType=VARCHAR},
-              update_user_id = #{updateUserId,jdbcType=VARCHAR},
-              create_user_name = #{createUserName,jdbcType=VARCHAR},
-              is_delete = #{isDelete,jdbcType=BIT},
-              order_id = #{orderId,jdbcType=VARCHAR}
-            where id = #{id,jdbcType=BIGINT}
+
+                    update value_card_change
+                    set card_id = #{cardId,jdbcType=BIGINT},
+                      store_id = #{storeId,jdbcType=BIGINT},
+                      tenant_id = #{tenantId,jdbcType=BIGINT},
+                      change_no = #{changeNo,jdbcType=VARCHAR},
+                      order_no = #{orderNo,jdbcType=VARCHAR},
+                      fin_no = #{finNo,jdbcType=VARCHAR},
+                      salesman_id = #{salesmanId,jdbcType=VARCHAR},
+                      salesman_name = #{salesmanName,jdbcType=VARCHAR},
+                      change_principal = #{changePrincipal,jdbcType=DECIMAL},
+                      change_present = #{changePresent,jdbcType=DECIMAL},
+                      amount = #{amount,jdbcType=DECIMAL},
+                      change_type = #{changeType,jdbcType=INTEGER},
+                      `status` = #{status,jdbcType=BIT},
+                      create_time = #{createTime,jdbcType=TIMESTAMP},
+                      update_time = #{updateTime,jdbcType=TIMESTAMP},
+                      remark = #{remark,jdbcType=VARCHAR},
+                      create_user_id = #{createUserId,jdbcType=VARCHAR},
+                      update_user_id = #{updateUserId,jdbcType=VARCHAR},
+                      create_user_name = #{createUserName,jdbcType=VARCHAR},
+                      is_delete = #{isDelete,jdbcType=BIT},
+                      order_id = #{orderId,jdbcType=VARCHAR}
+                    where id = #{id,jdbcType=BIGINT}
+
 
     </update>
 
@@ -496,7 +504,7 @@
         select
         <include refid="Base_Column_List"/>
         ,min(create_time) from value_card_change
-        where change_type = 2 and  status = 1 and and  is_delete = 0
+        where change_type = 2 and status = 1 and and is_delete = 0
         and create_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP}
         and create_time <![CDATA[<=]]> #{endTime,jdbcType=TIMESTAMP}
         group by card_id ORDER BY create_time DESC
@@ -507,8 +515,11 @@
         select
         <include refid="Base_Column_List"/>
         from value_card_change
-        where change_type = 2 and  status = 1 and  is_delete = 0
-        and create_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP}
-        and create_time <![CDATA[<=]]> #{endTime,jdbcType=TIMESTAMP}
+        where change_type = 2 and status = 1 and is_delete = 0
+        and
+        ((create_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP} and create_time <![CDATA[<=]]> #{endTime,jdbcType=TIMESTAMP})
+        OR
+        (update_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP} and update_time <![CDATA[<=]]> #{endTime,jdbcType=TIMESTAMP})
+        )
     </select>
 </mapper>
