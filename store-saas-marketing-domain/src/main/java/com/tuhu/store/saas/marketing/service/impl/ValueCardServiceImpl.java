@@ -392,10 +392,10 @@ public class ValueCardServiceImpl implements IValueCardService {
         log.info("进入退款数据校验检查->  req :{}  model -> {} ", req, model);
         if (req.getChangePresent().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)) {
             //退款金额为正数
-            throw  new StoreSaasMarketingException("退款本金为正数");
+            throw  new StoreSaasMarketingException("退款赠金为正数");
         }
         if (req.getChangePrincipal().compareTo(BigDecimal.ZERO) == Integer.valueOf(1)){
-            throw  new StoreSaasMarketingException("退款赠金为正数");
+            throw  new StoreSaasMarketingException("退款本金为正数");
         }
         // 客户没有开过卡而且要退款的情况
         if (model == null) {
