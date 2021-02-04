@@ -34,7 +34,7 @@
 
     <select id="pageBuyList" resultMap="BaseResultMap">
         SELECT
-        store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number,
+        store_id,tenant_id,seckill_activity_id,customer_id,buyer_phone_number,
         SUM(quantity) as quantity,sum(expect_amount) as expect_amount,max(is_new_customer) as is_new_customer
         FROM seckill_registration_record
         WHERE
@@ -47,7 +47,7 @@
         <if test="phone != null and phone != ''">
             and buyer_phone_number like CONCAT('%',#{phone},'%')
         </if>
-        group by store_id,tenant_id,seckill_activity_id,customer_id,customer_name,buyer_phone_number
+        group by store_id,tenant_id,seckill_activity_id,customer_id,buyer_phone_number
         order by payment_time desc
     </select>
 
