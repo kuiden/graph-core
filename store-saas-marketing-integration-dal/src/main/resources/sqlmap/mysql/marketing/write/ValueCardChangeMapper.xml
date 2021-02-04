@@ -521,6 +521,5 @@
         where change_type = 2 and status = 1 and is_delete = 0
         and update_time <![CDATA[>=]]>  #{startTime,jdbcType=TIMESTAMP}
         and update_time <![CDATA[<=]]> #{endTime,jdbcType=TIMESTAMP}
-        group by card_id ORDER BY update_time DESC
     </select>
 </mapper>
