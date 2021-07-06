@@ -1,8 +1,8 @@
 package com.kude.demo;
 
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
+//import org.junit.runner.JUnitCore;
+//import org.junit.runner.Result;
+//import org.junit.runner.notification.Failure;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -13,10 +13,6 @@ public class DemoApplication {
 
     public static void main(String[] args) {
 //        SpringApplication.run(DemoApplication.class, args);
-
-//        Car car = new Benz();
-//        CarDecorator carDecorator = new ConcreteCarDecorator(car);
-//        carDecorator.show();
 
 //        Graph<String> graph=new Graph<>(true);
 //        graph.addVertex("A", 0, "A");
